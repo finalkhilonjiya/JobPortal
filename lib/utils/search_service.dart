@@ -275,7 +275,7 @@ class SearchService {
   String _sanitizeSearchInput(String input) {
     // Remove potentially dangerous characters and limit length
     final sanitized = input
-        .replaceAll(RegExp(r'[\'\"\\;--]'), '') // Remove SQL injection chars
+        .replaceAll(RegExp(r'[\'\"\\;-]'), '') // Remove SQL injection chars
         .replaceAll(RegExp(r'[<>{}]'), '') // Remove XSS chars
         .replaceAll(RegExp(r'\s+'), ' ') // Normalize whitespace
         .trim();
