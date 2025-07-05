@@ -92,23 +92,23 @@ class ListingService {
           .order('created_at', ascending: false);
 
       if (categoryId != null) {
-        searchQuery = searchQuery.filter('category_id', 'eq', categoryId);
+        searchQuery = searchQuery.eq('category_id', categoryId);
       }
 
       if (minPrice != null) {
-        searchQuery = searchQuery.filter('price', 'gte', minPrice);
+        searchQuery = searchQuery.gte('price', minPrice);
       }
 
       if (maxPrice != null) {
-        searchQuery = searchQuery.filter('price', 'lte', maxPrice);
+        searchQuery = searchQuery.lte('price', maxPrice);
       }
 
       if (condition != null) {
-        searchQuery = searchQuery.filter('condition', 'eq', condition);
+        searchQuery = searchQuery.eq('condition', condition);
       }
 
       if (location != null) {
-        searchQuery = searchQuery.filter('location', 'ilike', '%$location%');
+        searchQuery = searchQuery.ilike('location', '%$location%');
       }
 
       if (limit != null) {
@@ -296,7 +296,7 @@ class ListingService {
           ''').eq('seller_id', userId).order('created_at', ascending: false);
 
       if (status != null) {
-        query = query.filter('status', 'eq', status);
+        query = query.eq('status', status);
       }
 
       if (limit != null) {
@@ -360,7 +360,7 @@ class ListingService {
             seller:user_profiles!seller_id(*),
             category:categories(*)
           ''')
-          .in_('id', listingIds)
+          .inFilter('id', listingIds)
           .eq('status', 'active');
 
       debugPrint('✅ Batch fetched ${response.length} listings');
