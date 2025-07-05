@@ -80,6 +80,8 @@ class ListingService {
   }) async {
     try {
       final client = SupabaseService().client;
+      
+      // Start with the base query
       var searchQuery = client
           .from('listings')
           .select('''
@@ -87,11 +89,15 @@ class ListingService {
             seller:user_profiles!seller_id(*),
             category:categories(*)
           ''')
-          .eq('status', 'active')
-          .ilike('title', '%$query%')
-          .order('created_at', ascending: false);
+          .eq('status', 'active');
 
-      if (categoryId != null) {
+      // Add search term if provided
+      if (query.isNotEmpty) {
+        searchQuery = searchQuery.ilike('title', '%$query%');
+      }
+
+      // Add optional filters
+      if (categoryId != null && categoryId.isNotEmpty) {
         searchQuery = searchQuery.eq('category_id', categoryId);
       }
 
@@ -103,13 +109,16 @@ class ListingService {
         searchQuery = searchQuery.lte('price', maxPrice);
       }
 
-      if (condition != null) {
+      if (condition != null && condition.isNotEmpty) {
         searchQuery = searchQuery.eq('condition', condition);
       }
 
-      if (location != null) {
+      if (location != null && location.isNotEmpty) {
         searchQuery = searchQuery.ilike('location', '%$location%');
       }
+
+      // Add ordering and limit
+      searchQuery = searchQuery.order('created_at', ascending: false);
 
       if (limit != null) {
         searchQuery = searchQuery.limit(limit);
@@ -133,13 +142,17 @@ class ListingService {
       // Use PostgreSQL function to atomically fetch and increment views
       // This prevents race conditions and improves performance
       if (incrementViews) {
-        final response = await client.rpc('get_listing_and_increment_views', params: {
-          'listing_id': listingId,
-        });
-        
-        if (response != null && response.isNotEmpty) {
-          debugPrint('✅ Fetched listing with view increment: $listingId');
-          return Map<String, dynamic>.from(response[0]);
+        try {
+          final response = await client.rpc('get_listing_and_increment_views', params: {
+            'listing_id': listingId,
+          });
+          
+          if (response != null && response.isNotEmpty) {
+            debugPrint('✅ Fetched listing with view increment: $listingId');
+            return Map<String, dynamic>.from(response[0]);
+          }
+        } catch (rpcError) {
+          debugPrint('⚠️ RPC function not available, falling back to standard query: $rpcError');
         }
       }
       
@@ -202,6 +215,8 @@ class ListingService {
         'longitude': longitude,
         'images': imageUrls ?? [],
         'status': 'active',
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
       };
 
       final response =
@@ -295,7 +310,7 @@ class ListingService {
             category:categories(*)
           ''').eq('seller_id', userId).order('created_at', ascending: false);
 
-      if (status != null) {
+      if (status != null && status.isNotEmpty) {
         query = query.eq('status', status);
       }
 
@@ -368,6 +383,98 @@ class ListingService {
     } catch (error) {
       debugPrint('❌ Failed to batch fetch listings: $error');
       throw Exception('Failed to batch fetch listings: $error');
+    }
+  }
+
+  /// Get featured/promoted listings
+  Future<List<Map<String, dynamic>>> getFeaturedListings({
+    int limit = 10,
+  }) async {
+    try {
+      final client = SupabaseService().client;
+      final response = await client
+          .from('listings')
+          .select('''
+            *,
+            seller:user_profiles!seller_id(*),
+            category:categories(*)
+          ''')
+          .eq('status', 'active')
+          .eq('is_featured', true)
+          .order('created_at', ascending: false)
+          .limit(limit);
+
+      debugPrint('✅ Fetched ${response.length} featured listings');
+      return List<Map<String, dynamic>>.from(response);
+    } catch (error) {
+      debugPrint('❌ Failed to fetch featured listings: $error');
+      // Return empty list instead of throwing to prevent cascade failures
+      return [];
+    }
+  }
+
+  /// Mark listing as sold
+  Future<Map<String, dynamic>> markAsSold(String listingId) async {
+    try {
+      final client = SupabaseService().client;
+      final userId = client.auth.currentUser?.id;
+
+      if (userId == null) {
+        throw Exception('User must be authenticated');
+      }
+
+      final response = await client
+          .from('listings')
+          .update({
+            'status': 'sold',
+            'sold_at': DateTime.now().toIso8601String(),
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', listingId)
+          .eq('seller_id', userId)
+          .select('''
+            *,
+            seller:user_profiles!seller_id(*),
+            category:categories(*)
+          ''').single();
+
+      debugPrint('✅ Marked listing as sold: $listingId');
+      return response;
+    } catch (error) {
+      debugPrint('❌ Failed to mark listing as sold: $error');
+      throw Exception('Failed to mark listing as sold: $error');
+    }
+  }
+
+  /// Reactivate listing
+  Future<Map<String, dynamic>> reactivateListing(String listingId) async {
+    try {
+      final client = SupabaseService().client;
+      final userId = client.auth.currentUser?.id;
+
+      if (userId == null) {
+        throw Exception('User must be authenticated');
+      }
+
+      final response = await client
+          .from('listings')
+          .update({
+            'status': 'active',
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', listingId)
+          .eq('seller_id', userId)
+          .select('''
+            *,
+            seller:user_profiles!seller_id(*),
+            category:categories(*)
+          ''').single();
+
+      debugPrint('✅ Reactivated listing: $listingId');
+      return response;
+    } catch (error) {
+      debugPrint('❌ Failed to reactivate listing: $error');
+      throw Exception('Failed to reactivate listing: $error');
     }
   }
 }
