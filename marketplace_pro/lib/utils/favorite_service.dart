@@ -205,7 +205,7 @@ class FavoriteService {
           .order('favorites_count', ascending: false);
 
       if (categoryId != null) {
-        query = query.filter('category_id', 'eq', categoryId);
+        query = query.eq('category_id', categoryId);
       }
 
       query = query.limit(limit);
