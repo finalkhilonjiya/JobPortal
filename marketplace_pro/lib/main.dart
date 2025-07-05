@@ -66,6 +66,7 @@ class _AppInitializerState extends State<AppInitializer> {
   bool _hasError = false;
   String _errorMessage = '';
   bool _useOfflineMode = false;
+  bool _navigationInProgress = false;
 
   @override
   void initState() {
@@ -134,19 +135,38 @@ class _AppInitializerState extends State<AppInitializer> {
           final event = data.event;
           debugPrint('🔄 Auth state changed: $event');
 
-          if (!mounted) return;
+          // Ensure widget is still mounted and initialization is complete
+          if (!mounted || !_isInitialized) return;
 
-          if (event == 'SIGNED_IN') {
-            Navigator.pushReplacementNamed(
-              context,
-              AppRoutes.homeMarketplaceFeed,
-            );
-          } else if (event == 'SIGNED_OUT') {
-            Navigator.pushReplacementNamed(
-              context,
-              AppRoutes.loginScreen,
-            );
-          }
+          // Prevent multiple rapid navigation calls
+          if (_navigationInProgress) return;
+          _navigationInProgress = true;
+
+          // Add delay to ensure navigation context is ready
+          Future.delayed(Duration(milliseconds: 100), () {
+            if (!mounted) {
+              _navigationInProgress = false;
+              return;
+            }
+
+            try {
+              if (event == 'SIGNED_IN') {
+                Navigator.pushReplacementNamed(
+                  context,
+                  AppRoutes.homeMarketplaceFeed,
+                );
+              } else if (event == 'SIGNED_OUT') {
+                Navigator.pushReplacementNamed(
+                  context,
+                  AppRoutes.loginScreen,
+                );
+              }
+            } catch (e) {
+              debugPrint('❌ Navigation error in auth listener: $e');
+            } finally {
+              _navigationInProgress = false;
+            }
+          });
         },
         onError: (error) {
           debugPrint('❌ Auth state listener error: $error');

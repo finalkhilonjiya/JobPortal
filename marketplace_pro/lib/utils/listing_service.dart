@@ -126,20 +126,41 @@ class ListingService {
   }
 
   /// Get listing by ID
-  Future<Map<String, dynamic>?> getListingById(String listingId) async {
+  Future<Map<String, dynamic>?> getListingById(String listingId, {bool incrementViews = true}) async {
     try {
       final client = SupabaseService().client;
+      
+      // Use PostgreSQL function to atomically fetch and increment views
+      // This prevents race conditions and improves performance
+      if (incrementViews) {
+        final response = await client.rpc('get_listing_and_increment_views', params: {
+          'listing_id': listingId,
+        });
+        
+        if (response != null && response.isNotEmpty) {
+          debugPrint('✅ Fetched listing with view increment: $listingId');
+          return Map<String, dynamic>.from(response[0]);
+        }
+      }
+      
+      // Fallback: fetch without incrementing views (for cases where RPC is not available)
       final response = await client.from('listings').select('''
             *,
             seller:user_profiles!seller_id(*),
             category:categories(*)
           ''').eq('id', listingId).single();
 
-      // Increment view count
-      await client
-          .from('listings')
-          .update({'views_count': (response['views_count'] ?? 0) + 1}).eq(
-              'id', listingId);
+      if (incrementViews) {
+        // Use atomic increment to prevent race conditions
+        try {
+          await client.rpc('increment_listing_views', params: {
+            'listing_id': listingId,
+          });
+        } catch (incrementError) {
+          debugPrint('⚠️ Failed to increment views (non-critical): $incrementError');
+          // Continue without throwing - view count is not critical
+        }
+      }
 
       debugPrint('✅ Fetched listing: $listingId');
       return response;
@@ -299,6 +320,8 @@ class ListingService {
   }) async {
     try {
       final client = SupabaseService().client;
+      
+      // Use more efficient query with better ordering for relevant results
       final response = await client
           .from('listings')
           .select('''
@@ -310,13 +333,41 @@ class ListingService {
           .eq('status', 'active')
           .neq('id', currentListingId)
           .limit(limit)
+          // Order by a combination of popularity and recency for better recommendations
+          .order('views_count', ascending: false)
           .order('created_at', ascending: false);
 
       debugPrint('✅ Fetched ${response.length} related listings');
       return List<Map<String, dynamic>>.from(response);
     } catch (error) {
       debugPrint('❌ Failed to fetch related listings: $error');
-      throw Exception('Failed to fetch related listings: $error');
+      // Return empty list instead of throwing to prevent cascade failures
+      debugPrint('🔄 Returning empty related listings due to error');
+      return [];
+    }
+  }
+
+  /// Batch get multiple listings by IDs (performance optimization)
+  Future<List<Map<String, dynamic>>> getListingsByIds(List<String> listingIds) async {
+    if (listingIds.isEmpty) return [];
+    
+    try {
+      final client = SupabaseService().client;
+      final response = await client
+          .from('listings')
+          .select('''
+            *,
+            seller:user_profiles!seller_id(*),
+            category:categories(*)
+          ''')
+          .in_('id', listingIds)
+          .eq('status', 'active');
+
+      debugPrint('✅ Batch fetched ${response.length} listings');
+      return List<Map<String, dynamic>>.from(response);
+    } catch (error) {
+      debugPrint('❌ Failed to batch fetch listings: $error');
+      throw Exception('Failed to batch fetch listings: $error');
     }
   }
 }

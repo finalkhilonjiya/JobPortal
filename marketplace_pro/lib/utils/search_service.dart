@@ -216,12 +216,16 @@ class SearchService {
 
     try {
       final client = SupabaseService().client;
+      
+      // Sanitize the input to prevent SQL injection
+      final sanitizedQuery = _sanitizeSearchInput(partialQuery);
+      if (sanitizedQuery.isEmpty) return [];
 
       // Get suggestions from recent searches
       final recentSearches = await client
           .from('search_history')
           .select('search_query')
-          .ilike('search_query', '$partialQuery%')
+          .ilike('search_query', '$sanitizedQuery%')
           .order('created_at', ascending: false)
           .limit(5);
 
@@ -230,7 +234,7 @@ class SearchService {
           .from('listings')
           .select('title')
           .eq('status', 'active')
-          .ilike('title', '$partialQuery%')
+          .ilike('title', '$sanitizedQuery%')
           .limit(5);
 
       // Get suggestions from category names
@@ -238,7 +242,7 @@ class SearchService {
           .from('categories')
           .select('name')
           .eq('is_active', true)
-          .ilike('name', '$partialQuery%')
+          .ilike('name', '$sanitizedQuery%')
           .limit(3);
 
       final suggestions = <String>{};
@@ -265,5 +269,22 @@ class SearchService {
       debugPrint('❌ Failed to get search suggestions: $error');
       return [];
     }
+  }
+
+  /// Sanitize search input to prevent SQL injection and other attacks
+  String _sanitizeSearchInput(String input) {
+    // Remove potentially dangerous characters and limit length
+    final sanitized = input
+        .replaceAll(RegExp(r'[\'\"\\;--]'), '') // Remove SQL injection chars
+        .replaceAll(RegExp(r'[<>{}]'), '') // Remove XSS chars
+        .replaceAll(RegExp(r'\s+'), ' ') // Normalize whitespace
+        .trim();
+    
+    // Limit input length to prevent DoS
+    if (sanitized.length > 100) {
+      return sanitized.substring(0, 100);
+    }
+    
+    return sanitized;
   }
 }
