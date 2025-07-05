@@ -1,0 +1,57 @@
+name: marketplace_pro
+description: A comprehensive marketplace application built with Flutter.
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+  flutter: ">=3.16.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # UI & Responsive Design
+  sizer: ^2.0.15
+  
+  # Network & Image Handling  
+  cached_network_image: ^3.3.1
+  flutter_svg: ^2.0.9
+  dio: ^5.7.0
+  connectivity_plus: ^5.0.2
+  
+  # Storage & Persistence
+  shared_preferences: ^2.2.2
+  
+  # Data Visualization
+  fl_chart: ^0.65.0
+  
+  # UI Enhancement & Typography
+  fluttertoast: ^8.2.4
+  google_fonts: ^6.1.0
+  
+  # Supabase Integration
+  supabase_flutter: ^2.3.4
+
+  web: any
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+
+# Environment Variables Configuration
+# To run the app with Supabase integration, use:
+# flutter run --dart-define=SUPABASE_URL=your_supabase_project_url --dart-define=SUPABASE_ANON_KEY=your_supabase_anon_key
+#
+# Example:
+# flutter run --dart-define=SUPABASE_URL=https://your-project.supabase.co --dart-define=SUPABASE_ANON_KEY=your_anon_key_here
+#
+# For development without Supabase, the app will run in offline mode.
