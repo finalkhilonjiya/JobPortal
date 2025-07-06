@@ -160,8 +160,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
       setState(() {
         // 👇 Ensure these are strings to match Set<String>
         _favoriteListings = favorites
-            .map((fav) => fav['listing_id'].toString())
-            .toSet();
+            .map((fav) => fav['listing_id'].toString()).toSet();
       });
     }
   } catch (error) {
