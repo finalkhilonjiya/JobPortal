@@ -1,20 +1,14 @@
 workflows:
   debug-build:
-    name: Debug APK Build with Logs
+    name: Debug APK Build
     environment:
       flutter: stable
-      android_signing:
-        - debug
     scripts:
-      - name: Get dependencies
+      - name: Get Flutter dependencies
         script: |
           flutter pub get
-      - name: Build debug APK with verbose logs
+      - name: Build APK in debug mode with verbose logging
         script: |
           flutter build apk --debug --verbose
     artifacts:
       - build/app/outputs/flutter-apk/app-debug.apk
-    publishing:
-      email:
-        recipients:
-          - your pankajdoley91@gmail.com
