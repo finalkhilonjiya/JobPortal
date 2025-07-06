@@ -153,19 +153,21 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
   }
 
   Future<void> _loadFavorites() async {
-    try {
-      final authService = AuthService();
-      if (authService.isAuthenticated()) {
-        final favorites = await _favoriteService.getUserFavorites();
-        setState(() {
-          _favoriteListings = Set<String>.from(
-              favorites.map((fav) => fav['listing_id'].toString()));
-        });
-      }
-    } catch (error) {
-      debugPrint('❌ Failed to load favorites: $error');
+  try {
+    final authService = AuthService();
+    if (authService.isAuthenticated()) {
+      final favorites = await _favoriteService.getUserFavorites();
+      setState(() {
+        // 👇 Ensure these are strings to match Set<String>
+        _favoriteListings = favorites
+            .map((fav) => fav['listing_id'].toString())
+            .toSet();
+      });
     }
+  } catch (error) {
+    debugPrint('❌ Failed to load favorites: $error');
   }
+}
 
   String _formatTimeAgo(DateTime dateTime) {
     final now = DateTime.now();
