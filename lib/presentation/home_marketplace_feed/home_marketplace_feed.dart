@@ -158,8 +158,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
       if (authService.isAuthenticated()) {
         final favorites = await _favoriteService.getUserFavorites();
         setState(() {
-          _favoriteListings = Set<Int>.from(
-              favorites.map((fav) => fav['listing_id'] as Int));
+          Set<String> _favoriteListings = Set.from(
+              favorites.map((fav) => fav['listing_id']?.toString()).where((id)=> id != null ));
         });
       }
     } catch (error) {
