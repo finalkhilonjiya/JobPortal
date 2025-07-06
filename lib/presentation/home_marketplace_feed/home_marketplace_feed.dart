@@ -339,7 +339,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
       } else {
         await _favoriteService.addFavorite(listingId);
         setState(() {
-          _favoriteListings.add(listingId.toSting());
+          _favoriteListings.add(listingId.toString());
         });
       }
 
