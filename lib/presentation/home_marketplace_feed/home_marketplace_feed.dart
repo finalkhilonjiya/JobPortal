@@ -23,7 +23,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
   int _currentIndex = 0;
   String _selectedCategory = 'All';
   String _selectedLocation = 'New York, NY';
- // Set<String> _favoriteListings = {};
+  Set<String> _favoriteListings = {};
 
   // Real data from Supabase
   List<Map<String, dynamic>> _listings = [];
@@ -151,20 +151,21 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
       debugPrint('❌ Failed to load listings: $error');
     }
   }
-/*  Future<void> _loadFavorites() async {
+
+  Future<void> _loadFavorites() async {
     try {
       final authService = AuthService();
       if (authService.isAuthenticated()) {
         final favorites = await _favoriteService.getUserFavorites();
         setState(() {
-           _favoriteListings = Set<String>.from(
-              favorites.map((fav) => int.parse(fav['listing_id'].toString())));
+          _favoriteListings = Set<String>.from(
+              favorites.map((fav) => fav['listing_id'].toString()));
         });
       }
     } catch (error) {
       debugPrint('❌ Failed to load favorites: $error');
     }
-  } */
+  }
 
   String _formatTimeAgo(DateTime dateTime) {
     final now = DateTime.now();
@@ -319,7 +320,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
     }
   }
 
- /* Future<void> _toggleFavorite(String listingId) async {
+  Future<void> _toggleFavorite(String listingId) async {
     HapticFeedback.lightImpact();
 
     try {
@@ -360,7 +361,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
         ),
       );
     }
-  } */
+  }
 
   void _onCategorySelected(String category) {
     setState(() {
@@ -579,7 +580,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
                               onTap: () => _onListingTap(listing),
                               onLongPress: () => _onListingLongPress(listing),
                               onFavoriteTap: () =>
-                                  _toggleFavorite(listing['id'] as String),
+                                  _toggleFavorite(listing['id'].toString()),
                             ),
                           );
                         },
