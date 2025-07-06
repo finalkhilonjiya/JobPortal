@@ -23,7 +23,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
   int _currentIndex = 0;
   String _selectedCategory = 'All';
   String _selectedLocation = 'New York, NY';
-  Set<String> _favoriteListings = {};
+  Set<int> _favoriteListings = {};
 
   // Real data from Supabase
   List<Map<String, dynamic>> _listings = [];
@@ -158,8 +158,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
       if (authService.isAuthenticated()) {
         final favorites = await _favoriteService.getUserFavorites();
         setState(() {
-           _favoriteListings = Set<String>.from(
-              favorites.map((fav) => fav['listing_id'].toString()));
+           _favoriteListings = Set<int>.from(
+              favorites.map((fav) => fav['listing_id'] as int));
         });
       }
     } catch (error) {
