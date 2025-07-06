@@ -331,15 +331,15 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
         return;
       }
 
-      if (_favoriteListings.contains(listingId)) {
+      if (_favoriteListings.contains(listingId.toString())) {
         await _favoriteService.removeFavorite(listingId);
         setState(() {
-          _favoriteListings.remove(listingId);
+          _favoriteListings.remove(listingId.toString());
         });
       } else {
         await _favoriteService.addFavorite(listingId);
         setState(() {
-          _favoriteListings.add(listingId);
+          _favoriteListings.add(listingId.toSting());
         });
       }
 
@@ -349,7 +349,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
             _listings.indexWhere((listing) => listing['id'] == listingId);
         if (index != -1) {
           _listings[index]['isFavorite'] =
-              _favoriteListings.contains(listingId);
+              _favoriteListings.contains(listingId.toString());
         }
       });
     } catch (error) {
