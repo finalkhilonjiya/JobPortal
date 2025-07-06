@@ -23,7 +23,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
   int _currentIndex = 0;
   String _selectedCategory = 'All';
   String _selectedLocation = 'New York, NY';
-  Set<int> _favoriteListings = {};
+  Set<String> _favoriteListings = {};
 
   // Real data from Supabase
   List<Map<String, dynamic>> _listings = [];
@@ -134,7 +134,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
             'imageUrl': firstImage,
             'category': listing['category']?['name'] ?? 'General',
             'isSponsored': listing['is_featured'] ?? false,
-            'isFavorite': _favoriteListings.contains(listing['id']),
+            'isFavorite': _favoriteListings.contains(listing['id'].toString()),
             'views_count': listing['views_count'] ?? 0,
             'condition': listing['condition'] ?? 'good',
             'seller': listing['seller'],
@@ -158,8 +158,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
       if (authService.isAuthenticated()) {
         final favorites = await _favoriteService.getUserFavorites();
         setState(() {
-           _favoriteListings = Set<int>.from(
-              favorites.map((fav) => fav['listing_id'] as int));
+           _favoriteListings = Set<String>.from(
+              favorites.map((fav) => fav['listing_id'].toString()));
         });
       }
     } catch (error) {
@@ -304,7 +304,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
             'imageUrl': firstImage,
             'category': listing['category']?['name'] ?? 'General',
             'isSponsored': listing['is_featured'] ?? false,
-            'isFavorite': _favoriteListings.contains(listing['id']),
+            'isFavorite': _favoriteListings.contains(listing['id'].toString()),
             'views_count': listing['views_count'] ?? 0,
             'condition': listing['condition'] ?? 'good',
             'seller': listing['seller'],
@@ -570,7 +570,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
 
                           final listing = _filteredListings[index];
                           final isFavorite =
-                              _favoriteListings.contains(listing['id']);
+                              _favoriteListings.contains(listing['id'].toString());
 
                           return Padding(
                             padding: EdgeInsets.only(bottom: 2.h),
