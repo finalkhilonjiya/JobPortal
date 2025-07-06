@@ -158,15 +158,9 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
     if (authService.isAuthenticated()) {
       final favorites = await _favoriteService.getUserFavorites();
 
-      // Debug logs
-      print("FAVORITES RAW: $favorites");
-      for (var fav in favorites) {
-        print("ID: ${fav['listing_id']} -> ${fav['listing_id'].runtimeType}");
-      }
-
-      final ids = favorites.map((fav) => fav['listing_id'].toString()).toSet();
-
-      print("SET TYPE: ${ids.runtimeType}");
+      final Set<String> ids = favorites
+          .map<String>((fav) => fav['listing_id'].toString())
+          .toSet();
 
       setState(() {
         _favoriteListings = ids;
