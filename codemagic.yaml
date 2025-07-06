@@ -1,14 +1,7 @@
-workflows:
-  debug-build:
-    name: Debug APK Build
-    environment:
-      flutter: stable
-    scripts:
-      - name: Get Flutter dependencies
-        script: |
-          flutter pub get
-      - name: Build APK in debug mode with verbose logging
-        script: |
-          flutter build apk --debug --verbose
-    artifacts:
-      - build/app/outputs/flutter-apk/app-debug.apk
+scripts:
+  - name: Build APK in debug mode with full logs
+    script: |
+      flutter pub get
+      flutter doctor -v
+      flutter analyze
+      flutter build apk --debug -v > flutter_build.log || (cat flutter_build.log && false)
