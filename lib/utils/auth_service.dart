@@ -1,6 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
@@ -11,7 +13,12 @@ class AuthService {
   factory AuthService() => _instance;
   AuthService._internal() {
     _initializeSessionMonitoring();
+    _initializeSocialLogins();
   }
+
+  // Social login instances
+  late GoogleSignIn _googleSignIn;
+  late FacebookAuth _facebookAuth;
 
   // Session monitoring
   Timer? _sessionTimer;
@@ -30,6 +37,15 @@ class AuthService {
       debugPrint('❌ Failed to get Supabase client: $e');
       return null;
     }
+  }
+
+  /// Initialize social login services
+  void _initializeSocialLogins() {
+    _googleSignIn = GoogleSignIn(
+      scopes: ['email', 'profile'],
+      serverClientId: const String.fromEnvironment('GOOGLE_WEB_CLIENT_ID'),
+    );
+    _facebookAuth = FacebookAuth.instance;
   }
 
   /// Initialize session monitoring and offline caching
@@ -71,7 +87,6 @@ class AuthService {
       final expiresAt = session.expiresAt;
       final now = DateTime.now().millisecondsSinceEpoch / 1000;
       
-      // Refresh if session expires in the next 5 minutes
       if (expiresAt != null && expiresAt - now < 300) {
         debugPrint('🔄 Refreshing session...');
         await client.auth.refreshSession();
@@ -79,6 +94,182 @@ class AuthService {
       }
     } catch (e) {
       debugPrint('❌ Session refresh failed: $e');
+    }
+  }
+
+  /// Validate if input is email or phone number
+  bool _isEmail(String input) {
+    return RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(input);
+  }
+
+  /// Validate if input is phone number
+  bool _isPhoneNumber(String input) {
+    final cleaned = input.replaceAll(RegExp(r'[^\d]'), '');
+    return RegExp(r'^[6-9]\d{9}$').hasMatch(cleaned) || 
+           RegExp(r'^\d{10,15}$').hasMatch(cleaned);
+  }
+
+  /// Normalize phone number format
+  String _normalizePhoneNumber(String phone) {
+    final cleaned = phone.replaceAll(RegExp(r'[^\d]'), '');
+    
+    if (cleaned.length == 10 && cleaned.startsWith(RegExp(r'[6-9]'))) {
+      return '+91$cleaned';
+    } else if (cleaned.length == 12 && cleaned.startsWith('91')) {
+      return '+$cleaned';
+    } else if (!cleaned.startsWith('+')) {
+      return '+$cleaned';
+    }
+    return cleaned;
+  }
+
+  /// Sign up with email/phone and password
+  Future<AuthResponse> signUp({
+    required String username,
+    required String password,
+    String? fullName,
+    String? role,
+  }) async {
+    try {
+      final client = _client;
+      if (client == null) {
+        throw AuthException('Supabase not available. Please check your connection.');
+      }
+
+      String? email;
+      String? phone;
+
+      if (_isEmail(username)) {
+        email = username.toLowerCase().trim();
+      } else if (_isPhoneNumber(username)) {
+        phone = _normalizePhoneNumber(username);
+        email = '${phone.replaceAll('+', '')}@khilonjiya.placeholder';
+      } else {
+        throw AuthException('Please enter a valid email address or phone number.');
+      }
+
+      final signUpData = {
+        'full_name': fullName ?? (phone != null ? phone : email.split('@')[0]),
+        'role': role ?? 'buyer',
+        'username_type': phone != null ? 'phone' : 'email',
+        'phone_number': phone,
+        'display_email': phone != null ? null : email,
+      };
+
+      final response = await client.auth.signUp(
+        email: email,
+        password: password,
+        phone: phone,
+        data: signUpData,
+      );
+
+      if (response.user != null) {
+        debugPrint('✅ User signed up successfully: ${phone ?? email}');
+        await _createUserProfile(response.user!, signUpData);
+      }
+
+      return response;
+    } catch (error) {
+      debugPrint('❌ Sign-up failed: $error');
+      throw AuthException('Sign-up failed: ${_getErrorMessage(error)}');
+    }
+  }
+
+  /// Sign in with email/phone and password
+  Future<AuthResponse> signIn({
+    required String username,
+    required String password,
+  }) async {
+    try {
+      final client = _client;
+      if (client == null) {
+        throw AuthException('Supabase not available. Please check your connection.');
+      }
+
+      String? email;
+      String? phone;
+
+      if (_isEmail(username)) {
+        email = username.toLowerCase().trim();
+      } else if (_isPhoneNumber(username)) {
+        phone = _normalizePhoneNumber(username);
+        email = await _getEmailFromPhone(phone);
+        if (email == null) {
+          throw AuthException('No account found with this phone number. Please sign up first.');
+        }
+      } else {
+        throw AuthException('Please enter a valid email address or phone number.');
+      }
+
+      final response = await client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+
+      if (response.user != null) {
+        debugPrint('✅ User signed in successfully: ${phone ?? email}');
+        _startSessionMonitoring();
+      }
+
+      return response;
+    } catch (error) {
+      debugPrint('❌ Sign-in failed: $error');
+      throw AuthException('Sign-in failed: ${_getErrorMessage(error)}');
+    }
+  }
+
+  /// Get email from phone number for login
+  Future<String?> _getEmailFromPhone(String phone) async {
+    try {
+      final client = _client;
+      if (client == null) return null;
+
+      final response = await client
+          .from('user_profiles')
+          .select('email')
+          .eq('phone_number', phone)
+          .maybeSingle();
+
+      return response?['email'];
+    } catch (e) {
+      debugPrint('❌ Failed to get email from phone: $e');
+      return null;
+    }
+  }
+
+  /// Extract user-friendly error messages
+  String _getErrorMessage(dynamic error) {
+    if (error is AuthException) {
+      switch (error.message) {
+        case 'Invalid login credentials':
+          return 'Invalid email/phone or password. Please check your credentials.';
+        case 'Email not confirmed':
+          return 'Please check your email and click the confirmation link.';
+        case 'User already registered':
+          return 'An account with this email/phone already exists. Please sign in.';
+        case 'Password should be at least 6 characters':
+          return 'Password must be at least 6 characters long.';
+        default:
+          return error.message;
+      }
+    }
+
+    final errorString = error.toString();
+    if (errorString.contains('network')) {
+      return 'Network error. Please check your internet connection.';
+    } else if (errorString.contains('timeout')) {
+      return 'Request timeout. Please try again.';
+    }
+
+    return 'An unexpected error occurred. Please try again.';
+  }
+
+  /// Create user profile after signup
+  Future<void> _createUserProfile(User user, [Map<String, dynamic>? additionalData]) async {
+    try {
+      await UserProfileService().createUserProfile(user, additionalData);
+    } catch (e) {
+      debugPrint('❌ Failed to create user profile: $e');
     }
   }
 
@@ -108,20 +299,6 @@ class AuthService {
     }
   }
 
-  /// Get cached auth state for offline access
-  Future<Map<String, dynamic>?> getCachedAuthState() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final cacheData = prefs.getString(_authStateKey);
-      if (cacheData != null) {
-        return jsonDecode(cacheData);
-      }
-    } catch (e) {
-      debugPrint('❌ Failed to get cached auth state: $e');
-    }
-    return null;
-  }
-
   /// Clear offline cache
   Future<void> _clearOfflineCache() async {
     try {
@@ -131,84 +308,6 @@ class AuthService {
       await prefs.remove(_sessionExpiryKey);
     } catch (e) {
       debugPrint('❌ Failed to clear offline cache: $e');
-    }
-  }
-
-  /// Sign up with email and password
-  Future<AuthResponse> signUp({
-    required String email,
-    required String password,
-    String? fullName,
-    String? role,
-  }) async {
-    try {
-      final client = _client;
-      if (client == null) {
-        throw AuthException(
-            'Supabase not available. Please check your connection and try again.');
-      }
-
-      final response = await client.auth.signUp(
-        email: email,
-        password: password,
-        data: {
-          'full_name': fullName ?? email.split('@')[0],
-          'role': role ?? 'buyer',
-        },
-      );
-
-      if (response.user != null) {
-        debugPrint('✅ User signed up successfully: ${response.user!.email}');
-        // Create user profile after successful signup
-        await _createUserProfile(response.user!);
-      }
-
-      return response;
-    } catch (error) {
-      debugPrint('❌ Sign-up failed: $error');
-      throw AuthException('Sign-up failed: ${_getErrorMessage(error)}');
-    }
-  }
-
-  /// Sign in with email and password
-  Future<AuthResponse> signIn({
-    required String email,
-    required String password,
-  }) async {
-    try {
-      final client = _client;
-      if (client == null) {
-        throw AuthException(
-            'Supabase not available. Please check your connection and try again.');
-      }
-
-      final response = await client.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
-
-      if (response.user != null) {
-        debugPrint('✅ User signed in successfully: ${response.user!.email}');
-        _startSessionMonitoring();
-      }
-
-      return response;
-    } catch (error) {
-      debugPrint('❌ Sign-in failed: $error');
-      throw AuthException('Sign-in failed: ${_getErrorMessage(error)}');
-    }
-  }
-
-  /// Sign out current user
-  Future<void> signOut() async {
-    try {
-      _stopSessionMonitoring();
-      await SupabaseService().signOut();
-      await _clearOfflineCache();
-      debugPrint('✅ User signed out successfully');
-    } catch (error) {
-      debugPrint('❌ Sign-out failed: $error');
-      throw AuthException('Sign-out failed: ${_getErrorMessage(error)}');
     }
   }
 
@@ -222,7 +321,7 @@ class AuthService {
     }
   }
 
-  /// Check if user is authenticated with fallback
+  /// Check if user is authenticated
   bool isAuthenticated() {
     try {
       return SupabaseService().isAuthenticated;
@@ -232,7 +331,7 @@ class AuthService {
     }
   }
 
-  /// Listen to auth state changes with error handling
+  /// Listen to auth state changes
   Stream<AuthState> get authStateChanges {
     try {
       return SupabaseService().authStateChanges;
@@ -242,13 +341,163 @@ class AuthService {
     }
   }
 
-  /// Reset password with improved error handling
-  Future<void> resetPassword(String email) async {
+// Add these methods to the AuthService class from Part 1
+
+  /// Sign in with Google
+  Future<AuthResponse> signInWithGoogle() async {
     try {
       final client = _client;
       if (client == null) {
-        throw AuthException(
-            'Supabase not available. Please check your connection and try again.');
+        throw AuthException('Supabase not available. Please check your connection.');
+      }
+
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        throw AuthException('Google sign-in was cancelled.');
+      }
+
+      final googleAuth = await googleUser.authentication;
+      if (googleAuth.accessToken == null || googleAuth.idToken == null) {
+        throw AuthException('Failed to get Google authentication tokens.');
+      }
+
+      final response = await client.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: googleAuth.idToken!,
+        accessToken: googleAuth.accessToken!,
+      );
+
+      if (response.user != null) {
+        debugPrint('✅ Google sign-in successful: ${response.user!.email}');
+        
+        await _handleSocialLoginProfile(response.user!, 'google', {
+          'avatar_url': googleUser.photoUrl,
+          'full_name': googleUser.displayName ?? response.user!.email?.split('@')[0],
+        });
+      }
+
+      return response;
+    } catch (error) {
+      debugPrint('❌ Google sign-in failed: $error');
+      await _googleSignIn.signOut();
+      throw AuthException('Google sign-in failed: ${_getErrorMessage(error)}');
+    }
+  }
+
+  /// Sign in with Facebook
+  Future<AuthResponse> signInWithFacebook() async {
+    try {
+      final client = _client;
+      if (client == null) {
+        throw AuthException('Supabase not available. Please check your connection.');
+      }
+
+      final facebookResult = await _facebookAuth.login(
+        permissions: ['email', 'public_profile'],
+      );
+
+      if (facebookResult.status != LoginStatus.success) {
+        throw AuthException('Facebook sign-in was cancelled or failed.');
+      }
+
+      final accessToken = facebookResult.accessToken?.tokenString;
+      if (accessToken == null) {
+        throw AuthException('Failed to get Facebook access token.');
+      }
+
+      final userData = await _facebookAuth.getUserData(
+        fields: "name,email,picture.width(200)",
+      );
+
+      final response = await client.auth.signInWithIdToken(
+        provider: OAuthProvider.facebook,
+        idToken: accessToken,
+      );
+
+      if (response.user != null) {
+        debugPrint('✅ Facebook sign-in successful: ${response.user!.email}');
+        
+        await _handleSocialLoginProfile(response.user!, 'facebook', {
+          'avatar_url': userData['picture']?['data']?['url'],
+          'full_name': userData['name'] ?? response.user!.email?.split('@')[0],
+        });
+      }
+
+      return response;
+    } catch (error) {
+      debugPrint('❌ Facebook sign-in failed: $error');
+      await _facebookAuth.logOut();
+      throw AuthException('Facebook sign-in failed: ${_getErrorMessage(error)}');
+    }
+  }
+
+  /// Handle social login profile creation/update
+  Future<void> _handleSocialLoginProfile(
+    User user, 
+    String provider, 
+    Map<String, dynamic> additionalData
+  ) async {
+    try {
+      final profileData = {
+        'username_type': 'email',
+        'display_email': user.email,
+        'social_provider': provider,
+        'role': 'buyer',
+        ...additionalData,
+      };
+
+      await _createUserProfile(user, profileData);
+    } catch (e) {
+      debugPrint('❌ Failed to handle social login profile: $e');
+    }
+  }
+
+  /// Sign out current user (including social logins)
+  Future<void> signOut() async {
+    try {
+      _stopSessionMonitoring();
+      
+      try {
+        await _googleSignIn.signOut();
+      } catch (e) {
+        debugPrint('Google sign-out error: $e');
+      }
+      
+      try {
+        await _facebookAuth.logOut();
+      } catch (e) {
+        debugPrint('Facebook sign-out error: $e');
+      }
+
+      await SupabaseService().signOut();
+      await _clearOfflineCache();
+      debugPrint('✅ User signed out successfully');
+    } catch (error) {
+      debugPrint('❌ Sign-out failed: $error');
+      throw AuthException('Sign-out failed: ${_getErrorMessage(error)}');
+    }
+  }
+
+  /// Reset password with username flexibility
+  Future<void> resetPassword(String username) async {
+    try {
+      final client = _client;
+      if (client == null) {
+        throw AuthException('Supabase not available. Please check your connection.');
+      }
+
+      String? email;
+
+      if (_isEmail(username)) {
+        email = username.toLowerCase().trim();
+      } else if (_isPhoneNumber(username)) {
+        final phone = _normalizePhoneNumber(username);
+        email = await _getEmailFromPhone(phone);
+        if (email == null) {
+          throw AuthException('No account found with this phone number.');
+        }
+      } else {
+        throw AuthException('Please enter a valid email address or phone number.');
       }
 
       await client.auth.resetPasswordForEmail(email);
@@ -259,7 +508,61 @@ class AuthService {
     }
   }
 
-  /// Update user profile with enhanced error handling
+  /// Check if username is available
+  Future<bool> isUsernameAvailable(String username) async {
+    try {
+      final client = _client;
+      if (client == null) return false;
+
+      if (_isEmail(username)) {
+        final email = username.toLowerCase().trim();
+        final response = await client
+            .from('user_profiles')
+            .select('id')
+            .eq('display_email', email)
+            .maybeSingle();
+        return response == null;
+      } else if (_isPhoneNumber(username)) {
+        final phone = _normalizePhoneNumber(username);
+        final response = await client
+            .from('user_profiles')
+            .select('id')
+            .eq('phone_number', phone)
+            .maybeSingle();
+        return response == null;
+      }
+
+      return false;
+    } catch (e) {
+      debugPrint('❌ Username availability check failed: $e');
+      return false;
+    }
+  }
+
+  /// Get user display name (phone or email)
+  String? getUserDisplayName() {
+    try {
+      final user = getCurrentUser();
+      if (user == null) return null;
+
+      final metadata = user.userMetadata;
+      if (metadata != null) {
+        final usernameType = metadata['username_type'];
+        if (usernameType == 'phone') {
+          return metadata['phone_number'];
+        } else {
+          return metadata['display_email'] ?? user.email;
+        }
+      }
+
+      return user.email;
+    } catch (e) {
+      debugPrint('❌ Get user display name failed: $e');
+      return null;
+    }
+  }
+
+  /// Update user profile
   Future<UserResponse> updateProfile({
     String? fullName,
     String? avatarUrl,
@@ -267,8 +570,7 @@ class AuthService {
     try {
       final client = _client;
       if (client == null) {
-        throw AuthException(
-            'Supabase not available. Please check your connection and try again.');
+        throw AuthException('Supabase not available. Please check your connection.');
       }
 
       final response = await client.auth.updateUser(
@@ -292,25 +594,15 @@ class AuthService {
     }
   }
 
-  /// Sign in with OAuth with better error handling
-  Future<bool> signInWithOAuth(OAuthProvider provider) async {
+  /// Update user profile after auth update
+  Future<void> _updateUserProfile(User user) async {
     try {
-      final client = _client;
-      if (client == null) {
-        throw AuthException(
-            'Supabase not available. Please check your connection and try again.');
-      }
-
-      final response = await client.auth.signInWithOAuth(
-        provider,
-        redirectTo: 'com.marketplace.pro://login-callback',
+      await UserProfileService().updateUserProfile(
+        fullName: user.userMetadata?['full_name'],
+        avatarUrl: user.userMetadata?['avatar_url'],
       );
-
-      debugPrint('✅ OAuth sign-in initiated: ${provider.name}');
-      return response;
-    } catch (error) {
-      debugPrint('❌ OAuth sign-in failed: $error');
-      throw AuthException('OAuth sign-in failed: ${_getErrorMessage(error)}');
+    } catch (e) {
+      debugPrint('❌ Failed to update user profile: $e');
     }
   }
 
@@ -319,7 +611,6 @@ class AuthService {
     try {
       if (!isAuthenticated()) return false;
 
-      // Check if we can access Supabase
       final healthStatus = await SupabaseService().getHealthStatus();
       return healthStatus['connection_ok'] == true &&
           healthStatus['authenticated'] == true;
@@ -382,39 +673,27 @@ class AuthService {
     }
   }
 
+  /// Get cached auth state for offline access
+  Future<Map<String, dynamic>?> getCachedAuthState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cacheData = prefs.getString(_authStateKey);
+      if (cacheData != null) {
+        return jsonDecode(cacheData);
+      }
+    } catch (e) {
+      debugPrint('❌ Failed to get cached auth state: $e');
+    }
+    return null;
+  }
+
   /// Dispose resources
   void dispose() {
     _stopSessionMonitoring();
     _authStateSubscription?.cancel();
   }
-
-  /// Extract user-friendly error messages
-  String _getErrorMessage(dynamic error) {
-    if (error is AuthException) {
-      switch (error.message) {
-        case 'Invalid login credentials':
-          return 'Invalid email or password. Please check your credentials and try again.';
-        case 'Email not confirmed':
-          return 'Please check your email and click the confirmation link before signing in.';
-        case 'User already registered':
-          return 'An account with this email already exists. Please sign in instead.';
-        case 'Password should be at least 6 characters':
-          return 'Password must be at least 6 characters long.';
-        default:
-          return error.message;
-      }
-    }
-
-    final errorString = error.toString();
-    if (errorString.contains('network')) {
-      return 'Network error. Please check your internet connection.';
-    } else if (errorString.contains('timeout')) {
-      return 'Request timeout. Please try again.';
-    }
-
-    return 'An unexpected error occurred. Please try again.';
-  }
 }
+
 
 // User Profile Service for extended profile management
 class UserProfileService {
@@ -434,7 +713,7 @@ class UserProfileService {
   }
 
   /// Create user profile after signup
-  Future<void> createUserProfile(User user) async {
+  Future<void> createUserProfile(User user, [Map<String, dynamic>? additionalData]) async {
     try {
       final client = _client;
       if (client == null) {
@@ -447,11 +726,16 @@ class UserProfileService {
         'full_name': user.userMetadata?['full_name'] ?? user.email?.split('@')[0],
         'role': user.userMetadata?['role'] ?? 'buyer',
         'avatar_url': user.userMetadata?['avatar_url'],
+        'username_type': user.userMetadata?['username_type'] ?? 'email',
+        'phone_number': user.userMetadata?['phone_number'],
+        'display_email': user.userMetadata?['display_email'] ?? user.email,
+        'social_provider': user.userMetadata?['social_provider'],
         'created_at': DateTime.now().toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
+        ...?additionalData,
       };
 
-      await client.from(_userProfilesTable).insert(profileData);
+      await client.from(_userProfilesTable).upsert(profileData);
       await _cacheUserProfile(profileData);
       debugPrint('✅ User profile created successfully');
     } catch (error) {
@@ -512,7 +796,7 @@ class UserProfileService {
       if (fullName != null) updateData['full_name'] = fullName;
       if (avatarUrl != null) updateData['avatar_url'] = avatarUrl;
       if (bio != null) updateData['bio'] = bio;
-      if (phone != null) updateData['phone'] = phone;
+      if (phone != null) updateData['phone_number'] = phone;
       if (address != null) updateData['address'] = address;
       if (preferences != null) updateData['preferences'] = preferences;
 
@@ -617,31 +901,170 @@ class UserProfileService {
       throw ProfileException('Failed to delete user profile: ${error.toString()}');
     }
   }
-}
 
-// Extension methods for AuthService to integrate with UserProfileService
-extension AuthServiceProfileExtension on AuthService {
-  /// Create user profile after signup
-  Future<void> _createUserProfile(User user) async {
+  /// Get user by phone number
+  Future<Map<String, dynamic>?> getUserByPhone(String phoneNumber) async {
     try {
-      await UserProfileService().createUserProfile(user);
-    } catch (e) {
-      debugPrint('❌ Failed to create user profile: $e');
-      // Don't throw here to avoid breaking signup flow
+      final client = _client;
+      if (client == null) return null;
+
+      final normalizedPhone = _normalizePhoneNumber(phoneNumber);
+      final response = await client
+          .from(_userProfilesTable)
+          .select()
+          .eq('phone_number', normalizedPhone)
+          .maybeSingle();
+
+      return response;
+    } catch (error) {
+      debugPrint('❌ Get user by phone failed: $error');
+      return null;
     }
   }
 
-  /// Update user profile after auth update
-  Future<void> _updateUserProfile(User user) async {
+  /// Get user by email
+  Future<Map<String, dynamic>?> getUserByEmail(String email) async {
     try {
-      await UserProfileService().updateUserProfile(
-        fullName: user.userMetadata?['full_name'],
-        avatarUrl: user.userMetadata?['avatar_url'],
-      );
-    } catch (e) {
-      debugPrint('❌ Failed to update user profile: $e');
-      // Don't throw here to avoid breaking update flow
+      final client = _client;
+      if (client == null) return null;
+
+      final response = await client
+          .from(_userProfilesTable)
+          .select()
+          .eq('display_email', email.toLowerCase().trim())
+          .maybeSingle();
+
+      return response;
+    } catch (error) {
+      debugPrint('❌ Get user by email failed: $error');
+      return null;
     }
+  }
+
+  /// Update user preferences
+  Future<void> updateUserPreferences(Map<String, dynamic> preferences) async {
+    try {
+      await updateUserProfile(preferences: preferences);
+    } catch (error) {
+      debugPrint('❌ Update user preferences failed: $error');
+      throw ProfileException('Failed to update preferences: ${error.toString()}');
+    }
+  }
+
+  /// Get user preferences
+  Future<Map<String, dynamic>?> getUserPreferences() async {
+    try {
+      final profile = await getUserProfile();
+      return profile?['preferences'] as Map<String, dynamic>?;
+    } catch (error) {
+      debugPrint('❌ Get user preferences failed: $error');
+      return null;
+    }
+  }
+
+  /// Search users by name or email
+  Future<List<Map<String, dynamic>>> searchUsers(String query, {int limit = 10}) async {
+    try {
+      final client = _client;
+      if (client == null) return [];
+
+      final response = await client
+          .from(_userProfilesTable)
+          .select('id, full_name, display_email, avatar_url, role')
+          .or('full_name.ilike.%$query%,display_email.ilike.%$query%')
+          .limit(limit);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (error) {
+      debugPrint('❌ Search users failed: $error');
+      return [];
+    }
+  }
+
+  /// Get users by role
+  Future<List<Map<String, dynamic>>> getUsersByRole(String role, {int limit = 50}) async {
+    try {
+      final client = _client;
+      if (client == null) return [];
+
+      final response = await client
+          .from(_userProfilesTable)
+          .select()
+          .eq('role', role)
+          .limit(limit);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (error) {
+      debugPrint('❌ Get users by role failed: $error');
+      return [];
+    }
+  }
+
+  /// Update user role
+  Future<void> updateUserRole(String userId, String newRole) async {
+    try {
+      final client = _client;
+      if (client == null) {
+        throw ProfileException('Supabase not available.');
+      }
+
+      await client
+          .from(_userProfilesTable)
+          .update({'role': newRole, 'updated_at': DateTime.now().toIso8601String()})
+          .eq('id', userId);
+
+      debugPrint('✅ User role updated successfully');
+    } catch (error) {
+      debugPrint('❌ Update user role failed: $error');
+      throw ProfileException('Failed to update user role: ${error.toString()}');
+    }
+  }
+
+  /// Check if user exists by username
+  Future<bool> userExists(String username) async {
+    try {
+      final client = _client;
+      if (client == null) return false;
+
+      if (_isEmail(username)) {
+        final user = await getUserByEmail(username);
+        return user != null;
+      } else if (_isPhoneNumber(username)) {
+        final user = await getUserByPhone(username);
+        return user != null;
+      }
+
+      return false;
+    } catch (error) {
+      debugPrint('❌ Check user exists failed: $error');
+      return false;
+    }
+  }
+
+  /// Helper method to validate email
+  bool _isEmail(String input) {
+    return RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(input);
+  }
+
+  /// Helper method to validate phone number
+  bool _isPhoneNumber(String input) {
+    final cleaned = input.replaceAll(RegExp(r'[^\d]'), '');
+    return RegExp(r'^[6-9]\d{9}$').hasMatch(cleaned) || 
+           RegExp(r'^\d{10,15}$').hasMatch(cleaned);
+  }
+
+  /// Helper method to normalize phone number
+  String _normalizePhoneNumber(String phone) {
+    final cleaned = phone.replaceAll(RegExp(r'[^\d]'), '');
+    
+    if (cleaned.length == 10 && cleaned.startsWith(RegExp(r'[6-9]'))) {
+      return '+91$cleaned';
+    } else if (cleaned.length == 12 && cleaned.startsWith('91')) {
+      return '+$cleaned';
+    } else if (!cleaned.startsWith('+')) {
+      return '+$cleaned';
+    }
+    return cleaned;
   }
 }
 
@@ -649,6 +1072,7 @@ extension AuthServiceProfileExtension on AuthService {
 class AuthException implements Exception {
   final String message;
   const AuthException(this.message);
+  
   @override
   String toString() => 'AuthException: $message';
 }
@@ -656,6 +1080,7 @@ class AuthException implements Exception {
 class ProfileException implements Exception {
   final String message;
   const ProfileException(this.message);
+  
   @override
   String toString() => 'ProfileException: $message';
 }
