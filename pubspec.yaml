@@ -1,5 +1,5 @@
 name: khilonjiya_com
-description: A comprehensive marketplace application built with Flutter for khilonjiya.com.
+description: A comprehensive marketplace application built with Flutter for khilonjiya.com - আমাৰ সংস্কৃতি, আমাৰ গৌৰৱ (Our Culture, Our Pride)
 
 publish_to: 'none'
 
@@ -13,30 +13,98 @@ dependencies:
   flutter:
     sdk: flutter
   
-  # State Management
+  # 🎯 STATE MANAGEMENT & ARCHITECTURE
   provider: ^6.0.5
+  flutter_bloc: ^8.1.3  # Added for advanced state management
+  equatable: ^2.0.5     # Added for value equality
   
-  # UI & Responsive Design
+  # 🎨 UI & RESPONSIVE DESIGN
   sizer: ^2.0.15
+  flutter_screenutil: ^5.9.0    # Added for better screen adaptation
+  animations: ^2.0.8             # Added for smooth animations
+  flutter_staggered_animations: ^1.1.1  # Added for staggered animations
+  lottie: ^2.7.0                # Added for Lottie animations
+  shimmer: ^3.0.0               # Added for loading shimmer effects
   
-  # Network & Image Handling  
+  # 🌐 NETWORK & API
   cached_network_image: ^3.3.1
   flutter_svg: ^2.0.9
   dio: ^5.7.0
   connectivity_plus: ^5.0.2
+  retrofit: ^4.0.3              # Added for API client generation
+  internet_connection_checker: ^1.0.0+1  # Added for connection checking
   
-  # Storage & Persistence
+  # 💾 STORAGE & PERSISTENCE
   shared_preferences: ^2.2.2
+  hive: ^2.2.3                  # Added for local database
+  hive_flutter: ^1.1.0          # Added for Hive Flutter integration
+  flutter_secure_storage: ^9.0.0  # Added for secure storage
+  path_provider: ^2.1.1         # Added for file system paths
   
-  # Data Visualization
+  # 🔐 AUTHENTICATION & SECURITY
+  supabase_flutter: ^2.3.4
+  google_sign_in: ^6.1.6        # Added for Google authentication
+  flutter_facebook_auth: ^6.0.3  # Added for Facebook authentication
+  local_auth: ^2.1.6            # Added for biometric authentication
+  crypto: ^3.0.3                # Added for encryption
+  
+  # 🖼️ IMAGES & MEDIA
+  image_picker: ^1.0.4          # Added for image selection
+  image_cropper: ^5.0.1         # Added for image editing
+  photo_view: ^0.14.0           # Added for image viewing
+  flutter_image_compress: ^2.1.0  # Added for image compression
+  video_player: ^2.8.1          # Added for video playback
+  file_picker: ^6.1.1           # Added for file selection
+  
+  # 📍 LOCATION & MAPS
+  google_maps_flutter: ^2.5.0   # Added for maps integration
+  location: ^5.0.3              # Added for location services
+  geolocator: ^10.1.0           # Added for GPS functionality
+  geocoding: ^2.1.1             # Added for address conversion
+  
+  # 💰 PAYMENTS
+  razorpay_flutter: ^1.3.6      # Added for Razorpay payments (Indian)
+  upi_india: ^3.4.0             # Added for UPI payments
+  
+  # 🔔 NOTIFICATIONS & MESSAGING
+  firebase_messaging: ^14.7.10  # Added for push notifications
+  flutter_local_notifications: ^16.3.0  # Added for local notifications
+  awesome_notifications: ^0.8.2  # Added for rich notifications
+  
+  # 📱 DEVICE FEATURES
+  device_info_plus: ^9.1.1      # Added for device information
+  package_info_plus: ^4.2.0     # Added for app information
+  permission_handler: ^11.0.1   # Added for permissions handling
+  share_plus: ^7.2.1            # Added for sharing functionality
+  url_launcher: ^6.2.1          # Added for launching URLs
+  
+  # 📊 DATA VISUALIZATION & CHARTS
   fl_chart: ^0.65.0
+  syncfusion_flutter_charts: ^23.2.7  # Added for advanced charts
   
-  # UI Enhancement & Typography
+  # 🔍 SEARCH & FILTERS
+  flutter_typeahead: ^4.8.0     # Added for search suggestions
+  
+  # 📅 DATE & TIME
+  intl: ^0.18.1                 # Added for internationalization
+  table_calendar: ^3.0.9        # Added for calendar widget
+  
+  # 🎪 ONBOARDING & TUTORIALS
+  introduction_screen: ^3.1.11   # Added for onboarding
+  
+  # 🛠️ UTILITIES
   fluttertoast: ^8.2.4
   google_fonts: ^6.1.0
+  uuid: ^4.2.1                  # Added for unique IDs
+  timeago: ^3.5.0               # Added for relative time
+  mask_text_input_formatter: ^2.5.0  # Added for input formatting
   
-  # Supabase Integration
-  supabase_flutter: ^2.3.4
+  # 🔗 DEEP LINKING & QR
+  qr_code_scanner: ^1.0.1       # Added for QR scanning
+  qr_flutter: ^4.1.0            # Added for QR generation
+  
+  # 🌍 LOCALIZATION
+  easy_localization: ^3.0.3     # Added for multi-language support
 
   web: any
   
@@ -44,18 +112,99 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  
+  # 🏗️ CODE GENERATION
+  build_runner: ^2.4.7          # Added for code generation
+  json_serializable: ^6.7.1     # Added for JSON serialization
+  hive_generator: ^2.0.1        # Added for Hive type adapters
+  retrofit_generator: ^8.0.4    # Added for API client generation
+  
+  # 🧪 TESTING
+  mockito: ^5.4.2               # Added for mocking in tests
+  bloc_test: ^9.1.5             # Added for Bloc testing
+  
+  # 📱 APP CONFIGURATION
+  flutter_launcher_icons: ^0.13.1  # Added for app icons
+  flutter_native_splash: ^2.3.5    # Added for splash screens
 
 flutter:
   uses-material-design: true
+  generate: true  # Added for localization
   
   assets:
     - assets/images/
+    - assets/icons/              # Added for custom icons
+    - assets/animations/         # Added for Lottie animations
+    - assets/translations/       # Added for localization files
+  
+  # 🔤 FONTS
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
 
-# Environment Variables Configuration
-# To run the app with Supabase integration, use:
-# flutter run --dart-define=SUPABASE_URL=your_supabase_project_url --dart-define=SUPABASE_ANON_KEY=your_supabase_anon_key
+# 🚀 APP LAUNCHER ICONS CONFIGURATION
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icons/app_icon.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+
+# 🎨 NATIVE SPLASH SCREEN CONFIGURATION
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/images/splash_logo.png
+  branding: assets/images/khilonjiya_branding.png
+  color_dark: "#1a1a1a"
+  image_dark: assets/images/splash_logo_dark.png
+  android_12:
+    image: assets/images/splash_logo_android12.png
+    icon_background_color: "#ffffff"
+
+# 🌍 ENVIRONMENT VARIABLES CONFIGURATION
+# 
+# Required Environment Variables:
+# --dart-define=SUPABASE_URL=your_supabase_project_url
+# --dart-define=SUPABASE_ANON_KEY=your_supabase_anon_key
+# --dart-define=GOOGLE_WEB_CLIENT_ID=your_google_web_client_id
+# --dart-define=GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+# --dart-define=RAZORPAY_KEY_ID=your_razorpay_key_id
 #
-# Example:
-# flutter run --dart-define=SUPABASE_URL=https://your-project.supabase.co --dart-define=SUPABASE_ANON_KEY=your_anon_key_here
+# Example run command:
+# flutter run --dart-define=SUPABASE_URL=https://your-project.supabase.co --dart-define=SUPABASE_ANON_KEY=your_anon_key --dart-define=GOOGLE_WEB_CLIENT_ID=your_google_client_id
 #
-# For development without Supabase, the app will run in offline mode.
+# For production build:
+# flutter build apk --dart-define=SUPABASE_URL=https://your-project.supabase.co --dart-define=SUPABASE_ANON_KEY=your_anon_key --dart-define=GOOGLE_WEB_CLIENT_ID=your_google_client_id
+#
+# 🔧 Development Mode:
+# The app will run in offline mode if Supabase credentials are not provided.
+# Some features like authentication and real-time sync will be limited.
+#
+# 📱 Platform Support:
+# - Android (API 21+)
+# - iOS (12.0+) 
+# - Web (Chrome, Firefox, Safari)
+#
+# 🎯 Marketplace Features Enabled:
+# ✅ Multi-language support (Assamese, English, Hindi)
+# ✅ Authentication (Email, Phone, Google, Facebook)
+# ✅ Real-time messaging and notifications
+# ✅ Image/video upload and compression
+# ✅ Location-based search and maps
+# ✅ Payment integration (Razorpay, UPI)
+# ✅ QR code scanning for quick actions
+# ✅ Advanced search and filtering
+# ✅ Charts and analytics
+# ✅ Offline mode support
+# ✅ Push notifications
+# ✅ Deep linking support
