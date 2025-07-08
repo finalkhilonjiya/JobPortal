@@ -14,16 +14,23 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
-  late AnimationController _logoAnimationController;
-  late AnimationController _loadingAnimationController;
-  late Animation<double> _logoScaleAnimation;
-  late Animation<double> _logoFadeAnimation;
-  late Animation<double> _loadingAnimation;
-
+  late AnimationController _gradientAnimationController;
+  late Animation<double> _gradientAnimation;
+  
   bool _isInitializing = true;
   bool _hasError = false;
   String _errorMessage = '';
   double _initializationProgress = 0.0;
+
+  // Beautiful gradient colors for khilonjiya.com
+  final List<Color> _gradientColors = [
+    const Color(0xFF6366F1), // Indigo
+    const Color(0xFF8B5CF6), // Purple
+    const Color(0xFFEC4899), // Pink
+    const Color(0xFFF59E0B), // Amber
+    const Color(0xFF10B981), // Emerald
+    const Color(0xFF3B82F6), // Blue
+  ];
 
   @override
   void initState() {
@@ -33,47 +40,32 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _setupAnimations() {
-    _logoAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+    _gradientAnimationController = AnimationController(
+      duration: const Duration(seconds: 3),
       vsync: this,
     );
 
-    _loadingAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
-      vsync: this,
-    );
-
-    _logoScaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _logoAnimationController,
-      curve: Curves.elasticOut,
-    ));
-
-    _logoFadeAnimation = Tween<double>(
+    _gradientAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _logoAnimationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeIn),
-    ));
-
-    _loadingAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _loadingAnimationController,
+      parent: _gradientAnimationController,
       curve: Curves.easeInOut,
     ));
 
-    _logoAnimationController.forward();
-    _loadingAnimationController.repeat();
+    // Start the gradient animation and repeat
+    _gradientAnimationController.forward();
+    _gradientAnimationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _gradientAnimationController.reverse();
+      } else if (status == AnimationStatus.dismissed) {
+        _gradientAnimationController.forward();
+      }
+    });
   }
 
   Future<void> _initializeApp() async {
     try {
-      // Perform initialization steps
       await _performInitializationSteps();
 
       if (mounted) {
@@ -100,7 +92,7 @@ class _SplashScreenState extends State<SplashScreen>
     ];
 
     for (int i = 0; i < steps.length; i++) {
-      await Future.delayed(const Duration(milliseconds: 300));
+      await Future.delayed(const Duration(milliseconds: 400));
 
       // Actual initialization on first step
       if (i == 0) {
@@ -108,7 +100,6 @@ class _SplashScreenState extends State<SplashScreen>
           await SupabaseService.initialize();
         } catch (e) {
           debugPrint('Supabase initialization error: $e');
-          // Continue anyway for demo purposes
         }
       }
 
@@ -121,11 +112,10 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateToNextScreen() async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 800));
 
     if (!mounted) return;
 
-    // Check authentication and first-time user status
     final isAuthenticated = await _checkAuthenticationStatus();
     final isFirstTime = await _checkFirstTimeUser();
 
@@ -172,40 +162,34 @@ class _SplashScreenState extends State<SplashScreen>
     _initializeApp();
   }
 
+  Color _getGradientColor(double progress) {
+    final colorIndex = (progress * (_gradientColors.length - 1));
+    final lowerIndex = colorIndex.floor();
+    final upperIndex = (lowerIndex + 1) % _gradientColors.length;
+    final t = colorIndex - lowerIndex;
+    
+    return Color.lerp(_gradientColors[lowerIndex], _gradientColors[upperIndex], t) ?? _gradientColors[0];
+  }
+
   @override
   void dispose() {
-    _logoAnimationController.dispose();
-    _loadingAnimationController.dispose();
+    _gradientAnimationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle(
+        value: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
-          systemNavigationBarColor: AppTheme.lightTheme.primaryColor,
-          systemNavigationBarIconBrightness: Brightness.light,
+          statusBarIconBrightness: Brightness.dark,
+          systemNavigationBarColor: Colors.white,
+          systemNavigationBarIconBrightness: Brightness.dark,
         ),
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.lightTheme.primaryColor,
-                AppTheme.lightTheme.primaryColor.withValues(alpha: 0.8),
-                AppTheme.getAccentColor(true),
-              ],
-            ),
-          ),
-          child: SafeArea(
-            child: _hasError ? _buildErrorView() : _buildSplashContent(),
-          ),
+        child: SafeArea(
+          child: _hasError ? _buildErrorView() : _buildSplashContent(),
         ),
       ),
     );
@@ -213,27 +197,25 @@ class _SplashScreenState extends State<SplashScreen>
 
   Widget _buildSplashContent() {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        // Main content area
         Expanded(
-          flex: 3,
+          flex: 6,
           child: Center(
-            child: AnimatedBuilder(
-              animation: _logoAnimationController,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: _logoScaleAnimation.value,
-                  child: Opacity(
-                    opacity: _logoFadeAnimation.value,
-                    child: _buildLogo(),
-                  ),
-                );
-              },
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildAnimatedAppName(),
+                SizedBox(height: 2.h),
+                _buildTagline(),
+              ],
             ),
           ),
         ),
+        
+        // Loading section
         Expanded(
-          flex: 1,
+          flex: 2,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -243,83 +225,44 @@ class _SplashScreenState extends State<SplashScreen>
             ],
           ),
         ),
+        
+        // Bottom spacing
+        SizedBox(height: 4.h),
       ],
     );
   }
 
-  Widget _buildLogo() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 25.w,
-          height: 25.w,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Center(
-            child: CustomIconWidget(
-              iconName: 'storefront',
-              color: AppTheme.lightTheme.primaryColor,
-              size: 12.w,
-            ),
-          ),
-        ),
-        SizedBox(height: 3.h),
-        Text(
-          'MarketPlace Pro',
-          style: AppTheme.lightTheme.textTheme.headlineMedium?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-          ),
-        ),
-        SizedBox(height: 1.h),
-        Text(
-          'Your trusted marketplace',
-          style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
-            color: Colors.white.withValues(alpha: 0.9),
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLoadingIndicator() {
+  Widget _buildAnimatedAppName() {
     return AnimatedBuilder(
-      animation: _loadingAnimation,
+      animation: _gradientAnimation,
       builder: (context, child) {
-        return Container(
-          width: 60.w,
-          height: 6,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(3),
-          ),
-          child: FractionallySizedBox(
-            alignment: Alignment.centerLeft,
-            widthFactor: _initializationProgress,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(3),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.white.withValues(alpha: 0.5),
-                    blurRadius: 8,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
+        return ShaderMask(
+          shaderCallback: (Rect bounds) {
+            return LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                _getGradientColor(_gradientAnimation.value),
+                _getGradientColor((_gradientAnimation.value + 0.3) % 1.0),
+                _getGradientColor((_gradientAnimation.value + 0.6) % 1.0),
+              ],
+              stops: const [0.0, 0.5, 1.0],
+            ).createShader(bounds);
+          },
+          child: Text(
+            'khilonjiya.com',
+            style: TextStyle(
+              fontSize: 8.5.w,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.2,
+              color: Colors.white,
+              shadows: [
+                Shadow(
+                  offset: const Offset(0, 2),
+                  blurRadius: 4,
+                  color: Colors.black.withOpacity(0.1),
+                ),
+              ],
             ),
           ),
         );
@@ -327,12 +270,76 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
+  Widget _buildTagline() {
+    return Column(
+      children: [
+        // Assamese text
+        Text(
+          'আমাৰ সংস্কৃতি, আমাৰ গৌৰৱ',
+          style: TextStyle(
+            fontSize: 4.2.w,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF6B7280),
+            letterSpacing: 0.5,
+          ),
+        ),
+        SizedBox(height: 0.8.h),
+        // English translation
+        Text(
+          'Our Culture, Our Pride',
+          style: TextStyle(
+            fontSize: 3.8.w,
+            fontWeight: FontWeight.w400,
+            color: const Color(0xFF9CA3AF),
+            letterSpacing: 0.8,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    return Container(
+      width: 70.w,
+      height: 4,
+      decoration: BoxDecoration(
+        color: const Color(0xFFE5E7EB),
+        borderRadius: BorderRadius.circular(2),
+      ),
+      child: FractionallySizedBox(
+        alignment: Alignment.centerLeft,
+        widthFactor: _initializationProgress,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+                Color(0xFF3B82F6), // Blue-500
+                Color(0xFF1D4ED8), // Blue-700
+              ],
+            ),
+            borderRadius: BorderRadius.circular(2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF3B82F6).withOpacity(0.3),
+                blurRadius: 6,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildProgressText() {
     return Text(
-      _isInitializing ? 'Initializing marketplace...' : 'Ready to explore!',
-      style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-        color: Colors.white.withValues(alpha: 0.8),
+      _isInitializing ? 'Loading your marketplace...' : 'Ready to explore!',
+      style: TextStyle(
+        fontSize: 3.5.w,
         fontWeight: FontWeight.w500,
+        color: const Color(0xFF6B7280),
+        letterSpacing: 0.3,
       ),
     );
   }
@@ -348,65 +355,66 @@ class _SplashScreenState extends State<SplashScreen>
               width: 20.w,
               height: 20.w,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: const Color(0xFFFEF2F2),
                 borderRadius: BorderRadius.circular(15),
+                border: Border.all(
+                  color: const Color(0xFFFECACA),
+                  width: 2,
+                ),
               ),
               child: Center(
-                child: CustomIconWidget(
-                  iconName: 'error_outline',
-                  color: Colors.white,
+                child: Icon(
+                  Icons.error_outline,
+                  color: const Color(0xFFEF4444),
                   size: 10.w,
                 ),
               ),
             ),
             SizedBox(height: 4.h),
             Text(
-              'Oops! Something went wrong',
-              style: AppTheme.lightTheme.textTheme.headlineSmall?.copyWith(
-                color: Colors.white,
+              'Connection Error',
+              style: TextStyle(
+                fontSize: 5.5.w,
                 fontWeight: FontWeight.w600,
+                color: const Color(0xFF111827),
               ),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 2.h),
             Text(
               _errorMessage,
-              style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
-                color: Colors.white.withValues(alpha: 0.9),
+              style: TextStyle(
+                fontSize: 4.w,
+                color: const Color(0xFF6B7280),
+                height: 1.4,
               ),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 4.h),
-            ElevatedButton(
+            ElevatedButton.icon(
               onPressed: _retryInitialization,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: AppTheme.lightTheme.primaryColor,
+                backgroundColor: const Color(0xFF3B82F6),
+                foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(
                   horizontal: 8.w,
                   vertical: 2.h,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                elevation: 3,
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CustomIconWidget(
-                    iconName: 'refresh',
-                    color: AppTheme.lightTheme.primaryColor,
-                    size: 5.w,
-                  ),
-                  SizedBox(width: 2.w),
-                  Text(
-                    'Try Again',
-                    style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
-                      color: AppTheme.lightTheme.primaryColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+              icon: Icon(
+                Icons.refresh,
+                size: 5.w,
+              ),
+              label: Text(
+                'Try Again',
+                style: TextStyle(
+                  fontSize: 4.w,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
