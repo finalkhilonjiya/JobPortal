@@ -3,7 +3,6 @@ import 'package:sizer/sizer.dart';
 
 import '../../../core/app_export.dart';
 import './feature_list_widget.dart';
-import './gesture_demo_widget.dart';
 
 class OnboardingPageWidget extends StatefulWidget {
   final Map<String, dynamic> data;
@@ -97,7 +96,7 @@ class _OnboardingPageWidgetState extends State<OnboardingPageWidget>
           children: [
             SizedBox(height: 8.h),
 
-            // Main illustration
+            // Main illustration - Clean without gesture overlay
             ScaleTransition(
               scale: _scaleAnimation,
               child: Container(
@@ -107,7 +106,7 @@ class _OnboardingPageWidgetState extends State<OnboardingPageWidget>
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
+                      color: Colors.black.withOpacity(0.1),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -125,7 +124,7 @@ class _OnboardingPageWidgetState extends State<OnboardingPageWidget>
                         fit: BoxFit.cover,
                       ),
 
-                      // Gradient overlay
+                      // Subtle gradient overlay for better text readability (optional)
                       Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -133,21 +132,9 @@ class _OnboardingPageWidgetState extends State<OnboardingPageWidget>
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              Colors.black.withValues(alpha: 0.3),
+                              Colors.black.withOpacity(0.1),
                             ],
                           ),
-                        ),
-                      ),
-
-                      // Gesture demonstration overlay
-                      Positioned(
-                        bottom: 4.h,
-                        left: 4.w,
-                        right: 4.w,
-                        child: GestureDemoWidget(
-                          gestureType: widget.data["gesture"] as String,
-                          gestureText: widget.data["gestureText"] as String,
-                          isActive: widget.isActive,
                         ),
                       ),
                     ],
