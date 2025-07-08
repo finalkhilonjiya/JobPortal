@@ -1,4 +1,3 @@
-> Pankaj:
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -11,19 +10,26 @@ import './theme/app_theme.dart';
 import './utils/auth_service.dart';
 import './utils/supabase_service.dart';
 
-// Configuration Management
+// Enhanced Configuration Management
 class AppConfig {
   static const String supabaseUrl = String.fromEnvironment('SUPABASE_URL');
   static const String supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
-  static const Duration initializationTimeout = Duration(seconds: 10);
+  
+  // Timeouts and delays
+  static const Duration initializationTimeout = Duration(seconds: 15);
   static const Duration navigationDelay = Duration(milliseconds: 100);
   static const Duration mountDelay = Duration(milliseconds: 500);
+  static const Duration splashMinimumDuration = Duration(seconds: 2);
+  
+  // App metadata
+  static const String appName = 'Marketplace Pro';
+  static const String appVersion = '1.0.0';
   
   static bool get hasSupabaseCredentials => 
       supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
 }
 
-// Service Locator for Dependency Injection
+// Enhanced Service Locator
 class ServiceLocator {
   static final ServiceLocator _instance = ServiceLocator._internal();
   factory ServiceLocator() => _instance;
@@ -34,7 +40,7 @@ class ServiceLocator {
   T get<T>() {
     final service = _services[T];
     if (service == null) {
-      throw Exception('Service of type $T not found. Make sure to register it first.');
+      throw Exception('Service of type $T not found. Register it first.');
     }
     return service as T;
   }
@@ -47,19 +53,20 @@ class ServiceLocator {
     _services.remove(T);
   }
   
-  void clear() {
+  Future<void> dispose() async {
     _services.clear();
   }
 }
 
-// App State Management
+// Enhanced App State Management
 enum AppState {
   initializing,
   initialized,
   error,
   authenticated,
   unauthenticated,
-  offline
+  offline,
+  maintenance
 }
 
 class AppStateNotifier extends ChangeNotifier {
@@ -67,16 +74,19 @@ class AppStateNotifier extends ChangeNotifier {
   String _errorMessage = '';
   bool _isOfflineMode = false;
   bool _navigationInProgress = false;
+  bool _isRetrying = false;
 
   AppState get state => _state;
   String get errorMessage => _errorMessage;
   bool get isOfflineMode => _isOfflineMode;
   bool get navigationInProgress => _navigationInProgress;
   bool get isInitialized => _state != AppState.initializing;
+  bool get isRetrying => _isRetrying;
 
   void setState(AppState newState) {
     if (_state != newState) {
       _state = newState;
+      debugPrint('🔄 App state changed to: $newState');
       notifyListeners();
     }
   }
@@ -88,6 +98,7 @@ class AppStateNotifier extends ChangeNotifier {
 
   void setOfflineMode(bool offline) {
     _isOfflineMode = offline;
+    debugPrint('🌐 Offline mode: $offline');
     notifyListeners();
   }
 
@@ -96,42 +107,66 @@ class AppStateNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setRetrying(bool retrying) {
+    _isRetrying = retrying;
+    notifyListeners();
+  }
+
   void clearError() {
     _errorMessage = '';
     notifyListeners();
   }
+
+  void retry() {
+    clearError();
+    setOfflineMode(false);
+    setRetrying(true);
+    setState(AppState.initializing);
+  }
 }
 
-// Centralized App Initialization Service
+// Enhanced App Initialization Service
 class AppInitializationService {
   final ServiceLocator _serviceLocator = ServiceLocator();
   final AppStateNotifier _stateNotifier;
   late final AuthService _authService;
+  
+  bool _isInitialized = false;
+  bool get isInitialized => _isInitialized;
 
   AppInitializationService(this._stateNotifier);
 
   Future<void> initialize() async {
+    final stopwatch = Stopwatch()..start();
+    
     try {
       debugPrint('🚀 Starting app initialization...');
       
       // Register services
       _registerServices();
       
-      // Initialize Supabase with timeout and error handling
-      await _initializeSupabaseWithFallback();
+      // Initialize Supabase with enhanced retry logic
+      await _initializeSupabaseWithRetry();
       
-      // Set up auth state listener only if Supabase is available
+      // Set up auth state listener if not offline
       if (!_stateNotifier.isOfflineMode) {
         _setupAuthStateListener();
       }
       
+      _isInitialized = true;
       _stateNotifier.setState(AppState.initialized);
-      debugPrint('✅ App initialization completed');
       
-    } catch (e) {
+      stopwatch.stop();
+      debugPrint('✅ App initialization completed in ${stopwatch.elapsedMilliseconds}ms');
+      
+    } catch (e, stackTrace) {
+      stopwatch.stop();
       debugPrint('❌ App initialization failed: $e');
-      _stateNotifier.setError(e.toString());
+      debugPrint('Stack trace: $stackTrace');
+      _stateNotifier.setError('Failed to initialize app: ${e.toString()}');
       rethrow;
+    } finally {
+      _stateNotifier.setRetrying(false);
     }
   }
 
@@ -141,23 +176,35 @@ class AppInitializationService {
     _serviceLocator.register<AppStateNotifier>(_stateNotifier);
   }
 
-  Future<void> _initializeSupabaseWithFallback() async {
-    try {
-      if (!AppConfig.hasSupabaseCredentials) {
-        debugPrint('⚠️ Supabase credentials not found, enabling offline mode');
-        _stateNotifier.setOfflineMode(true);
-        return;
-      }
-
-> Pankaj:
-// Initialize Supabase with timeout
-      await SupabaseService.initialize().timeout(AppConfig.initializationTimeout);
-      debugPrint('✅ Supabase initialization completed');
-      
-    } catch (e) {
-      debugPrint('❌ Supabase initialization failed: $e');
-      debugPrint('🔄 Falling back to offline mode');
+  Future<void> _initializeSupabaseWithRetry({int maxRetries = 3}) async {
+    if (!AppConfig.hasSupabaseCredentials) {
+      debugPrint('⚠️ Supabase credentials not found, enabling offline mode');
       _stateNotifier.setOfflineMode(true);
+      return;
+    }
+
+    for (int attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        debugPrint('🔄 Supabase initialization attempt $attempt/$maxRetries');
+        
+        await SupabaseService.initialize()
+            .timeout(AppConfig.initializationTimeout);
+            
+        debugPrint('✅ Supabase initialization completed');
+        return;
+        
+      } catch (e) {
+        debugPrint('❌ Supabase attempt $attempt failed: $e');
+        
+        if (attempt == maxRetries) {
+          debugPrint('🔄 All attempts failed, enabling offline mode');
+          _stateNotifier.setOfflineMode(true);
+          return;
+        }
+        
+        // Progressive delay: 2s, 4s, 6s
+        await Future.delayed(Duration(seconds: attempt * 2));
+      }
     }
   }
 
@@ -168,10 +215,18 @@ class AppInitializationService {
           final event = data.event;
           debugPrint('🔄 Auth state changed: $event');
 
-          if (event == 'SIGNED_IN') {
-            _stateNotifier.setState(AppState.authenticated);
-          } else if (event == 'SIGNED_OUT') {
-            _stateNotifier.setState(AppState.unauthenticated);
+          switch (event) {
+            case 'SIGNED_IN':
+              _stateNotifier.setState(AppState.authenticated);
+              break;
+            case 'SIGNED_OUT':
+              _stateNotifier.setState(AppState.unauthenticated);
+              break;
+            case 'TOKEN_REFRESHED':
+              debugPrint('🔄 Token refreshed');
+              break;
+            default:
+              debugPrint('🔄 Unknown auth event: $event');
           }
         },
         onError: (error) {
@@ -190,19 +245,24 @@ class AppInitializationService {
       return AppState.offline;
     }
     
-    return _authService.isAuthenticated() 
-        ? AppState.authenticated 
-        : AppState.unauthenticated;
+    try {
+      return _authService.isAuthenticated() 
+          ? AppState.authenticated 
+          : AppState.unauthenticated;
+    } catch (e) {
+      debugPrint('❌ Error determining auth state: $e');
+      return AppState.unauthenticated;
+    }
   }
 }
 
-// Navigation Service
+// Enhanced Navigation Service
 class NavigationService {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   
   static BuildContext? get context => navigatorKey.currentContext;
   
-  static Future<void> pushReplacementNamed(String routeName) async {
+  static Future<void> pushReplacementNamed(String routeName, {Object? arguments}) async {
     final currentContext = context;
     if (currentContext == null) {
       debugPrint('❌ Navigation context not available');
@@ -210,7 +270,23 @@ class NavigationService {
     }
     
     try {
-      await Navigator.pushReplacementNamed(currentContext, routeName);
+      debugPrint('🧭 Navigating to: $routeName');
+      await Navigator.pushReplacementNamed(currentContext, routeName, arguments: arguments);
+    } catch (e) {
+      debugPrint('❌ Navigation error: $e');
+    }
+  }
+  
+  static Future<void> pushNamed(String routeName, {Object? arguments}) async {
+    final currentContext = context;
+    if (currentContext == null) {
+      debugPrint('❌ Navigation context not available');
+      return;
+    }
+    
+    try {
+      debugPrint('🧭 Pushing: $routeName');
+      await Navigator.pushNamed(currentContext, routeName, arguments: arguments);
     } catch (e) {
       debugPrint('❌ Navigation error: $e');
     }
@@ -220,15 +296,26 @@ class NavigationService {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 🚨 CRITICAL: Custom error handling - DO NOT REMOVE
+  // 🚨 CRITICAL: Enhanced error handling
   ErrorWidget.builder = (FlutterErrorDetails details) {
+    debugPrint('❌ Widget Error: ${details.exception}');
     return CustomErrorWidget(errorDetails: details);
   };
 
-  // 🚨 CRITICAL: Device orientation lock - DO NOT REMOVE
+  // 🚨 CRITICAL: Device orientation and system UI
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp
   ]);
+  
+  // Enhanced system UI overlay style
+  SystemChrome.setSystemUIOverlayStyle(
+    SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
 
   runApp(MyApp());
 }
@@ -245,12 +332,13 @@ class MyApp extends StatelessWidget {
           return Sizer(
             builder: (context, orientation, screenType) {
               return MaterialApp(
-                title: 'marketplace_pro',
+                title: AppConfig.appName,
                 theme: AppTheme.lightTheme,
                 darkTheme: AppTheme.darkTheme,
-                themeMode: ThemeMode.light,
+                themeMode: ThemeMode.system,
                 navigatorKey: NavigationService.navigatorKey,
-                // 🚨 CRITICAL: NEVER REMOVE OR MODIFY
+                
+                // 🚨 CRITICAL: Text scaling and responsiveness
                 builder: (context, child) {
                   return MediaQuery(
                     data: MediaQuery.of(context).copyWith(
@@ -259,7 +347,7 @@ class MyApp extends StatelessWidget {
                     child: child!,
                   );
                 },
-                // 🚨 END CRITICAL SECTION
+                
                 debugShowCheckedModeBanner: false,
                 routes: AppRoutes.routes,
                 initialRoute: AppRoutes.initial,
@@ -278,17 +366,25 @@ class AppInitializer extends StatefulWidget {
   _AppInitializerState createState() => _AppInitializerState();
 }
 
-class _AppInitializerState extends State<AppInitializer> {
+class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObserver {
   late final AppInitializationService _initializationService;
   late final AppStateNotifier _stateNotifier;
+  late final Stopwatch _splashStopwatch;
 
-> Pankaj:
-@override
+  @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _stateNotifier = Provider.of<AppStateNotifier>(context, listen: false);
     _initializationService = AppInitializationService(_stateNotifier);
+    _splashStopwatch = Stopwatch()..start();
     _initializeApp();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   Future<void> _initializeApp() async {
@@ -296,63 +392,104 @@ class _AppInitializerState extends State<AppInitializer> {
       await _initializationService.initialize();
       await _handleInitialNavigation();
     } catch (e) {
-      // Error is already handled in the service
       debugPrint('❌ App initialization failed: $e');
+      // Error state is already handled in the service
     }
   }
 
   Future<void> _handleInitialNavigation() async {
-    // Small delay to ensure widget is mounted
-    await Future.delayed(AppConfig.mountDelay);
+    // Ensure minimum splash duration for smooth UX
+    final elapsed = _splashStopwatch.elapsedMilliseconds;
+    final minimumMs = AppConfig.splashMinimumDuration.inMilliseconds;
+    final delay = elapsed < minimumMs ? minimumMs - elapsed : 0;
 
+    await Future.delayed(Duration(milliseconds: delay));
+    
     if (!mounted) return;
 
     try {
       final initialState = _initializationService.determineInitialState();
       _stateNotifier.setState(initialState);
       
+      // Navigation flow: AppInitializer → splash → onboarding → auth → home
       switch (initialState) {
         case AppState.authenticated:
-          debugPrint('🔐 User authenticated, navigating to home');
+          debugPrint('🔐 User already authenticated, navigating directly to home');
           NavigationService.pushReplacementNamed(AppRoutes.homeMarketplaceFeed);
           break;
         case AppState.offline:
-        case AppState.unauthenticated:
-          debugPrint('🔓 Navigating to splash screen');
+          debugPrint('🌐 Offline mode, navigating to splash (limited features)');
           NavigationService.pushReplacementNamed(AppRoutes.splashScreen);
           break;
+        case AppState.unauthenticated:
+        case AppState.initialized:
         default:
+          debugPrint('🔓 New user flow: navigating to splash → onboarding → auth');
           NavigationService.pushReplacementNamed(AppRoutes.splashScreen);
       }
     } catch (e) {
       debugPrint('❌ Navigation error: $e');
+      // Fallback to splash screen on any navigation error
       NavigationService.pushReplacementNamed(AppRoutes.splashScreen);
     }
   }
 
-  void _retryInitialization() {
-    _stateNotifier.setState(AppState.initializing);
-    _stateNotifier.clearError();
-    _stateNotifier.setOfflineMode(false);
-    _initializeApp();
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    switch (state) {
+      case AppLifecycleState.resumed:
+        debugPrint('📱 App resumed - checking auth state');
+        // Optionally refresh auth state when app comes to foreground
+        if (_initializationService.isInitialized && !_stateNotifier.isOfflineMode) {
+          _checkAuthStateOnResume();
+        }
+        break;
+      case AppLifecycleState.paused:
+        debugPrint('📱 App paused');
+        break;
+      case AppLifecycleState.detached:
+        debugPrint('📱 App detached - cleaning up');
+        _cleanup();
+        break;
+      default:
+        break;
+    }
+  }
+
+  Future<void> _checkAuthStateOnResume() async {
+    try {
+      final currentState = _initializationService.determineInitialState();
+      if (currentState != _stateNotifier.state) {
+        debugPrint('🔄 Auth state changed while app was in background');
+        _stateNotifier.setState(currentState);
+      }
+    } catch (e) {
+      debugPrint('❌ Error checking auth state on resume: $e');
+    }
+  }
+
+  Future<void> _cleanup() async {
+    try {
+      await ServiceLocator().dispose();
+      debugPrint('🧹 Cleanup completed');
+    } catch (e) {
+      debugPrint('❌ Cleanup error: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<AppStateNotifier>(
       builder: (context, stateNotifier, child) {
-        // Listen to state changes for navigation
-        if (stateNotifier.isInitialized && !stateNotifier.navigationInProgress) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _handleStateBasedNavigation(stateNotifier.state);
-          });
-        }
-
         switch (stateNotifier.state) {
           case AppState.initializing:
             return _buildLoadingScreen();
           case AppState.error:
             return _buildErrorScreen(stateNotifier);
+          case AppState.offline:
+            return _buildOfflineScreen();
           default:
             return _buildLoadingScreen();
         }
@@ -360,64 +497,83 @@ class _AppInitializerState extends State<AppInitializer> {
     );
   }
 
-  void _handleStateBasedNavigation(AppState state) {
-    if (_stateNotifier.navigationInProgress) return;
-    
-    _stateNotifier.setNavigationInProgress(true);
-    
-    Future.delayed(AppConfig.navigationDelay, () {
-      if (!mounted) {
-        _stateNotifier.setNavigationInProgress(false);
-        return;
-      }
-
-      try {
-        switch (state) {
-          case AppState.authenticated:
-            NavigationService.pushReplacementNamed(AppRoutes.homeMarketplaceFeed);
-            break;
-          case AppState.unauthenticated:
-            NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
-            break;
-          case AppState.offline:
-          case AppState.initialized:
-            NavigationService.pushReplacementNamed(AppRoutes.splashScreen);
-            break;
-          default:
-            break;
-        }
-      } catch (e) {
-        debugPrint('❌ Navigation error in state handler: $e');
-      } finally {
-        _stateNotifier.setNavigationInProgress(false);
-      }
-    });
-  }
-
   Widget _buildLoadingScreen() {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
+      backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,
+      body: SafeArea(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(
-              color: AppTheme.lightTheme.primaryColor,
-            ),
-            SizedBox(height: 24),
-            Text(
-              'Initializing Marketplace Pro...',
-
-> Pankaj:
-style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w500,
+            Expanded(
+              flex: 3,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // App logo
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: AppTheme.lightTheme.primaryColor,
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.lightTheme.primaryColor.withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.storefront,
+                        size: 60,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 32),
+                    Text(
+                      AppConfig.appName,
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.lightTheme.primaryColor,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Your trusted marketplace',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            SizedBox(height: 8),
-            Text(
-              'Setting up your marketplace experience',
-              style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                color: Colors.grey[600],
+            Expanded(
+              flex: 1,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppTheme.lightTheme.primaryColor,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 24),
+                  Text(
+                    _stateNotifier.isRetrying 
+                        ? 'Retrying connection...' 
+                        : 'Setting up your marketplace experience...',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -428,7 +584,7 @@ style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
 
   Widget _buildErrorScreen(AppStateNotifier stateNotifier) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.all(24),
@@ -437,22 +593,24 @@ style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
             children: [
               Icon(
                 Icons.error_outline,
-                size: 64,
+                size: 80,
                 color: Colors.red[400],
               ),
               SizedBox(height: 24),
               Text(
-                'Initialization Error',
-                style: AppTheme.lightTheme.textTheme.headlineSmall?.copyWith(
+                'Connection Error',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.red[600],
                 ),
+                textAlign: TextAlign.center,
               ),
               SizedBox(height: 16),
               Text(
-                'We encountered an issue while setting up the app. You can continue in offline mode or try again.',
+                stateNotifier.errorMessage.isNotEmpty 
+                    ? stateNotifier.errorMessage
+                    : 'Unable to connect to our servers. Please check your internet connection and try again.',
                 textAlign: TextAlign.center,
-                style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.grey[600],
                 ),
               ),
@@ -460,36 +618,43 @@ style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
               Row(
                 children: [
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: _retryInitialization,
+                    child: ElevatedButton.icon(
+                      onPressed: stateNotifier.isRetrying ? null : () {
+                        stateNotifier.retry();
+                        _initializeApp();
+                      },
+                      icon: stateNotifier.isRetrying 
+                          ? SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : Icon(Icons.refresh),
+                      label: Text(stateNotifier.isRetrying ? 'Retrying...' : 'Retry'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.lightTheme.primaryColor,
+                        foregroundColor: Colors.white,
                         padding: EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: Text(
-                        'Retry',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
                   ),
                   SizedBox(width: 16),
                   Expanded(
-                    child: OutlinedButton(
+                    child: OutlinedButton.icon(
                       onPressed: () {
+                        stateNotifier.setOfflineMode(true);
                         NavigationService.pushReplacementNamed(AppRoutes.splashScreen);
                       },
+                      icon: Icon(Icons.cloud_off),
+                      label: Text('Continue'),
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 16),
                         side: BorderSide(color: AppTheme.lightTheme.primaryColor),
-                      ),
-                      child: Text(
-                        'Continue',
-                        style: TextStyle(
-                          color: AppTheme.lightTheme.primaryColor,
-                          fontWeight: FontWeight.w600,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
@@ -512,13 +677,11 @@ style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
                         color: Colors.orange[600],
                         size: 20,
                       ),
-
-> Pankaj:
-SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Running in offline mode. Some features may be limited.',
-                          style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                          'Some features may be limited in offline mode.',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Colors.orange[700],
                           ),
                         ),
@@ -534,10 +697,79 @@ SizedBox(width: 12),
     );
   }
 
-  @override
-  void dispose() {
-    // Clean up service locator if needed
-    ServiceLocator().clear();
-    super.dispose();
+  Widget _buildOfflineScreen() {
+    return Scaffold(
+      backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.cloud_off,
+                size: 80,
+                color: Colors.blue[400],
+              ),
+              SizedBox(height: 24),
+              Text(
+                'Offline Mode',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16),
+              Text(
+                'You\'re currently offline. Some features may be limited. Connect to the internet for the full experience.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.grey[600],
+                ),
+              ),
+              SizedBox(height: 32),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        _stateNotifier.retry();
+                        _initializeApp();
+                      },
+                      icon: Icon(Icons.wifi),
+                      label: Text('Try Again'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[400],
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        NavigationService.pushReplacementNamed(AppRoutes.splashScreen);
+                      },
+                      icon: Icon(Icons.offline_bolt),
+                      label: Text('Continue'),
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        side: BorderSide(color: Colors.blue[400]!),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
