@@ -1,5 +1,5 @@
-name: Zapo
-description: A comprehensive marketplace application built with Flutter.
+name: khilonjiya_com
+description: A comprehensive marketplace application built with Flutter for khilonjiya.com.
 
 publish_to: 'none'
 
@@ -12,6 +12,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  
+  # State Management
+  provider: ^6.0.5
   
   # UI & Responsive Design
   sizer: ^2.0.15
@@ -36,6 +39,7 @@ dependencies:
   supabase_flutter: ^2.3.4
 
   web: any
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
