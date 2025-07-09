@@ -223,12 +223,13 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   }
 
   // Enhanced email validation with comprehensive patterns
+  // Enhanced email validation with comprehensive patterns
   bool _validateEmail(String email) {
     if (email.isEmpty) return false;
     
-    // Comprehensive email regex
+    // Fixed comprehensive email regex
     final emailRegex = RegExp(
-      r'^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
+      r'^[a-zA-Z0-9.!#$%&*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
     );
     
     return emailRegex.hasMatch(email.trim()) && 
