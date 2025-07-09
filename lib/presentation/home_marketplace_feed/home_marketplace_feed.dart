@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../core/app_export.dart';
-import './widgets/category_chip_widget.dart';
-import './widgets/listing_card_widget.dart';
-import './widgets/location_selector_widget.dart';
+import '../../routes/app_routes.dart';
+import '../../theme/app_theme.dart';
+import '../../utils/category_service.dart';
+import '../../utils/listing_service.dart';
+import '../../utils/favorite_service.dart';
+import '../../utils/auth_service.dart';
+import '../../widgets/custom_icon_widget.dart';
+import './widgets/enhanced_category_chip_widget.dart';
+import './widgets/compact_listing_card_widget.dart';
+import './widgets/enhanced_location_selector_widget.dart';
+import './widgets/trending_section_widget.dart';
+import './widgets/quick_action_widget.dart';
+import './widgets/advanced_filter_widget.dart';
 
 class HomeMarketplaceFeed extends StatefulWidget {
   const HomeMarketplaceFeed({Key? key}) : super(key: key);
@@ -16,43 +27,185 @@ class HomeMarketplaceFeed extends StatefulWidget {
 
 class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
     with TickerProviderStateMixin {
+  // Animation Controllers
+  late AnimationController _headerAnimationController;
+  late AnimationController _listAnimationController;
+  late Animation<double> _headerFadeAnimation;
+  late Animation<Offset> _listSlideAnimation;
+  
+  // Scroll and Loading States
   late ScrollController _scrollController;
   bool _isLoading = false;
   bool _isRefreshing = false;
   bool _isLoadingCategories = false;
+  bool _isLoadingLocation = false;
+  bool _showBackToTop = false;
+  
+  // Navigation and Selection States
   int _currentIndex = 0;
   String _selectedCategory = 'All';
-  String _selectedLocation = 'New York, NY';
+  String _selectedLocation = 'Detect Location';
   Set<String> _favoriteListings = {};
-
-  // Real data from Supabase
+  
+  // Location and Distance States
+  Position? _currentPosition;
+  double _selectedDistance = 5.0; // Default 5km
+  bool _useGpsLocation = true;
+  
+  // Search and Filter States
+  String _searchQuery = '';
+  Map<String, dynamic> _activeFilters = {};
+  bool _showSearch = false;
+  
+  // Data Collections
   List<Map<String, dynamic>> _listings = [];
   List<Map<String, dynamic>> _categories = [];
-
+  List<Map<String, dynamic>> _trendingListings = [];
+  
+  // Services
   final CategoryService _categoryService = CategoryService();
   final ListingService _listingService = ListingService();
   final FavoriteService _favoriteService = FavoriteService();
+  final AuthService _authService = AuthService();
 
-  final List<String> _locations = [
-    'New York, NY',
-    'Los Angeles, CA',
-    'Chicago, IL',
-    'Houston, TX',
-    'Phoenix, AZ',
-    'Philadelphia, PA'
+  // Enhanced Categories for khilonjiya.com marketplace
+  final List<Map<String, dynamic>> _defaultCategories = [
+    {'id': 'all', 'name': 'All', 'icon': 'apps', 'color': '0xFF6366F1'},
+    {'id': 'electronics', 'name': 'Electronics', 'icon': 'devices', 'color': '0xFF3B82F6'},
+    {'id': 'fashion', 'name': 'Fashion', 'icon': 'checkroom', 'color': '0xFFEC4899'},
+    {'id': 'jobs', 'name': 'Jobs', 'icon': 'work', 'color': '0xFF10B981'},
+    {'id': 'automotive', 'name': 'Vehicles', 'icon': 'directions_car', 'color': '0xFFF59E0B'},
+    {'id': 'furniture', 'name': 'Furniture', 'icon': 'chair', 'color': '0xFF8B5CF6'},
+    {'id': 'books', 'name': 'Books', 'icon': 'menu_book', 'color': '0xFF06B6D4'},
+    {'id': 'sports', 'name': 'Sports', 'icon': 'sports_soccer', 'color': '0xFFF97316'},
+    {'id': 'food', 'name': 'Food', 'icon': 'restaurant', 'color': '0xFFEF4444'},
+    {'id': 'services', 'name': 'Services', 'icon': 'handyman', 'color': '0xFF84CC16'},
+  ];
+
+  final List<String> _defaultLocations = [
+    'Detect Location',
+    'Guwahati, Assam',
+    'Dibrugarh, Assam', 
+    'Jorhat, Assam',
+    'Silchar, Assam',
+    'Tezpur, Assam',
+    'Nagaon, Assam',
+    'Bongaigaon, Assam',
+    'Sivasagar, Assam',
   ];
 
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
-    _scrollController.addListener(_onScroll);
+    _setupAnimations();
+    _setupScrollController();
+    _requestLocationPermission();
     _loadInitialData();
   }
 
-  Future<void> _loadInitialData() async {
+  void _setupAnimations() {
+    _headerAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    
+    _listAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    
+    _headerFadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _headerAnimationController,
+      curve: Curves.easeOut,
+    ));
+    
+    _listSlideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _listAnimationController,
+      curve: Curves.easeOutCubic,
+    ));
+    
+    // Start animations
+    _headerAnimationController.forward();
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) _listAnimationController.forward();
+    });
+  }
+
+  void _setupScrollController() {
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+    _scrollController.addListener(() {
+      setState(() {
+        _showBackToTop = _scrollController.offset > 500;
+      });
+    });
+  }
+
+  Future<void> _requestLocationPermission() async {
+    try {
+      setState(() {
+        _isLoadingLocation = true;
+      });
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.whileInUse || 
+          permission == LocationPermission.always) {
+        await _getCurrentLocation();
+      } else {
+        setState(() {
+          _useGpsLocation = false;
+          _selectedLocation = 'Guwahati, Assam'; // Default to Guwahati
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Location permission error: $e');
+      setState(() {
+        _useGpsLocation = false;
+        _selectedLocation = 'Guwahati, Assam';
+      });
+    } finally {
+      setState(() {
+        _isLoadingLocation = false;
+      });
+    }
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      _currentPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      
+      if (_currentPosition != null) {
+        setState(() {
+          _selectedLocation = 'Current Location';
+          _useGpsLocation = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Get location error: $e');
+      setState(() {
+        _useGpsLocation = false;
+        _selectedLocation = 'Guwahati, Assam';
+      });
+    }
+  }
+
+
+Future<void> _loadInitialData() async {
     await Future.wait([
       _loadCategories(),
+      _loadTrendingListings(),
       _loadListings(),
       _loadFavorites(),
     ]);
@@ -65,35 +218,49 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
       });
 
       final categories = await _categoryService.getMainCategories();
-
+      
       setState(() {
-        _categories = [
-          {'id': 'all', 'name': 'All'},
-          ...categories
-              .map((cat) => {
-                    'id': cat['id'],
-                    'name': cat['name'],
-                  })
-              .toList(),
-        ];
+        _categories = _defaultCategories.map((defaultCat) {
+          // Try to find matching category from service
+          final serverCat = categories.firstWhere(
+            (cat) => cat['name'].toString().toLowerCase() == 
+                     defaultCat['name'].toString().toLowerCase(),
+            orElse: () => null,
+          );
+          
+          return {
+            'id': serverCat?['id'] ?? defaultCat['id'],
+            'name': defaultCat['name'],
+            'icon': defaultCat['icon'],
+            'color': defaultCat['color'],
+            'count': serverCat?['listing_count'] ?? 0,
+          };
+        }).toList();
         _isLoadingCategories = false;
       });
     } catch (error) {
       setState(() {
         _isLoadingCategories = false;
-        // Fallback to default categories if Supabase fails
-        _categories = [
-          {'id': 'all', 'name': 'All'},
-          {'id': '1', 'name': 'Electronics'},
-          {'id': '2', 'name': 'Furniture'},
-          {'id': '3', 'name': 'Fashion'},
-          {'id': '4', 'name': 'Sports'},
-          {'id': '5', 'name': 'Automotive'},
-          {'id': '6', 'name': 'Books'},
-          {'id': '7', 'name': 'Home & Garden'},
-        ];
+        _categories = _defaultCategories.map((cat) => {
+          ...cat,
+          'count': 0,
+        }).toList();
       });
       debugPrint('❌ Failed to load categories: $error');
+    }
+  }
+
+  Future<void> _loadTrendingListings() async {
+    try {
+      final trending = await _listingService.getTrendingListings(limit: 5);
+      setState(() {
+        _trendingListings = trending.map((listing) => _formatListing(listing)).toList();
+      });
+    } catch (error) {
+      debugPrint('❌ Failed to load trending listings: $error');
+      setState(() {
+        _trendingListings = [];
+      });
     }
   }
 
@@ -104,72 +271,106 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
       });
 
       List<Map<String, dynamic>> listings;
-      if (_selectedCategory == 'All') {
+      
+      // Apply distance filter if GPS location is available
+      if (_useGpsLocation && _currentPosition != null) {
+        listings = await _listingService.getNearbyListings(
+          latitude: _currentPosition!.latitude,
+          longitude: _currentPosition!.longitude,
+          radiusKm: _selectedDistance,
+          categoryId: _selectedCategory == 'All' ? null : _selectedCategory,
+          limit: 20,
+        );
+      } else if (_selectedCategory == 'All') {
         listings = await _listingService.getActiveListings(limit: 20);
       } else {
         final categoryId = _categories.firstWhere(
-            (cat) => cat['name'] == _selectedCategory,
-            orElse: () => {'id': null})['id'];
+          (cat) => cat['name'] == _selectedCategory,
+          orElse: () => {'id': null},
+        )['id'];
+        
         if (categoryId != null && categoryId != 'all') {
-          listings = await _listingService.getListingsByCategory(categoryId,
-              limit: 20);
+          listings = await _listingService.getListingsByCategory(categoryId, limit: 20);
         } else {
           listings = await _listingService.getActiveListings(limit: 20);
         }
       }
 
-      setState(() {
-        _listings = listings.map((listing) {
-          final images = listing['images'] as List<dynamic>?;
-          final firstImage = images?.isNotEmpty == true
-              ? images!.first as String
-              : 'https://images.unsplash.com/photo-1560472355-536de3962603?w=400&h=300&fit=crop';
-
-          return {
-            'id': listing['id'],
-            'title': listing['title'],
-            'price': '\$${listing['price']}',
-            'location': listing['location'] ?? 'Unknown Location',
-            'timePosted': _formatTimeAgo(DateTime.parse(listing['created_at'])),
-            'imageUrl': firstImage,
-            'category': listing['category']?['name'] ?? 'General',
-            'isSponsored': listing['is_featured'] ?? false,
-            'isFavorite': _favoriteListings.contains(listing['id'].toString()),
-            'views_count': listing['views_count'] ?? 0,
-            'condition': listing['condition'] ?? 'good',
-            'seller': listing['seller'],
-          };
+      // Apply search filter if active
+      if (_searchQuery.isNotEmpty) {
+        listings = listings.where((listing) {
+          final title = listing['title'].toString().toLowerCase();
+          final description = listing['description']?.toString().toLowerCase() ?? '';
+          final query = _searchQuery.toLowerCase();
+          return title.contains(query) || description.contains(query);
         }).toList();
+      }
+
+      setState(() {
+        _listings = listings.map((listing) => _formatListing(listing)).toList();
         _isLoading = false;
       });
     } catch (error) {
       setState(() {
         _isLoading = false;
-        // Fallback to mock data if Supabase fails
         _listings = _getMockListings();
       });
       debugPrint('❌ Failed to load listings: $error');
     }
   }
 
-  Future<void> _loadFavorites() async {
-  try {
-    final authService = AuthService();
-    if (authService.isAuthenticated()) {
-      final favorites = await _favoriteService.getUserFavorites();
+  Map<String, dynamic> _formatListing(Map<String, dynamic> listing) {
+    final images = listing['images'] as List<dynamic>?;
+    final firstImage = images?.isNotEmpty == true
+        ? images!.first as String
+        : 'https://images.unsplash.com/photo-1560472355-536de3962603?w=400&h=300&fit=crop';
 
-      final Set<String> ids = favorites
-          .map<String>((fav) => fav['listing_id'].toString())
-          .toSet();
-
-      setState(() {
-        _favoriteListings = ids;
-      });
+    double? distance;
+    if (_currentPosition != null && listing['latitude'] != null && listing['longitude'] != null) {
+      distance = Geolocator.distanceBetween(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+        listing['latitude'].toDouble(),
+        listing['longitude'].toDouble(),
+      ) / 1000; // Convert to kilometers
     }
-  } catch (error) {
-    debugPrint('❌ Failed to load favorites: $error');
+
+    return {
+      'id': listing['id'],
+      'title': listing['title'],
+      'price': '\$${listing['price']}',
+      'location': listing['location'] ?? 'Unknown Location',
+      'timePosted': _formatTimeAgo(DateTime.parse(listing['created_at'])),
+      'imageUrl': firstImage,
+      'category': listing['category']?['name'] ?? 'General',
+      'isSponsored': listing['is_featured'] ?? false,
+      'isFavorite': _favoriteListings.contains(listing['id'].toString()),
+      'views_count': listing['views_count'] ?? 0,
+      'condition': listing['condition'] ?? 'good',
+      'seller': listing['seller'],
+      'distance': distance,
+      'description': listing['description'],
+      'latitude': listing['latitude'],
+      'longitude': listing['longitude'],
+    };
   }
-}
+
+  Future<void> _loadFavorites() async {
+    try {
+      if (_authService.isAuthenticated()) {
+        final favorites = await _favoriteService.getUserFavorites();
+        final Set<String> ids = favorites
+            .map<String>((fav) => fav['listing_id'].toString())
+            .toSet();
+
+        setState(() {
+          _favoriteListings = ids;
+        });
+      }
+    } catch (error) {
+      debugPrint('❌ Failed to load favorites: $error');
+    }
+  }
 
   String _formatTimeAgo(DateTime dateTime) {
     final now = DateTime.now();
@@ -191,55 +392,50 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
       {
         "id": "1",
         "title": "iPhone 14 Pro Max - Excellent Condition",
-        "price": "\$899",
-        "location": "Manhattan, NY",
+        "price": "₹89,999",
+        "location": "Fancy Bazar, Guwahati",
         "timePosted": "2 hours ago",
-        "imageUrl":
-            "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&h=300&fit=crop",
+        "imageUrl": "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&h=300&fit=crop",
         "category": "Electronics",
         "isSponsored": true,
         "isFavorite": false,
+        "distance": 2.5,
+        "condition": "excellent",
+        "seller": {"phone_number": "+918638527410"},
       },
       {
         "id": "2",
-        "title": "MacBook Air M2 - Brand New Sealed",
-        "price": "\$1199",
-        "location": "Brooklyn, NY",
+        "title": "Assamese Traditional Mekhela Chador",
+        "price": "₹12,500",
+        "location": "Paltan Bazar, Guwahati",
         "timePosted": "4 hours ago",
-        "imageUrl":
-            "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=400&h=300&fit=crop",
-        "category": "Electronics",
+        "imageUrl": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400&h=300&fit=crop",
+        "category": "Fashion",
         "isSponsored": false,
         "isFavorite": false,
+        "distance": 1.8,
+        "condition": "new",
+        "seller": {"phone_number": null},
       },
       {
         "id": "3",
-        "title": "Modern Dining Table Set",
-        "price": "\$450",
-        "location": "Queens, NY",
+        "title": "Software Developer - Remote Work",
+        "price": "₹8,50,000/year",
+        "location": "Guwahati, Assam",
         "timePosted": "6 hours ago",
-        "imageUrl":
-            "https://images.unsplash.com/photo-1581539250439-c96689b516dd?w=400&h=300&fit=crop",
-        "category": "Furniture",
+        "imageUrl": "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=300&fit=crop",
+        "category": "Jobs",
         "isSponsored": false,
         "isFavorite": true,
-      },
-      {
-        "id": "4",
-        "title": "2020 Honda Civic - Low Mileage",
-        "price": "\$18500",
-        "location": "Bronx, NY",
-        "timePosted": "1 day ago",
-        "imageUrl":
-            "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400&h=300&fit=crop",
-        "category": "Automotive",
-        "isSponsored": false,
-        "isFavorite": false,
+        "distance": 0.5,
+        "condition": "new",
+        "seller": {"phone_number": "+919876543210"},
       },
     ];
   }
 
-  void _onScroll() {
+
+void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       _loadMoreListings();
@@ -253,8 +449,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
       _isRefreshing = true;
     });
 
+    HapticFeedback.lightImpact();
+    
     await Future.wait([
       _loadCategories(),
+      _loadTrendingListings(),
       _loadListings(),
       _loadFavorites(),
     ]);
@@ -272,48 +471,45 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
     });
 
     try {
-      // Load more listings with offset
       List<Map<String, dynamic>> moreListings;
       final offset = _listings.length;
 
-      if (_selectedCategory == 'All') {
-        moreListings =
-            await _listingService.getActiveListings(limit: 10, offset: offset);
+      if (_useGpsLocation && _currentPosition != null) {
+        moreListings = await _listingService.getNearbyListings(
+          latitude: _currentPosition!.latitude,
+          longitude: _currentPosition!.longitude,
+          radiusKm: _selectedDistance,
+          categoryId: _selectedCategory == 'All' ? null : _selectedCategory,
+          limit: 10,
+          offset: offset,
+        );
+      } else if (_selectedCategory == 'All') {
+        moreListings = await _listingService.getActiveListings(
+          limit: 10, 
+          offset: offset,
+        );
       } else {
         final categoryId = _categories.firstWhere(
-            (cat) => cat['name'] == _selectedCategory,
-            orElse: () => {'id': null})['id'];
+          (cat) => cat['name'] == _selectedCategory,
+          orElse: () => {'id': null},
+        )['id'];
+        
         if (categoryId != null && categoryId != 'all') {
-          moreListings = await _listingService.getListingsByCategory(categoryId,
-              limit: 10);
+          moreListings = await _listingService.getListingsByCategory(
+            categoryId,
+            limit: 10,
+            offset: offset,
+          );
         } else {
           moreListings = await _listingService.getActiveListings(
-              limit: 10, offset: offset);
+            limit: 10,
+            offset: offset,
+          );
         }
       }
 
       setState(() {
-        _listings.addAll(moreListings.map((listing) {
-          final images = listing['images'] as List<dynamic>?;
-          final firstImage = images?.isNotEmpty == true
-              ? images!.first as String
-              : 'https://images.unsplash.com/photo-1560472355-536de3962603?w=400&h=300&fit=crop';
-
-          return {
-            'id': listing['id'],
-            'title': listing['title'],
-            'price': '\$${listing['price']}',
-            'location': listing['location'] ?? 'Unknown Location',
-            'timePosted': _formatTimeAgo(DateTime.parse(listing['created_at'])),
-            'imageUrl': firstImage,
-            'category': listing['category']?['name'] ?? 'General',
-            'isSponsored': listing['is_featured'] ?? false,
-            'isFavorite': _favoriteListings.contains(listing['id'].toString()),
-            'views_count': listing['views_count'] ?? 0,
-            'condition': listing['condition'] ?? 'good',
-            'seller': listing['seller'],
-          };
-        }));
+        _listings.addAll(moreListings.map((listing) => _formatListing(listing)));
         _isLoading = false;
       });
     } catch (error) {
@@ -328,9 +524,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
     HapticFeedback.lightImpact();
 
     try {
-      final authService = AuthService();
-      if (!authService.isAuthenticated()) {
-        // Navigate to login if not authenticated
+      if (!_authService.isAuthenticated()) {
         Navigator.pushNamed(context, AppRoutes.loginScreen);
         return;
       }
@@ -340,49 +534,117 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
         setState(() {
           _favoriteListings.remove(listingId.toString());
         });
+        _showSnackBar('Removed from favorites', Icons.favorite_border);
       } else {
         await _favoriteService.addFavorite(listingId);
         setState(() {
           _favoriteListings.add(listingId.toString());
         });
+        _showSnackBar('Added to favorites', Icons.favorite, isSuccess: true);
       }
 
-      // Update the listing's favorite status in the list
+      // Update the listing's favorite status in the lists
       setState(() {
-        final index =
-            _listings.indexWhere((listing) => listing['id'] == listingId);
+        final index = _listings.indexWhere((listing) => listing['id'] == listingId);
         if (index != -1) {
-          _listings[index]['isFavorite'] =
-              _favoriteListings.contains(listingId.toString());
+          _listings[index]['isFavorite'] = _favoriteListings.contains(listingId.toString());
+        }
+        
+        final trendingIndex = _trendingListings.indexWhere((listing) => listing['id'] == listingId);
+        if (trendingIndex != -1) {
+          _trendingListings[trendingIndex]['isFavorite'] = _favoriteListings.contains(listingId.toString());
         }
       });
     } catch (error) {
       debugPrint('❌ Failed to toggle favorite: $error');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to update favorite'),
-          backgroundColor: AppTheme.lightTheme.colorScheme.error,
-        ),
-      );
+      _showSnackBar('Failed to update favorite', Icons.error, isError: true);
     }
   }
 
   void _onCategorySelected(String category) {
+    if (_selectedCategory == category) return;
+    
     setState(() {
       _selectedCategory = category;
     });
-    _loadListings(); // Reload listings when category changes
+    
+    HapticFeedback.lightImpact();
+    _loadListings();
   }
 
   void _onLocationChanged(String location) {
     setState(() {
       _selectedLocation = location;
+      if (location == 'Detect Location') {
+        _useGpsLocation = true;
+        _getCurrentLocation();
+      } else {
+        _useGpsLocation = false;
+      }
     });
-    // Could trigger location-based filtering here
+    
+    HapticFeedback.lightImpact();
     _loadListings();
   }
 
+  void _onDistanceChanged(double distance) {
+    setState(() {
+      _selectedDistance = distance;
+    });
+    
+    if (_useGpsLocation) {
+      _loadListings();
+    }
+  }
+
+  void _onSearchChanged(String query) {
+    setState(() {
+      _searchQuery = query;
+    });
+    
+    // Debounce search
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (_searchQuery == query) {
+        _loadListings();
+      }
+    });
+  }
+
+  void _toggleSearch() {
+    setState(() {
+      _showSearch = !_showSearch;
+      if (!_showSearch) {
+        _searchQuery = '';
+        _loadListings();
+      }
+    });
+    
+    HapticFeedback.lightImpact();
+  }
+
+  void _showAdvancedFilters() {
+    HapticFeedback.lightImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => AdvancedFilterWidget(
+        currentFilters: _activeFilters,
+        currentDistance: _selectedDistance,
+        useGpsLocation: _useGpsLocation,
+        onFiltersApplied: (filters, distance) {
+          setState(() {
+            _activeFilters = filters;
+            _selectedDistance = distance;
+          });
+          _loadListings();
+        },
+      ),
+    );
+  }
+
   void _onListingTap(Map<String, dynamic> listing) {
+    HapticFeedback.lightImpact();
     Navigator.pushNamed(context, AppRoutes.listingDetail, arguments: listing);
   }
 
@@ -395,296 +657,497 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: AppTheme.lightTheme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      builder: (context) => QuickActionWidget(
+        listing: listing,
+        onShare: () => _shareListing(listing),
+        onReport: () => _reportListing(listing),
+        onHide: () => _hideListing(listing),
+      ),
+    );
+  }
+
+  void _shareListing(Map<String, dynamic> listing) {
+    // Implement share functionality
+    _showSnackBar('Share functionality coming soon!', Icons.share);
+  }
+
+  void _reportListing(Map<String, dynamic> listing) {
+    // Implement report functionality
+    _showSnackBar('Listing reported', Icons.flag, isSuccess: true);
+  }
+
+  void _hideListing(Map<String, dynamic> listing) {
+    setState(() {
+      _listings.removeWhere((item) => item['id'] == listing['id']);
+    });
+    _showSnackBar('Listing hidden', Icons.visibility_off);
+  }
+
+  void _scrollToTop() {
+    HapticFeedback.lightImpact();
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _showSnackBar(String message, IconData icon, {bool isSuccess = false, bool isError = false}) {
+    if (!mounted) return;
+    
+    Color backgroundColor;
+    if (isSuccess) {
+      backgroundColor = AppTheme.getSuccessColor(true);
+    } else if (isError) {
+      backgroundColor = AppTheme.lightTheme.colorScheme.error;
+    } else {
+      backgroundColor = AppTheme.lightTheme.colorScheme.primary;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
           children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(top: 12),
-              decoration: BoxDecoration(
-                color: AppTheme.lightTheme.colorScheme.outline,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: CustomIconWidget(
-                      iconName: 'share',
-                      color: AppTheme.lightTheme.colorScheme.primary,
-                      size: 24,
-                    ),
-                    title: Text(
-                      'Share',
-                      style: AppTheme.lightTheme.textTheme.bodyLarge,
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      // Handle share
-                    },
-                  ),
-                  ListTile(
-                    leading: CustomIconWidget(
-                      iconName: 'report',
-                      color: AppTheme.lightTheme.colorScheme.error,
-                      size: 24,
-                    ),
-                    title: Text(
-                      'Report',
-                      style: AppTheme.lightTheme.textTheme.bodyLarge,
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      // Handle report
-                    },
-                  ),
-                  ListTile(
-                    leading: CustomIconWidget(
-                      iconName: 'visibility_off',
-                      color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-                      size: 24,
-                    ),
-                    title: Text(
-                      'Hide similar',
-                      style: AppTheme.lightTheme.textTheme.bodyLarge,
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      // Handle hide similar
-                    },
-                  ),
-                ],
-              ),
-            ),
+            Icon(icon, color: Colors.white, size: 20),
+            SizedBox(width: 2.w),
+            Expanded(child: Text(message)),
           ],
         ),
+        backgroundColor: backgroundColor,
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.all(4.w),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
 
   List<Map<String, dynamic>> get _filteredListings {
-    if (_selectedCategory == 'All') {
-      return _listings;
-    }
-    return _listings
-        .where(
-            (listing) => (listing['category'] as String) == _selectedCategory)
-        .toList();
+    return _listings;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Sticky Header
-            Container(
-              color: AppTheme.lightTheme.colorScheme.surface,
-              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-              child: Column(
-                children: [
-                  // Location and Notification Row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: LocationSelectorWidget(
-                          selectedLocation: _selectedLocation,
-                          locations: _locations,
-                          onLocationChanged: _onLocationChanged,
-                        ),
-                      ),
-                      SizedBox(width: 3.w),
-                      GestureDetector(
-                        onTap: () {
-                          // Handle notification tap
-                        },
-                        child: Container(
-                          padding: EdgeInsets.all(2.w),
-                          decoration: BoxDecoration(
-                            color: AppTheme
-                                .lightTheme.colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: CustomIconWidget(
-                            iconName: 'notifications',
-                            color: AppTheme.lightTheme.colorScheme.primary,
-                            size: 24,
-                          ),
-                        ),
+
+
+return CompactListingCardWidget(
+                                      listing: listing,
+                                      isFavorite: isFavorite,
+                                      onTap: () => _onListingTap(listing),
+                                      onLongPress: () => _onListingLongPress(listing),
+                                      onFavoriteTap: () => _toggleFavorite(listing['id'].toString()),
+                                      showDistance: _useGpsLocation,
+                                    );
+                                  },
+                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
+                                ),
+                              ),
+                            ),
+                      
+                      // Bottom padding
+                      SliverToBoxAdapter(
+                        child: SizedBox(height: 10.h),
                       ),
                     ],
                   ),
-                  SizedBox(height: 1.h),
-                  // Category Chips
-                  SizedBox(
-                    height: 5.h,
-                    child: _isLoadingCategories
-                        ? Center(
-                            child: CircularProgressIndicator(
-                              color: AppTheme.lightTheme.colorScheme.primary,
-                            ),
-                          )
-                        : ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: _categories.length,
-                            itemBuilder: (context, index) {
-                              return Padding(
-                                padding: EdgeInsets.only(right: 2.w),
-                                child: CategoryChipWidget(
-                                  category: _categories[index]['name']!,
-                                  isSelected: _selectedCategory ==
-                                      _categories[index]['name'],
-                                  onTap: () => _onCategorySelected(
-                                      _categories[index]['name']!),
-                                ),
-                              );
-                            },
-                          ),
-                  ),
-                ],
-              ),
-            ),
-            // Main Content
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _refreshListings,
-                color: AppTheme.lightTheme.colorScheme.primary,
-                child: _filteredListings.isEmpty && !_isLoading
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 4.w, vertical: 1.h),
-                        itemCount:
-                            _filteredListings.length + (_isLoading ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (index == _filteredListings.length) {
-                            return _buildLoadingIndicator();
-                          }
-
-                          final listing = _filteredListings[index];
-                          final isFavorite =
-                              _favoriteListings.contains(listing['id'].toString());
-
-                          return Padding(
-                            padding: EdgeInsets.only(bottom: 2.h),
-                            child: ListingCardWidget(
-                              listing: listing,
-                              isFavorite: isFavorite,
-                              onTap: () => _onListingTap(listing),
-                              onLongPress: () => _onListingLongPress(listing),
-                              onFavoriteTap: () =>
-                                  _toggleFavorite(listing['id'].toString()),
-                            ),
-                          );
-                        },
-                      ),
+                ),
               ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: AppTheme.lightTheme.colorScheme.surface,
-        selectedItemColor: AppTheme.lightTheme.colorScheme.primary,
-        unselectedItemColor: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+      
+      // Enhanced Bottom Navigation
+      bottomNavigationBar: _buildEnhancedBottomNav(),
+      
+      // Back to Top Button
+      floatingActionButton: _showBackToTop
+          ? FloatingActionButton.small(
+              onPressed: _scrollToTop,
+              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+              child: const Icon(Icons.keyboard_arrow_up, color: Colors.white),
+            )
+          : FloatingActionButton(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                Navigator.pushNamed(context, AppRoutes.createListing);
+              },
+              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
+            ),
+    );
+  }
 
-          switch (index) {
-            case 0:
-              // Already on Home
-              break;
-            case 1:
-              Navigator.pushNamed(context, AppRoutes.searchAndFilters);
-              break;
-            case 2:
-              Navigator.pushNamed(context, AppRoutes.createListing);
-              break;
-            case 3:
-              Navigator.pushNamed(context, AppRoutes.chatMessaging);
-              break;
-            case 4:
-              Navigator.pushNamed(context, AppRoutes.userProfile);
-              break;
-          }
-        },
-        items: [
-          BottomNavigationBarItem(
-            icon: CustomIconWidget(
-              iconName: 'home',
-              color: _currentIndex == 0
-                  ? AppTheme.lightTheme.colorScheme.primary
-                  : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-              size: 24,
-            ),
-            label: 'Home',
+  Widget _buildEnhancedHeader() {
+    return Container(
+      color: AppTheme.lightTheme.colorScheme.surface,
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+      child: Column(
+        children: [
+          // Top Row - Location, Search, Notifications
+          Row(
+            children: [
+              Expanded(
+                child: EnhancedLocationSelectorWidget(
+                  selectedLocation: _selectedLocation,
+                  locations: _defaultLocations,
+                  isLoading: _isLoadingLocation,
+                  useGpsLocation: _useGpsLocation,
+                  onLocationChanged: _onLocationChanged,
+                ),
+              ),
+              SizedBox(width: 3.w),
+              
+              // Search Toggle Button
+              GestureDetector(
+                onTap: _toggleSearch,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: EdgeInsets.all(2.5.w),
+                  decoration: BoxDecoration(
+                    color: _showSearch 
+                        ? AppTheme.lightTheme.colorScheme.primary
+                        : AppTheme.lightTheme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    _showSearch ? Icons.close : Icons.search,
+                    color: _showSearch 
+                        ? Colors.white
+                        : AppTheme.lightTheme.colorScheme.primary,
+                    size: 24,
+                  ),
+                ),
+              ),
+              
+              SizedBox(width: 2.w),
+              
+              // Notifications Button
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.pushNamed(context, AppRoutes.notificationsScreen);
+                },
+                child: Container(
+                  padding: EdgeInsets.all(2.5.w),
+                  decoration: BoxDecoration(
+                    color: AppTheme.lightTheme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Stack(
+                    children: [
+                      Icon(
+                        Icons.notifications_outlined,
+                        color: AppTheme.lightTheme.colorScheme.primary,
+                        size: 24,
+                      ),
+                      // Notification badge
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: AppTheme.lightTheme.colorScheme.error,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: CustomIconWidget(
-              iconName: 'search',
-              color: _currentIndex == 1
-                  ? AppTheme.lightTheme.colorScheme.primary
-                  : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-              size: 24,
+          
+          // Search Bar (when active)
+          if (_showSearch) ...[
+            SizedBox(height: 2.h),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+              decoration: BoxDecoration(
+                color: AppTheme.lightTheme.colorScheme.primaryContainer.withAlpha(77),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppTheme.lightTheme.colorScheme.primary.withAlpha(77),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.search,
+                    color: AppTheme.lightTheme.colorScheme.primary,
+                    size: 20,
+                  ),
+                  SizedBox(width: 3.w),
+                  Expanded(
+                    child: TextField(
+                      onChanged: _onSearchChanged,
+                      decoration: InputDecoration(
+                        hintText: 'Search in khilonjiya.com...',
+                        border: InputBorder.none,
+                        hintStyle: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                          color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      style: AppTheme.lightTheme.textTheme.bodyMedium,
+                      autofocus: true,
+                    ),
+                  ),
+                  if (_activeFilters.isNotEmpty)
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
+                      decoration: BoxDecoration(
+                        color: AppTheme.lightTheme.colorScheme.primary,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${_activeFilters.length}',
+                        style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-            label: 'Search',
+          ],
+          
+          SizedBox(height: 2.h),
+          
+          // Enhanced Categories Section
+          SizedBox(
+            height: 12.h, // Increased height for prominent look
+            child: _isLoadingCategories
+                ? Center(
+                    child: CircularProgressIndicator(
+                      color: AppTheme.lightTheme.colorScheme.primary,
+                    ),
+                  )
+                : ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: _categories.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: EdgeInsets.only(right: 3.w),
+                        child: EnhancedCategoryChipWidget(
+                          category: _categories[index],
+                          isSelected: _selectedCategory == _categories[index]['name'],
+                          onTap: () => _onCategorySelected(_categories[index]['name']),
+                        ),
+                      );
+                    },
+                  ),
           ),
-          BottomNavigationBarItem(
-            icon: CustomIconWidget(
-              iconName: 'add_circle',
-              color: _currentIndex == 2
-                  ? AppTheme.lightTheme.colorScheme.primary
-                  : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-              size: 24,
+          
+          // Distance Filter (when GPS is active)
+          if (_useGpsLocation && _currentPosition != null) ...[
+            SizedBox(height: 1.h),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+              decoration: BoxDecoration(
+                color: AppTheme.lightTheme.colorScheme.secondaryContainer.withAlpha(77),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.location_on,
+                    color: AppTheme.lightTheme.colorScheme.primary,
+                    size: 16,
+                  ),
+                  SizedBox(width: 2.w),
+                  Text(
+                    'Within ${_selectedDistance.toInt()} km',
+                    style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: _showAdvancedFilters,
+                    child: Text(
+                      'Change',
+                      style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                        color: AppTheme.lightTheme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            label: 'Sell',
-          ),
-          BottomNavigationBarItem(
-            icon: CustomIconWidget(
-              iconName: 'chat',
-              color: _currentIndex == 3
-                  ? AppTheme.lightTheme.colorScheme.primary
-                  : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-              size: 24,
-            ),
-            label: 'Messages',
-          ),
-          BottomNavigationBarItem(
-            icon: CustomIconWidget(
-              iconName: 'person',
-              color: _currentIndex == 4
-                  ? AppTheme.lightTheme.colorScheme.primary
-                  : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-              size: 24,
-            ),
-            label: 'Profile',
-          ),
+          ],
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, AppRoutes.createListing);
-        },
-        backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-        child: CustomIconWidget(
-          iconName: 'add',
-          color: Colors.white,
-          size: 28,
+    );
+  }
+
+
+Widget _buildEnhancedBottomNav() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.lightTheme.colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.lightTheme.colorScheme.shadow.withAlpha(26),
+            blurRadius: 12,
+            offset: const Offset(0, -4),
+          ),
+        ],
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.transparent,
+          selectedItemColor: AppTheme.lightTheme.colorScheme.primary,
+          unselectedItemColor: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+          selectedLabelStyle: AppTheme.lightTheme.textTheme.labelSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+          unselectedLabelStyle: AppTheme.lightTheme.textTheme.labelSmall?.copyWith(
+            fontWeight: FontWeight.w400,
+          ),
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+
+            HapticFeedback.lightImpact();
+
+            switch (index) {
+              case 0:
+                // Already on Home
+                break;
+              case 1:
+                Navigator.pushNamed(context, AppRoutes.searchAndFilters);
+                break;
+              case 2:
+                Navigator.pushNamed(context, AppRoutes.createListing);
+                break;
+              case 3:
+                Navigator.pushNamed(context, AppRoutes.chatMessaging);
+                break;
+              case 4:
+                Navigator.pushNamed(context, AppRoutes.userProfile);
+                break;
+            }
+          },
+          items: [
+            BottomNavigationBarItem(
+              icon: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: EdgeInsets.all(1.w),
+                decoration: BoxDecoration(
+                  color: _currentIndex == 0
+                      ? AppTheme.lightTheme.colorScheme.primary.withAlpha(26)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  _currentIndex == 0 ? Icons.home : Icons.home_outlined,
+                  size: 24,
+                ),
+              ),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: EdgeInsets.all(1.w),
+                decoration: BoxDecoration(
+                  color: _currentIndex == 1
+                      ? AppTheme.lightTheme.colorScheme.primary.withAlpha(26)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  _currentIndex == 1 ? Icons.search : Icons.search_outlined,
+                  size: 24,
+                ),
+              ),
+              label: 'Search',
+            ),
+            BottomNavigationBarItem(
+              icon: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: EdgeInsets.all(1.w),
+                decoration: BoxDecoration(
+                  color: _currentIndex == 2
+                      ? AppTheme.lightTheme.colorScheme.primary.withAlpha(26)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  _currentIndex == 2 ? Icons.add_circle : Icons.add_circle_outline,
+                  size: 24,
+                ),
+              ),
+              label: 'Sell',
+            ),
+            BottomNavigationBarItem(
+              icon: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: EdgeInsets.all(1.w),
+                decoration: BoxDecoration(
+                  color: _currentIndex == 3
+                      ? AppTheme.lightTheme.colorScheme.primary.withAlpha(26)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Stack(
+                  children: [
+                    Icon(
+                      _currentIndex == 3 ? Icons.chat : Icons.chat_outlined,
+                      size: 24,
+                    ),
+                    // Unread message badge
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: AppTheme.lightTheme.colorScheme.error,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              label: 'Messages',
+            ),
+            BottomNavigationBarItem(
+              icon: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: EdgeInsets.all(1.w),
+                decoration: BoxDecoration(
+                  color: _currentIndex == 4
+                      ? AppTheme.lightTheme.colorScheme.primary.withAlpha(26)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  _currentIndex == 4 ? Icons.person : Icons.person_outlined,
+                  size: 24,
+                ),
+              ),
+              label: 'Profile',
+            ),
+          ],
         ),
       ),
     );
@@ -697,35 +1160,62 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CustomIconWidget(
-              iconName: 'search_off',
-              color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-              size: 80,
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppTheme.lightTheme.colorScheme.primaryContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.search_off,
+                size: 40,
+                color: AppTheme.lightTheme.colorScheme.primary,
+              ),
             ),
             SizedBox(height: 3.h),
             Text(
               'No listings found',
               style: AppTheme.lightTheme.textTheme.headlineSmall?.copyWith(
-                color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
               ),
             ),
             SizedBox(height: 1.h),
             Text(
-              'Try adjusting your location or category filters',
+              _searchQuery.isNotEmpty
+                  ? 'No results found for "$_searchQuery"'
+                  : 'Try adjusting your location or category filters',
               style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
                 color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 3.h),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _selectedCategory = 'All';
-                });
-                _loadListings();
-              },
-              child: const Text('Reset Filters'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _selectedCategory = 'All';
+                      _searchQuery = '';
+                      _activeFilters.clear();
+                      _showSearch = false;
+                    });
+                    _loadListings();
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Reset Filters'),
+                ),
+                SizedBox(width: 3.w),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(context, AppRoutes.createListing);
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Listing'),
+                ),
+              ],
             ),
           ],
         ),
@@ -736,16 +1226,28 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
   Widget _buildLoadingIndicator() {
     return Container(
       padding: EdgeInsets.all(4.w),
-      child: Center(
-        child: CircularProgressIndicator(
-          color: AppTheme.lightTheme.colorScheme.primary,
-        ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            color: AppTheme.lightTheme.colorScheme.primary,
+          ),
+          SizedBox(height: 2.h),
+          Text(
+            'Loading more listings...',
+            style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+              color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }
 
   @override
   void dispose() {
+    _headerAnimationController.dispose();
+    _listAnimationController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
