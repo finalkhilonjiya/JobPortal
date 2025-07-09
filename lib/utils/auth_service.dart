@@ -385,6 +385,7 @@ class AuthService {
   }
 
   /// Sign in with Facebook
+  /// Sign in with Facebook
   Future<AuthResponse> signInWithFacebook() async {
     try {
       final client = _client;
@@ -400,7 +401,8 @@ class AuthService {
         throw AuthException('Facebook sign-in was cancelled or failed.');
       }
 
-      final accessToken = facebookResult.accessToken?.tokenString;
+      // Fixed: Use token instead of tokenString
+      final accessToken = facebookResult.accessToken?.token;
       if (accessToken == null) {
         throw AuthException('Failed to get Facebook access token.');
       }
@@ -430,7 +432,6 @@ class AuthService {
       throw AuthException('Facebook sign-in failed: ${_getErrorMessage(error)}');
     }
   }
-
   /// Handle social login profile creation/update
   Future<void> _handleSocialLoginProfile(
     User user, 
