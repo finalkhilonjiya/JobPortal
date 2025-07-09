@@ -799,7 +799,7 @@ class AppTheme {
     return isLight ? errorLight : errorDark;
   }
 
-  /// Helper method to get success color based on theme
+/*  /// Helper method to get success color based on theme
   static Color getSuccessColor(bool isLight) {
     return isLight ? successLight : successDark;
   }
@@ -812,7 +812,7 @@ class AppTheme {
   /// Helper method to get accent color based on theme
   static Color getAccentColor(bool isLight) {
     return isLight ? accentLight : accentDark;
-  }
+  } */
 
   /// Helper method to get text primary color based on theme
   static Color getTextPrimaryColor(bool isLight) {
