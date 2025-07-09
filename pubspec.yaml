@@ -101,7 +101,7 @@ dependencies:
   # 🔗 DEEP LINKING & QR
   qr_code_scanner:
     git:
-      url: https://github.com/pankajkhilonjiya/qr_code_scanner.git
+      url: https://github.com/bhabajit54321/qr_code_scanner.git
       ref: main  # ✅ Replace with your forked repo that includes `namespace` in build.gradle
 
   qr_flutter: ^4.1.0
