@@ -496,14 +496,15 @@ void _onProfilePhotoSelected(String? photoPath) {
         locationEnabled: _isLocationEnabled,
       );
 
+      // Fixed: Use correct HapticFeedback method
       if (response.user != null) {
         setState(() {
           _showOtpVerification = true;
           _currentStep = 2;
         });
 
-        // Provide haptic feedback for success
-        HapticFeedback.notificationFeedback();
+        // Fixed: Use selectionClick instead of notificationFeedback
+        HapticFeedback.selectionClick();
         
         _showSuccessSnackBar('Verification code sent to your ${_selectedContactMethod}');
 
@@ -512,6 +513,39 @@ void _onProfilePhotoSelected(String? photoPath) {
       } else {
         throw Exception('Registration failed - no user returned');
       }
+    } catch (error) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      // Enhanced error handling with specific messages
+      String errorMessage = _getEnhancedErrorMessage(error.toString());
+      setState(() {
+        _errorMessage = errorMessage;
+      });
+      
+      _showErrorSnackBar(errorMessage);
+      HapticFeedback.heavyImpact(); // Error feedback
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _handleOtpVerified() {
+    setState(() {
+      _currentStep = 3;
+    });
+
+    // Fixed: Use selectionClick instead of notificationFeedback
+    HapticFeedback.selectionClick();
+    
+    // Show success dialog
+    _showSuccessDialog();
+  }
     } catch (error) {
       setState(() {
         _isLoading = false;
