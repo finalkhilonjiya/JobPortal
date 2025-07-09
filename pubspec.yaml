@@ -86,7 +86,7 @@ dependencies:
   flutter_typeahead: ^4.8.0
   
   # 📅 DATE & TIME
-  intl: ^0.18.1
+  #intl: ^0.18.1
   table_calendar: ^3.0.9
   
   # 🎪 ONBOARDING & TUTORIALS
