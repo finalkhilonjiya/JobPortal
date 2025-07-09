@@ -3,13 +3,6 @@ Building Android
 
 
 
-
-
-== Building for Android ==
-
-> flutter build appbundle --debug
-
-
 == Building for Android ==
 
 > flutter build appbundle --debug
@@ -113,97 +106,6 @@ Ask the maintainers of file_picker to either avoid referencing a default impleme
 Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
 Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
 
-Resolving dependencies...
-Downloading packages...
-  _fe_analyzer_shared 76.0.0 (85.0.0 available)
-  _flutterfire_internals 1.3.35 (1.3.58 available)
-  analyzer 6.11.0 (7.5.5 available)
-  archive 3.6.1 (4.0.7 available)
-  bloc 8.1.4 (9.0.0 available)
-  bloc_test 9.1.7 (10.0.0 available)
-  characters 1.4.0 (1.4.1 available)
-  connectivity_plus 5.0.2 (6.1.4 available)
-  connectivity_plus_platform_interface 1.2.4 (2.0.1 available)
-  dart_style 2.3.8 (3.1.0 available)
-  device_info_plus 9.1.2 (11.5.0 available)
-  facebook_auth_desktop 1.0.3 (2.1.1 available)
-  file_picker 6.2.1 (10.2.0 available)
-  firebase_core 2.32.0 (3.15.1 available)
-  firebase_core_platform_interface 5.4.2 (6.0.0 available)
-  firebase_core_web 2.24.0 (2.24.1 available)
-  firebase_messaging 14.7.10 (15.2.9 available)
-  firebase_messaging_platform_interface 4.5.37 (4.6.9 available)
-  firebase_messaging_web 3.5.18 (3.10.9 available)
-  fl_chart 0.65.0 (1.0.0 available)
-  flutter_bloc 8.1.6 (9.1.1 available)
-  flutter_facebook_auth 6.2.0 (7.1.2 available)
-  flutter_facebook_auth_platform_interface 5.0.0 (6.1.2 available)
-  flutter_facebook_auth_web 5.0.0 (6.1.2 available)
-  flutter_launcher_icons 0.13.1 (0.14.4 available)
-  flutter_lints 5.0.0 (6.0.0 available)
-  flutter_local_notifications 16.3.3 (19.3.0 available)
-  flutter_local_notifications_linux 4.0.1 (6.0.0 available)
-  flutter_local_notifications_platform_interface 7.2.0 (9.1.0 available)
-  flutter_native_splash 2.4.4 (2.4.6 available)
-  flutter_secure_storage_linux 1.2.3 (2.0.1 available)
-  flutter_secure_storage_macos 3.1.3 (4.0.0 available)
-  flutter_secure_storage_platform_interface 1.1.2 (2.0.1 available)
-  flutter_secure_storage_web 1.2.1 (2.0.0 available)
-  flutter_secure_storage_windows 3.1.2 (4.0.0 available)
-  geocoding 2.2.2 (4.0.0 available)
-  geocoding_android 3.3.1 (4.0.1 available)
-  geocoding_ios 2.3.0 (3.0.2 available)
-  geolocator 10.1.1 (14.0.2 available)
-  geolocator_android 4.6.2 (5.0.2 available)
-  geolocator_web 2.2.1 (4.1.3 available)
-  google_sign_in 6.3.0 (7.1.0 available)
-  google_sign_in_android 6.2.1 (7.0.1 available)
-  google_sign_in_ios 5.9.0 (6.0.1 available)
-  google_sign_in_platform_interface 2.5.0 (3.0.0 available)
-  google_sign_in_web 0.12.4+4 (1.0.0 available)
-  image 4.3.0 (4.5.4 available)
-  image_cropper 5.0.1 (9.1.0 available)
-  image_cropper_for_web 3.0.0 (6.1.0 available)
-  image_cropper_platform_interface 5.0.0 (7.1.0 available)
-  internet_connection_checker 1.0.0+1 (3.0.1 available)
-  js 0.6.7 (0.7.2 available)
-  json_serializable 6.9.0 (6.9.5 available)
-  leak_tracker 10.0.9 (11.0.1 available)
-  leak_tracker_flutter_testing 3.0.9 (3.0.10 available)
-  leak_tracker_testing 3.0.1 (3.0.2 available)
-  lints 5.1.1 (6.0.0 available)
-  location 5.0.3 (8.0.1 available)
-  location_platform_interface 3.1.2 (6.0.1 available)
-  location_web 4.2.0 (6.0.1 available)
-  lottie 2.7.0 (3.3.1 available)
-  material_color_utilities 0.11.1 (0.13.0 available)
-  meta 1.16.0 (1.17.0 available)
-  mime 1.0.6 (2.0.0 available)
-  mockito 5.4.5 (5.4.6 available)
-  package_info_plus 4.2.0 (8.3.0 available)
-  package_info_plus_platform_interface 2.0.1 (3.2.0 available)
-  permission_handler 11.4.0 (12.0.1 available)
-  permission_handler_android 12.1.0 (13.0.1 available)
-  petitparser 6.1.0 (7.0.0 available)
-  photo_view 0.14.0 (0.15.0 available)
-  protobuf 3.1.0 (4.1.0 available)
-  retrofit_generator 8.2.1 (9.7.0 available)
-  share_plus 7.2.2 (11.0.0 available)
-  share_plus_platform_interface 3.4.0 (6.0.0 available)
-  sizer 2.0.15 (3.0.5 available)
-  source_gen 1.5.0 (2.0.0 available)
-  source_helper 1.3.5 (1.3.6 available)
-  test 1.25.15 (1.26.2 available)
-  test_api 0.7.4 (0.7.6 available)
-  test_core 0.6.8 (0.6.11 available)
-  timezone 0.9.4 (0.10.1 available)
-  vector_math 2.1.4 (2.2.0 available)
-  vm_service 15.0.0 (15.0.2 available)
-  win32_registry 1.1.5 (2.1.0 available)
-  xml 6.5.0 (6.6.0 available)
-Got dependencies!
-86 packages have newer versions incompatible with dependency constraints.
-Try `flutter pub outdated` for more information.
 Package file_picker:linux references file_picker:linux as the default plugin, but it does not provide an inline implementation.
 Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: linux: default_package: file_picker` or add an inline implementation to file_picker via `platforms: linux:` `pluginClass` or `dartPluginClass`.
 
@@ -222,38 +124,7 @@ Ask the maintainers of file_picker to either avoid referencing a default impleme
 Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
 Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
 
-Package file_picker:linux references file_picker:linux as the default plugin, but it does not provide an inline implementation.
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: linux: default_package: file_picker` or add an inline implementation to file_picker via `platforms: linux:` `pluginClass` or `dartPluginClass`.
-
-Package file_picker:macos references file_picker:macos as the default plugin, but it does not provide an inline implementation.
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: macos: default_package: file_picker` or add an inline implementation to file_picker via `platforms: macos:` `pluginClass` or `dartPluginClass`.
-
-Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
-
-Package file_picker:linux references file_picker:linux as the default plugin, but it does not provide an inline implementation.
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: linux: default_package: file_picker` or add an inline implementation to file_picker via `platforms: linux:` `pluginClass` or `dartPluginClass`.
-
-Package file_picker:macos references file_picker:macos as the default plugin, but it does not provide an inline implementation.
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: macos: default_package: file_picker` or add an inline implementation to file_picker via `platforms: macos:` `pluginClass` or `dartPluginClass`.
-
-Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
-
-Package file_picker:linux references file_picker:linux as the default plugin, but it does not provide an inline implementation.
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: linux: default_package: file_picker` or add an inline implementation to file_picker via `platforms: linux:` `pluginClass` or `dartPluginClass`.
-
-Package file_picker:macos references file_picker:macos as the default plugin, but it does not provide an inline implementation.
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: macos: default_package: file_picker` or add an inline implementation to file_picker via `platforms: macos:` `pluginClass` or `dartPluginClass`.
-
-Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
-Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
-
-Running Gradle task 'bundleDebug'...                            Running Gradle task 'bundleDebug'...                            
-Checking the license for package NDK (Side by side) 26.3.11579264 in /usr/local/share/android-sdk/licenses
-License for package NDK (Side by side) 26.3.11579264 accepted.
-Preparing "Install NDK (Side by side) 26.3.11579264 v.26.3.11579264".
-
+Running Gradle task 'bundleDebug'...                            
 Checking the license for package NDK (Side by side) 26.3.11579264 in /usr/local/share/android-sdk/licenses
 License for package NDK (Side by side) 26.3.11579264 accepted.
 Preparing "Install NDK (Side by side) 26.3.11579264 v.26.3.11579264".
@@ -261,20 +132,9 @@ Preparing "Install NDK (Side by side) 26.3.11579264 v.26.3.11579264".
 Installing NDK (Side by side) 26.3.11579264 in /usr/local/share/android-sdk/ndk/26.3.11579264
 "Install NDK (Side by side) 26.3.11579264 v.26.3.11579264" complete.
 "Install NDK (Side by side) 26.3.11579264 v.26.3.11579264" finished.
-"Install NDK (Side by side) 26.3.11579264 v.26.3.11579264" ready.
-Installing NDK (Side by side) 26.3.11579264 in /usr/local/share/android-sdk/ndk/26.3.11579264
-"Install NDK (Side by side) 26.3.11579264 v.26.3.11579264" complete.
-"Install NDK (Side by side) 26.3.11579264 v.26.3.11579264" finished.
 Checking the license for package Android SDK Build-Tools 34 in /usr/local/share/android-sdk/licenses
 License for package Android SDK Build-Tools 34 accepted.
 Preparing "Install Android SDK Build-Tools 34 v.34.0.0".
-Checking the license for package Android SDK Build-Tools 34 in /usr/local/share/android-sdk/licenses
-License for package Android SDK Build-Tools 34 accepted.
-Preparing "Install Android SDK Build-Tools 34 v.34.0.0".
-"Install Android SDK Build-Tools 34 v.34.0.0" ready.
-Installing Android SDK Build-Tools 34 in /usr/local/share/android-sdk/build-tools/34.0.0
-"Install Android SDK Build-Tools 34 v.34.0.0" complete.
-"Install Android SDK Build-Tools 34 v.34.0.0" finished.
 "Install Android SDK Build-Tools 34 v.34.0.0" ready.
 Installing Android SDK Build-Tools 34 in /usr/local/share/android-sdk/build-tools/34.0.0
 "Install Android SDK Build-Tools 34 v.34.0.0" complete.
@@ -314,4 +174,2117 @@ import 'package:sizer/sizer.dart';
 ^^^^^^
 lib/presentation/login_screen/login_screen.dart:5:1: Error: Directives must appear before any declarations.
 Try moving the directive before any declarations.
-import '../../core/app_export.
+import '../../core/app_export.dart';
+^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:731:1: Error: Expected a class member, but got 'return'.
+return CompactListingCardWidget(
+^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:732:46: Error: Non-optional parameters can't have a default value.
+Try removing the default value or making the parameter optional.
+                                      listing: listing,
+                                             ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:733:49: Error: Non-optional parameters can't have a default value.
+Try removing the default value or making the parameter optional.
+                                      isFavorite: isFavorite,
+                                                ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:734:44: Error: Non-optional parameters can't have a default value.
+Try removing the default value or making the parameter optional.
+                                      onTap: () => _onListingTap(listing),
+                                           ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:735:50: Error: Non-optional parameters can't have a default value.
+Try removing the default value or making the parameter optional.
+                                      onLongPress: () => _onListingLongPress(listing),
+                                                 ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:736:52: Error: Non-optional parameters can't have a default value.
+Try removing the default value or making the parameter optional.
+                                      onFavoriteTap: () => _toggleFavorite(listing['id'].toString()),
+                                                   ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:737:51: Error: Non-optional parameters can't have a default value.
+Try removing the default value or making the parameter optional.
+                                      showDistance: _useGpsLocation,
+                                                  ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:739:36: Error: Expected a declaration, but got ','.
+                                  },
+                                   ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:35: Error: Variables must be declared using the keywords 'const', 'final', 'var' or a type name.
+Try adding the name of the type of the variable or the keyword 'var'.
+                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
+                                  ^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:35: Error: Expected ';' after this.
+                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
+                                  ^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:45: Error: Expected a declaration, but got ':'.
+                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
+                                            ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:47: Error: A function declaration needs an explicit list of parameters.
+Try adding a parameter list to the function declaration.
+                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
+                                              ^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:64: Error: Expected '{' before this.
+                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
+                                                               ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:64: Error: Expected a declaration, but got '.'.
+                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
+                                                               ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:65: Error: Variables must be declared using the keywords 'const', 'final', 'var' or a type name.
+Try adding the name of the type of the variable or the keyword 'var'.
+                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
+                                                                ^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:65: Error: Expected ';' after this.
+                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
+                                                                ^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:72: Error: Operators must be declared within a class.
+Try removing the operator, moving it to a class, or converting it to be a function.
+                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
+                                                                       ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:86: Error: Expected ')' before this.
+                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
+                                                                                     ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:94: Error: Expected '{' before this.
+                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
+                                                                                          ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:94: Error: Expected a declaration, but got ','.
+                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
+                                                                                          ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:741:33: Error: Expected a declaration, but got ')'.
+                                ),
+                                ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:741:34: Error: Expected a declaration, but got ','.
+                                ),
+                                 ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:742:31: Error: Expected a declaration, but got ')'.
+                              ),
+                              ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:742:32: Error: Expected a declaration, but got ','.
+                              ),
+                               ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:743:29: Error: Expected a declaration, but got ')'.
+                            ),
+                            ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:743:30: Error: Expected a declaration, but got ','.
+                            ),
+                             ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:747:30: Error: Non-optional parameters can't have a default value.
+Try removing the default value or making the parameter optional.
+                        child: SizedBox(height: 10.h),
+                             ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:748:24: Error: Expected '{' before this.
+                      ),
+                       ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:748:24: Error: Expected a declaration, but got ','.
+                      ),
+                       ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:749:21: Error: Expected a declaration, but got ']'.
+                    ],
+                    ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:749:22: Error: Expected a declaration, but got ','.
+                    ],
+                     ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:750:19: Error: Expected a declaration, but got ')'.
+                  ),
+                  ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:750:20: Error: Expected a declaration, but got ','.
+                  ),
+                   ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:751:17: Error: Expected a declaration, but got ')'.
+                ),
+                ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:751:18: Error: Expected a declaration, but got ','.
+                ),
+                 ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:752:15: Error: Expected a declaration, but got ')'.
+              ),
+              ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:752:16: Error: Expected a declaration, but got ','.
+              ),
+               ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:753:13: Error: Expected a declaration, but got ')'.
+            ),
+            ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:753:14: Error: Expected a declaration, but got ','.
+            ),
+             ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:754:11: Error: Expected a declaration, but got ']'.
+          ],
+          ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:754:12: Error: Expected a declaration, but got ','.
+          ],
+           ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:755:9: Error: Expected a declaration, but got ')'.
+        ),
+        ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:755:10: Error: Expected a declaration, but got ','.
+        ),
+         ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:756:7: Error: Expected a declaration, but got ')'.
+      ),
+      ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:756:8: Error: Expected a declaration, but got ','.
+      ),
+       ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:759:7: Error: Variables must be declared using the keywords 'const', 'final', 'var' or a type name.
+Try adding the name of the type of the variable or the keyword 'var'.
+      bottomNavigationBar: _buildEnhancedBottomNav(),
+      ^^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:759:7: Error: Expected ';' after this.
+      bottomNavigationBar: _buildEnhancedBottomNav(),
+      ^^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:759:26: Error: Expected a declaration, but got ':'.
+      bottomNavigationBar: _buildEnhancedBottomNav(),
+                         ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:759:53: Error: Expected '{' before this.
+      bottomNavigationBar: _buildEnhancedBottomNav(),
+                                                    ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:759:53: Error: Expected a declaration, but got ','.
+      bottomNavigationBar: _buildEnhancedBottomNav(),
+                                                    ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:762:7: Error: Variables must be declared using the keywords 'const', 'final', 'var' or a type name.
+Try adding the name of the type of the variable or the keyword 'var'.
+      floatingActionButton: _showBackToTop
+      ^^^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:762:7: Error: Expected ';' after this.
+      floatingActionButton: _showBackToTop
+      ^^^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:762:27: Error: Expected a declaration, but got ':'.
+      floatingActionButton: _showBackToTop
+                          ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:763:13: Error: A function declaration needs an explicit list of parameters.
+Try adding a parameter list to the function declaration.
+          ? FloatingActionButton.small(
+            ^^^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:763:33: Error: Expected '{' before this.
+          ? FloatingActionButton.small(
+                                ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:763:33: Error: Expected a declaration, but got '.'.
+          ? FloatingActionButton.small(
+                                ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:764:24: Error: Non-optional parameters can't have a default value.
+Try removing the default value or making the parameter optional.
+              onPressed: _scrollToTop,
+                       ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:765:30: Error: Non-optional parameters can't have a default value.
+Try removing the default value or making the parameter optional.
+              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+                             ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:766:20: Error: Non-optional parameters can't have a default value.
+Try removing the default value or making the parameter optional.
+              child: const Icon(Icons.keyboard_arrow_up, color: Colors.white),
+                   ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:768:11: Error: Expected '{' before this.
+          : FloatingActionButton(
+          ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:768:11: Error: Expected a declaration, but got ':'.
+          : FloatingActionButton(
+          ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:769:24: Error: Non-optional parameters can't have a default value.
+Try removing the default value or making the parameter optional.
+              onPressed: () {
+                       ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:773:30: Error: Non-optional parameters can't have a default value.
+Try removing the default value or making the parameter optional.
+              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+                             ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:774:20: Error: Non-optional parameters can't have a default value.
+Try removing the default value or making the parameter optional.
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
+                   ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:775:14: Error: Expected '{' before this.
+            ),
+             ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:775:14: Error: Expected a declaration, but got ','.
+            ),
+             ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:776:5: Error: Expected a declaration, but got ')'.
+    );
+    ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:776:6: Error: Unexpected token ';'.
+    );
+     ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:777:3: Error: Expected a declaration, but got '}'.
+  }
+  ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1254:1: Error: Expected a declaration, but got '}'.
+}
+^
+lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:608:20: Error: Can't find ')' to match '('.
+          BoxShadow(
+                   ^
+lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:607:20: Error: Can't find ']' to match '['.
+        boxShadow: [
+                   ^
+lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:599:32: Error: Can't find ')' to match '('.
+      decoration: BoxDecoration(
+                               ^
+lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:597:21: Error: Can't find ')' to match '('.
+    return Container(
+                    ^
+lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:596:32: Error: Can't find '}' to match '{'.
+  Widget _buildBottomActions() {
+                               ^
+lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:25:70: Error: Can't find '}' to match '{'.
+class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
+                                                                     ^
+lib/presentation/registration_screen/registration_screen.dart:12:8: Error: Error when reading 'lib/presentation/registration_screen/widgets/category_chip_widget.dart': No such file or directory
+import './widgets/category_chip_widget.dart';
+       ^
+lib/presentation/registration_screen/registration_screen.dart:13:8: Error: Error when reading 'lib/presentation/registration_screen/widgets/listing_card_widget.dart': No such file or directory
+import './widgets/listing_card_widget.dart';
+       ^
+lib/presentation/registration_screen/registration_screen.dart:14:8: Error: Error when reading 'lib/presentation/registration_screen/widgets/location_selector_widget.dart': No such file or directory
+import './widgets/location_selector_widget.dart';
+       ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:989:8: Error: '_buildEnhancedBottomNav' is already declared in this scope.
+Widget _buildEnhancedBottomNav() {
+       ^^^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:759:28: Context: Previous declaration of '_buildEnhancedBottomNav'.
+      bottomNavigationBar: _buildEnhancedBottomNav(),
+                           ^^^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:768:13: Error: 'FloatingActionButton' is already declared in this scope.
+          : FloatingActionButton(
+            ^^^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:763:13: Context: Previous declaration of 'FloatingActionButton'.
+          ? FloatingActionButton.small(
+            ^^^^^^^^^^^^^^^^^^^^
+lib/theme/app_theme.dart:803:16: Error: 'getSuccessColor' is already declared in this scope.
+  static Color getSuccessColor(bool isLight) {
+               ^^^^^^^^^^^^^^^
+lib/theme/app_theme.dart:777:16: Context: Previous declaration of 'getSuccessColor'.
+  static Color getSuccessColor(bool isLight) {
+               ^^^^^^^^^^^^^^^
+lib/theme/app_theme.dart:808:16: Error: 'getWarningColor' is already declared in this scope.
+  static Color getWarningColor(bool isLight) {
+               ^^^^^^^^^^^^^^^
+lib/theme/app_theme.dart:782:16: Context: Previous declaration of 'getWarningColor'.
+  static Color getWarningColor(bool isLight) {
+               ^^^^^^^^^^^^^^^
+lib/theme/app_theme.dart:813:16: Error: 'getAccentColor' is already declared in this scope.
+  static Color getAccentColor(bool isLight) {
+               ^^^^^^^^^^^^^^
+lib/theme/app_theme.dart:787:16: Context: Previous declaration of 'getAccentColor'.
+  static Color getAccentColor(bool isLight) {
+               ^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:7:27: Error: Type 'StatefulWidget' not found.
+class LoginScreen extends StatefulWidget {
+                          ^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:8:22: Error: Type 'Key' not found.
+  const LoginScreen({Key? key}) : super(key: key);
+                     ^^^
+lib/presentation/login_screen/login_screen.dart:11:3: Error: Type 'State' not found.
+  State<LoginScreen> createState() => _LoginScreenState();
+  ^^^^^
+lib/presentation/login_screen/login_screen.dart:14:33: Error: Type 'State' not found.
+class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin {
+                                ^^^^^
+lib/presentation/login_screen/login_screen.dart:14:57: Error: Type 'TickerProviderStateMixin' not found.
+class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin {
+                                                        ^^^^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:28:8: Error: Type 'AnimationController' not found.
+  late AnimationController _logoAnimationController;
+       ^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:29:8: Error: Type 'AnimationController' not found.
+  late AnimationController _formAnimationController;
+       ^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:30:8: Error: Type 'Animation' not found.
+  late Animation<double> _logoFadeAnimation;
+       ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:31:8: Error: Type 'Animation' not found.
+  late Animation<Offset> _formSlideAnimation;
+       ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:329:3: Error: Type 'Widget' not found.
+  Widget build(BuildContext context) {
+  ^^^^^^
+lib/presentation/login_screen/login_screen.dart:329:16: Error: Type 'BuildContext' not found.
+  Widget build(BuildContext context) {
+               ^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:368:3: Error: Type 'Widget' not found.
+  Widget _buildLogo() {
+  ^^^^^^
+lib/presentation/login_screen/login_screen.dart:434:3: Error: Type 'Widget' not found.
+  Widget _buildLoginForm() {
+  ^^^^^^
+lib/presentation/login_screen/login_screen.dart:455:3: Error: Type 'Widget' not found.
+  Widget _buildUsernameField() {
+  ^^^^^^
+lib/presentation/login_screen/login_screen.dart:521:3: Error: Type 'Widget' not found.
+  Widget _buildPasswordField() {
+  ^^^^^^
+lib/presentation/login_screen/login_screen.dart:601:3: Error: Type 'Widget' not found.
+  Widget _buildForgotPasswordLink() {
+  ^^^^^^
+lib/presentation/login_screen/login_screen.dart:621:3: Error: Type 'Widget' not found.
+  Widget _buildLoginButton() {
+  ^^^^^^
+lib/presentation/login_screen/login_screen.dart:668:2: Error: Type 'Widget' not found.
+ Widget _buildSocialLoginSection() {
+ ^^^^^^
+lib/presentation/login_screen/login_screen.dart:758:3: Error: Type 'Widget' not found.
+  Widget _buildSignUpLink() {
+  ^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:762:29: Error: Type '_showBackToTop' not found.
+      floatingActionButton: _showBackToTop
+                            ^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:14:7: Error: The type 'TickerProviderStateMixin' can't be mixed in.
+class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin {
+      ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:28:7: Error: The non-abstract class '_HomeMarketplaceFeedState' is missing implementations for these members:
+ - State.build
+ - _HomeMarketplaceFeedState.CompactListingCardWidget
+Try to either
+ - provide an implementation,
+ - inherit an implementation from a superclass or mixin,
+ - mark the class as abstract, or
+ - provide a 'noSuchMethod' implementation.
+
+class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
+      ^^^^^^^^^^^^^^^^^^^^^^^^^
+../programs/flutter/packages/flutter/lib/src/widgets/framework.dart:1461:10: Context: 'State.build' is defined here.
+  Widget build(BuildContext context);
+         ^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:731:8: Context: '_HomeMarketplaceFeedState.CompactListingCardWidget' is defined here.
+return CompactListingCardWidget(
+       ^^^^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:15:30: Error: 'FormState' isn't a type.
+  final _formKey = GlobalKey<FormState>();
+                             ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:15:20: Error: Method not found: 'GlobalKey'.
+  final _formKey = GlobalKey<FormState>();
+                   ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:16:31: Error: Method not found: 'TextEditingController'.
+  final _usernameController = TextEditingController(); // Changed from email to username
+                              ^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:17:31: Error: Method not found: 'TextEditingController'.
+  final _passwordController = TextEditingController();
+                              ^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:34:30: Error: Method not found: 'FocusNode'.
+  final _usernameFocusNode = FocusNode();
+                             ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:35:30: Error: Method not found: 'FocusNode'.
+  final _passwordFocusNode = FocusNode();
+                             ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:8:41: Error: No named parameter with the name 'key'.
+  const LoginScreen({Key? key}) : super(key: key);
+                                        ^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:732:48: Error: Undefined name 'listing'.
+                                      listing: listing,
+                                               ^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:733:51: Error: Undefined name 'isFavorite'.
+                                      isFavorite: isFavorite,
+                                                  ^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:734:66: Error: Undefined name 'listing'.
+                                      onTap: () => _onListingTap(listing),
+                                                                 ^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:734:52: Error: Method not found: '_onListingTap'.
+                                      onTap: () => _onListingTap(listing),
+                                                   ^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:734:46: Error: Not a constant expression.
+                                      onTap: () => _onListingTap(listing),
+                                             ^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:735:78: Error: Undefined name 'listing'.
+                                      onLongPress: () => _onListingLongPress(listing),
+                                                                             ^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:735:58: Error: Method not found: '_onListingLongPress'.
+                                      onLongPress: () => _onListingLongPress(listing),
+                                                         ^^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:735:52: Error: Not a constant expression.
+                                      onLongPress: () => _onListingLongPress(listing),
+                                                   ^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:736:76: Error: Undefined name 'listing'.
+                                      onFavoriteTap: () => _toggleFavorite(listing['id'].toString()),
+                                                                           ^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:736:90: Error: Method invocation is not a constant expression.
+                                      onFavoriteTap: () => _toggleFavorite(listing['id'].toString()),
+                                                                                         ^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:736:60: Error: Method not found: '_toggleFavorite'.
+                                      onFavoriteTap: () => _toggleFavorite(listing['id'].toString()),
+                                                           ^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:736:54: Error: Not a constant expression.
+                                      onFavoriteTap: () => _toggleFavorite(listing['id'].toString()),
+                                                     ^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:737:53: Error: Undefined name '_useGpsLocation'.
+                                      showDistance: _useGpsLocation,
+                                                    ^^^^^^^^^^^^^^^
+lib/routes/app_routes.dart:141:44: Error: Couldn't find constructor 'RegistrationScreen'.
+    registrationScreen: (context) => const RegistrationScreen(),
+                                           ^^^^^^^^^^^^^^^^^^
+lib/routes/app_routes.dart:150:45: Error: 'HomeMarketplaceFeed' is imported from both 'package:khilonjiya_com/presentation/home_marketplace_feed/home_marketplace_feed.dart' and 'package:khilonjiya_com/presentation/registration_screen/registration_screen.dart'.
+    homeMarketplaceFeed: (context) => const HomeMarketplaceFeed(),
+                                            ^^^^^^^^^^^^^^^^^^^
+lib/routes/app_routes.dart:140:37: Error: A value of type 'LoginScreen' can't be returned from a function with return type 'Widget'.
+ - 'LoginScreen' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+ - 'Widget' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
+    loginScreen: (context) => const LoginScreen(),
+                                    ^
+lib/presentation/login_screen/login_screen.dart:8:22: Error: 'Key' isn't a type.
+  const LoginScreen({Key? key}) : super(key: key);
+                     ^^^
+lib/presentation/login_screen/login_screen.dart:28:8: Error: 'AnimationController' isn't a type.
+  late AnimationController _logoAnimationController;
+       ^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:29:8: Error: 'AnimationController' isn't a type.
+  late AnimationController _formAnimationController;
+       ^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:30:8: Error: 'Animation' isn't a type.
+  late Animation<double> _logoFadeAnimation;
+       ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:31:8: Error: 'Animation' isn't a type.
+  late Animation<Offset> _formSlideAnimation;
+       ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:39:11: Error: Superclass has no method named 'initState'.
+    super.initState();
+          ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:45:42: Error: The method 'setState' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'setState'.
+    _usernameFocusNode.addListener(() => setState(() {}));
+                                         ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:46:42: Error: The method 'setState' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'setState'.
+    _passwordFocusNode.addListener(() => setState(() {}));
+                                         ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:50:32: Error: The method 'AnimationController' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'AnimationController'.
+    _logoAnimationController = AnimationController(
+                               ^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:55:32: Error: The method 'AnimationController' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'AnimationController'.
+    _formAnimationController = AnimationController(
+                               ^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:60:26: Error: The method 'Tween' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Tween'.
+    _logoFadeAnimation = Tween<double>(
+                         ^^^^^
+lib/presentation/login_screen/login_screen.dart:63:15: Error: The method 'CurvedAnimation' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'CurvedAnimation'.
+    ).animate(CurvedAnimation(
+              ^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:65:14: Error: The getter 'Curves' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Curves'.
+      curve: Curves.easeOut,
+             ^^^^^^
+lib/presentation/login_screen/login_screen.dart:68:27: Error: The method 'Tween' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Tween'.
+    _formSlideAnimation = Tween<Offset>(
+                          ^^^^^
+lib/presentation/login_screen/login_screen.dart:71:15: Error: The method 'CurvedAnimation' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'CurvedAnimation'.
+    ).animate(CurvedAnimation(
+              ^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:73:14: Error: The getter 'Curves' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Curves'.
+      curve: Curves.easeOutCubic,
+             ^^^^^^
+lib/presentation/login_screen/login_screen.dart:79:11: Error: The getter 'mounted' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'mounted'.
+      if (mounted) _formAnimationController.forward();
+          ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:91:11: Error: Superclass has no method named 'dispose'.
+    super.dispose();
+          ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:95:5: Error: The method 'setState' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'setState'.
+    setState(() {
+    ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:146:5: Error: The getter 'FocusScope' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'FocusScope'.
+    FocusScope.of(context).unfocus();
+    ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:146:19: Error: The getter 'context' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'context'.
+    FocusScope.of(context).unfocus();
+                  ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:148:5: Error: The method 'setState' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'setState'.
+    setState(() {
+    ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:164:9: Error: The method 'setState' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'setState'.
+        setState(() {
+        ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:168:13: Error: The getter 'mounted' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'mounted'.
+        if (mounted) {
+            ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:169:11: Error: The getter 'Navigator' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Navigator'.
+          Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
+          ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:169:42: Error: The getter 'context' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'context'.
+          Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
+                                         ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:172:9: Error: The method 'setState' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'setState'.
+        setState(() {
+        ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:178:7: Error: The method 'setState' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'setState'.
+      setState(() {
+      ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:183:7: Error: The method 'setState' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'setState'.
+      setState(() {
+      ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:193:5: Error: The getter 'FocusScope' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'FocusScope'.
+    FocusScope.of(context).unfocus();
+    ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:193:19: Error: The getter 'context' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'context'.
+    FocusScope.of(context).unfocus();
+                  ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:194:5: Error: The method 'setState' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'setState'.
+    setState(() {
+    ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:203:9: Error: The method 'setState' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'setState'.
+        setState(() {
+        ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:207:13: Error: The getter 'mounted' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'mounted'.
+        if (mounted) {
+            ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:208:11: Error: The getter 'Navigator' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Navigator'.
+          Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
+          ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:208:42: Error: The getter 'context' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'context'.
+          Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
+                                         ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:212:7: Error: The method 'setState' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'setState'.
+      setState(() {
+      ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:217:7: Error: The method 'setState' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'setState'.
+      setState(() {
+      ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:227:5: Error: The getter 'FocusScope' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'FocusScope'.
+    FocusScope.of(context).unfocus();
+    ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:227:19: Error: The getter 'context' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'context'.
+    FocusScope.of(context).unfocus();
+                  ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:228:5: Error: The method 'setState' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'setState'.
+    setState(() {
+    ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:237:9: Error: The method 'setState' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'setState'.
+        setState(() {
+        ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:241:13: Error: The getter 'mounted' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'mounted'.
+        if (mounted) {
+            ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:242:11: Error: The getter 'Navigator' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Navigator'.
+          Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
+          ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:242:42: Error: The getter 'context' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'context'.
+          Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
+                                         ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:246:7: Error: The method 'setState' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'setState'.
+      setState(() {
+      ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:251:7: Error: The method 'setState' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'setState'.
+      setState(() {
+      ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:259:9: Error: The getter 'mounted' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'mounted'.
+    if (mounted) {
+        ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:260:7: Error: The getter 'ScaffoldMessenger' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ScaffoldMessenger'.
+      ScaffoldMessenger.of(context).showSnackBar(
+      ^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:260:28: Error: The getter 'context' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'context'.
+      ScaffoldMessenger.of(context).showSnackBar(
+                           ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:261:9: Error: The method 'SnackBar' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SnackBar'.
+        SnackBar(
+        ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:262:20: Error: The method 'Row' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Row'.
+          content: Row(
+                   ^^^
+lib/presentation/login_screen/login_screen.dart:264:15: Error: The method 'Icon' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Icon'.
+              Icon(
+              ^^^^
+lib/presentation/login_screen/login_screen.dart:265:17: Error: The getter 'Icons' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Icons'.
+                Icons.error_outline,
+                ^^^^^
+lib/presentation/login_screen/login_screen.dart:266:24: Error: The getter 'Colors' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Colors'.
+                color: Colors.white,
+                       ^^^^^^
+lib/presentation/login_screen/login_screen.dart:269:15: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+              SizedBox(width: 12),
+              ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:270:15: Error: The method 'Expanded' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Expanded'.
+              Expanded(
+              ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:271:24: Error: The method 'Text' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Text'.
+                child: Text(
+                       ^^^^
+lib/presentation/login_screen/login_screen.dart:273:26: Error: The method 'TextStyle' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'TextStyle'.
+                  style: TextStyle(
+                         ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:274:28: Error: The getter 'Colors' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Colors'.
+                    color: Colors.white,
+                           ^^^^^^
+lib/presentation/login_screen/login_screen.dart:282:21: Error: The getter 'SnackBarBehavior' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'SnackBarBehavior'.
+          behavior: SnackBarBehavior.floating,
+                    ^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:283:19: Error: The getter 'EdgeInsets' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'EdgeInsets'.
+          margin: EdgeInsets.all(4.w),
+                  ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:284:18: Error: The method 'RoundedRectangleBorder' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'RoundedRectangleBorder'.
+          shape: RoundedRectangleBorder(
+                 ^^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:285:27: Error: The getter 'BorderRadius' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'BorderRadius'.
+            borderRadius: BorderRadius.circular(12),
+                          ^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:316:37: Error: Can't use 'getSuccessColor' because it is declared more than once.
+          backgroundColor: AppTheme.getSuccessColor(true),
+                                    ^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:294:9: Error: The getter 'mounted' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'mounted'.
+    if (mounted) {
+        ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:295:7: Error: The getter 'ScaffoldMessenger' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ScaffoldMessenger'.
+      ScaffoldMessenger.of(context).showSnackBar(
+      ^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:295:28: Error: The getter 'context' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'context'.
+      ScaffoldMessenger.of(context).showSnackBar(
+                           ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:296:9: Error: The method 'SnackBar' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SnackBar'.
+        SnackBar(
+        ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:297:20: Error: The method 'Row' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Row'.
+          content: Row(
+                   ^^^
+lib/presentation/login_screen/login_screen.dart:299:15: Error: The method 'Icon' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Icon'.
+              Icon(
+              ^^^^
+lib/presentation/login_screen/login_screen.dart:300:17: Error: The getter 'Icons' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Icons'.
+                Icons.check_circle,
+                ^^^^^
+lib/presentation/login_screen/login_screen.dart:301:24: Error: The getter 'Colors' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Colors'.
+                color: Colors.white,
+                       ^^^^^^
+lib/presentation/login_screen/login_screen.dart:304:15: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+              SizedBox(width: 12),
+              ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:305:15: Error: The method 'Expanded' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Expanded'.
+              Expanded(
+              ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:306:24: Error: The method 'Text' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Text'.
+                child: Text(
+                       ^^^^
+lib/presentation/login_screen/login_screen.dart:308:26: Error: The method 'TextStyle' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'TextStyle'.
+                  style: TextStyle(
+                         ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:309:28: Error: The getter 'Colors' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Colors'.
+                    color: Colors.white,
+                           ^^^^^^
+lib/presentation/login_screen/login_screen.dart:317:21: Error: The getter 'SnackBarBehavior' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'SnackBarBehavior'.
+          behavior: SnackBarBehavior.floating,
+                    ^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:318:19: Error: The getter 'EdgeInsets' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'EdgeInsets'.
+          margin: EdgeInsets.all(4.w),
+                  ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:319:18: Error: The method 'RoundedRectangleBorder' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'RoundedRectangleBorder'.
+          shape: RoundedRectangleBorder(
+                 ^^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:320:27: Error: The getter 'BorderRadius' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'BorderRadius'.
+            borderRadius: BorderRadius.circular(12),
+                          ^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:329:16: Error: 'BuildContext' isn't a type.
+  Widget build(BuildContext context) {
+               ^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:337:28: Error: Couldn't find constructor 'ClampingScrollPhysics'.
+            physics: const ClampingScrollPhysics(),
+                           ^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:330:12: Error: The method 'Scaffold' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Scaffold'.
+    return Scaffold(
+           ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:331:24: Error: The getter 'Colors' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Colors'.
+      backgroundColor: Colors.white,
+                       ^^^^^^
+lib/presentation/login_screen/login_screen.dart:333:13: Error: The method 'SafeArea' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SafeArea'.
+      body: SafeArea(
+            ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:334:16: Error: The method 'GestureDetector' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'GestureDetector'.
+        child: GestureDetector(
+               ^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:336:18: Error: The method 'SingleChildScrollView' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SingleChildScrollView'.
+          child: SingleChildScrollView(
+                 ^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:338:20: Error: The method 'ConstrainedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'ConstrainedBox'.
+            child: ConstrainedBox(
+                   ^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:339:28: Error: The method 'BoxConstraints' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'BoxConstraints'.
+              constraints: BoxConstraints(
+                           ^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:340:28: Error: The getter 'MediaQuery' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'MediaQuery'.
+                minHeight: MediaQuery.of(context).size.height -
+                           ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:341:21: Error: The getter 'MediaQuery' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'MediaQuery'.
+                    MediaQuery.of(context).padding.top -
+                    ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:342:21: Error: The getter 'MediaQuery' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'MediaQuery'.
+                    MediaQuery.of(context).padding.bottom,
+                    ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:344:22: Error: The method 'Padding' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Padding'.
+              child: Padding(
+                     ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:345:26: Error: The getter 'EdgeInsets' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'EdgeInsets'.
+                padding: EdgeInsets.symmetric(horizontal: 6.w),
+                         ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:346:24: Error: The method 'Column' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Column'.
+                child: Column(
+                       ^^^^^^
+lib/presentation/login_screen/login_screen.dart:347:39: Error: The getter 'CrossAxisAlignment' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'CrossAxisAlignment'.
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      ^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:349:21: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+                    SizedBox(height: 6.h),
+                    ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:351:21: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+                    SizedBox(height: 4.h),
+                    ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:353:21: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+                    SizedBox(height: 4.h),
+                    ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:355:21: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+                    SizedBox(height: 4.h),
+                    ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:357:21: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+                    SizedBox(height: 4.h),
+                    ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:335:24: Error: The getter 'FocusScope' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'FocusScope'.
+          onTap: () => FocusScope.of(context).unfocus(),
+                       ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:379:28: Error: Can't use 'getAccentColor' because it is declared more than once.
+                  AppTheme.getAccentColor(true),
+                           ^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:369:12: Error: The method 'FadeTransition' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'FadeTransition'.
+    return FadeTransition(
+           ^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:371:14: Error: The method 'Column' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Column'.
+      child: Column(
+             ^^^^^^
+lib/presentation/login_screen/login_screen.dart:374:11: Error: The method 'ShaderMask' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'ShaderMask'.
+          ShaderMask(
+          ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:383:20: Error: The method 'Text' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Text'.
+            child: Text(
+                   ^^^^
+lib/presentation/login_screen/login_screen.dart:385:22: Error: The method 'TextStyle' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'TextStyle'.
+              style: TextStyle(
+                     ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:388:24: Error: The getter 'Colors' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Colors'.
+                color: Colors.white,
+                       ^^^^^^
+lib/presentation/login_screen/login_screen.dart:376:22: Error: The method 'LinearGradient' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'LinearGradient'.
+              return LinearGradient(
+                     ^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:393:11: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+          SizedBox(height: 1.h),
+          ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:395:11: Error: The method 'Text' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Text'.
+          Text(
+          ^^^^
+lib/presentation/login_screen/login_screen.dart:397:20: Error: The method 'TextStyle' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'TextStyle'.
+            style: TextStyle(
+                   ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:404:11: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+          SizedBox(height: 0.5.h),
+          ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:405:11: Error: The method 'Text' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Text'.
+          Text(
+          ^^^^
+lib/presentation/login_screen/login_screen.dart:407:20: Error: The method 'TextStyle' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'TextStyle'.
+            style: TextStyle(
+                   ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:411:26: Error: The getter 'FontStyle' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'FontStyle'.
+              fontStyle: FontStyle.italic,
+                         ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:414:11: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+          SizedBox(height: 3.h),
+          ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:415:11: Error: The method 'Text' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Text'.
+          Text(
+          ^^^^
+lib/presentation/login_screen/login_screen.dart:422:11: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+          SizedBox(height: 1.h),
+          ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:423:11: Error: The method 'Text' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Text'.
+          Text(
+          ^^^^
+lib/presentation/login_screen/login_screen.dart:435:12: Error: The method 'SlideTransition' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SlideTransition'.
+    return SlideTransition(
+           ^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:437:14: Error: The method 'Form' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Form'.
+      child: Form(
+             ^^^^
+lib/presentation/login_screen/login_screen.dart:439:16: Error: The method 'Column' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Column'.
+        child: Column(
+               ^^^^^^
+lib/presentation/login_screen/login_screen.dart:440:31: Error: The getter 'CrossAxisAlignment' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'CrossAxisAlignment'.
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+                              ^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:443:13: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+            SizedBox(height: 2.h),
+            ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:445:13: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+            SizedBox(height: 1.h),
+            ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:447:13: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+            SizedBox(height: 3.h),
+            ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:456:12: Error: The method 'Column' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Column'.
+    return Column(
+           ^^^^^^
+lib/presentation/login_screen/login_screen.dart:457:27: Error: The getter 'CrossAxisAlignment' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'CrossAxisAlignment'.
+      crossAxisAlignment: CrossAxisAlignment.start,
+                          ^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:459:9: Error: The method 'TextFormField' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'TextFormField'.
+        TextFormField(
+        ^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:467:23: Error: The method 'InputDecoration' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'InputDecoration'.
+          decoration: InputDecoration(
+                      ^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:470:25: Error: The method 'Padding' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Padding'.
+            prefixIcon: Padding(
+                        ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:471:24: Error: The getter 'EdgeInsets' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'EdgeInsets'.
+              padding: EdgeInsets.all(3.w),
+                       ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:472:22: Error: The method 'Icon' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Icon'.
+              child: Icon(
+                     ^^^^
+lib/presentation/login_screen/login_screen.dart:473:33: Error: The getter 'Icons' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Icons'.
+                _isEmailInput ? Icons.email_outlined : Icons.phone_outlined,
+                                ^^^^^
+lib/presentation/login_screen/login_screen.dart:473:56: Error: The getter 'Icons' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Icons'.
+                _isEmailInput ? Icons.email_outlined : Icons.phone_outlined,
+                                                       ^^^^^
+lib/presentation/login_screen/login_screen.dart:479:21: Error: The method 'OutlineInputBorder' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'OutlineInputBorder'.
+            border: OutlineInputBorder(
+                    ^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:480:29: Error: The getter 'BorderRadius' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'BorderRadius'.
+              borderRadius: BorderRadius.circular(12),
+                            ^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:481:27: Error: The method 'BorderSide' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'BorderSide'.
+              borderSide: BorderSide(
+                          ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:485:28: Error: The method 'OutlineInputBorder' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'OutlineInputBorder'.
+            focusedBorder: OutlineInputBorder(
+                           ^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:486:29: Error: The getter 'BorderRadius' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'BorderRadius'.
+              borderRadius: BorderRadius.circular(12),
+                            ^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:487:27: Error: The method 'BorderSide' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'BorderSide'.
+              borderSide: BorderSide(
+                          ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:492:26: Error: The method 'OutlineInputBorder' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'OutlineInputBorder'.
+            errorBorder: OutlineInputBorder(
+                         ^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:493:29: Error: The getter 'BorderRadius' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'BorderRadius'.
+              borderRadius: BorderRadius.circular(12),
+                            ^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:494:27: Error: The method 'BorderSide' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'BorderSide'.
+              borderSide: BorderSide(
+                          ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:502:13: Error: The getter 'FocusScope' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'FocusScope'.
+            FocusScope.of(context).requestFocus(_passwordFocusNode);
+            ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:502:27: Error: The getter 'context' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'context'.
+            FocusScope.of(context).requestFocus(_passwordFocusNode);
+                          ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:506:11: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+          SizedBox(height: 1.h),
+          ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:507:11: Error: The method 'Padding' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Padding'.
+          Padding(
+          ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:508:22: Error: The getter 'EdgeInsets' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'EdgeInsets'.
+            padding: EdgeInsets.only(left: 3.w),
+                     ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:509:20: Error: The method 'Text' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Text'.
+            child: Text(
+                   ^^^^
+lib/presentation/login_screen/login_screen.dart:522:12: Error: The method 'Column' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Column'.
+    return Column(
+           ^^^^^^
+lib/presentation/login_screen/login_screen.dart:523:27: Error: The getter 'CrossAxisAlignment' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'CrossAxisAlignment'.
+      crossAxisAlignment: CrossAxisAlignment.start,
+                          ^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:525:9: Error: The method 'TextFormField' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'TextFormField'.
+        TextFormField(
+        ^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:533:23: Error: The method 'InputDecoration' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'InputDecoration'.
+          decoration: InputDecoration(
+                      ^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:536:25: Error: The method 'Padding' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Padding'.
+            prefixIcon: Padding(
+                        ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:537:24: Error: The getter 'EdgeInsets' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'EdgeInsets'.
+              padding: EdgeInsets.all(3.w),
+                       ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:538:22: Error: The method 'Icon' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Icon'.
+              child: Icon(
+                     ^^^^
+lib/presentation/login_screen/login_screen.dart:539:17: Error: The getter 'Icons' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Icons'.
+                Icons.lock_outline,
+                ^^^^^
+lib/presentation/login_screen/login_screen.dart:544:25: Error: The method 'IconButton' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'IconButton'.
+            suffixIcon: IconButton(
+                        ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:545:21: Error: The method 'Icon' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Icon'.
+              icon: Icon(
+                    ^^^^
+lib/presentation/login_screen/login_screen.dart:546:38: Error: The getter 'Icons' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Icons'.
+                _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                                     ^^^^^
+lib/presentation/login_screen/login_screen.dart:546:61: Error: The getter 'Icons' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Icons'.
+                _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                                                            ^^^^^
+lib/presentation/login_screen/login_screen.dart:551:17: Error: The method 'setState' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'setState'.
+                setState(() {
+                ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:557:21: Error: The method 'OutlineInputBorder' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'OutlineInputBorder'.
+            border: OutlineInputBorder(
+                    ^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:558:29: Error: The getter 'BorderRadius' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'BorderRadius'.
+              borderRadius: BorderRadius.circular(12),
+                            ^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:559:27: Error: The method 'BorderSide' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'BorderSide'.
+              borderSide: BorderSide(
+                          ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:563:28: Error: The method 'OutlineInputBorder' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'OutlineInputBorder'.
+            focusedBorder: OutlineInputBorder(
+                           ^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:564:29: Error: The getter 'BorderRadius' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'BorderRadius'.
+              borderRadius: BorderRadius.circular(12),
+                            ^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:565:27: Error: The method 'BorderSide' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'BorderSide'.
+              borderSide: BorderSide(
+                          ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:570:26: Error: The method 'OutlineInputBorder' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'OutlineInputBorder'.
+            errorBorder: OutlineInputBorder(
+                         ^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:571:29: Error: The getter 'BorderRadius' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'BorderRadius'.
+              borderRadius: BorderRadius.circular(12),
+                            ^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:572:27: Error: The method 'BorderSide' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'BorderSide'.
+              borderSide: BorderSide(
+                          ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:586:11: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+          SizedBox(height: 1.h),
+          ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:587:11: Error: The method 'Padding' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Padding'.
+          Padding(
+          ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:588:22: Error: The getter 'EdgeInsets' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'EdgeInsets'.
+            padding: EdgeInsets.only(left: 3.w),
+                     ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:589:20: Error: The method 'Text' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Text'.
+            child: Text(
+                   ^^^^
+lib/presentation/login_screen/login_screen.dart:602:12: Error: The method 'Align' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Align'.
+    return Align(
+           ^^^^^
+lib/presentation/login_screen/login_screen.dart:603:18: Error: The getter 'Alignment' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Alignment'.
+      alignment: Alignment.centerRight,
+                 ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:604:14: Error: The method 'TextButton' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'TextButton'.
+      child: TextButton(
+             ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:610:16: Error: The method 'Text' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Text'.
+        child: Text(
+               ^^^^
+lib/presentation/login_screen/login_screen.dart:606:11: Error: The getter 'FocusScope' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'FocusScope'.
+          FocusScope.of(context).unfocus();
+          ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:606:25: Error: The getter 'context' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'context'.
+          FocusScope.of(context).unfocus();
+                        ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:630:28: Error: Can't use 'getAccentColor' because it is declared more than once.
+                  AppTheme.getAccentColor(true),
+                           ^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:654:61: Error: Undefined name 'Colors'.
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                            ^^^^^^
+lib/presentation/login_screen/login_screen.dart:654:31: Error: Method not found: 'AlwaysStoppedAnimation'.
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ^^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:652:30: Error: Couldn't find constructor 'CircularProgressIndicator'.
+                child: const CircularProgressIndicator(
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:622:12: Error: The method 'Container' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Container'.
+    return Container(
+           ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:624:19: Error: The method 'BoxDecoration' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'BoxDecoration'.
+      decoration: BoxDecoration(
+                  ^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:625:23: Error: The getter 'BorderRadius' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'BorderRadius'.
+        borderRadius: BorderRadius.circular(12),
+                      ^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:627:15: Error: The method 'LinearGradient' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'LinearGradient'.
+            ? LinearGradient(
+              ^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:635:14: Error: The method 'ElevatedButton' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'ElevatedButton'.
+      child: ElevatedButton(
+             ^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:637:16: Error: The getter 'ElevatedButton' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ElevatedButton'.
+        style: ElevatedButton.styleFrom(
+               ^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:639:17: Error: The getter 'Colors' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Colors'.
+              ? Colors.transparent
+                ^^^^^^
+lib/presentation/login_screen/login_screen.dart:641:28: Error: The getter 'Colors' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Colors'.
+          foregroundColor: Colors.white,
+                           ^^^^^^
+lib/presentation/login_screen/login_screen.dart:644:18: Error: The method 'RoundedRectangleBorder' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'RoundedRectangleBorder'.
+          shape: RoundedRectangleBorder(
+                 ^^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:645:27: Error: The getter 'BorderRadius' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'BorderRadius'.
+            borderRadius: BorderRadius.circular(12),
+                          ^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:649:15: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+            ? SizedBox(
+              ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:657:15: Error: The method 'Text' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Text'.
+            : Text(
+              ^^^^
+lib/presentation/login_screen/login_screen.dart:660:26: Error: The getter 'Colors' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Colors'.
+                  color: Colors.white,
+                         ^^^^^^
+lib/presentation/login_screen/login_screen.dart:669:12: Error: The method 'Column' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Column'.
+    return Column(
+           ^^^^^^
+lib/presentation/login_screen/login_screen.dart:671:9: Error: The method 'Row' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Row'.
+        Row(
+        ^^^
+lib/presentation/login_screen/login_screen.dart:673:13: Error: The method 'Expanded' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Expanded'.
+            Expanded(
+            ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:674:22: Error: The method 'Divider' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Divider'.
+              child: Divider(
+                     ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:679:13: Error: The method 'Padding' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Padding'.
+            Padding(
+            ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:680:24: Error: The getter 'EdgeInsets' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'EdgeInsets'.
+              padding: EdgeInsets.symmetric(horizontal: 4.w),
+                       ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:681:22: Error: The method 'Text' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Text'.
+              child: Text(
+                     ^^^^
+lib/presentation/login_screen/login_screen.dart:688:13: Error: The method 'Expanded' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Expanded'.
+            Expanded(
+            ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:689:22: Error: The method 'Divider' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Divider'.
+              child: Divider(
+                     ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:696:9: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+        SizedBox(height: 3.h),
+        ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:697:9: Error: The method 'Row' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Row'.
+        Row(
+        ^^^
+lib/presentation/login_screen/login_screen.dart:699:13: Error: The method 'Expanded' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Expanded'.
+            Expanded(
+            ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:700:22: Error: The getter 'OutlinedButton' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'OutlinedButton'.
+              child: OutlinedButton.icon(
+                     ^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:702:23: Error: The method 'Icon' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Icon'.
+                icon: Icon(
+                      ^^^^
+lib/presentation/login_screen/login_screen.dart:703:19: Error: The getter 'Icons' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Icons'.
+                  Icons.g_mobiledata,
+                  ^^^^^
+lib/presentation/login_screen/login_screen.dart:707:24: Error: The method 'Text' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Text'.
+                label: Text(
+                       ^^^^
+lib/presentation/login_screen/login_screen.dart:713:24: Error: The getter 'OutlinedButton' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'OutlinedButton'.
+                style: OutlinedButton.styleFrom(
+                       ^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:714:28: Error: The getter 'EdgeInsets' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'EdgeInsets'.
+                  padding: EdgeInsets.symmetric(vertical: 3.w),
+                           ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:715:25: Error: The method 'BorderSide' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'BorderSide'.
+                  side: BorderSide(
+                        ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:719:26: Error: The method 'RoundedRectangleBorder' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'RoundedRectangleBorder'.
+                  shape: RoundedRectangleBorder(
+                         ^^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:720:35: Error: The getter 'BorderRadius' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'BorderRadius'.
+                    borderRadius: BorderRadius.circular(12),
+                                  ^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:725:13: Error: The method 'SizedBox' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'SizedBox'.
+            SizedBox(width: 3.w),
+            ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:726:13: Error: The method 'Expanded' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Expanded'.
+            Expanded(
+            ^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:727:22: Error: The getter 'OutlinedButton' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'OutlinedButton'.
+              child: OutlinedButton.icon(
+                     ^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:729:23: Error: The method 'Icon' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Icon'.
+                icon: Icon(
+                      ^^^^
+lib/presentation/login_screen/login_screen.dart:730:19: Error: The getter 'Icons' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Icons'.
+                  Icons.facebook,
+                  ^^^^^
+lib/presentation/login_screen/login_screen.dart:734:24: Error: The method 'Text' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Text'.
+                label: Text(
+                       ^^^^
+lib/presentation/login_screen/login_screen.dart:740:24: Error: The getter 'OutlinedButton' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'OutlinedButton'.
+                style: OutlinedButton.styleFrom(
+                       ^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:741:28: Error: The getter 'EdgeInsets' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'EdgeInsets'.
+                  padding: EdgeInsets.symmetric(vertical: 3.w),
+                           ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:742:25: Error: The method 'BorderSide' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'BorderSide'.
+                  side: BorderSide(
+                        ^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:746:26: Error: The method 'RoundedRectangleBorder' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'RoundedRectangleBorder'.
+                  shape: RoundedRectangleBorder(
+                         ^^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:747:35: Error: The getter 'BorderRadius' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'BorderRadius'.
+                    borderRadius: BorderRadius.circular(12),
+                                  ^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:759:12: Error: The method 'Row' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Row'.
+    return Row(
+           ^^^
+lib/presentation/login_screen/login_screen.dart:760:26: Error: The getter 'MainAxisAlignment' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'MainAxisAlignment'.
+      mainAxisAlignment: MainAxisAlignment.center,
+                         ^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:762:9: Error: The method 'Text' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Text'.
+        Text(
+        ^^^^
+lib/presentation/login_screen/login_screen.dart:768:9: Error: The method 'GestureDetector' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'GestureDetector'.
+        GestureDetector(
+        ^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:771:13: Error: The getter 'Navigator' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'Navigator'.
+            Navigator.pushNamed(context, AppRoutes.registrationScreen);
+            ^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:771:33: Error: The getter 'context' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'context'.
+            Navigator.pushNamed(context, AppRoutes.registrationScreen);
+                                ^^^^^^^
+lib/presentation/login_screen/login_screen.dart:773:18: Error: The method 'Text' isn't defined for the class '_LoginScreenState'.
+ - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'Text'.
+          child: Text(
+                 ^^^^
+lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:165:31: Error: Can't use 'getSuccessColor' because it is declared more than once.
+              color: AppTheme.getSuccessColor(true),
+                              ^^^^^^^^^^^^^^^
+lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:172:35: Error: Can't use 'getSuccessColor' because it is declared more than once.
+        backgroundColor: AppTheme.getSuccessColor(true),
+                                  ^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:228:27: Error: The value 'null' can't be returned from a function with return type 'Map<String, dynamic>' because 'Map<String, dynamic>' is not nullable.
+ - 'Map' is from 'dart:core'.
+            orElse: () => null,
+                          ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:255:46: Error: The method 'getTrendingListings' isn't defined for the class 'ListingService'.
+ - 'ListingService' is from 'package:khilonjiya_com/utils/listing_service.dart' ('lib/utils/listing_service.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'getTrendingListings'.
+      final trending = await _listingService.getTrendingListings(limit: 5);
+                                             ^^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:277:42: Error: The method 'getNearbyListings' isn't defined for the class 'ListingService'.
+ - 'ListingService' is from 'package:khilonjiya_com/utils/listing_service.dart' ('lib/utils/listing_service.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'getNearbyListings'.
+        listings = await _listingService.getNearbyListings(
+                                         ^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:363:39: Error: A value of type 'String' can't be assigned to a variable of type 'int'.
+            .map<String>((fav) => fav['listing_id'].toString())
+                                      ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:478:46: Error: The method 'getNearbyListings' isn't defined for the class 'ListingService'.
+ - 'ListingService' is from 'package:khilonjiya_com/utils/listing_service.dart' ('lib/utils/listing_service.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'getNearbyListings'.
+        moreListings = await _listingService.getNearbyListings(
+                                             ^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:700:34: Error: Can't use 'getSuccessColor' because it is declared more than once.
+      backgroundColor = AppTheme.getSuccessColor(true);
+                                 ^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:734:52: Error: Not a constant expression.
+                                      onTap: () => _onListingTap(listing),
+                                                   ^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:734:52: Error: Method invocation is not a constant expression.
+                                      onTap: () => _onListingTap(listing),
+                                                   ^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:735:58: Error: Not a constant expression.
+                                      onLongPress: () => _onListingLongPress(listing),
+                                                         ^^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:735:58: Error: Method invocation is not a constant expression.
+                                      onLongPress: () => _onListingLongPress(listing),
+                                                         ^^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:736:60: Error: Not a constant expression.
+                                      onFavoriteTap: () => _toggleFavorite(listing['id'].toString()),
+                                                           ^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:736:60: Error: Method invocation is not a constant expression.
+                                      onFavoriteTap: () => _toggleFavorite(listing['id'].toString()),
+                                                           ^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:737:53: Error: Not a constant expression.
+                                      showDistance: _useGpsLocation,
+                                                    ^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:747:32: Error: Constant expression expected.
+Try inserting 'const'.
+                        child: SizedBox(height: 10.h),
+                               ^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:764:26: Error: Undefined name '_scrollToTop'.
+              onPressed: _scrollToTop,
+                         ^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:765:41: Error: Not a constant expression.
+              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+                                        ^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:765:52: Error: Not a constant expression.
+              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+                                                   ^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:770:32: Error: Method invocation is not a constant expression.
+                HapticFeedback.lightImpact();
+                               ^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:771:37: Error: Undefined name 'context'.
+                Navigator.pushNamed(context, AppRoutes.createListing);
+                                    ^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:771:27: Error: Method invocation is not a constant expression.
+                Navigator.pushNamed(context, AppRoutes.createListing);
+                          ^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:769:26: Error: Not a constant expression.
+              onPressed: () {
+                         ^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:773:41: Error: Not a constant expression.
+              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+                                        ^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:773:52: Error: Not a constant expression.
+              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+                                                   ^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:790:37: Error: Undefined name '_selectedLocation'.
+                  selectedLocation: _selectedLocation,
+                                    ^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:791:30: Error: Undefined name '_defaultLocations'.
+                  locations: _defaultLocations,
+                             ^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:792:30: Error: Undefined name '_isLoadingLocation'.
+                  isLoading: _isLoadingLocation,
+                             ^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:793:35: Error: Undefined name '_useGpsLocation'.
+                  useGpsLocation: _useGpsLocation,
+                                  ^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:794:38: Error: Undefined name '_onLocationChanged'.
+                  onLocationChanged: _onLocationChanged,
+                                     ^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:801:24: Error: Undefined name '_toggleSearch'.
+                onTap: _toggleSearch,
+                       ^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:806:28: Error: Undefined name '_showSearch'.
+                    color: _showSearch 
+                           ^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:812:21: Error: Undefined name '_showSearch'.
+                    _showSearch ? Icons.close : Icons.search,
+                    ^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:813:28: Error: Undefined name '_showSearch'.
+                    color: _showSearch 
+                           ^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:827:39: Error: Undefined name 'context'.
+                  Navigator.pushNamed(context, AppRoutes.notificationsScreen);
+                                      ^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:863:15: Error: Undefined name '_showSearch'.
+          if (_showSearch) ...[
+              ^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:885:34: Error: Undefined name '_onSearchChanged'.
+                      onChanged: _onSearchChanged,
+                                 ^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:897:23: Error: Undefined name '_activeFilters'.
+                  if (_activeFilters.isNotEmpty)
+                      ^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:905:28: Error: Undefined name '_activeFilters'.
+                        '${_activeFilters.length}',
+                           ^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:922:20: Error: Undefined name '_isLoadingCategories'.
+            child: _isLoadingCategories
+                   ^^^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:931:32: Error: Undefined name '_categories'.
+                    itemCount: _categories.length,
+                               ^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:936:37: Error: Undefined name '_categories'.
+                          category: _categories[index],
+                                    ^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:937:60: Error: Undefined name '_categories'.
+                          isSelected: _selectedCategory == _categories[index]['name'],
+                                                           ^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:937:39: Error: Undefined name '_selectedCategory'.
+                          isSelected: _selectedCategory == _categories[index]['name'],
+                                      ^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:938:60: Error: Undefined name '_categories'.
+                          onTap: () => _onCategorySelected(_categories[index]['name']),
+                                                           ^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:938:40: Error: Method not found: '_onCategorySelected'.
+                          onTap: () => _onCategorySelected(_categories[index]['name']),
+                                       ^^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:946:15: Error: Undefined name '_useGpsLocation'.
+          if (_useGpsLocation && _currentPosition != null) ...[
+              ^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:946:34: Error: Undefined name '_currentPosition'.
+          if (_useGpsLocation && _currentPosition != null) ...[
+                                 ^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:963:31: Error: Undefined name '_selectedDistance'.
+                    'Within ${_selectedDistance.toInt()} km',
+                              ^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:970:28: Error: Undefined name '_showAdvancedFilters'.
+                    onTap: _showAdvancedFilters,
+                           ^^^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1011:25: Error: Undefined name '_currentIndex'.
+          currentIndex: _currentIndex,
+                        ^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1024:15: Error: Setter not found: '_currentIndex'.
+              _currentIndex = index;
+              ^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1023:13: Error: Method not found: 'setState'.
+            setState(() {
+            ^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1034:37: Error: Undefined name 'context'.
+                Navigator.pushNamed(context, AppRoutes.searchAndFilters);
+                                    ^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1037:37: Error: Undefined name 'context'.
+                Navigator.pushNamed(context, AppRoutes.createListing);
+                                    ^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1040:37: Error: Undefined name 'context'.
+                Navigator.pushNamed(context, AppRoutes.chatMessaging);
+                                    ^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1043:37: Error: Undefined name 'context'.
+                Navigator.pushNamed(context, AppRoutes.userProfile);
+                                    ^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1053:26: Error: Undefined name '_currentIndex'.
+                  color: _currentIndex == 0
+                         ^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1059:19: Error: Undefined name '_currentIndex'.
+                  _currentIndex == 0 ? Icons.home : Icons.home_outlined,
+                  ^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1070:26: Error: Undefined name '_currentIndex'.
+                  color: _currentIndex == 1
+                         ^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1076:19: Error: Undefined name '_currentIndex'.
+                  _currentIndex == 1 ? Icons.search : Icons.search_outlined,
+                  ^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1087:26: Error: Undefined name '_currentIndex'.
+                  color: _currentIndex == 2
+                         ^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1093:19: Error: Undefined name '_currentIndex'.
+                  _currentIndex == 2 ? Icons.add_circle : Icons.add_circle_outline,
+                  ^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1104:26: Error: Undefined name '_currentIndex'.
+                  color: _currentIndex == 3
+                         ^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1112:23: Error: Undefined name '_currentIndex'.
+                      _currentIndex == 3 ? Icons.chat : Icons.chat_outlined,
+                      ^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1138:26: Error: Undefined name '_currentIndex'.
+                  color: _currentIndex == 4
+                         ^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1144:19: Error: Undefined name '_currentIndex'.
+                  _currentIndex == 4 ? Icons.person : Icons.person_outlined,
+                  ^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1185:15: Error: Undefined name '_searchQuery'.
+              _searchQuery.isNotEmpty
+              ^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1186:45: Error: Undefined name '_searchQuery'.
+                  ? 'No results found for "$_searchQuery"'
+                                            ^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1200:23: Error: Setter not found: '_selectedCategory'.
+                      _selectedCategory = 'All';
+                      ^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1201:23: Error: Setter not found: '_searchQuery'.
+                      _searchQuery = '';
+                      ^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1202:23: Error: Undefined name '_activeFilters'.
+                      _activeFilters.clear();
+                      ^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1203:23: Error: Setter not found: '_showSearch'.
+                      _showSearch = false;
+                      ^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1199:21: Error: Method not found: 'setState'.
+                    setState(() {
+                    ^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1205:21: Error: Method not found: '_loadListings'.
+                    _loadListings();
+                    ^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1213:41: Error: Undefined name 'context'.
+                    Navigator.pushNamed(context, AppRoutes.createListing);
+                                        ^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1249:5: Error: Undefined name '_headerAnimationController'.
+    _headerAnimationController.dispose();
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1250:5: Error: Undefined name '_listAnimationController'.
+    _listAnimationController.dispose();
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1251:5: Error: Undefined name '_scrollController'.
+    _scrollController.dispose();
+    ^^^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1252:5: Error: Expected identifier, but got 'super'.
+    super.dispose();
+    ^^^^^
+lib/presentation/registration_screen/registration_screen.dart:27:12: Error: The method 'is_' isn't defined for the class 'PostgrestFilterBuilder<List<Map<String, dynamic>>>'.
+ - 'PostgrestFilterBuilder' is from 'package:postgrest/src/postgrest_builder.dart' ('../.pub-cache/hosted/pub.dev/postgrest-2.4.2/lib/src/postgrest_builder.dart').
+ - 'List' is from 'dart:core'.
+ - 'Map' is from 'dart:core'.
+Try correcting the name to the name of an existing method, or defining a method named 'is_'.
+          .is_('parent_category_id', null)
+           ^^^
+lib/presentation/registration_screen/registration_screen.dart:790:36: Error: The method 'ListingCardWidget' isn't defined for the class '_HomeMarketplaceFeedState'.
+ - '_HomeMarketplaceFeedState' is from 'package:khilonjiya_com/presentation/registration_screen/registration_screen.dart' ('lib/presentation/registration_screen/registration_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'ListingCardWidget'.
+                            child: ListingCardWidget(
+                                   ^^^^^^^^^^^^^^^^^
+lib/presentation/registration_screen/registration_screen.dart:832:24: Error: The method 'LocationSelectorWidget' isn't defined for the class '_HomeMarketplaceFeedState'.
+ - '_HomeMarketplaceFeedState' is from 'package:khilonjiya_com/presentation/registration_screen/registration_screen.dart' ('lib/presentation/registration_screen/registration_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'LocationSelectorWidget'.
+                child: LocationSelectorWidget(
+                       ^^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/registration_screen/registration_screen.dart:924:28: Error: The method 'CategoryChipWidget' isn't defined for the class '_HomeMarketplaceFeedState'.
+ - '_HomeMarketplaceFeedState' is from 'package:khilonjiya_com/presentation/registration_screen/registration_screen.dart' ('lib/presentation/registration_screen/registration_screen.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'CategoryChipWidget'.
+                    child: CategoryChipWidget(
+                           ^^^^^^^^^^^^^^^^^^
+lib/presentation/chat_messaging/chat_messaging.dart:562:39: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                      color: AppTheme.getSuccessColor(
+                                      ^^^^^^^^^^^^^^^
+lib/presentation/chat_messaging/chat_messaging.dart:607:40: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                            ? AppTheme.getSuccessColor(
+                                       ^^^^^^^^^^^^^^^
+lib/presentation/chat_messaging/chat_messaging.dart:724:41: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                        color: AppTheme.getSuccessColor(
+                                        ^^^^^^^^^^^^^^^
+lib/presentation/chat_messaging/chat_messaging.dart:733:47: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                              color: AppTheme.getSuccessColor(
+                                              ^^^^^^^^^^^^^^^
+lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:285:41: Error: Can't use 'getSuccessColor' because it is declared more than once.
+              backgroundColor: AppTheme.getSuccessColor(true),
+                                        ^^^^^^^^^^^^^^^
+lib/presentation/create_listing/create_listing.dart:151:31: Error: Can't use 'getSuccessColor' because it is declared more than once.
+              color: AppTheme.getSuccessColor(true),
+                              ^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/widgets/compact_listing_card_widget.dart:95:43: Error: Can't use 'getWarningColor' because it is declared more than once.
+                          color: AppTheme.getWarningColor(true),
+                                          ^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/widgets/compact_listing_card_widget.dart:279:43: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                          color: AppTheme.getSuccessColor(true),
+                                          ^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/widgets/trending_section_widget.dart:40:34: Error: Can't use 'getAccentColor' because it is declared more than once.
+                        AppTheme.getAccentColor(true),
+                                 ^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/widgets/trending_section_widget.dart:206:38: Error: Can't use 'getWarningColor' because it is declared more than once.
+                            AppTheme.getWarningColor(true),
+                                     ^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/widgets/trending_section_widget.dart:213:45: Error: Can't use 'getWarningColor' because it is declared more than once.
+                            color: AppTheme.getWarningColor(true).withAlpha(77),
+                                            ^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/widgets/trending_section_widget.dart:347:45: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                            color: AppTheme.getSuccessColor(true).withAlpha(26),
+                                            ^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/widgets/trending_section_widget.dart:356:49: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                                color: AppTheme.getSuccessColor(true),
+                                                ^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/widgets/trending_section_widget.dart:362:51: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                                  color: AppTheme.getSuccessColor(true),
+                                                  ^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/widgets/quick_action_widget.dart:150:35: Error: Can't use 'getAccentColor' because it is declared more than once.
+                  color: AppTheme.getAccentColor(true),
+                                  ^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/widgets/quick_action_widget.dart:164:35: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                  color: AppTheme.getSuccessColor(true),
+                                  ^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:608:20: Error: Expected ';' after this.
+          BoxShadow(
+                   ^
+lib/presentation/listing_detail/widgets/item_details_widget.dart:97:31: Error: Can't use 'getSuccessColor' because it is declared more than once.
+              color: AppTheme.getSuccessColor(true).withValues(alpha: 0.1),
+                              ^^^^^^^^^^^^^^^
+lib/presentation/listing_detail/widgets/item_details_widget.dart:103:33: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                color: AppTheme.getSuccessColor(true),
+                                ^^^^^^^^^^^^^^^
+lib/presentation/listing_detail/widgets/item_details_widget.dart:127:55: Error: Can't use 'getSuccessColor' because it is declared more than once.
+            _buildInfoChip(widget.condition, AppTheme.getSuccessColor(true)),
+                                                      ^^^^^^^^^^^^^^^
+lib/presentation/listing_detail/widgets/related_items_widget.dart:137:45: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                            color: AppTheme.getSuccessColor(true)
+                                            ^^^^^^^^^^^^^^^
+lib/presentation/listing_detail/widgets/related_items_widget.dart:145:47: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                              color: AppTheme.getSuccessColor(true),
+                                              ^^^^^^^^^^^^^^^
+lib/presentation/listing_detail/widgets/safety_tips_widget.dart:86:36: Error: Can't use 'getWarningColor' because it is declared more than once.
+                          AppTheme.getWarningColor(true).withValues(alpha: 0.1),
+                                   ^^^^^^^^^^^^^^^
+lib/presentation/listing_detail/widgets/safety_tips_widget.dart:91:39: Error: Can't use 'getWarningColor' because it is declared more than once.
+                      color: AppTheme.getWarningColor(true),
+                                      ^^^^^^^^^^^^^^^
+lib/presentation/user_profile/widgets/account_settings_section_widget.dart:211:45: Error: Can't use 'getWarningColor' because it is declared more than once.
+                            color: AppTheme.getWarningColor(true),
+                                            ^^^^^^^^^^^^^^^
+lib/presentation/user_profile/widgets/my_listings_section_widget.dart:316:25: Error: Can't use 'getSuccessColor' because it is declared more than once.
+        return AppTheme.getSuccessColor(true);
+                        ^^^^^^^^^^^^^^^
+lib/presentation/user_profile/widgets/my_listings_section_widget.dart:320:25: Error: Can't use 'getWarningColor' because it is declared more than once.
+        return AppTheme.getWarningColor(true);
+                        ^^^^^^^^^^^^^^^
+lib/presentation/user_profile/widgets/profile_header_widget.dart:104:37: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                    color: AppTheme.getSuccessColor(true),
+                                    ^^^^^^^^^^^^^^^
+lib/presentation/user_profile/widgets/profile_header_widget.dart:170:35: Error: Can't use 'getWarningColor' because it is declared more than once.
+                  color: AppTheme.getWarningColor(true),
+                                  ^^^^^^^^^^^^^^^
+lib/presentation/user_profile/widgets/statistics_cards_widget.dart:37:29: Error: Can't use 'getSuccessColor' because it is declared more than once.
+            color: AppTheme.getSuccessColor(true),
+                            ^^^^^^^^^^^^^^^
+lib/presentation/user_profile/widgets/statistics_cards_widget.dart:44:29: Error: Can't use 'getAccentColor' because it is declared more than once.
+            color: AppTheme.getAccentColor(true),
+                            ^^^^^^^^^^^^^^
+lib/presentation/user_profile/widgets/verification_center_widget.dart:120:26: Error: Can't use 'getSuccessColor' because it is declared more than once.
+              ? AppTheme.getSuccessColor(true).withValues(alpha: 0.1)
+                         ^^^^^^^^^^^^^^^
+lib/presentation/user_profile/widgets/verification_center_widget.dart:121:26: Error: Can't use 'getWarningColor' because it is declared more than once.
+              : AppTheme.getWarningColor(true).withValues(alpha: 0.1),
+                         ^^^^^^^^^^^^^^^
+lib/presentation/user_profile/widgets/verification_center_widget.dart:125:28: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                ? AppTheme.getSuccessColor(true)
+                           ^^^^^^^^^^^^^^^
+lib/presentation/user_profile/widgets/verification_center_widget.dart:126:28: Error: Can't use 'getWarningColor' because it is declared more than once.
+                : AppTheme.getWarningColor(true),
+                           ^^^^^^^^^^^^^^^
+lib/presentation/user_profile/widgets/verification_center_widget.dart:137:32: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                    ? AppTheme.getSuccessColor(true)
+                               ^^^^^^^^^^^^^^^
+lib/presentation/user_profile/widgets/verification_center_widget.dart:138:32: Error: Can't use 'getWarningColor' because it is declared more than once.
+                    : AppTheme.getWarningColor(true),
+                               ^^^^^^^^^^^^^^^
+lib/presentation/favorites_and_saved_items/widgets/favorite_item_card_widget.dart:156:53: Error: Can't use 'getAccentColor' because it is declared more than once.
+                                    color: AppTheme.getAccentColor(true),
+                                                    ^^^^^^^^^^^^^^
+lib/presentation/favorites_and_saved_items/widgets/favorite_item_card_widget.dart:193:52: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                                        ? AppTheme.getSuccessColor(true)
+                                                   ^^^^^^^^^^^^^^^
+lib/presentation/favorites_and_saved_items/widgets/favorite_item_card_widget.dart:194:52: Error: Can't use 'getWarningColor' because it is declared more than once.
+                                        : AppTheme.getWarningColor(true),
+                                                   ^^^^^^^^^^^^^^^
+lib/presentation/create_listing/widgets/additional_details_widget.dart:397:47: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                              color: AppTheme.getSuccessColor(true),
+                                              ^^^^^^^^^^^^^^^
+lib/presentation/create_listing/widgets/listing_details_widget.dart:331:45: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                            color: AppTheme.getSuccessColor(true),
+                                            ^^^^^^^^^^^^^^^
+lib/presentation/create_listing/widgets/location_picker_widget.dart:414:45: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                            color: AppTheme.getSuccessColor(true),
+                                            ^^^^^^^^^^^^^^^
+lib/presentation/create_listing/widgets/preview_listing_widget.dart:134:49: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                                color: AppTheme.getSuccessColor(true)
+                                                ^^^^^^^^^^^^^^^
+lib/presentation/create_listing/widgets/preview_listing_widget.dart:143:51: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                                  color: AppTheme.getSuccessColor(true),
+                                                  ^^^^^^^^^^^^^^^
+lib/presentation/create_listing/widgets/preview_listing_widget.dart:454:36: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                        ? AppTheme.getSuccessColor(true)
+                                   ^^^^^^^^^^^^^^^
+lib/presentation/create_listing/widgets/price_condition_widget.dart:383:45: Error: Can't use 'getSuccessColor' because it is declared more than once.
+                            color: AppTheme.getSuccessColor(true),
+                                            ^^^^^^^^^^^^^^^
+lib/presentation/onboarding_tutorial/widgets/feature_list_widget.dart:157:29: Error: Can't use 'getSuccessColor' because it is declared more than once.
+            color: AppTheme.getSuccessColor(true),
+                            ^^^^^^^^^^^^^^^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:747:32: Error: Constant evaluation error:
+                        child: SizedBox(height: 10.h),
+                               ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:747:52: Context: Extension operations can't be used in constant expressions.
+                        child: SizedBox(height: 10.h),
+                                                   ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:747:25: Context: While analyzing:
+                        child: SizedBox(height: 10.h),
+                        ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:765:64: Error: Constant evaluation error:
+              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+                                                               ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:765:41: Context: The invocation of 'lightTheme' is not allowed in a constant expression.
+              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+                                        ^
+lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:765:15: Context: While analyzing:
+              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+              ^
+Target kernel_snapshot_program failed: Exception
+
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileFlutterBuildDebug'.
+> Process 'command '/Users/builder/programs/flutter/bin/flutter'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 5m 37s
+Running Gradle task 'bundleDebug'...                              338.7s
+Gradle task bundleDebug failed with exit code 1
+
+
+Build failed :|
+Failed to build for Android
+mpp
+mpp
+github.com/bhabajit54321/mpp
+
+
+Start new build
+Build overview
+Artifacts
+Current configuration
+Click on the build steps for details.
+
+Preparing build machine
+38s
+Fetching app sources
+3s
+Installing SDKs
+1m 2s
+Installing dependencies
+28s
+Publishing
+< 1s
+Cleaning up
+< 1s
+Failed to build for Android
+
+
+Applications
+Builds
+App Preview
+TRY DEMO
+Teams
+Billing
+Try enterprise
+Security statement
+Documentation
+Support
+
+
+Log out
+
