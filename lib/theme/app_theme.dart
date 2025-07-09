@@ -787,4 +787,40 @@ class AppTheme {
   static Color getAccentColor(bool isLight) {
     return isLight ? accentLight : accentDark;
   }
+
+
+   /// Helper method to get primary color based on theme
+  static Color getPrimaryColor(bool isLight) {
+    return isLight ? primaryLight : primaryDark;
+  }
+
+  /// Helper method to get error color based on theme
+  static Color getErrorColor(bool isLight) {
+    return isLight ? errorLight : errorDark;
+  }
+
+  /// Helper method to get success color based on theme
+  static Color getSuccessColor(bool isLight) {
+    return isLight ? successLight : successDark;
+  }
+
+  /// Helper method to get warning color based on theme
+  static Color getWarningColor(bool isLight) {
+    return isLight ? warningLight : warningDark;
+  }
+
+  /// Helper method to get accent color based on theme
+  static Color getAccentColor(bool isLight) {
+    return isLight ? accentLight : accentDark;
+  }
+
+  /// Helper method to get text primary color based on theme
+  static Color getTextPrimaryColor(bool isLight) {
+    return isLight ? textPrimaryLight : textPrimaryDark;
+  }
+
+  /// Helper method to get text secondary color based on theme
+  static Color getTextSecondaryColor(bool isLight) {
+    return isLight ? textSecondaryLight : textSecondaryDark;
+  }
 }
