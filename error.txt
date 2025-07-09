@@ -1,11 +1,118 @@
 Building Android
-6m 13s
+5m 42s
+
+
 
 
 
 == Building for Android ==
 
 > flutter build appbundle --debug
+
+
+== Building for Android ==
+
+> flutter build appbundle --debug
+Resolving dependencies...
+Downloading packages...
+  _fe_analyzer_shared 76.0.0 (85.0.0 available)
+  _flutterfire_internals 1.3.35 (1.3.58 available)
+  analyzer 6.11.0 (7.5.5 available)
+  archive 3.6.1 (4.0.7 available)
+  bloc 8.1.4 (9.0.0 available)
+  bloc_test 9.1.7 (10.0.0 available)
+  characters 1.4.0 (1.4.1 available)
+  connectivity_plus 5.0.2 (6.1.4 available)
+  connectivity_plus_platform_interface 1.2.4 (2.0.1 available)
+  dart_style 2.3.8 (3.1.0 available)
+  device_info_plus 9.1.2 (11.5.0 available)
+  facebook_auth_desktop 1.0.3 (2.1.1 available)
+  file_picker 6.2.1 (10.2.0 available)
+  firebase_core 2.32.0 (3.15.1 available)
+  firebase_core_platform_interface 5.4.2 (6.0.0 available)
+  firebase_core_web 2.24.0 (2.24.1 available)
+  firebase_messaging 14.7.10 (15.2.9 available)
+  firebase_messaging_platform_interface 4.5.37 (4.6.9 available)
+  firebase_messaging_web 3.5.18 (3.10.9 available)
+  fl_chart 0.65.0 (1.0.0 available)
+  flutter_bloc 8.1.6 (9.1.1 available)
+  flutter_facebook_auth 6.2.0 (7.1.2 available)
+  flutter_facebook_auth_platform_interface 5.0.0 (6.1.2 available)
+  flutter_facebook_auth_web 5.0.0 (6.1.2 available)
+  flutter_launcher_icons 0.13.1 (0.14.4 available)
+  flutter_lints 5.0.0 (6.0.0 available)
+  flutter_local_notifications 16.3.3 (19.3.0 available)
+  flutter_local_notifications_linux 4.0.1 (6.0.0 available)
+  flutter_local_notifications_platform_interface 7.2.0 (9.1.0 available)
+  flutter_native_splash 2.4.4 (2.4.6 available)
+  flutter_secure_storage_linux 1.2.3 (2.0.1 available)
+  flutter_secure_storage_macos 3.1.3 (4.0.0 available)
+  flutter_secure_storage_platform_interface 1.1.2 (2.0.1 available)
+  flutter_secure_storage_web 1.2.1 (2.0.0 available)
+  flutter_secure_storage_windows 3.1.2 (4.0.0 available)
+  geocoding 2.2.2 (4.0.0 available)
+  geocoding_android 3.3.1 (4.0.1 available)
+  geocoding_ios 2.3.0 (3.0.2 available)
+  geolocator 10.1.1 (14.0.2 available)
+  geolocator_android 4.6.2 (5.0.2 available)
+  geolocator_web 2.2.1 (4.1.3 available)
+  google_sign_in 6.3.0 (7.1.0 available)
+  google_sign_in_android 6.2.1 (7.0.1 available)
+  google_sign_in_ios 5.9.0 (6.0.1 available)
+  google_sign_in_platform_interface 2.5.0 (3.0.0 available)
+  google_sign_in_web 0.12.4+4 (1.0.0 available)
+  image 4.3.0 (4.5.4 available)
+  image_cropper 5.0.1 (9.1.0 available)
+  image_cropper_for_web 3.0.0 (6.1.0 available)
+  image_cropper_platform_interface 5.0.0 (7.1.0 available)
+  internet_connection_checker 1.0.0+1 (3.0.1 available)
+  js 0.6.7 (0.7.2 available)
+  json_serializable 6.9.0 (6.9.5 available)
+  leak_tracker 10.0.9 (11.0.1 available)
+  leak_tracker_flutter_testing 3.0.9 (3.0.10 available)
+  leak_tracker_testing 3.0.1 (3.0.2 available)
+  lints 5.1.1 (6.0.0 available)
+  location 5.0.3 (8.0.1 available)
+  location_platform_interface 3.1.2 (6.0.1 available)
+  location_web 4.2.0 (6.0.1 available)
+  lottie 2.7.0 (3.3.1 available)
+  material_color_utilities 0.11.1 (0.13.0 available)
+  meta 1.16.0 (1.17.0 available)
+  mime 1.0.6 (2.0.0 available)
+  mockito 5.4.5 (5.4.6 available)
+  package_info_plus 4.2.0 (8.3.0 available)
+  package_info_plus_platform_interface 2.0.1 (3.2.0 available)
+  permission_handler 11.4.0 (12.0.1 available)
+  permission_handler_android 12.1.0 (13.0.1 available)
+  petitparser 6.1.0 (7.0.0 available)
+  photo_view 0.14.0 (0.15.0 available)
+  protobuf 3.1.0 (4.1.0 available)
+  retrofit_generator 8.2.1 (9.7.0 available)
+  share_plus 7.2.2 (11.0.0 available)
+  share_plus_platform_interface 3.4.0 (6.0.0 available)
+  sizer 2.0.15 (3.0.5 available)
+  source_gen 1.5.0 (2.0.0 available)
+  source_helper 1.3.5 (1.3.6 available)
+  test 1.25.15 (1.26.2 available)
+  test_api 0.7.4 (0.7.6 available)
+  test_core 0.6.8 (0.6.11 available)
+  timezone 0.9.4 (0.10.1 available)
+  vector_math 2.1.4 (2.2.0 available)
+  vm_service 15.0.0 (15.0.2 available)
+  win32_registry 1.1.5 (2.1.0 available)
+  xml 6.5.0 (6.6.0 available)
+Got dependencies!
+86 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Package file_picker:linux references file_picker:linux as the default plugin, but it does not provide an inline implementation.
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: linux: default_package: file_picker` or add an inline implementation to file_picker via `platforms: linux:` `pluginClass` or `dartPluginClass`.
+
+Package file_picker:macos references file_picker:macos as the default plugin, but it does not provide an inline implementation.
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: macos: default_package: file_picker` or add an inline implementation to file_picker via `platforms: macos:` `pluginClass` or `dartPluginClass`.
+
+Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
+
 Resolving dependencies...
 Downloading packages...
   _fe_analyzer_shared 76.0.0 (85.0.0 available)
@@ -124,7 +231,29 @@ Ask the maintainers of file_picker to either avoid referencing a default impleme
 Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
 Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
 
-Running Gradle task 'bundleDebug'...                            
+Package file_picker:linux references file_picker:linux as the default plugin, but it does not provide an inline implementation.
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: linux: default_package: file_picker` or add an inline implementation to file_picker via `platforms: linux:` `pluginClass` or `dartPluginClass`.
+
+Package file_picker:macos references file_picker:macos as the default plugin, but it does not provide an inline implementation.
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: macos: default_package: file_picker` or add an inline implementation to file_picker via `platforms: macos:` `pluginClass` or `dartPluginClass`.
+
+Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
+
+Package file_picker:linux references file_picker:linux as the default plugin, but it does not provide an inline implementation.
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: linux: default_package: file_picker` or add an inline implementation to file_picker via `platforms: linux:` `pluginClass` or `dartPluginClass`.
+
+Package file_picker:macos references file_picker:macos as the default plugin, but it does not provide an inline implementation.
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: macos: default_package: file_picker` or add an inline implementation to file_picker via `platforms: macos:` `pluginClass` or `dartPluginClass`.
+
+Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
+Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
+
+Running Gradle task 'bundleDebug'...                            Running Gradle task 'bundleDebug'...                            
+Checking the license for package NDK (Side by side) 26.3.11579264 in /usr/local/share/android-sdk/licenses
+License for package NDK (Side by side) 26.3.11579264 accepted.
+Preparing "Install NDK (Side by side) 26.3.11579264 v.26.3.11579264".
+
 Checking the license for package NDK (Side by side) 26.3.11579264 in /usr/local/share/android-sdk/licenses
 License for package NDK (Side by side) 26.3.11579264 accepted.
 Preparing "Install NDK (Side by side) 26.3.11579264 v.26.3.11579264".
@@ -132,9 +261,20 @@ Preparing "Install NDK (Side by side) 26.3.11579264 v.26.3.11579264".
 Installing NDK (Side by side) 26.3.11579264 in /usr/local/share/android-sdk/ndk/26.3.11579264
 "Install NDK (Side by side) 26.3.11579264 v.26.3.11579264" complete.
 "Install NDK (Side by side) 26.3.11579264 v.26.3.11579264" finished.
+"Install NDK (Side by side) 26.3.11579264 v.26.3.11579264" ready.
+Installing NDK (Side by side) 26.3.11579264 in /usr/local/share/android-sdk/ndk/26.3.11579264
+"Install NDK (Side by side) 26.3.11579264 v.26.3.11579264" complete.
+"Install NDK (Side by side) 26.3.11579264 v.26.3.11579264" finished.
 Checking the license for package Android SDK Build-Tools 34 in /usr/local/share/android-sdk/licenses
 License for package Android SDK Build-Tools 34 accepted.
 Preparing "Install Android SDK Build-Tools 34 v.34.0.0".
+Checking the license for package Android SDK Build-Tools 34 in /usr/local/share/android-sdk/licenses
+License for package Android SDK Build-Tools 34 accepted.
+Preparing "Install Android SDK Build-Tools 34 v.34.0.0".
+"Install Android SDK Build-Tools 34 v.34.0.0" ready.
+Installing Android SDK Build-Tools 34 in /usr/local/share/android-sdk/build-tools/34.0.0
+"Install Android SDK Build-Tools 34 v.34.0.0" complete.
+"Install Android SDK Build-Tools 34 v.34.0.0" finished.
 "Install Android SDK Build-Tools 34 v.34.0.0" ready.
 Installing Android SDK Build-Tools 34 in /usr/local/share/android-sdk/build-tools/34.0.0
 "Install Android SDK Build-Tools 34 v.34.0.0" complete.
@@ -148,793 +288,30 @@ Ask the maintainers of file_picker to either avoid referencing a default impleme
 Package file_picker:windows references file_picker:windows as the default plugin, but it does not provide an inline implementation.
 Ask the maintainers of file_picker to either avoid referencing a default implementation via `platforms: windows: default_package: file_picker` or add an inline implementation to file_picker via `platforms: windows:` `pluginClass` or `dartPluginClass`.
 
-lib/presentation/login_screen/login_screen.dart:674:29: Error: Can't find ')' to match '('.
-              child: Divider(
-                            ^
-lib/presentation/login_screen/login_screen.dart:673:21: Error: Can't find ')' to match '('.
-            Expanded(
-                    ^
-lib/presentation/login_screen/login_screen.dart:672:21: Error: Can't find ']' to match '['.
-          children: [
-                    ^
-lib/presentation/login_screen/login_screen.dart:671:12: Error: Can't find ')' to match '('.
-        Row(
-           ^
-lib/presentation/login_screen/login_screen.dart:670:17: Error: Can't find ']' to match '['.
-      children: [
-                ^
-lib/presentation/login_screen/login_screen.dart:669:18: Error: Can't find ')' to match '('.
-    return Column(
-                 ^
-lib/presentation/login_screen/login_screen.dart:668:37: Error: Can't find '}' to match '{'.
-  Widget _buildSocialLoginSection() {
-                                    ^
 lib/presentation/login_screen/login_screen.dart:14:82: Error: Can't find '}' to match '{'.
 class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin {
                                                                                  ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:731:1: Error: Expected a class member, but got 'return'.
-return CompactListingCardWidget(
+lib/presentation/login_screen/login_screen.dart:1:1: Error: Variables must be declared using the keywords 'const', 'final', 'var' or a type name.
+Try adding the name of the type of the variable or the keyword 'var'.
+iimport 'package:flutter/material.dart';
+^^^^^^^
+lib/presentation/login_screen/login_screen.dart:1:1: Error: Expected ';' after this.
+iimport 'package:flutter/material.dart';
+^^^^^^^
+lib/presentation/login_screen/login_screen.dart:1:9: Error: Expected a declaration, but got ''package:flutter/material.dart''.
+iimport 'package:flutter/material.dart';
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lib/presentation/login_screen/login_screen.dart:1:40: Error: Unexpected token ';'.
+iimport 'package:flutter/material.dart';
+                                       ^
+lib/presentation/login_screen/login_screen.dart:2:1: Error: Directives must appear before any declarations.
+Try moving the directive before any declarations.
+import 'package:flutter/services.dart';
 ^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:732:46: Error: Non-optional parameters can't have a default value.
-Try removing the default value or making the parameter optional.
-                                      listing: listing,
-                                             ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:733:49: Error: Non-optional parameters can't have a default value.
-Try removing the default value or making the parameter optional.
-                                      isFavorite: isFavorite,
-                                                ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:734:44: Error: Non-optional parameters can't have a default value.
-Try removing the default value or making the parameter optional.
-                                      onTap: () => _onListingTap(listing),
-                                           ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:735:50: Error: Non-optional parameters can't have a default value.
-Try removing the default value or making the parameter optional.
-                                      onLongPress: () => _onListingLongPress(listing),
-                                                 ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:736:52: Error: Non-optional parameters can't have a default value.
-Try removing the default value or making the parameter optional.
-                                      onFavoriteTap: () => _toggleFavorite(listing['id'].toString()),
-                                                   ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:737:51: Error: Non-optional parameters can't have a default value.
-Try removing the default value or making the parameter optional.
-                                      showDistance: _useGpsLocation,
-                                                  ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:739:36: Error: Expected a declaration, but got ','.
-                                  },
-                                   ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:35: Error: Variables must be declared using the keywords 'const', 'final', 'var' or a type name.
-Try adding the name of the type of the variable or the keyword 'var'.
-                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
-                                  ^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:35: Error: Expected ';' after this.
-                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
-                                  ^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:45: Error: Expected a declaration, but got ':'.
-                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
-                                            ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:47: Error: A function declaration needs an explicit list of parameters.
-Try adding a parameter list to the function declaration.
-                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
-                                              ^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:64: Error: Expected '{' before this.
-                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
-                                                               ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:64: Error: Expected a declaration, but got '.'.
-                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
-                                                               ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:65: Error: Variables must be declared using the keywords 'const', 'final', 'var' or a type name.
-Try adding the name of the type of the variable or the keyword 'var'.
-                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
-                                                                ^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:65: Error: Expected ';' after this.
-                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
-                                                                ^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:72: Error: Operators must be declared within a class.
-Try removing the operator, moving it to a class, or converting it to be a function.
-                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
-                                                                       ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:86: Error: Expected ')' before this.
-                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
-                                                                                     ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:94: Error: Expected '{' before this.
-                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
-                                                                                          ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:740:94: Error: Expected a declaration, but got ','.
-                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
-                                                                                          ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:741:33: Error: Expected a declaration, but got ')'.
-                                ),
-                                ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:741:34: Error: Expected a declaration, but got ','.
-                                ),
-                                 ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:742:31: Error: Expected a declaration, but got ')'.
-                              ),
-                              ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:742:32: Error: Expected a declaration, but got ','.
-                              ),
-                               ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:743:29: Error: Expected a declaration, but got ')'.
-                            ),
-                            ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:743:30: Error: Expected a declaration, but got ','.
-                            ),
-                             ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:747:30: Error: Non-optional parameters can't have a default value.
-Try removing the default value or making the parameter optional.
-                        child: SizedBox(height: 10.h),
-                             ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:748:24: Error: Expected '{' before this.
-                      ),
-                       ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:748:24: Error: Expected a declaration, but got ','.
-                      ),
-                       ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:749:21: Error: Expected a declaration, but got ']'.
-                    ],
-                    ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:749:22: Error: Expected a declaration, but got ','.
-                    ],
-                     ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:750:19: Error: Expected a declaration, but got ')'.
-                  ),
-                  ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:750:20: Error: Expected a declaration, but got ','.
-                  ),
-                   ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:751:17: Error: Expected a declaration, but got ')'.
-                ),
-                ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:751:18: Error: Expected a declaration, but got ','.
-                ),
-                 ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:752:15: Error: Expected a declaration, but got ')'.
-              ),
-              ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:752:16: Error: Expected a declaration, but got ','.
-              ),
-               ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:753:13: Error: Expected a declaration, but got ')'.
-            ),
-            ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:753:14: Error: Expected a declaration, but got ','.
-            ),
-             ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:754:11: Error: Expected a declaration, but got ']'.
-          ],
-          ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:754:12: Error: Expected a declaration, but got ','.
-          ],
-           ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:755:9: Error: Expected a declaration, but got ')'.
-        ),
-        ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:755:10: Error: Expected a declaration, but got ','.
-        ),
-         ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:756:7: Error: Expected a declaration, but got ')'.
-      ),
-      ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:756:8: Error: Expected a declaration, but got ','.
-      ),
-       ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:759:7: Error: Variables must be declared using the keywords 'const', 'final', 'var' or a type name.
-Try adding the name of the type of the variable or the keyword 'var'.
-      bottomNavigationBar: _buildEnhancedBottomNav(),
-      ^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:759:7: Error: Expected ';' after this.
-      bottomNavigationBar: _buildEnhancedBottomNav(),
-      ^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:759:26: Error: Expected a declaration, but got ':'.
-      bottomNavigationBar: _buildEnhancedBottomNav(),
-                         ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:759:53: Error: Expected '{' before this.
-      bottomNavigationBar: _buildEnhancedBottomNav(),
-                                                    ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:759:53: Error: Expected a declaration, but got ','.
-      bottomNavigationBar: _buildEnhancedBottomNav(),
-                                                    ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:762:7: Error: Variables must be declared using the keywords 'const', 'final', 'var' or a type name.
-Try adding the name of the type of the variable or the keyword 'var'.
-      floatingActionButton: _showBackToTop
-      ^^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:762:7: Error: Expected ';' after this.
-      floatingActionButton: _showBackToTop
-      ^^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:762:27: Error: Expected a declaration, but got ':'.
-      floatingActionButton: _showBackToTop
-                          ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:763:13: Error: A function declaration needs an explicit list of parameters.
-Try adding a parameter list to the function declaration.
-          ? FloatingActionButton.small(
-            ^^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:763:33: Error: Expected '{' before this.
-          ? FloatingActionButton.small(
-                                ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:763:33: Error: Expected a declaration, but got '.'.
-          ? FloatingActionButton.small(
-                                ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:764:24: Error: Non-optional parameters can't have a default value.
-Try removing the default value or making the parameter optional.
-              onPressed: _scrollToTop,
-                       ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:765:30: Error: Non-optional parameters can't have a default value.
-Try removing the default value or making the parameter optional.
-              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-                             ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:766:20: Error: Non-optional parameters can't have a default value.
-Try removing the default value or making the parameter optional.
-              child: const Icon(Icons.keyboard_arrow_up, color: Colors.white),
-                   ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:768:11: Error: Expected '{' before this.
-          : FloatingActionButton(
-          ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:768:11: Error: Expected a declaration, but got ':'.
-          : FloatingActionButton(
-          ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:769:24: Error: Non-optional parameters can't have a default value.
-Try removing the default value or making the parameter optional.
-              onPressed: () {
-                       ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:773:30: Error: Non-optional parameters can't have a default value.
-Try removing the default value or making the parameter optional.
-              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-                             ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:774:20: Error: Non-optional parameters can't have a default value.
-Try removing the default value or making the parameter optional.
-              child: const Icon(Icons.add, color: Colors.white, size: 28),
-                   ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:775:14: Error: Expected '{' before this.
-            ),
-             ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:775:14: Error: Expected a declaration, but got ','.
-            ),
-             ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:776:5: Error: Expected a declaration, but got ')'.
-    );
-    ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:776:6: Error: Unexpected token ';'.
-    );
-     ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:777:3: Error: Expected a declaration, but got '}'.
-  }
-  ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1254:1: Error: Expected a declaration, but got '}'.
-}
-^
-lib/presentation/registration_screen/registration_screen.dart:231:141: Error: String starting with ' must end with '.
-      r'^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
-                                                                                          ^
-lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:608:20: Error: Can't find ')' to match '('.
-          BoxShadow(
-                   ^
-lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:607:20: Error: Can't find ']' to match '['.
-        boxShadow: [
-                   ^
-lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:599:32: Error: Can't find ')' to match '('.
-      decoration: BoxDecoration(
-                               ^
-lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:597:21: Error: Can't find ')' to match '('.
-    return Container(
-                    ^
-lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:596:32: Error: Can't find '}' to match '{'.
-  Widget _buildBottomActions() {
-                               ^
-lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:25:70: Error: Can't find '}' to match '{'.
-class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
-                                                                     ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:989:8: Error: '_buildEnhancedBottomNav' is already declared in this scope.
-Widget _buildEnhancedBottomNav() {
-       ^^^^^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:759:28: Context: Previous declaration of '_buildEnhancedBottomNav'.
-      bottomNavigationBar: _buildEnhancedBottomNav(),
-                           ^^^^^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:768:13: Error: 'FloatingActionButton' is already declared in this scope.
-          : FloatingActionButton(
-            ^^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:763:13: Context: Previous declaration of 'FloatingActionButton'.
-          ? FloatingActionButton.small(
-            ^^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:762:29: Error: Type '_showBackToTop' not found.
-      floatingActionButton: _showBackToTop
-                            ^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:28:7: Error: The non-abstract class '_HomeMarketplaceFeedState' is missing implementations for these members:
- - State.build
- - _HomeMarketplaceFeedState.CompactListingCardWidget
-Try to either
- - provide an implementation,
- - inherit an implementation from a superclass or mixin,
- - mark the class as abstract, or
- - provide a 'noSuchMethod' implementation.
-
-class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
-      ^^^^^^^^^^^^^^^^^^^^^^^^^
-../programs/flutter/packages/flutter/lib/src/widgets/framework.dart:1461:10: Context: 'State.build' is defined here.
-  Widget build(BuildContext context);
-         ^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:731:8: Context: '_HomeMarketplaceFeedState.CompactListingCardWidget' is defined here.
-return CompactListingCardWidget(
-       ^^^^^^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:732:48: Error: Undefined name 'listing'.
-                                      listing: listing,
-                                               ^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:733:51: Error: Undefined name 'isFavorite'.
-                                      isFavorite: isFavorite,
-                                                  ^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:734:66: Error: Undefined name 'listing'.
-                                      onTap: () => _onListingTap(listing),
-                                                                 ^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:734:52: Error: Method not found: '_onListingTap'.
-                                      onTap: () => _onListingTap(listing),
-                                                   ^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:734:46: Error: Not a constant expression.
-                                      onTap: () => _onListingTap(listing),
-                                             ^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:735:78: Error: Undefined name 'listing'.
-                                      onLongPress: () => _onListingLongPress(listing),
-                                                                             ^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:735:58: Error: Method not found: '_onListingLongPress'.
-                                      onLongPress: () => _onListingLongPress(listing),
-                                                         ^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:735:52: Error: Not a constant expression.
-                                      onLongPress: () => _onListingLongPress(listing),
-                                                   ^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:736:76: Error: Undefined name 'listing'.
-                                      onFavoriteTap: () => _toggleFavorite(listing['id'].toString()),
-                                                                           ^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:736:90: Error: Method invocation is not a constant expression.
-                                      onFavoriteTap: () => _toggleFavorite(listing['id'].toString()),
-                                                                                         ^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:736:60: Error: Method not found: '_toggleFavorite'.
-                                      onFavoriteTap: () => _toggleFavorite(listing['id'].toString()),
-                                                           ^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:736:54: Error: Not a constant expression.
-                                      onFavoriteTap: () => _toggleFavorite(listing['id'].toString()),
-                                                     ^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:737:53: Error: Undefined name '_useGpsLocation'.
-                                      showDistance: _useGpsLocation,
-                                                    ^^^^^^^^^^^^^^^
-lib/utils/auth_service.dart:403:55: Error: The getter 'tokenString' isn't defined for the class 'AccessToken'.
- - 'AccessToken' is from 'package:flutter_facebook_auth_platform_interface/src/access_token.dart' ('../.pub-cache/hosted/pub.dev/flutter_facebook_auth_platform_interface-5.0.0/lib/src/access_token.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'tokenString'.
-      final accessToken = facebookResult.accessToken?.tokenString;
-                                                      ^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:281:37: Error: Member not found: 'AppTheme.getErrorColor'.
-          backgroundColor: AppTheme.getErrorColor(true),
-                                    ^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:356:21: Error: The method '_buildSignUpLink' isn't defined for the class '_LoginScreenState'.
- - '_LoginScreenState' is from 'package:khilonjiya_com/presentation/login_screen/login_screen.dart' ('lib/presentation/login_screen/login_screen.dart').
-Try correcting the name to the name of an existing method, or defining a method named '_buildSignUpLink'.
-                    _buildSignUpLink(),
-                    ^^^^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:378:28: Error: Member not found: 'AppTheme.getPrimaryColor'.
-                  AppTheme.getPrimaryColor(true),
-                           ^^^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:400:31: Error: Member not found: 'AppTheme.getTextSecondaryColor'.
-              color: AppTheme.getTextSecondaryColor(true),
-                              ^^^^^^^^^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:410:31: Error: Member not found: 'AppTheme.getTextSecondaryColor'.
-              color: AppTheme.getTextSecondaryColor(true),
-                              ^^^^^^^^^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:419:31: Error: Member not found: 'AppTheme.getTextPrimaryColor'.
-              color: AppTheme.getTextPrimaryColor(true),
-                              ^^^^^^^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:426:31: Error: Member not found: 'AppTheme.getTextSecondaryColor'.
-              color: AppTheme.getTextSecondaryColor(true),
-                              ^^^^^^^^^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:495:33: Error: Member not found: 'AppTheme.getErrorColor'.
-                color: AppTheme.getErrorColor(true),
-                                ^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:512:33: Error: Member not found: 'AppTheme.getErrorColor'.
-                color: AppTheme.getErrorColor(true),
-                                ^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:573:33: Error: Member not found: 'AppTheme.getErrorColor'.
-                color: AppTheme.getErrorColor(true),
-                                ^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:592:33: Error: Member not found: 'AppTheme.getErrorColor'.
-                color: AppTheme.getErrorColor(true),
-                                ^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:629:28: Error: Member not found: 'AppTheme.getPrimaryColor'.
-                  AppTheme.getPrimaryColor(true),
-                           ^^^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:643:33: Error: Member not found: 'AppTheme.getPrimaryColor'.
-          shadowColor: AppTheme.getPrimaryColor(true).withOpacity(0.3),
-                                ^^^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:674:29: Error: Expected ';' after this.
-              child: Divider(
-                            ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:228:27: Error: The value 'null' can't be returned from a function with return type 'Map<String, dynamic>' because 'Map<String, dynamic>' is not nullable.
- - 'Map' is from 'dart:core'.
-            orElse: () => null,
-                          ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:255:46: Error: The method 'getTrendingListings' isn't defined for the class 'ListingService'.
- - 'ListingService' is from 'package:khilonjiya_com/utils/listing_service.dart' ('lib/utils/listing_service.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'getTrendingListings'.
-      final trending = await _listingService.getTrendingListings(limit: 5);
-                                             ^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:277:42: Error: The method 'getNearbyListings' isn't defined for the class 'ListingService'.
- - 'ListingService' is from 'package:khilonjiya_com/utils/listing_service.dart' ('lib/utils/listing_service.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'getNearbyListings'.
-        listings = await _listingService.getNearbyListings(
-                                         ^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:363:39: Error: A value of type 'String' can't be assigned to a variable of type 'int'.
-            .map<String>((fav) => fav['listing_id'].toString())
-                                      ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:478:46: Error: The method 'getNearbyListings' isn't defined for the class 'ListingService'.
- - 'ListingService' is from 'package:khilonjiya_com/utils/listing_service.dart' ('lib/utils/listing_service.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'getNearbyListings'.
-        moreListings = await _listingService.getNearbyListings(
-                                             ^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:734:52: Error: Not a constant expression.
-                                      onTap: () => _onListingTap(listing),
-                                                   ^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:734:52: Error: Method invocation is not a constant expression.
-                                      onTap: () => _onListingTap(listing),
-                                                   ^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:735:58: Error: Not a constant expression.
-                                      onLongPress: () => _onListingLongPress(listing),
-                                                         ^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:735:58: Error: Method invocation is not a constant expression.
-                                      onLongPress: () => _onListingLongPress(listing),
-                                                         ^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:736:60: Error: Not a constant expression.
-                                      onFavoriteTap: () => _toggleFavorite(listing['id'].toString()),
-                                                           ^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:736:60: Error: Method invocation is not a constant expression.
-                                      onFavoriteTap: () => _toggleFavorite(listing['id'].toString()),
-                                                           ^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:737:53: Error: Not a constant expression.
-                                      showDistance: _useGpsLocation,
-                                                    ^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:747:32: Error: Constant expression expected.
-Try inserting 'const'.
-                        child: SizedBox(height: 10.h),
-                               ^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:764:26: Error: Undefined name '_scrollToTop'.
-              onPressed: _scrollToTop,
-                         ^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:765:41: Error: Not a constant expression.
-              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-                                        ^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:765:52: Error: Not a constant expression.
-              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-                                                   ^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:770:32: Error: Method invocation is not a constant expression.
-                HapticFeedback.lightImpact();
-                               ^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:771:37: Error: Undefined name 'context'.
-                Navigator.pushNamed(context, AppRoutes.createListing);
-                                    ^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:771:27: Error: Method invocation is not a constant expression.
-                Navigator.pushNamed(context, AppRoutes.createListing);
-                          ^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:769:26: Error: Not a constant expression.
-              onPressed: () {
-                         ^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:773:41: Error: Not a constant expression.
-              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-                                        ^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:773:52: Error: Not a constant expression.
-              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-                                                   ^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:790:37: Error: Undefined name '_selectedLocation'.
-                  selectedLocation: _selectedLocation,
-                                    ^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:791:30: Error: Undefined name '_defaultLocations'.
-                  locations: _defaultLocations,
-                             ^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:792:30: Error: Undefined name '_isLoadingLocation'.
-                  isLoading: _isLoadingLocation,
-                             ^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:793:35: Error: Undefined name '_useGpsLocation'.
-                  useGpsLocation: _useGpsLocation,
-                                  ^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:794:38: Error: Undefined name '_onLocationChanged'.
-                  onLocationChanged: _onLocationChanged,
-                                     ^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:801:24: Error: Undefined name '_toggleSearch'.
-                onTap: _toggleSearch,
-                       ^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:806:28: Error: Undefined name '_showSearch'.
-                    color: _showSearch 
-                           ^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:812:21: Error: Undefined name '_showSearch'.
-                    _showSearch ? Icons.close : Icons.search,
-                    ^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:813:28: Error: Undefined name '_showSearch'.
-                    color: _showSearch 
-                           ^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:827:39: Error: Undefined name 'context'.
-                  Navigator.pushNamed(context, AppRoutes.notificationsScreen);
-                                      ^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:863:15: Error: Undefined name '_showSearch'.
-          if (_showSearch) ...[
-              ^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:885:34: Error: Undefined name '_onSearchChanged'.
-                      onChanged: _onSearchChanged,
-                                 ^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:897:23: Error: Undefined name '_activeFilters'.
-                  if (_activeFilters.isNotEmpty)
-                      ^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:905:28: Error: Undefined name '_activeFilters'.
-                        '${_activeFilters.length}',
-                           ^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:922:20: Error: Undefined name '_isLoadingCategories'.
-            child: _isLoadingCategories
-                   ^^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:931:32: Error: Undefined name '_categories'.
-                    itemCount: _categories.length,
-                               ^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:936:37: Error: Undefined name '_categories'.
-                          category: _categories[index],
-                                    ^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:937:60: Error: Undefined name '_categories'.
-                          isSelected: _selectedCategory == _categories[index]['name'],
-                                                           ^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:937:39: Error: Undefined name '_selectedCategory'.
-                          isSelected: _selectedCategory == _categories[index]['name'],
-                                      ^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:938:60: Error: Undefined name '_categories'.
-                          onTap: () => _onCategorySelected(_categories[index]['name']),
-                                                           ^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:938:40: Error: Method not found: '_onCategorySelected'.
-                          onTap: () => _onCategorySelected(_categories[index]['name']),
-                                       ^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:946:15: Error: Undefined name '_useGpsLocation'.
-          if (_useGpsLocation && _currentPosition != null) ...[
-              ^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:946:34: Error: Undefined name '_currentPosition'.
-          if (_useGpsLocation && _currentPosition != null) ...[
-                                 ^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:963:31: Error: Undefined name '_selectedDistance'.
-                    'Within ${_selectedDistance.toInt()} km',
-                              ^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:970:28: Error: Undefined name '_showAdvancedFilters'.
-                    onTap: _showAdvancedFilters,
-                           ^^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1011:25: Error: Undefined name '_currentIndex'.
-          currentIndex: _currentIndex,
-                        ^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1024:15: Error: Setter not found: '_currentIndex'.
-              _currentIndex = index;
-              ^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1023:13: Error: Method not found: 'setState'.
-            setState(() {
-            ^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1034:37: Error: Undefined name 'context'.
-                Navigator.pushNamed(context, AppRoutes.searchAndFilters);
-                                    ^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1037:37: Error: Undefined name 'context'.
-                Navigator.pushNamed(context, AppRoutes.createListing);
-                                    ^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1040:37: Error: Undefined name 'context'.
-                Navigator.pushNamed(context, AppRoutes.chatMessaging);
-                                    ^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1043:37: Error: Undefined name 'context'.
-                Navigator.pushNamed(context, AppRoutes.userProfile);
-                                    ^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1053:26: Error: Undefined name '_currentIndex'.
-                  color: _currentIndex == 0
-                         ^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1059:19: Error: Undefined name '_currentIndex'.
-                  _currentIndex == 0 ? Icons.home : Icons.home_outlined,
-                  ^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1070:26: Error: Undefined name '_currentIndex'.
-                  color: _currentIndex == 1
-                         ^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1076:19: Error: Undefined name '_currentIndex'.
-                  _currentIndex == 1 ? Icons.search : Icons.search_outlined,
-                  ^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1087:26: Error: Undefined name '_currentIndex'.
-                  color: _currentIndex == 2
-                         ^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1093:19: Error: Undefined name '_currentIndex'.
-                  _currentIndex == 2 ? Icons.add_circle : Icons.add_circle_outline,
-                  ^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1104:26: Error: Undefined name '_currentIndex'.
-                  color: _currentIndex == 3
-                         ^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1112:23: Error: Undefined name '_currentIndex'.
-                      _currentIndex == 3 ? Icons.chat : Icons.chat_outlined,
-                      ^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1138:26: Error: Undefined name '_currentIndex'.
-                  color: _currentIndex == 4
-                         ^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1144:19: Error: Undefined name '_currentIndex'.
-                  _currentIndex == 4 ? Icons.person : Icons.person_outlined,
-                  ^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1185:15: Error: Undefined name '_searchQuery'.
-              _searchQuery.isNotEmpty
-              ^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1186:45: Error: Undefined name '_searchQuery'.
-                  ? 'No results found for "$_searchQuery"'
-                                            ^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1200:23: Error: Setter not found: '_selectedCategory'.
-                      _selectedCategory = 'All';
-                      ^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1201:23: Error: Setter not found: '_searchQuery'.
-                      _searchQuery = '';
-                      ^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1202:23: Error: Undefined name '_activeFilters'.
-                      _activeFilters.clear();
-                      ^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1203:23: Error: Setter not found: '_showSearch'.
-                      _showSearch = false;
-                      ^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1199:21: Error: Method not found: 'setState'.
-                    setState(() {
-                    ^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1205:21: Error: Method not found: '_loadListings'.
-                    _loadListings();
-                    ^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1213:41: Error: Undefined name 'context'.
-                    Navigator.pushNamed(context, AppRoutes.createListing);
-                                        ^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1249:5: Error: Undefined name '_headerAnimationController'.
-    _headerAnimationController.dispose();
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1250:5: Error: Undefined name '_listAnimationController'.
-    _listAnimationController.dispose();
-    ^^^^^^^^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1251:5: Error: Undefined name '_scrollController'.
-    _scrollController.dispose();
-    ^^^^^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1252:5: Error: Expected identifier, but got 'super'.
-    super.dispose();
-    ^^^^^
-lib/presentation/registration_screen/registration_screen.dart:231:28: Error: '+' is not a prefix operator.
-Try removing '+'.
-      r'^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
-                           ^
-lib/presentation/registration_screen/registration_screen.dart:231:29: Error: Expected an identifier, but got '/='.
-Try inserting an identifier before '/='.
-      r'^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
-                            ^^
-lib/presentation/registration_screen/registration_screen.dart:231:31: Error: Expected an identifier, but got '?'.
-Try inserting an identifier before '?'.
-      r'^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
-                              ^
-lib/presentation/registration_screen/registration_screen.dart:231:32: Error: Expected an identifier, but got '^'.
-Try inserting an identifier before '^'.
-      r'^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
-                               ^
-lib/presentation/registration_screen/registration_screen.dart:231:34: Error: Expected ':' before this.
-      r'^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
-                                 ^
-lib/presentation/registration_screen/registration_screen.dart:231:34: Error: Expected an identifier, but got '`'.
-Try inserting an identifier before '`'.
-      r'^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
-                                 ^
-lib/presentation/registration_screen/registration_screen.dart:231:29: Error: Can't assign to this.
-      r'^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
-                            ^^
-lib/presentation/registration_screen/registration_screen.dart:231:35: Error: Expected ',' before this.
-      r'^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
-                                  ^
-lib/presentation/registration_screen/registration_screen.dart:231:36: Error: Expected an identifier, but got '|'.
-Try inserting an identifier before '|'.
-      r'^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
-                                   ^
-lib/presentation/registration_screen/registration_screen.dart:231:37: Error: Expected an identifier, but got '}'.
-Try inserting an identifier before '}'.
-      r'^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
-                                    ^
-lib/presentation/registration_screen/registration_screen.dart:231:40: Error: Expected an identifier, but got ']'.
-Try inserting an identifier before ']'.
-      r'^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
-                                       ^
-lib/presentation/registration_screen/registration_screen.dart:231:38: Error: '~' isn't a binary operator.
-      r'^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
-                                     ^
-lib/presentation/registration_screen/registration_screen.dart:231:40: Error: Expected ')' before this.
-      r'^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
-                                       ^
-lib/presentation/registration_screen/registration_screen.dart:230:30: Error: Too many positional arguments: 1 allowed, but 2 found.
-Try removing the extra positional arguments.
-    final emailRegex = RegExp(
-                             ^
-org-dartlang-sdk:///flutter/third_party/dart/sdk/lib/_internal/vm/lib/regexp_patch.dart:10:11: Context: Found this candidate, but the arguments don't match.
-  factory RegExp(
-          ^
-lib/presentation/registration_screen/registration_screen.dart:505:24: Error: Member not found: 'HapticFeedback.notificationFeedback'.
-        HapticFeedback.notificationFeedback();
-                       ^^^^^^^^^^^^^^^^^^^^
-lib/presentation/registration_screen/registration_screen.dart:490:9: Error: No named parameter with the name 'email'.
-        email: email,
-        ^^^^^
-lib/presentation/registration_screen/registration_screen.dart:575:20: Error: Member not found: 'HapticFeedback.notificationFeedback'.
-    HapticFeedback.notificationFeedback();
-                   ^^^^^^^^^^^^^^^^^^^^
-lib/presentation/registration_screen/registration_screen.dart:2012:30: Error: The method 'signUpWithEmail' isn't defined for the class 'AuthService'.
- - 'AuthService' is from 'package:khilonjiya_com/utils/auth_service.dart' ('lib/utils/auth_service.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'signUpWithEmail'.
-      final response = await signUpWithEmail(email, password);
-                             ^^^^^^^^^^^^^^^
-lib/presentation/registration_screen/registration_screen.dart:2042:28: Error: The method 'updateProfile' isn't defined for the class 'UserProfileService'.
- - 'UserProfileService' is from 'package:khilonjiya_com/utils/auth_service.dart' ('lib/utils/auth_service.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'updateProfile'.
-      await profileService.updateProfile(
-                           ^^^^^^^^^^^^^
-lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:608:20: Error: Expected ';' after this.
-          BoxShadow(
-                   ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:747:32: Error: Constant evaluation error:
-                        child: SizedBox(height: 10.h),
-                               ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:747:52: Context: Extension operations can't be used in constant expressions.
-                        child: SizedBox(height: 10.h),
-                                                   ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:747:25: Context: While analyzing:
-                        child: SizedBox(height: 10.h),
-                        ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:765:64: Error: Constant evaluation error:
-              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-                                                               ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:765:41: Context: The invocation of 'lightTheme' is not allowed in a constant expression.
-              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-                                        ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:765:15: Context: While analyzing:
-              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-              ^
-Target kernel_snapshot_program failed: Exception
-
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':app:compileFlutterBuildDebug'.
-> Process 'command '/Users/builder/programs/flutter/bin/flutter'' finished with non-zero exit value 1
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
-
-BUILD FAILED in 6m 9s
-Running Gradle task 'bundleDebug'...                              369.9s
-Gradle task bundleDebug failed with exit code 1
-
-
-Build failed :|
-Failed to build for Android
-mpp
-mpp
-github.com/bhabajit54321/mpp
-
-
-Start new build
-Build overview
-Artifacts
-Current configuration
-Click on the build steps for details.
-
-Preparing build machine
-33s
-Fetching app sources
-2s
-Installing SDKs
-47s
-Installing dependencies
-21s
-Publishing
-< 1s
-Cleaning up
-< 1s
-Failed to build for Android
-
-
-Applications
-Builds
-App Preview
-TRY DEMO
-Teams
-Billing
-Try enterprise
-Security statement
-Documentation
-Support
-
-
-Log out
-
+lib/presentation/login_screen/login_screen.dart:3:1: Error: Directives must appear before any declarations.
+Try moving the directive before any declarations.
+import 'package:sizer/sizer.dart';
+^^^^^^
+lib/presentation/login_screen/login_screen.dart:5:1: Error: Directives must appear before any declarations.
+Try moving the directive before any declarations.
+import '../../core/app_export.
