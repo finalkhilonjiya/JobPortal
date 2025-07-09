@@ -80,13 +80,12 @@ dependencies:
 
   # 📊 DATA VISUALIZATION & CHARTS
   fl_chart: ^0.65.0
-  syncfusion_flutter_charts: ^23.2.7
+  syncfusion_flutter_charts: ^30.1.39  # ✅ Updated for intl compatibility
 
   # 🔍 SEARCH & FILTERS
   flutter_typeahead: ^4.8.0
 
   # 📅 DATE & TIME
-  # intl: ^0.18.1  # ❌ Removed due to SDK pinning intl to 0.20.2
   table_calendar: ^3.0.9
 
   # 🎪 ONBOARDING & TUTORIALS
@@ -135,7 +134,7 @@ flutter:
     - assets/animations/
     - assets/translations/
 
-  # 🔤 FONTS (Make these optional since files may not exist)
+  # 🔤 FONTS (Optional)
   # fonts:
   #   - family: Inter
   #     fonts:
@@ -148,7 +147,7 @@ flutter:
   #       - asset: assets/fonts/Inter-Bold.ttf
   #         weight: 700
 
-# 🚀 APP LAUNCHER ICONS CONFIGURATION (Comment out if assets don't exist)
+# 🚀 APP LAUNCHER ICONS CONFIGURATION
 # flutter_launcher_icons:
 #   android: "launcher_icon"
 #   ios: true
@@ -158,7 +157,7 @@ flutter:
 #     generate: true
 #     image_path: "assets/icons/app_icon.png"
 
-# 🎨 NATIVE SPLASH SCREEN CONFIGURATION (Comment out if assets don't exist)
+# 🎨 NATIVE SPLASH SCREEN CONFIGURATION
 # flutter_native_splash:
 #   color: "#ffffff"
 #   image: assets/images/splash_logo.png
