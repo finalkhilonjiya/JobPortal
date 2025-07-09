@@ -25,6 +25,7 @@ dependencies:
   flutter_staggered_animations: ^1.1.1
   lottie: ^2.7.0
   shimmer: ^3.0.0
+  flutter_keyboard_visibility: ^6.0.0
 
   # 🌐 NETWORK & API
   cached_network_image: ^3.3.1
