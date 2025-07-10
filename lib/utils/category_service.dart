@@ -26,14 +26,20 @@ class CategoryService {
         return _getKhilonjijaCategories();
       }
 
-      // Fixed: Use eq() for null check instead of is_()
+      // ✅ FIXED: Get all categories and filter in Dart to avoid Supabase null query issues
       final response = await client
           .from(_categoriesTable)
           .select('*')
-          .is_('parent_id', null)
           .order('sort_order', ascending: true);
 
-      return List<Map<String, dynamic>>.from(response);
+      final allCategories = List<Map<String, dynamic>>.from(response);
+      
+      // Filter for main categories (where parent_id is null) in Dart
+      final mainCategories = allCategories
+          .where((category) => category['parent_id'] == null)
+          .toList();
+
+      return mainCategories;
     } catch (error) {
       debugPrint('❌ Get main categories failed: $error');
       return _getKhilonjijaCategories();
