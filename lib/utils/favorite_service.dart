@@ -253,7 +253,7 @@ class FavoriteService {
             category:categories(name),
             seller:user_profiles(full_name, avatar_url)
           ''')
-          .in('id', topListingIds)
+          .in_('id', topListingIds)
           .eq('status', 'active');
 
       return List<Map<String, dynamic>>.from(listingsResponse);

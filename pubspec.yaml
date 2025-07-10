@@ -34,6 +34,7 @@ dependencies:
   connectivity_plus: ^5.0.2
   retrofit: ^4.0.3
   internet_connection_checker: ^1.0.0+1
+  postgrest: ^2.4.2
 
   # 💾 STORAGE & PERSISTENCE
   shared_preferences: ^2.2.2
@@ -55,7 +56,7 @@ dependencies:
   photo_view: ^0.14.0
   flutter_image_compress: ^2.1.0
   video_player: ^2.8.1
-  file_picker: ^6.1.1
+  file_picker: ^10.2.0
 
   # 📍 LOCATION & MAPS
   google_maps_flutter: ^2.5.0
