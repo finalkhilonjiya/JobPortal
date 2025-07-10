@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import './supabase_service.dart';
 
 class CategoryService {
@@ -6,170 +7,155 @@ class CategoryService {
   factory CategoryService() => _instance;
   CategoryService._internal();
 
-  /// Get all active categories
-  Future<List<Map<String, dynamic>>> getCategories() async {
-    try {
-      final client = SupabaseService().client;
-      final response = await client
-          .from('categories')
-          .select('*')
-          .eq('is_active', true)
-          .order('sort_order', ascending: true);
+  static const String _categoriesTable = 'categories';
 
-      debugPrint('✅ Fetched ${response.length} categories');
-      return List<Map<String, dynamic>>.from(response);
-    } catch (error) {
-      debugPrint('❌ Failed to fetch categories: $error');
-      throw Exception('Failed to fetch categories: $error');
+  SupabaseClient? get _client {
+    try {
+      return SupabaseService().safeClient;
+    } catch (e) {
+      debugPrint('❌ Failed to get Supabase client: $e');
+      return null;
     }
   }
 
-  /// Get main categories (no parent)
+  /// Get main categories (top-level categories)
   Future<List<Map<String, dynamic>>> getMainCategories() async {
     try {
-      final client = SupabaseService().client;
-      final response = await client
-          .from('categories')
-          .select('*')
-          .eq('is_active', true)
-          .isFilter('parent_category_id', null)
-          .order('sort_order', ascending: true);
+      final client = _client;
+      if (client == null) {
+        return _getFallbackCategories();
+      }
 
-      debugPrint('✅ Fetched ${response.length} main categories');
+      final response = await client
+          .from(_categoriesTable)
+          .select('*')
+          .is_('parent_id', null)
+          .order('name');
+
       return List<Map<String, dynamic>>.from(response);
     } catch (error) {
-      debugPrint('❌ Failed to fetch main categories: $error');
-      throw Exception('Failed to fetch main categories: $error');
+      debugPrint('❌ Get main categories failed: $error');
+      return _getFallbackCategories();
     }
   }
 
-  /// Get subcategories by parent category
-  Future<List<Map<String, dynamic>>> getSubcategories(
-      String parentCategoryId) async {
+  /// Get subcategories for a parent category
+  Future<List<Map<String, dynamic>>> getSubcategories(String parentId) async {
     try {
-      final client = SupabaseService().client;
-      final response = await client
-          .from('categories')
-          .select('*')
-          .eq('is_active', true)
-          .eq('parent_category_id', parentCategoryId)
-          .order('sort_order', ascending: true);
+      final client = _client;
+      if (client == null) return [];
 
-      debugPrint(
-          '✅ Fetched ${response.length} subcategories for parent: $parentCategoryId');
+      final response = await client
+          .from(_categoriesTable)
+          .select('*')
+          .eq('parent_id', parentId)
+          .order('name');
+
       return List<Map<String, dynamic>>.from(response);
     } catch (error) {
-      debugPrint('❌ Failed to fetch subcategories: $error');
-      throw Exception('Failed to fetch subcategories: $error');
+      debugPrint('❌ Get subcategories failed: $error');
+      return [];
+    }
+  }
+
+  /// Get all categories in a hierarchical structure
+  Future<List<Map<String, dynamic>>> getAllCategoriesHierarchy() async {
+    try {
+      final client = _client;
+      if (client == null) {
+        return _getFallbackCategories();
+      }
+
+      final response = await client
+          .from(_categoriesTable)
+          .select('*')
+          .order('parent_id')
+          .order('name');
+
+      final categories = List<Map<String, dynamic>>.from(response);
+      return _buildCategoryHierarchy(categories);
+    } catch (error) {
+      debugPrint('❌ Get categories hierarchy failed: $error');
+      return _getFallbackCategories();
     }
   }
 
   /// Get category by ID
   Future<Map<String, dynamic>?> getCategoryById(String categoryId) async {
     try {
-      final client = SupabaseService().client;
+      final client = _client;
+      if (client == null) return null;
+
       final response = await client
-          .from('categories')
+          .from(_categoriesTable)
           .select('*')
           .eq('id', categoryId)
           .single();
 
-      debugPrint('✅ Fetched category: $categoryId');
       return response;
     } catch (error) {
-      debugPrint('❌ Failed to fetch category: $error');
-      throw Exception('Failed to fetch category: $error');
+      debugPrint('❌ Get category by ID failed: $error');
+      return null;
     }
   }
 
-  /// Get categories with listing counts
-  Future<List<Map<String, dynamic>>> getCategoriesWithCounts() async {
-    try {
-      final client = SupabaseService().client;
-
-      // Get categories with listing counts using a join
-      final response = await client.rpc('get_categories_with_counts');
-
-      debugPrint('✅ Fetched categories with listing counts');
-      return List<Map<String, dynamic>>.from(response);
-    } catch (error) {
-      // Fallback to simple category fetch if RPC doesn't exist
-      debugPrint('⚠️ RPC not available, fetching categories without counts');
-      return await getCategories();
-    }
-  }
-
-  /// Search categories
+  /// Search categories by name
   Future<List<Map<String, dynamic>>> searchCategories(String query) async {
     try {
-      final client = SupabaseService().client;
+      final client = _client;
+      if (client == null) return [];
+
       final response = await client
-          .from('categories')
+          .from(_categoriesTable)
           .select('*')
-          .eq('is_active', true)
           .ilike('name', '%$query%')
-          .order('sort_order', ascending: true);
+          .order('name')
+          .limit(20);
 
-      debugPrint(
-          '✅ Search found ${response.length} categories for query: $query');
       return List<Map<String, dynamic>>.from(response);
     } catch (error) {
-      debugPrint('❌ Failed to search categories: $error');
-      throw Exception('Failed to search categories: $error');
+      debugPrint('❌ Search categories failed: $error');
+      return [];
     }
   }
 
-  /// Get category hierarchy (category with its parent and children)
-  Future<Map<String, dynamic>> getCategoryHierarchy(String categoryId) async {
-    try {
-      final client = SupabaseService().client;
+  /// Build category hierarchy from flat list
+  List<Map<String, dynamic>> _buildCategoryHierarchy(List<Map<String, dynamic>> categories) {
+    final Map<String, Map<String, dynamic>> categoryMap = {};
+    final List<Map<String, dynamic>> rootCategories = [];
 
-      // Get the category with its parent
-      final category = await client.from('categories').select('''
-            *,
-            parent:categories!parent_category_id(*)
-          ''').eq('id', categoryId).single();
-
-      // Get children categories
-      final children = await client
-          .from('categories')
-          .select('*')
-          .eq('parent_category_id', categoryId)
-          .eq('is_active', true)
-          .order('sort_order', ascending: true);
-
-      final result = {
+    // Create a map for quick lookup
+    for (final category in categories) {
+      categoryMap[category['id']] = {
         ...category,
-        'children': children,
+        'children': <Map<String, dynamic>>[],
       };
-
-      debugPrint('✅ Fetched category hierarchy for: $categoryId');
-      return result;
-    } catch (error) {
-      debugPrint('❌ Failed to fetch category hierarchy: $error');
-      throw Exception('Failed to fetch category hierarchy: $error');
     }
+
+    // Build hierarchy
+    for (final category in categories) {
+      final parentId = category['parent_id'];
+      if (parentId == null) {
+        rootCategories.add(categoryMap[category['id']]!);
+      } else if (categoryMap.containsKey(parentId)) {
+        categoryMap[parentId]!['children'].add(categoryMap[category['id']]!);
+      }
+    }
+
+    return rootCategories;
   }
 
-  /// Get popular categories (based on listing count)
-  Future<List<Map<String, dynamic>>> getPopularCategories(
-      {int limit = 6}) async {
-    try {
-      final client = SupabaseService().client;
-
-      // This would ideally use a database function, but for now we'll do a simple query
-      final response = await client
-          .from('categories')
-          .select('*')
-          .eq('is_active', true)
-          .order('sort_order', ascending: true)
-          .limit(limit);
-
-      debugPrint('✅ Fetched ${response.length} popular categories');
-      return List<Map<String, dynamic>>.from(response);
-    } catch (error) {
-      debugPrint('❌ Failed to fetch popular categories: $error');
-      throw Exception('Failed to fetch popular categories: $error');
-    }
+  /// Get fallback categories when database is unavailable
+  List<Map<String, dynamic>> _getFallbackCategories() {
+    return [
+      {'id': '1', 'name': 'Electronics', 'parent_id': null},
+      {'id': '2', 'name': 'Furniture', 'parent_id': null},
+      {'id': '3', 'name': 'Fashion', 'parent_id': null},
+      {'id': '4', 'name': 'Sports', 'parent_id': null},
+      {'id': '5', 'name': 'Automotive', 'parent_id': null},
+      {'id': '6', 'name': 'Books', 'parent_id': null},
+      {'id': '7', 'name': 'Home & Garden', 'parent_id': null},
+      {'id': '8', 'name': 'Jobs', 'parent_id': null},
+    ];
   }
 }
