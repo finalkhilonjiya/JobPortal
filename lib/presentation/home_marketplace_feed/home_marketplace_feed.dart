@@ -215,7 +215,7 @@ Future<void> _loadInitialData() async {
             (cat) => cat['name'].toString().toLowerCase() == 
                      defaultCat['name'].toString().toLowerCase(),
             orElse: () => null,
-          );
+          ) as Map<String, dynamic>?;
           
           return {
             'id': serverCat?['id'] ?? defaultCat['id'],
@@ -267,7 +267,6 @@ Future<void> _loadInitialData() async {
           latitude: _currentPosition!.latitude,
           longitude: _currentPosition!.longitude,
           radiusKm: _selectedDistance,
-          categoryId: _selectedCategory == 'All' ? null : _selectedCategory,
           limit: 20,
         );
       } else if (_selectedCategory == 'All') {
@@ -468,7 +467,6 @@ void _onScroll() {
           latitude: _currentPosition!.latitude,
           longitude: _currentPosition!.longitude,
           radiusKm: _selectedDistance,
-          categoryId: _selectedCategory == 'All' ? null : _selectedCategory,
           limit: 10,
           offset: offset,
         );
@@ -732,7 +730,8 @@ void _onScroll() {
                 SliverToBoxAdapter(
                   child: TrendingSectionWidget(
                     trendingListings: _trendingListings,
-                    onTap: _onListingTap,
+                    onListingTap: _onListingTap,
+                    onFavoriteTap: _toggleFavorite,
                   ),
                 ),
               // Listings
