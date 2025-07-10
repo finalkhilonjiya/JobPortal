@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- ✅ File provider paths for khilonjiya.com marketplace -->
+    
+    <!-- External storage for camera photos -->
+    <external-path name="external_files" path="."/>
+    
+    <!-- Cache directory for temporary files -->
+    <cache-path name="cache" path="." />
+    
+    <!-- Internal storage for app files -->
+    <files-path name="files" path="." />
+    
+    <!-- External cache for temporary shared files -->
+    <external-cache-path name="external_cache" path="." />
+    
+    <!-- Downloads directory for shared files -->
+    <external-files-path 
+        name="downloads" 
+        path="Download/" />
+        
+    <!-- Pictures directory for marketplace photos -->
+    <external-files-path 
+        name="pictures" 
+        path="Pictures/" />
+</paths>
