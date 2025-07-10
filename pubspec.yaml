@@ -7,7 +7,7 @@ version: 1.0.0+1
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
-  flutter: ">=3.19.0"
+  flutter: ">=3.24.0"
 
 dependencies:
   flutter:
@@ -70,18 +70,18 @@ dependencies:
   # 🔔 NOTIFICATIONS & MESSAGING
   firebase_messaging: ^14.8.0
   flutter_local_notifications: ^17.0.0
-  awesome_notifications: ^0.9.3+1
+  awesome_notifications: ^0.10.1
 
   # 📱 DEVICE FEATURES
   device_info_plus: ^10.0.0
-  package_info_plus: ^5.0.1
+  package_info_plus: ^6.0.0
   permission_handler: ^11.3.0
-  share_plus: ^8.0.2
+  share_plus: ^9.0.0
   url_launcher: ^6.2.5
 
   # 📊 DATA VISUALIZATION & CHARTS
   fl_chart: ^0.68.0
-  syncfusion_flutter_charts: ^21.2.10
+  syncfusion_flutter_charts: ^24.1.46
 
   # 🔍 SEARCH & FILTERS
   flutter_typeahead: ^5.2.0  # ✅ Upgraded to fix dependency conflict
