@@ -606,4 +606,66 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
         ),
         boxShadow: [
           BoxShadow(
-      
+            color: AppTheme.lightTheme.colorScheme.shadow.withAlpha(26),
+            blurRadius: 12,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              style: OutlinedButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 3.w),
+                side: BorderSide(
+                  color: AppTheme.lightTheme.colorScheme.outline,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'Reset',
+                style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
+                  color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: 3.w),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () {
+                final filters = {
+                  'condition': _selectedCondition,
+                  'sort': _selectedSort,
+                  'time': _selectedTimeFilter,
+                };
+                widget.onFiltersApplied(filters, _selectedDistance);
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 3.w),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'Apply Filters',
+                style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }

@@ -13,6 +13,7 @@ import '../presentation/chat_messaging/chat_messaging.dart';
 import '../presentation/favorites_and_saved_items/favorites_and_saved_items.dart';
 import '../presentation/create_listing/create_listing.dart';
 import '../presentation/configuration_setup/configuration_setup.dart';
+import '../presentation/notifications/notifications_screen.dart';
 
 // Additional screens we'll create
 // import '../presentation/forgot_password/forgot_password_screen.dart';
@@ -184,7 +185,7 @@ class AppRoutes {
     // transactionDetailScreen: (context) => const TransactionDetailScreen(),
     
     // 🔔 Notification Routes
-    // notificationsScreen: (context) => const NotificationsScreen(),
+    notificationsScreen: (context) => const NotificationsScreen(),
     // notificationSettingsScreen: (context) => const NotificationSettingsScreen(),
     
     // 📍 Location Routes
