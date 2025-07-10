@@ -30,7 +30,7 @@ class CategoryService {
       final response = await client
           .from(_categoriesTable)
           .select('*')
-          .isFilter('parent_id', 'is', null)
+          .eq('parent_id', null)
           .order('sort_order', ascending: true);
 
       return List<Map<String, dynamic>>.from(response);
