@@ -836,7 +836,13 @@ void _onScroll() {
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  Navigator.pushNamed(context, AppRoutes.notificationsScreen);
+                  // TODO: Implement notifications screen
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Notifications feature coming soon!'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
                 },
                 child: Container(
                   padding: EdgeInsets.all(2.5.w),

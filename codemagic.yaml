@@ -1,14 +1,18 @@
 workflows:
-  android-build:
-    name: Android Build
+  build_apk:
+    name: Build APK with latest Flutter
+    max_build_duration: 60
     environment:
-      flutter: "3.19.5"
+      flutter: stable
+      xcode: latest
+      android: true
     scripts:
-      - name: Clean build artifacts
-        script: flutter clean
-      - name: Get dependencies
-        script: flutter pub get
-      - name: Build appbundle
-        script: flutter build appbundle --debug
+      - name: Clean build
+        script: |
+          flutter clean
+          flutter pub get
+      - name: Build APK
+        script: |
+          flutter build apk --debug
     artifacts:
-      - build/app/outputs/bundle/debug/app-debug.aab
+      - build/app/outputs/flutter-apk/app-debug.apk
