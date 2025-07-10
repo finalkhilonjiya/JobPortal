@@ -70,7 +70,7 @@ dependencies:
   # 🔔 NOTIFICATIONS & MESSAGING
   firebase_messaging: ^14.8.0
   flutter_local_notifications: ^17.0.0
-  awesome_notifications: ^0.10.1
+  awesome_notifications: ^0.9.2
 
   # 📱 DEVICE FEATURES
   device_info_plus: ^10.0.0
