@@ -23,11 +23,8 @@
     
     <!-- Phone permission for contact features -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
-    
-    <!-- ✅ FIXED: Set minimum SDK version to 23 -->
-    <uses-sdk 
-        android:minSdkVersion="23" 
-        android:targetSdkVersion="34" />
+
+    <!-- ✅ REMOVED: uses-sdk (deprecated in manifest) - SDK versions now only in build.gradle -->
 
     <application
         android:label="khilonjiya.com"
@@ -38,12 +35,11 @@
         android:theme="@style/LaunchTheme"
         android:usesCleartextTraffic="true">
         
-        <!-- ✅ FIXED: Updated MainActivity for Flutter v2 embedding -->
+        <!-- ✅ FIXED: Simplified MainActivity for Flutter v2 embedding -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
-            android:taskAffinity=""
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
@@ -64,10 +60,7 @@
                       android:host="khilonjiya.com" />
             </intent-filter>
             
-            <!-- ✅ FIXED: Flutter v2 embedding metadata -->
-            <meta-data
-                android:name="io.flutter.embedding.android.NormalTheme"
-                android:resource="@style/NormalTheme" />
+            <!-- ✅ REMOVED: NormalTheme meta-data (optional and can cause issues) -->
         </activity>
         
         <!-- File Provider for image sharing -->
@@ -96,9 +89,6 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="marketplace_notifications" />
-            
-
-            
     </application>
     
     <!-- Required for devices running Android 6.0+ -->
