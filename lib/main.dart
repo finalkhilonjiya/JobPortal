@@ -3,12 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
-import '../core/app_export.dart';
-import '../widgets/custom_error_widget.dart';
-import './routes/app_routes.dart';
-import './theme/app_theme.dart';
-import './utils/auth_service.dart';
-import './utils/supabase_service.dart';
+import 'core/app_export.dart';
+import 'widgets/custom_error_widget.dart';
+import 'routes/app_routes.dart';
+import 'theme/app_theme.dart';
+import 'utils/auth_service.dart';
+import 'utils/supabase_service.dart';
 
 // Enhanced Configuration Management
 class AppConfig {
@@ -22,7 +22,7 @@ class AppConfig {
   static const Duration splashMinimumDuration = Duration(seconds: 2);
   
   // App metadata
-  static const String appName = 'Marketplace Pro';
+  static const String appName = 'khilonjiya.com';
   static const String appVersion = '1.0.0';
   
   static bool get hasSupabaseCredentials => 
@@ -216,13 +216,13 @@ class AppInitializationService {
           debugPrint('🔄 Auth state changed: $event');
 
           switch (event) {
-            case 'SIGNED_IN':
+            case AuthChangeEvent.signedIn:
               _stateNotifier.setState(AppState.authenticated);
               break;
-            case 'SIGNED_OUT':
+            case AuthChangeEvent.signedOut:
               _stateNotifier.setState(AppState.unauthenticated);
               break;
-            case 'TOKEN_REFRESHED':
+            case AuthChangeEvent.tokenRefreshed:
               debugPrint('🔄 Token refreshed');
               break;
             default:
@@ -309,7 +309,7 @@ void main() async {
   
   // Enhanced system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
-    SystemUiOverlayStyle(
+    const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
       systemNavigationBarColor: Colors.white,
@@ -321,6 +321,8 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -342,7 +344,7 @@ class MyApp extends StatelessWidget {
                 builder: (context, child) {
                   return MediaQuery(
                     data: MediaQuery.of(context).copyWith(
-                      textScaler: TextScaler.linear(1.0),
+                      textScaler: const TextScaler.linear(1.0),
                     ),
                     child: child!,
                   );
@@ -351,7 +353,7 @@ class MyApp extends StatelessWidget {
                 debugShowCheckedModeBanner: false,
                 routes: AppRoutes.routes,
                 initialRoute: AppRoutes.initial,
-                home: AppInitializer(),
+                home: const AppInitializer(),
               );
             },
           );
@@ -362,8 +364,10 @@ class MyApp extends StatelessWidget {
 }
 
 class AppInitializer extends StatefulWidget {
+  const AppInitializer({Key? key}) : super(key: key);
+
   @override
-  _AppInitializerState createState() => _AppInitializerState();
+  State<AppInitializer> createState() => _AppInitializerState();
 }
 
 class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObserver {
@@ -520,17 +524,17 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
                           BoxShadow(
                             color: AppTheme.lightTheme.primaryColor.withOpacity(0.3),
                             blurRadius: 20,
-                            offset: Offset(0, 10),
+                            offset: const Offset(0, 10),
                           ),
                         ],
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.storefront,
                         size: 60,
                         color: Colors.white,
                       ),
                     ),
-                    SizedBox(height: 32),
+                    const SizedBox(height: 32),
                     Text(
                       AppConfig.appName,
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -538,9 +542,9 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
                         color: AppTheme.lightTheme.primaryColor,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
-                      'Your trusted marketplace',
+                      'আমাৰ সংস্কৃতি, আমাৰ গৌৰৱ',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Colors.grey[600],
                       ),
@@ -564,7 +568,7 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
                       ),
                     ),
                   ),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 24),
                   Text(
                     _stateNotifier.isRetrying 
                         ? 'Retrying connection...' 
@@ -587,7 +591,7 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
       backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -596,7 +600,7 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
                 size: 80,
                 color: Colors.red[400],
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               Text(
                 'Connection Error',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -604,7 +608,7 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
                 stateNotifier.errorMessage.isNotEmpty 
                     ? stateNotifier.errorMessage
@@ -614,7 +618,7 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
                   color: Colors.grey[600],
                 ),
               ),
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
               Row(
                 children: [
                   Expanded(
@@ -624,34 +628,34 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
                         _initializeApp();
                       },
                       icon: stateNotifier.isRetrying 
-                          ? SizedBox(
+                          ? const SizedBox(
                               width: 16,
                               height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
-                          : Icon(Icons.refresh),
+                          : const Icon(Icons.refresh),
                       label: Text(stateNotifier.isRetrying ? 'Retrying...' : 'Retry'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.lightTheme.primaryColor,
                         foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () {
                         stateNotifier.setOfflineMode(true);
                         NavigationService.pushReplacementNamed(AppRoutes.splashScreen);
                       },
-                      icon: Icon(Icons.cloud_off),
-                      label: Text('Continue'),
+                      icon: const Icon(Icons.cloud_off),
+                      label: const Text('Continue'),
                       style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         side: BorderSide(color: AppTheme.lightTheme.primaryColor),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -662,9 +666,9 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
                 ],
               ),
               if (stateNotifier.isOfflineMode) ...[
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Container(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.orange[50],
                     borderRadius: BorderRadius.circular(12),
@@ -677,7 +681,7 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
                         color: Colors.orange[600],
                         size: 20,
                       ),
-                      SizedBox(width: 12),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'Some features may be limited in offline mode.',
@@ -702,7 +706,7 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
       backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -711,14 +715,14 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
                 size: 80,
                 color: Colors.blue[400],
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               Text(
                 'Offline Mode',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
                 'You\'re currently offline. Some features may be limited. Connect to the internet for the full experience.',
                 textAlign: TextAlign.center,
@@ -726,7 +730,7 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
                   color: Colors.grey[600],
                 ),
               ),
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
               Row(
                 children: [
                   Expanded(
@@ -735,28 +739,28 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
                         _stateNotifier.retry();
                         _initializeApp();
                       },
-                      icon: Icon(Icons.wifi),
-                      label: Text('Try Again'),
+                      icon: const Icon(Icons.wifi),
+                      label: const Text('Try Again'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue[400],
                         foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () {
                         NavigationService.pushReplacementNamed(AppRoutes.splashScreen);
                       },
-                      icon: Icon(Icons.offline_bolt),
-                      label: Text('Continue'),
+                      icon: const Icon(Icons.offline_bolt),
+                      label: const Text('Continue'),
                       style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         side: BorderSide(color: Colors.blue[400]!),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
