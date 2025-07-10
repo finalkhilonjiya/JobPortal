@@ -27,8 +27,7 @@
     <!-- ✅ FIXED: Set minimum SDK version to 23 -->
     <uses-sdk 
         android:minSdkVersion="23" 
-        android:targetSdkVersion="34" 
-        tools:overrideLibrary="me.carda.awesome_notifications" />
+        android:targetSdkVersion="34" />
 
     <application
         android:label="khilonjiya.com"
@@ -98,19 +97,7 @@
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="marketplace_notifications" />
             
-        <!-- Awesome Notifications Configuration -->
-        <receiver android:name="me.carda.awesome_notifications.services.AwesomeNotificationsBroadcastReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="AWESOME_NOTIFICATIONS_ACTION" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </receiver>
-        
-        <service android:name="me.carda.awesome_notifications.services.AwesomeNotificationsService"
-            android:enabled="true"
-            android:exported="true" />
+
             
     </application>
     
