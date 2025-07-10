@@ -6,7 +6,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.2.0 <4.0.0'
+  sdk: '>=3.3.0 <4.0.0'  # Changed from >=3.2.0
   flutter: ">=3.16.0"
 
 dependencies:
@@ -108,7 +108,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^3.0.0  # Changed from ^5.0.0 to ^3.0.0
+
 
   # 🏗️ CODE GENERATION
   build_runner: ^2.4.7
@@ -116,9 +117,11 @@ dev_dependencies:
   hive_generator: ^2.0.1
   retrofit_generator: ^8.0.4
 
+
   # 🧪 TESTING
   mockito: ^5.4.2
   bloc_test: ^9.1.5
+
 
   # 📱 APP CONFIGURATION
   flutter_launcher_icons: ^0.13.1
