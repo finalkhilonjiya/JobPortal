@@ -3,6 +3,7 @@ plugins {
     id "kotlin-android"
     id "dev.flutter.flutter-gradle-plugin"
 }
+
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file('local.properties')
 if (localPropertiesFile.exists()) {
@@ -24,7 +25,8 @@ if (flutterVersionName == null) {
 android {
     namespace "com.khilonjiya.marketplace"
     compileSdk 34
-    ndkVersion flutter.ndkVersion
+    // ✅ FIXED: Use explicit NDK version instead of flutter.ndkVersion
+    ndkVersion "25.1.8937393"
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
@@ -41,50 +43,38 @@ android {
 
     defaultConfig {
         applicationId "com.khilonjiya.marketplace"
-        // ✅ FIXED: Updated minSdkVersion from 21 to 23 to support awesome_notifications
         minSdkVersion 23
         targetSdkVersion 34
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         
-        // Enable multidex for large apps
         multiDexEnabled true
-        
-        // Add any additional configurations here
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            // Signing config for release builds
             signingConfig signingConfigs.debug
-            
-            // Enable code shrinking and obfuscation
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            
-            // Disable debugging for release
             debuggable false
             jniDebuggable false
             renderscriptDebuggable false
         }
         
         debug {
-            // Keep debugging enabled for debug builds
             debuggable true
             minifyEnabled false
             shrinkResources false
         }
     }
     
-    // Add this to handle potential build issues
     packagingOptions {
         pickFirst '**/libc++_shared.so'
         pickFirst '**/libjsc.so'
     }
     
-    // Lint configuration
     lintOptions {
         disable 'InvalidPackage'
         checkReleaseBuilds false
@@ -96,10 +86,10 @@ flutter {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    // ✅ FIXED: Use explicit Kotlin version instead of variable
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22"
     implementation 'androidx.multidex:multidex:2.0.1'
     
-    // Test dependencies
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test:runner:1.5.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
