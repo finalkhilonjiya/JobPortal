@@ -1,6 +1,7 @@
 plugins {
     id "com.android.application"
     id "kotlin-android"
+    // ✅ FIXED: Updated to use the latest Flutter Gradle plugin
     id "dev.flutter.flutter-gradle-plugin"
 }
 
