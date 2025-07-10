@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
-import 'package:lottie/lottie.dart';
 
 import '../../core/app_export.dart';
 import '../../routes/app_routes.dart';
@@ -36,8 +34,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   final _passwordFocusNode = FocusNode();
   final _confirmPasswordFocusNode = FocusNode();
 
-  // Enhanced auth service with proper provider integration
-  AuthService? _authService;
+  // Enhanced auth service
+  final _authService = AuthService();
 
   // Enhanced state management
   bool _isPasswordVisible = false;
@@ -72,19 +70,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   @override
   void initState() {
     super.initState();
-    _initializeAuthService();
     _setupAnimations();
     _setupValidationListeners();
     _setupFocusListeners();
-  }
-
-  void _initializeAuthService() {
-    // Get AuthService from Provider context
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _authService = Provider.of<AuthService>(context, listen: false);
-      }
-    });
   }
 
   void _setupAnimations() {
@@ -226,9 +214,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   bool _validateEmail(String email) {
     if (email.isEmpty) return false;
     
-    // Comprehensive email regex
+    // Fixed regex pattern - escaped the single quote properly
     final emailRegex = RegExp(
-      r'^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
+      r'^[a-zA-Z0-9.!#$%&\'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
     );
     
     return emailRegex.hasMatch(email.trim()) && 
@@ -396,8 +384,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     return null;
   }
 
-
-void _onProfilePhotoSelected(String? photoPath) {
+  void _onProfilePhotoSelected(String? photoPath) {
     setState(() {
       _profilePhotoPath = photoPath;
     });
@@ -473,26 +460,19 @@ void _onProfilePhotoSelected(String? photoPath) {
     });
 
     try {
-      // Ensure auth service is available
-      if (_authService == null) {
-        _authService = Provider.of<AuthService>(context, listen: false);
-      }
-
-      final email = _selectedContactMethod == 'email'
+      final username = _selectedContactMethod == 'email'
           ? _emailController.text.trim()
-          : '${_phoneController.text.replaceAll(RegExp(r'[^\d]'), '')}@khilonjiya.temp'; // Temporary email for phone signup
+          : _phoneController.text.trim();
       
       final password = _passwordController.text;
       final fullName = _nameController.text.trim();
 
       // Enhanced registration with additional metadata
-      final response = await _authService!.signUp(
-        email: email,
+      final response = await _authService.signUp(
+        username: username,
         password: password,
         fullName: fullName,
-        phone: _selectedContactMethod == 'phone' ? _phoneController.text.trim() : null,
-        profilePhotoPath: _profilePhotoPath,
-        locationEnabled: _isLocationEnabled,
+        role: 'buyer',
       );
 
       if (response.user != null) {
@@ -502,7 +482,7 @@ void _onProfilePhotoSelected(String? photoPath) {
         });
 
         // Provide haptic feedback for success
-        HapticFeedback.notificationFeedback();
+        HapticFeedback.selectionClick();
         
         _showSuccessSnackBar('Verification code sent to your ${_selectedContactMethod}');
 
@@ -532,6 +512,7 @@ void _onProfilePhotoSelected(String? photoPath) {
       }
     }
   }
+
 
   String _getEnhancedErrorMessage(String error) {
     if (error.toLowerCase().contains('user already registered') || 
@@ -572,7 +553,7 @@ void _onProfilePhotoSelected(String? photoPath) {
     });
 
     // Provide success haptic feedback
-    HapticFeedback.notificationFeedback();
+    HapticFeedback.selectionClick();
     
     // Show success dialog
     _showSuccessDialog();
@@ -592,7 +573,7 @@ void _onProfilePhotoSelected(String? photoPath) {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1),
+                color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -673,4 +654,1258 @@ void _onProfilePhotoSelected(String? photoPath) {
               Expanded(child: Text(message)),
             ],
           ),
-          backgroundColor: AppThem
+          backgroundColor: AppTheme.lightTheme.colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(4.w),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+  }
+
+  void _showSuccessSnackBar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+              SizedBox(width: 2.w),
+              Expanded(child: Text(message)),
+            ],
+          ),
+          backgroundColor: Colors.green.shade600,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(4.w),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  void _showInfoSnackBar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.white, size: 20),
+              SizedBox(width: 2.w),
+              Expanded(child: Text(message)),
+            ],
+          ),
+          backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(4.w),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    // Dispose animation controllers
+    _fadeController.dispose();
+    _slideController.dispose();
+    
+    // Dispose text controllers
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    
+    // Dispose focus nodes
+    _nameFocusNode.dispose();
+    _emailFocusNode.dispose();
+    _phoneFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    _confirmPasswordFocusNode.dispose();
+    
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async {
+        // Enhanced back button handling
+        if (_isLoading) return false; // Prevent going back while loading
+        
+        if (_nameController.text.isNotEmpty ||
+            _emailController.text.isNotEmpty ||
+            _phoneController.text.isNotEmpty ||
+            _passwordController.text.isNotEmpty) {
+          _showExitConfirmation();
+          return false;
+        }
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,
+        body: SafeArea(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: Column(
+                children: [
+                  _buildEnhancedHeader(),
+                  _buildEnhancedProgressIndicator(),
+                  if (_errorMessage.isNotEmpty) _buildErrorBanner(),
+                  Expanded(
+                    child: _showOtpVerification
+                        ? _buildOtpVerificationStep()
+                        : _buildEnhancedRegistrationForm(),
+                  ),
+                  _buildEnhancedBottomButton(),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEnhancedHeader() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+      decoration: BoxDecoration(
+        color: AppTheme.lightTheme.colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () {
+              if (_isLoading) return; // Prevent navigation while loading
+              
+              if (_nameController.text.isNotEmpty ||
+                  _emailController.text.isNotEmpty ||
+                  _phoneController.text.isNotEmpty ||
+                  _passwordController.text.isNotEmpty) {
+                _showExitConfirmation();
+              } else {
+                Navigator.of(context).pop();
+              }
+            },
+            child: Container(
+              padding: EdgeInsets.all(2.w),
+              decoration: BoxDecoration(
+                color: AppTheme.lightTheme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppTheme.lightTheme.colorScheme.outline,
+                  width: 1,
+                ),
+              ),
+              child: Icon(
+                Icons.arrow_back_ios,
+                color: AppTheme.lightTheme.colorScheme.onSurface,
+                size: 20,
+              ),
+            ),
+          ),
+          SizedBox(width: 4.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _showOtpVerification 
+                      ? 'Verify Your Account' 
+                      : 'Join khilonjiya.com',
+                  style: AppTheme.lightTheme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  _showOtpVerification
+                      ? 'Enter the verification code sent to your ${_selectedContactMethod}'
+                      : 'আমাৰ সংস্কৃতি, আমাৰ গৌৰৱ - Join our marketplace',
+                  style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Loading indicator in header
+          if (_isLoading)
+            SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppTheme.lightTheme.colorScheme.primary,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnhancedProgressIndicator() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+      child: Column(
+        children: [
+          Row(
+            children: List.generate(_totalSteps, (index) {
+              final isActive = index < _currentStep;
+              final isCurrent = index == _currentStep - 1;
+
+              return Expanded(
+                child: Container(
+                  margin: EdgeInsets.symmetric(horizontal: 1.w),
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: isActive
+                        ? AppTheme.lightTheme.colorScheme.primary
+                        : AppTheme.lightTheme.colorScheme.outline.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  child: isCurrent && _isLoading
+                      ? LinearProgressIndicator(
+                          backgroundColor: Colors.transparent,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppTheme.lightTheme.colorScheme.primary,
+                          ),
+                        )
+                      : null,
+                ),
+              );
+            }),
+          ),
+          SizedBox(height: 1.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Details',
+                style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                  color: _currentStep >= 1 
+                      ? AppTheme.lightTheme.colorScheme.primary 
+                      : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                  fontWeight: _currentStep == 1 ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+              Text(
+                'Verify',
+                style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                  color: _currentStep >= 2 
+                      ? AppTheme.lightTheme.colorScheme.primary 
+                      : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                  fontWeight: _currentStep == 2 ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+              Text(
+                'Complete',
+                style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                  color: _currentStep >= 3 
+                      ? AppTheme.lightTheme.colorScheme.primary 
+                      : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                  fontWeight: _currentStep == 3 ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorBanner() {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      padding: EdgeInsets.all(3.w),
+      margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+      decoration: BoxDecoration(
+        color: AppTheme.lightTheme.colorScheme.error.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppTheme.lightTheme.colorScheme.error.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.error_outline,
+            color: AppTheme.lightTheme.colorScheme.error,
+            size: 20,
+          ),
+          SizedBox(width: 2.w),
+          Expanded(
+            child: Text(
+              _errorMessage,
+              style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                color: AppTheme.lightTheme.colorScheme.error,
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: _clearErrorMessage,
+            child: Icon(
+              Icons.close,
+              color: AppTheme.lightTheme.colorScheme.error,
+              size: 16,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOtpVerificationStep() {
+    return OtpVerificationWidget(
+      contactMethod: _selectedContactMethod,
+      contactValue: _selectedContactMethod == 'email'
+          ? _emailController.text
+          : _phoneController.text,
+      onVerified: _handleOtpVerified,
+      onResend: () {
+        _showInfoSnackBar('Verification code resent to your ${_selectedContactMethod}');
+      },
+    );
+  }
+
+
+  Widget _buildEnhancedRegistrationForm() {
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(horizontal: 4.w),
+      physics: const BouncingScrollPhysics(),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 2.h),
+
+            // Enhanced Profile Photo Upload
+            ProfilePhotoUploadWidget(
+              onPhotoSelected: _onProfilePhotoSelected,
+              currentPhotoPath: _profilePhotoPath,
+            ),
+
+            SizedBox(height: 3.h),
+
+            // Enhanced Name Field
+            _buildEnhancedInputField(
+              controller: _nameController,
+              focusNode: _nameFocusNode,
+              label: 'Full Name',
+              hint: 'Enter your full name',
+              keyboardType: TextInputType.name,
+              textInputAction: TextInputAction.next,
+              isValid: _isNameValid,
+              prefixIcon: Icons.person_outline,
+              validator: _validateNameField,
+              onFieldSubmitted: (_) {
+                FocusScope.of(context).requestFocus(
+                    _selectedContactMethod == 'email'
+                        ? _emailFocusNode
+                        : _phoneFocusNode);
+              },
+            ),
+
+            SizedBox(height: 2.h),
+
+            // Enhanced Contact Method Toggle
+            _buildEnhancedContactMethodToggle(),
+
+            SizedBox(height: 2.h),
+
+            // Enhanced Email or Phone Field
+            _selectedContactMethod == 'email'
+                ? _buildEnhancedInputField(
+                    controller: _emailController,
+                    focusNode: _emailFocusNode,
+                    label: 'Email Address',
+                    hint: 'your.email@example.com',
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    isValid: _isEmailValid,
+                    prefixIcon: Icons.email_outlined,
+                    validator: _validateEmailField,
+                    onFieldSubmitted: (_) {
+                      FocusScope.of(context).requestFocus(_passwordFocusNode);
+                    },
+                  )
+                : _buildEnhancedInputField(
+                    controller: _phoneController,
+                    focusNode: _phoneFocusNode,
+                    label: 'Phone Number',
+                    hint: '+91 XXXXX XXXXX',
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.next,
+                    isValid: _isPhoneValid,
+                    prefixIcon: Icons.phone_outlined,
+                    validator: _validatePhoneField,
+                    onFieldSubmitted: (_) {
+                      FocusScope.of(context).requestFocus(_passwordFocusNode);
+                    },
+                  ),
+
+            SizedBox(height: 2.h),
+
+            // Enhanced Password Field
+            _buildEnhancedInputField(
+              controller: _passwordController,
+              focusNode: _passwordFocusNode,
+              label: 'Password',
+              hint: 'Create a strong password',
+              obscureText: !_isPasswordVisible,
+              textInputAction: TextInputAction.next,
+              isValid: _isPasswordValid,
+              prefixIcon: Icons.lock_outline,
+              suffixIcon: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isPasswordVisible = !_isPasswordVisible;
+                  });
+                  HapticFeedback.lightImpact();
+                },
+                child: Icon(
+                  _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                  color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                  size: 20,
+                ),
+              ),
+              validator: _validatePasswordField,
+              onFieldSubmitted: (_) {
+                FocusScope.of(context).requestFocus(_confirmPasswordFocusNode);
+              },
+            ),
+
+            // Enhanced Password Strength Indicator
+            if (_passwordController.text.isNotEmpty) ...[
+              SizedBox(height: 1.h),
+              PasswordStrengthIndicatorWidget(
+                password: _passwordController.text,
+                strength: _passwordStrength,
+              ),
+              SizedBox(height: 0.5.h),
+              Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 14,
+                    color: _getPasswordStrengthColor(),
+                  ),
+                  SizedBox(width: 1.w),
+                  Text(
+                    'Password strength: ${_getPasswordStrengthText()}',
+                    style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                      color: _getPasswordStrengthColor(),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
+            SizedBox(height: 2.h),
+
+            // Enhanced Confirm Password Field
+            _buildEnhancedInputField(
+              controller: _confirmPasswordController,
+              focusNode: _confirmPasswordFocusNode,
+              label: 'Confirm Password',
+              hint: 'Re-enter your password',
+              obscureText: !_isConfirmPasswordVisible,
+              textInputAction: TextInputAction.done,
+              isValid: _isConfirmPasswordValid,
+              prefixIcon: Icons.lock_outline,
+              suffixIcon: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                  });
+                  HapticFeedback.lightImpact();
+                },
+                child: Icon(
+                  _isConfirmPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                  color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                  size: 20,
+                ),
+              ),
+              validator: _validateConfirmPasswordField,
+            ),
+
+            // Password match indicator
+            if (_confirmPasswordController.text.isNotEmpty) ...[
+              SizedBox(height: 0.5.h),
+              Row(
+                children: [
+                  Icon(
+                    _isConfirmPasswordValid ? Icons.check_circle : Icons.cancel,
+                    size: 14,
+                    color: _isConfirmPasswordValid 
+                        ? Colors.green.shade600 
+                        : Colors.red.shade400,
+                  ),
+                  SizedBox(width: 1.w),
+                  Text(
+                    _isConfirmPasswordValid ? 'Passwords match' : 'Passwords do not match',
+                    style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                      color: _isConfirmPasswordValid 
+                          ? Colors.green.shade600 
+                          : Colors.red.shade400,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
+            SizedBox(height: 3.h),
+
+            // Enhanced Location Services Toggle
+            _buildEnhancedLocationToggle(),
+
+            SizedBox(height: 3.h),
+
+            // Enhanced Terms and Privacy
+            _buildEnhancedTermsCheckbox(),
+
+            SizedBox(height: 10.h), // Space for bottom button
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEnhancedInputField({
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required String label,
+    required String hint,
+    TextInputType keyboardType = TextInputType.text,
+    TextInputAction textInputAction = TextInputAction.next,
+    bool obscureText = false,
+    bool isValid = false,
+    IconData? prefixIcon,
+    Widget? suffixIcon,
+    String? Function(String?)? validator,
+    void Function(String)? onFieldSubmitted,
+  }) {
+    final bool hasError = controller.text.isNotEmpty && !isValid;
+    final bool hasFocus = focusNode.hasFocus;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        SizedBox(height: 0.5.h),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: hasFocus
+                ? [
+                    BoxShadow(
+                      color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    )
+                  ]
+                : null,
+          ),
+          child: TextFormField(
+            controller: controller,
+            focusNode: focusNode,
+            keyboardType: keyboardType,
+            textInputAction: textInputAction,
+            obscureText: obscureText,
+            validator: validator,
+            onFieldSubmitted: onFieldSubmitted,
+            style: AppTheme.lightTheme.textTheme.bodyLarge,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
+                color: AppTheme.lightTheme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+              ),
+              prefixIcon: prefixIcon != null
+                  ? Icon(
+                      prefixIcon,
+                      color: hasFocus
+                          ? AppTheme.lightTheme.colorScheme.primary
+                          : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                      size: 20,
+                    )
+                  : null,
+              suffixIcon: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (controller.text.isNotEmpty && isValid)
+                    Icon(
+                      Icons.check_circle,
+                      color: Colors.green.shade600,
+                      size: 20,
+                    ),
+                  if (controller.text.isNotEmpty && hasError)
+                    Icon(
+                      Icons.error,
+                      color: Colors.red.shade400,
+                      size: 20,
+                    ),
+                  if (suffixIcon != null) ...[
+                    SizedBox(width: 2.w),
+                    suffixIcon,
+                  ],
+                  SizedBox(width: 3.w),
+                ],
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: AppTheme.lightTheme.colorScheme.outline,
+                  width: 1,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: hasError
+                      ? Colors.red.shade400
+                      : AppTheme.lightTheme.colorScheme.outline,
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: hasError
+                      ? Colors.red.shade400
+                      : AppTheme.lightTheme.colorScheme.primary,
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Colors.red.shade400,
+                  width: 1,
+                ),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Colors.red.shade400,
+                  width: 2,
+                ),
+              ),
+              filled: true,
+              fillColor: hasFocus
+                  ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.05)
+                  : AppTheme.lightTheme.colorScheme.surface,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 4.w,
+                vertical: 3.w,
+              ),
+            ),
+            onTap: () {
+              if (!focusNode.hasFocus) {
+                FocusScope.of(context).requestFocus(focusNode);
+              }
+            },
+            onChanged: (value) {
+              // Clear error message when user starts typing
+              if (_errorMessage.isNotEmpty) {
+                _clearErrorMessage();
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEnhancedContactMethodToggle() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Preferred Contact Method',
+          style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        SizedBox(height: 0.5.h),
+        Text(
+          'Choose how you\'d like to receive notifications',
+          style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+            color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        SizedBox(height: 1.h),
+        Container(
+          decoration: BoxDecoration(
+            color: AppTheme.lightTheme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.lightTheme.colorScheme.outline,
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    if (_selectedContactMethod != 'email') {
+                      setState(() {
+                        _selectedContactMethod = 'email';
+                        _phoneController.clear();
+                        _clearErrorMessage();
+                      });
+                      HapticFeedback.lightImpact();
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: EdgeInsets.symmetric(vertical: 3.w),
+                    decoration: BoxDecoration(
+                      color: _selectedContactMethod == 'email'
+                          ? AppTheme.lightTheme.colorScheme.primary
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: _selectedContactMethod == 'email'
+                          ? [
+                              BoxShadow(
+                                color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              )
+                            ]
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.email_outlined,
+                          color: _selectedContactMethod == 'email'
+                              ? Colors.white
+                              : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                          size: 18,
+                        ),
+                        SizedBox(width: 2.w),
+                        Text(
+                          'Email',
+                          style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
+                            color: _selectedContactMethod == 'email'
+                                ? Colors.white
+                                : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                            fontWeight: _selectedContactMethod == 'email'
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    if (_selectedContactMethod != 'phone') {
+                      setState(() {
+                        _selectedContactMethod = 'phone';
+                        _emailController.clear();
+                        _clearErrorMessage();
+                      });
+                      HapticFeedback.lightImpact();
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: EdgeInsets.symmetric(vertical: 3.w),
+                    decoration: BoxDecoration(
+                      color: _selectedContactMethod == 'phone'
+                          ? AppTheme.lightTheme.colorScheme.primary
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: _selectedContactMethod == 'phone'
+                          ? [
+                              BoxShadow(
+                                color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              )
+                            ]
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.phone_outlined,
+                          color: _selectedContactMethod == 'phone'
+                              ? Colors.white
+                              : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                          size: 18,
+                        ),
+                        SizedBox(width: 2.w),
+                        Text(
+                          'Phone',
+                          style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
+                            color: _selectedContactMethod == 'phone'
+                                ? Colors.white
+                                : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                            fontWeight: _selectedContactMethod == 'phone'
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEnhancedLocationToggle() {
+    return Container(
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: AppTheme.lightTheme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _isLocationEnabled
+              ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3)
+              : AppTheme.lightTheme.colorScheme.outline.withOpacity(0.3),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: EdgeInsets.all(3.w),
+            decoration: BoxDecoration(
+              color: _isLocationEnabled
+                  ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1)
+                  : AppTheme.lightTheme.colorScheme.outline.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              _isLocationEnabled ? Icons.location_on : Icons.location_off,
+              color: _isLocationEnabled
+                  ? AppTheme.lightTheme.colorScheme.primary
+                  : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+              size: 24,
+            ),
+          ),
+          SizedBox(width: 3.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Enable Location Services',
+                  style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 0.5.h),
+                Text(
+                  _isLocationEnabled
+                      ? 'Great! You\'ll see nearby listings and local deals'
+                      : 'Find local listings and sellers near you',
+                  style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                    color: _isLocationEnabled
+                        ? AppTheme.lightTheme.colorScheme.primary
+                        : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                if (_isLocationEnabled) ...[
+                  SizedBox(height: 0.5.h),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle_outline,
+                        size: 14,
+                        color: AppTheme.lightTheme.colorScheme.primary,
+                      ),
+                      SizedBox(width: 1.w),
+                      Text(
+                        'Location access enabled',
+                        style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                          color: AppTheme.lightTheme.colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            child: Switch(
+              value: _isLocationEnabled,
+              onChanged: (value) => _toggleLocationServices(),
+              activeColor: AppTheme.lightTheme.colorScheme.primary,
+              activeTrackColor: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
+              inactiveThumbColor: AppTheme.lightTheme.colorScheme.outline,
+              inactiveTrackColor: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.3),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnhancedTermsCheckbox() {
+    return Container(
+      padding: EdgeInsets.all(3.w),
+      decoration: BoxDecoration(
+        color: _acceptTerms
+            ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.05)
+            : AppTheme.lightTheme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _acceptTerms
+              ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3)
+              : AppTheme.lightTheme.colorScheme.outline.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            child: Checkbox(
+              value: _acceptTerms,
+              onChanged: (value) {
+                setState(() {
+                  _acceptTerms = value ?? false;
+                });
+                HapticFeedback.lightImpact();
+              },
+              activeColor: AppTheme.lightTheme.colorScheme.primary,
+              checkColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _acceptTerms = !_acceptTerms;
+                });
+                HapticFeedback.lightImpact();
+              },
+              child: Padding(
+                padding: EdgeInsets.only(top: 3.w, left: 2.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    RichText(
+                      text: TextSpan(
+                        style: AppTheme.lightTheme.textTheme.bodyMedium,
+                        children: [
+                          const TextSpan(text: 'I agree to the '),
+                          WidgetSpan(
+                            child: GestureDetector(
+                              onTap: () {
+                                _showTermsBottomSheet();
+                                HapticFeedback.lightImpact();
+                              },
+                              child: Text(
+                                'Terms of Service',
+                                style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                                  color: AppTheme.lightTheme.colorScheme.primary,
+                                  decoration: TextDecoration.underline,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const TextSpan(text: ' and '),
+                          WidgetSpan(
+                            child: GestureDetector(
+                              onTap: () {
+                                _showTermsBottomSheet();
+                                HapticFeedback.lightImpact();
+                              },
+                              child: Text(
+                                'Privacy Policy',
+                                style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                                  color: AppTheme.lightTheme.colorScheme.primary,
+                                  decoration: TextDecoration.underline,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 1.h),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.security,
+                          size: 14,
+                          color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                        ),
+                        SizedBox(width: 1.w),
+                        Expanded(
+                          child: Text(
+                            'Your data is secure and protected with us',
+                            style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                              color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnhancedBottomButton() {
+    return Container(
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: AppTheme.lightTheme.colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.1),
+            blurRadius: 12,
+            offset: const Offset(0, -4),
+          ),
+        ],
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Form completion indicator
+          if (!_showOtpVerification) ...[
+            Row(
+              children: [
+                Icon(
+                  Icons.checklist,
+                  size: 16,
+                  color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                ),
+                SizedBox(width: 2.w),
+                Text(
+                  'Form ${_getCompletionPercentage()}% complete',
+                  style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                    color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const Spacer(),
+                if (_isFormValid)
+                  Icon(
+                    Icons.check_circle,
+                    size: 16,
+                    color: Colors.green.shade600,
+                  ),
+              ],
+            ),
+            SizedBox(height: 2.h),
+          ],
+
+          // Main action button
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              onPressed: _showOtpVerification
+                  ? null
+                  : (_isFormValid && !_isLoading ? _handleRegistration : null),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _isFormValid && !_isLoading
+                    ? AppTheme.lightTheme.colorScheme.primary
+                    : AppTheme.lightTheme.colorScheme.outline.withOpacity(0.3),
+                foregroundColor: _isFormValid && !_isLoading
+                    ? Colors.white
+                    : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                elevation: _isFormValid && !_isLoading ? 4 : 0,
+                shadowColor: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: _isLoading
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        ),
+                        SizedBox(width: 3.w),
+                        Text(
+                          'Creating Account...',
+                          style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.person_add,
+                          size: 20,
+                          color: _isFormValid ? Colors.white : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                        ),
+                        SizedBox(width: 2.w),
+                        Text(
+                          'Create Account',
+                          style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+
+          SizedBox(height: 2.h),
+
+          // Alternative sign-in option
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Already have an account? ',
+                style: AppTheme.lightTheme.textTheme.bodyMedium,
+              ),
+              GestureDetector(
+                onTap: _isLoading
+                    ? null
+                    : () {
+                        HapticFeedback.lightImpact();
+                        Navigator.pushReplacementNamed(context, AppRoutes.loginScreen);
+                      },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 1.w),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: _isLoading
+                        ? Colors.transparent
+                        : AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
+                  ),
+                  child: Text(
+                    'Sign In',
+                    style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                      color: _isLoading
+                          ? AppTheme.lightTheme.colorScheme.onSurfaceVariant
+                          : AppTheme.lightTheme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // Cultural touch and app branding
+          SizedBox(height: 2.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.local_mall,
+                size: 16,
+                color: AppTheme.lightTheme.colorScheme.primary,
+              ),
+              SizedBox(width: 1.w),
+              Text(
+                'khilonjiya.com',
+                style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                  color: AppTheme.lightTheme.colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                ' - আমাৰ সংস্কৃতি, আমাৰ গৌৰৱ',
+                style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                  color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper method to calculate form completion percentage
+  int _getCompletionPercentage() {
+    int completed = 0;
+    int total = 5; // name, email/phone, password, confirm password, terms
+
+    if (_isNameValid) completed++;
+    if (_selectedContactMethod == 'email' ? _isEmailValid : _isPhoneValid) completed++;
+    if (_isPasswordValid) completed++;
+    if (_isConfirmPasswordValid) completed++;
+    if (_acceptTerms) completed++;
+
+    return ((completed / total) * 100).round();
+  }
+}
