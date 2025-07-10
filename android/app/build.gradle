@@ -1,10 +1,8 @@
 plugins {
     id "com.android.application"
     id "kotlin-android"
-    // ✅ FIXED: Updated to use the latest Flutter Gradle plugin
     id "dev.flutter.flutter-gradle-plugin"
 }
-
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file('local.properties')
 if (localPropertiesFile.exists()) {
