@@ -1,4 +1,4 @@
-THIS SHOULD BE A LINTER ERRORimport 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 import 'package:geolocator/geolocator.dart';
@@ -273,10 +273,11 @@ Future<void> _loadInitialData() async {
       } else if (_selectedCategory == 'All') {
         listings = await _listingService.getActiveListings(limit: 20);
       } else {
-        final categoryId = _categories.firstWhere(
+        final category = _categories.firstWhere(
           (cat) => cat['name'] == _selectedCategory,
-          orElse: () => {'id': null},
-        )['id'];
+          orElse: () => <String, dynamic>{},
+        );
+        final categoryId = category['id'];
         
         if (categoryId != null && categoryId != 'all') {
           listings = await _listingService.getListingsByCategory(categoryId, limit: 20);
