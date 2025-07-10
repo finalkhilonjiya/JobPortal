@@ -81,7 +81,7 @@ dependencies:
 
   # 📊 DATA VISUALIZATION & CHARTS
   fl_chart: ^0.68.0
-  syncfusion_flutter_charts: ^30.4.0
+  syncfusion_flutter_charts: ^21.2.10
 
   # 🔍 SEARCH & FILTERS
   flutter_typeahead: ^5.2.0  # ✅ Upgraded to fix dependency conflict
