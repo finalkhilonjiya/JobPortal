@@ -214,7 +214,7 @@ Future<void> _loadInitialData() async {
           final serverCat = categories.firstWhere(
             (cat) => cat['name'].toString().toLowerCase() == 
                      defaultCat['name'].toString().toLowerCase(),
-            orElse: () => null,
+            orElse: () => <String, dynamic>{},
           );
           
           return {
