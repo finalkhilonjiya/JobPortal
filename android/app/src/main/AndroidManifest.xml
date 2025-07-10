@@ -32,7 +32,6 @@
 
     <application
         android:label="khilonjiya.com"
-        android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="true"
         android:supportsRtl="true"
