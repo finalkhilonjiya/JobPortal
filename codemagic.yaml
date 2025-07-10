@@ -1,2 +1,14 @@
-- name: Run analyzer
-  script: flutter analyze
+workflows:
+  android-build:
+    name: Android Build
+    environment:
+      flutter: "3.19.0"
+    scripts:
+      - name: Clean build artifacts
+        script: flutter clean
+      - name: Get dependencies
+        script: flutter pub get
+      - name: Build appbundle
+        script: flutter build appbundle --debug
+    artifacts:
+      - build/app/outputs/bundle/debug/app-debug.aab
