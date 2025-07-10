@@ -113,6 +113,7 @@ class ListingService {
     double radiusKm = 10.0,
     int limit = 20,
     int offset = 0,
+    String? categoryId,
   }) async {
     try {
       final client = _client;
@@ -120,16 +121,18 @@ class ListingService {
         return _getMockNearbyListings();
       }
 
-      // For now, return all active listings since geo-filtering requires PostGIS
-      // In production, you would use ST_DWithin or similar PostGIS functions
-      final response = await client
+      var query = client
           .from('listings')
           .select('''
             *,
             category:categories(name),
             seller:user_profiles(full_name, avatar_url)
           ''')
-          .eq('status', 'active')
+          .eq('status', 'active');
+      if (categoryId != null && categoryId != 'all') {
+        query = query.eq('category_id', categoryId);
+      }
+      final response = await query
           .order('created_at', ascending: false)
           .range(offset, offset + limit - 1);
 

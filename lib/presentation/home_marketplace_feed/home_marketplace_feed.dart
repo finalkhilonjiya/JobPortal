@@ -732,7 +732,8 @@ void _onScroll() {
                 SliverToBoxAdapter(
                   child: TrendingSectionWidget(
                     trendingListings: _trendingListings,
-                    onTap: _onListingTap,
+                    onListingTap: _onListingTap,
+                    onFavoriteTap: _toggleFavorite,
                   ),
                 ),
               // Listings
