@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+THIS SHOULD BE A LINTER ERRORimport 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 import 'package:geolocator/geolocator.dart';

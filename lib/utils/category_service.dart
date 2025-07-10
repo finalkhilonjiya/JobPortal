@@ -36,7 +36,7 @@ class CategoryService {
       
       // Filter for main categories (where parent_id is null) in Dart
       final mainCategories = allCategories
-          .where((category) => category['parent_id'] == null)
+          .where((category) => category['parent_id'] == null || category['parent_id'] == '')
           .toList();
 
       return mainCategories;

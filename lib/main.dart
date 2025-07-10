@@ -213,21 +213,13 @@ class AppInitializationService {
     try {
       _authService.authStateChanges.listen(
         (data) {
-          final event = data.event;
-          debugPrint('🔄 Auth state changed: $event');
+          final session = data.session;
+          debugPrint('🔄 Auth state changed: ${data.event}');
 
-          switch (event) {
-            case AuthChangeEvent.signedIn:
-              _stateNotifier.setState(AppState.authenticated);
-              break;
-            case AuthChangeEvent.signedOut:
-              _stateNotifier.setState(AppState.unauthenticated);
-              break;
-            case AuthChangeEvent.tokenRefreshed:
-              debugPrint('🔄 Token refreshed');
-              break;
-            default:
-              debugPrint('🔄 Unknown auth event: $event');
+          if (session != null) {
+            _stateNotifier.setState(AppState.authenticated);
+          } else {
+            _stateNotifier.setState(AppState.unauthenticated);
           }
         },
         onError: (error) {
