@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">marketplace_pro</string>
-
+    <!-- App name -->
+    <string name="app_name">khilonjiya.com</string>
+    
+    <!-- Google Sign-In Client ID (replace with your actual client ID) -->
+    <string name="google_sign_in_client_id">YOUR_GOOGLE_SIGN_IN_CLIENT_ID</string>
+    
+    <!-- Notification channels -->
+    <string name="default_notification_channel_id">marketplace_notifications</string>
+    <string name="default_notification_channel_name">Marketplace Notifications</string>
+    
+    <!-- File provider authority -->
+    <string name="file_provider_authority">com.khilonjiya.marketplace.fileprovider</string>
 </resources>
