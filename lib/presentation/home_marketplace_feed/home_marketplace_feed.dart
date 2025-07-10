@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:geolocator/geolocator.dart;
 
 import '../../core/app_export.dart';
 import '../../routes/app_routes.dart';
@@ -40,6 +40,16 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
   bool _isLoadingCategories = false;
   bool _isLoadingLocation = false;
   bool _showBackToTop = false;
+  bool _showSearch = false;
+bool _showBackToTop = false;
+String _searchQuery = '';
+Map<String, dynamic> _activeFilters = {};
+bool _isLoadingLocation = false;
+bool _useGpsLocation = false;
+Position? _currentPosition;
+double _selectedDistance = 5.0;
+late AnimationController _headerAnimationController;
+late AnimationController _listAnimationController;
   
   // Navigation and Selection States
   int _currentIndex = 0;
