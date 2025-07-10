@@ -1,7 +1,5 @@
 Building Android
-6m 17s
-
-
+4m 7s
 
 
 
@@ -422,30 +420,6 @@ lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:778:13: Error:
 lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:773:13: Context: Previous declaration of 'FloatingActionButton'.
           ? FloatingActionButton.small(
             ^^^^^^^^^^^^^^^^^^^^
-lib/theme/app_theme.dart:834:16: Error: 'getPrimaryColor' is already declared in this scope.
-  static Color getPrimaryColor(bool isLight) {
-               ^^^^^^^^^^^^^^^
-lib/theme/app_theme.dart:793:16: Context: Previous declaration of 'getPrimaryColor'.
-  static Color getPrimaryColor(bool isLight) {
-               ^^^^^^^^^^^^^^^
-lib/theme/app_theme.dart:829:16: Error: 'getErrorColor' is already declared in this scope.
-  static Color getErrorColor(bool isLight) {
-               ^^^^^^^^^^^^^
-lib/theme/app_theme.dart:798:16: Context: Previous declaration of 'getErrorColor'.
-  static Color getErrorColor(bool isLight) {
-               ^^^^^^^^^^^^^
-lib/theme/app_theme.dart:839:16: Error: 'getTextPrimaryColor' is already declared in this scope.
-  static Color getTextPrimaryColor(bool isLight) {
-               ^^^^^^^^^^^^^^^^^^^
-lib/theme/app_theme.dart:818:16: Context: Previous declaration of 'getTextPrimaryColor'.
-  static Color getTextPrimaryColor(bool isLight) {
-               ^^^^^^^^^^^^^^^^^^^
-lib/theme/app_theme.dart:844:16: Error: 'getTextSecondaryColor' is already declared in this scope.
-  static Color getTextSecondaryColor(bool isLight) {
-               ^^^^^^^^^^^^^^^^^^^^^
-lib/theme/app_theme.dart:823:16: Context: Previous declaration of 'getTextSecondaryColor'.
-  static Color getTextSecondaryColor(bool isLight) {
-               ^^^^^^^^^^^^^^^^^^^^^
 lib/presentation/login_screen/login_screen.dart:786:10: Error: '_buildSocialLoginSection' is already declared in this scope.
   Widget _buildSocialLoginSection() {
          ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -518,6 +492,9 @@ lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:62:10: Error: 
 lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:50:8: Context: Previous declaration of '_selectedDistance'.
 double _selectedDistance = 5.0;
        ^^^^^^^^^^^^^^^^^
+lib/utils/listing_service.dart:10:3: Error: Type 'SupabaseClient' not found.
+  SupabaseClient? get _client {
+  ^^^^^^^^^^^^^^
 lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:49:1: Error: Type 'Position' not found.
 Position? _currentPosition;
 ^^^^^^^^
@@ -583,82 +560,32 @@ lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:746:54: Error:
 lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:747:53: Error: Can't use '_useGpsLocation' because it is declared more than once.
                                       showDistance: _useGpsLocation,
                                                     ^
-lib/utils/listing_service.dart:18:22: Error: The getter '_client' isn't defined for the class 'ListingService'.
- - 'ListingService' is from 'package:khilonjiya_com/utils/listing_service.dart' ('lib/utils/listing_service.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named '_client'.
-      final client = _client;
-                     ^^^^^^^
-lib/utils/listing_service.dart:35:7: Error: The method 'debugPrint' isn't defined for the class 'ListingService'.
- - 'ListingService' is from 'package:khilonjiya_com/utils/listing_service.dart' ('lib/utils/listing_service.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'debugPrint'.
-      debugPrint('❌ Get trending listings failed: $error');
-      ^^^^^^^^^^
-lib/utils/listing_service.dart:49:22: Error: The getter '_client' isn't defined for the class 'ListingService'.
- - 'ListingService' is from 'package:khilonjiya_com/utils/listing_service.dart' ('lib/utils/listing_service.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named '_client'.
-      final client = _client;
-                     ^^^^^^^
-lib/utils/listing_service.dart:67:7: Error: The method 'debugPrint' isn't defined for the class 'ListingService'.
- - 'ListingService' is from 'package:khilonjiya_com/utils/listing_service.dart' ('lib/utils/listing_service.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'debugPrint'.
-      debugPrint('❌ Get nearby listings failed: $error');
-      ^^^^^^^^^^
-lib/utils/category_service.dart:32:12: Error: The method 'is_' isn't defined for the class 'PostgrestFilterBuilder<List<Map<String, dynamic>>>'.
+lib/main.dart:219:18: Error: Undefined name 'AuthChangeEvent'.
+            case AuthChangeEvent.signedIn:
+                 ^^^^^^^^^^^^^^^
+lib/main.dart:222:18: Error: Undefined name 'AuthChangeEvent'.
+            case AuthChangeEvent.signedOut:
+                 ^^^^^^^^^^^^^^^
+lib/main.dart:225:18: Error: Undefined name 'AuthChangeEvent'.
+            case AuthChangeEvent.tokenRefreshed:
+                 ^^^^^^^^^^^^^^^
+lib/utils/category_service.dart:33:28: Error: The value 'null' can't be assigned to the parameter type 'Object' because 'Object' is not nullable.
+ - 'Object' is from 'dart:core'.
+          .eq('parent_id', null)
+                           ^
+lib/utils/favorite_service.dart:256:12: Error: The method 'in_' isn't defined for the class 'PostgrestFilterBuilder<List<Map<String, dynamic>>>'.
  - 'PostgrestFilterBuilder' is from 'package:postgrest/src/postgrest_builder.dart' ('../.pub-cache/hosted/pub.dev/postgrest-2.4.2/lib/src/postgrest_builder.dart').
  - 'List' is from 'dart:core'.
  - 'Map' is from 'dart:core'.
-Try correcting the name to the name of an existing method, or defining a method named 'is_'.
-          .is_('parent_id', null)
+Try correcting the name to the name of an existing method, or defining a method named 'in_'.
+          .in_('id', topListingIds)
            ^^^
-lib/utils/favorite_service.dart:132:31: Error: Couldn't find constructor 'FetchOptions'.
-          .select('id', const FetchOptions(count: CountOption.exact))
-                              ^^^^^^^^^^^^
-lib/utils/favorite_service.dart:132:18: Error: Too many positional arguments: 1 allowed, but 2 found.
-Try removing the extra positional arguments.
-          .select('id', const FetchOptions(count: CountOption.exact))
-                 ^
-lib/presentation/login_screen/login_screen.dart:281:37: Error: Can't use 'getErrorColor' because it is declared more than once.
-          backgroundColor: AppTheme.getErrorColor(true),
-                                    ^^^^^^^^^^^^^
 lib/presentation/login_screen/login_screen.dart:354:21: Error: Can't use '_buildSocialLoginSection' because it is declared more than once.
                     _buildSocialLoginSection(),
                     ^
 lib/presentation/login_screen/login_screen.dart:356:21: Error: Can't use '_buildSignUpLink' because it is declared more than once.
                     _buildSignUpLink(),
                     ^
-lib/presentation/login_screen/login_screen.dart:378:28: Error: Can't use 'getPrimaryColor' because it is declared more than once.
-                  AppTheme.getPrimaryColor(true),
-                           ^^^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:400:31: Error: Can't use 'getTextSecondaryColor' because it is declared more than once.
-              color: AppTheme.getTextSecondaryColor(true),
-                              ^^^^^^^^^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:410:31: Error: Can't use 'getTextSecondaryColor' because it is declared more than once.
-              color: AppTheme.getTextSecondaryColor(true),
-                              ^^^^^^^^^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:419:31: Error: Can't use 'getTextPrimaryColor' because it is declared more than once.
-              color: AppTheme.getTextPrimaryColor(true),
-                              ^^^^^^^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:426:31: Error: Can't use 'getTextSecondaryColor' because it is declared more than once.
-              color: AppTheme.getTextSecondaryColor(true),
-                              ^^^^^^^^^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:495:33: Error: Can't use 'getErrorColor' because it is declared more than once.
-                color: AppTheme.getErrorColor(true),
-                                ^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:512:33: Error: Can't use 'getErrorColor' because it is declared more than once.
-                color: AppTheme.getErrorColor(true),
-                                ^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:573:33: Error: Can't use 'getErrorColor' because it is declared more than once.
-                color: AppTheme.getErrorColor(true),
-                                ^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:592:33: Error: Can't use 'getErrorColor' because it is declared more than once.
-                color: AppTheme.getErrorColor(true),
-                                ^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:629:28: Error: Can't use 'getPrimaryColor' because it is declared more than once.
-                  AppTheme.getPrimaryColor(true),
-                           ^^^^^^^^^^^^^^^
-lib/presentation/login_screen/login_screen.dart:643:33: Error: Can't use 'getPrimaryColor' because it is declared more than once.
-          shadowColor: AppTheme.getPrimaryColor(true).withOpacity(0.3),
-                                ^^^^^^^^^^^^^^^
 lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:49:1: Error: 'Position' isn't a type.
 Position? _currentPosition;
 ^^^^^^^^
@@ -1147,14 +1074,13 @@ Execution failed for task ':app:compileFlutterBuildDebug'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 6m 13s
-Running Gradle task 'bundleDebug'...                              374.5s
+BUILD FAILED in 4m 3s
+Running Gradle task 'bundleDebug'...                              244.0s
 Gradle task bundleDebug failed with exit code 1
 
 
 Build failed :|
 Failed to build for Android
-
 mpp
 mpp
 github.com/bhabajit54321/mpp
@@ -1167,11 +1093,11 @@ Current configuration
 Click on the build steps for details.
 
 Preparing build machine
-39s
+29s
 Fetching app sources
 2s
 Installing SDKs
-48s
+46s
 Installing dependencies
 20s
 Publishing
