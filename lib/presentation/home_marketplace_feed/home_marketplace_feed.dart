@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
-import 'package:geolocator/geolocator.dart;
+import 'package:geolocator/geolocator.dart';
 
 import '../../core/app_export.dart';
 import '../../routes/app_routes.dart';
@@ -32,7 +32,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
   late AnimationController _listAnimationController;
   late Animation<double> _headerFadeAnimation;
   late Animation<Offset> _listSlideAnimation;
-  
   // Scroll and Loading States
   late ScrollController _scrollController;
   bool _isLoading = false;
@@ -41,43 +40,25 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
   bool _isLoadingLocation = false;
   bool _showBackToTop = false;
   bool _showSearch = false;
-bool _showBackToTop = false;
-String _searchQuery = '';
-Map<String, dynamic> _activeFilters = {};
-bool _isLoadingLocation = false;
-bool _useGpsLocation = false;
-Position? _currentPosition;
-double _selectedDistance = 5.0;
-late AnimationController _headerAnimationController;
-late AnimationController _listAnimationController;
-  
+  String _searchQuery = '';
+  Map<String, dynamic> _activeFilters = {};
+  bool _useGpsLocation = false;
+  Position? _currentPosition;
+  double _selectedDistance = 5.0;
   // Navigation and Selection States
   int _currentIndex = 0;
   String _selectedCategory = 'All';
   String _selectedLocation = 'Detect Location';
   Set<String> _favoriteListings = {};
-  
-  // Location and Distance States
-  Position? _currentPosition;
-  double _selectedDistance = 5.0; // Default 5km
-  bool _useGpsLocation = true;
-  
-  // Search and Filter States
-  String _searchQuery = '';
-  Map<String, dynamic> _activeFilters = {};
-  bool _showSearch = false;
-  
   // Data Collections
   List<Map<String, dynamic>> _listings = [];
   List<Map<String, dynamic>> _categories = [];
   List<Map<String, dynamic>> _trendingListings = [];
-  
   // Services
   final CategoryService _categoryService = CategoryService();
   final ListingService _listingService = ListingService();
   final FavoriteService _favoriteService = FavoriteService();
   final AuthService _authService = AuthService();
-
   // Enhanced Categories for khilonjiya.com marketplace
   final List<Map<String, dynamic>> _defaultCategories = [
     {'id': 'all', 'name': 'All', 'icon': 'apps', 'color': '0xFF6366F1'},
@@ -91,11 +72,10 @@ late AnimationController _listAnimationController;
     {'id': 'food', 'name': 'Food', 'icon': 'restaurant', 'color': '0xFFEF4444'},
     {'id': 'services', 'name': 'Services', 'icon': 'handyman', 'color': '0xFF84CC16'},
   ];
-
   final List<String> _defaultLocations = [
     'Detect Location',
     'Guwahati, Assam',
-    'Dibrugarh, Assam', 
+    'Dibrugarh, Assam',
     'Jorhat, Assam',
     'Silchar, Assam',
     'Tezpur, Assam',
@@ -103,7 +83,6 @@ late AnimationController _listAnimationController;
     'Bongaigaon, Assam',
     'Sivasagar, Assam',
   ];
-
   @override
   void initState() {
     super.initState();
@@ -736,39 +715,61 @@ void _onScroll() {
     return _listings;
   }
 
-
-
-return CompactListingCardWidget(
-                                      listing: listing,
-                                      isFavorite: isFavorite,
-                                      onTap: () => _onListingTap(listing),
-                                      onLongPress: () => _onListingLongPress(listing),
-                                      onFavoriteTap: () => _toggleFavorite(listing['id'].toString()),
-                                      showDistance: _useGpsLocation,
-                                    );
-                                  },
-                                  childCount: _filteredListings.length + (_isLoading ? 1 : 0),
-                                ),
-                              ),
-                            ),
-                      
-                      // Bottom padding
-                      SliverToBoxAdapter(
-                        child: SizedBox(height: 10.h),
-                      ),
-                    ],
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: _refreshListings,
+          child: CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              SliverToBoxAdapter(
+                child: _buildEnhancedHeader(),
+              ),
+              // Trending Section
+              if (_trendingListings.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: TrendingSectionWidget(
+                    trendingListings: _trendingListings,
+                    onTap: _onListingTap,
                   ),
                 ),
+              // Listings
+              _filteredListings.isEmpty && !_isLoading
+                  ? SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _buildEmptyState(),
+                    )
+                  : SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          if (index >= _filteredListings.length) {
+                            return _isLoading ? _buildLoadingIndicator() : null;
+                          }
+                          final listing = _filteredListings[index];
+                          final isFavorite = _favoriteListings.contains(listing['id'].toString());
+                          return CompactListingCardWidget(
+                            listing: listing,
+                            isFavorite: isFavorite,
+                            onTap: () => _onListingTap(listing),
+                            onLongPress: () => _onListingLongPress(listing),
+                            onFavoriteTap: () => _toggleFavorite(listing['id'].toString()),
+                            showDistance: _useGpsLocation,
+                          );
+                        },
+                        childCount: _filteredListings.length + (_isLoading ? 1 : 0),
+                      ),
+                    ),
+              // Bottom padding
+              SliverToBoxAdapter(
+                child: SizedBox(height: 10.h),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-      
-      // Enhanced Bottom Navigation
       bottomNavigationBar: _buildEnhancedBottomNav(),
-      
-      // Back to Top Button
       floatingActionButton: _showBackToTop
           ? FloatingActionButton.small(
               onPressed: _scrollToTop,
