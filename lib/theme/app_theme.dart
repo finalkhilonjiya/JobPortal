@@ -823,4 +823,35 @@ class AppTheme {
   static Color getTextSecondaryColor(bool isLight) {
     return isLight ? textSecondaryLight : textSecondaryDark;
   }
+   // ADD THESE METHODS TO YOUR EXISTING AppTheme CLASS (at the end)
+
+  /// Helper method to get error color based on theme
+  static Color getErrorColor(bool isLight) {
+    return isLight ? errorLight : errorDark;
+  }
+
+  /// Helper method to get primary color based on theme
+  static Color getPrimaryColor(bool isLight) {
+    return isLight ? primaryLight : primaryDark;
+  }
+
+  /// Helper method to get text primary color based on theme
+  static Color getTextPrimaryColor(bool isLight) {
+    return isLight ? textPrimaryLight : textPrimaryDark;
+  }
+
+  /// Helper method to get text secondary color based on theme
+  static Color getTextSecondaryColor(bool isLight) {
+    return isLight ? textSecondaryLight : textSecondaryDark;
+  }
+
+  /// Helper method to get surface color based on theme
+  static Color getSurfaceColor(bool isLight) {
+    return isLight ? surfaceLight : surfaceDark;
+  }
+
+  /// Helper method to get background color based on theme
+  static Color getBackgroundColor(bool isLight) {
+    return isLight ? backgroundLight : backgroundDark;
+  }
 }
