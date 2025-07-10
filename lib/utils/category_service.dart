@@ -18,24 +18,25 @@ class CategoryService {
     }
   }
 
-  /// Get main categories (top-level categories)
+  /// Get main categories (top-level categories) - FIXED METHOD
   Future<List<Map<String, dynamic>>> getMainCategories() async {
     try {
       final client = _client;
       if (client == null) {
-        return _getFallbackCategories();
+        return _getKhilonjijaCategories();
       }
 
+      // Fixed: Use eq() for null check instead of is_()
       final response = await client
           .from(_categoriesTable)
           .select('*')
-          .is_('parent_id', null)
-          .order('name');
+          .eq('parent_id', null)
+          .order('sort_order', ascending: true);
 
       return List<Map<String, dynamic>>.from(response);
     } catch (error) {
       debugPrint('❌ Get main categories failed: $error');
-      return _getFallbackCategories();
+      return _getKhilonjijaCategories();
     }
   }
 
@@ -49,7 +50,7 @@ class CategoryService {
           .from(_categoriesTable)
           .select('*')
           .eq('parent_id', parentId)
-          .order('name');
+          .order('sort_order', ascending: true);
 
       return List<Map<String, dynamic>>.from(response);
     } catch (error) {
@@ -63,20 +64,20 @@ class CategoryService {
     try {
       final client = _client;
       if (client == null) {
-        return _getFallbackCategories();
+        return _getKhilonjijaCategories();
       }
 
       final response = await client
           .from(_categoriesTable)
           .select('*')
           .order('parent_id')
-          .order('name');
+          .order('sort_order', ascending: true);
 
       final categories = List<Map<String, dynamic>>.from(response);
       return _buildCategoryHierarchy(categories);
     } catch (error) {
       debugPrint('❌ Get categories hierarchy failed: $error');
-      return _getFallbackCategories();
+      return _getKhilonjijaCategories();
     }
   }
 
@@ -84,18 +85,24 @@ class CategoryService {
   Future<Map<String, dynamic>?> getCategoryById(String categoryId) async {
     try {
       final client = _client;
-      if (client == null) return null;
+      if (client == null) {
+        return _getKhilonjijaCategories()
+            .where((cat) => cat['id'] == categoryId)
+            .firstOrNull;
+      }
 
       final response = await client
           .from(_categoriesTable)
           .select('*')
           .eq('id', categoryId)
-          .single();
+          .maybeSingle();
 
       return response;
     } catch (error) {
       debugPrint('❌ Get category by ID failed: $error');
-      return null;
+      return _getKhilonjijaCategories()
+          .where((cat) => cat['id'] == categoryId)
+          .firstOrNull;
     }
   }
 
@@ -103,19 +110,87 @@ class CategoryService {
   Future<List<Map<String, dynamic>>> searchCategories(String query) async {
     try {
       final client = _client;
-      if (client == null) return [];
+      if (client == null) {
+        return _getKhilonjijaCategories()
+            .where((cat) => cat['name']
+                .toString()
+                .toLowerCase()
+                .contains(query.toLowerCase()))
+            .toList();
+      }
 
       final response = await client
           .from(_categoriesTable)
           .select('*')
           .ilike('name', '%$query%')
-          .order('name')
+          .order('sort_order', ascending: true)
           .limit(20);
 
       return List<Map<String, dynamic>>.from(response);
     } catch (error) {
       debugPrint('❌ Search categories failed: $error');
-      return [];
+      return _getKhilonjijaCategories()
+          .where((cat) => cat['name']
+              .toString()
+              .toLowerCase()
+              .contains(query.toLowerCase()))
+          .toList();
+    }
+  }
+
+  /// Get category by name
+  Future<Map<String, dynamic>?> getCategoryByName(String name) async {
+    try {
+      final client = _client;
+      if (client == null) {
+        return _getKhilonjijaCategories()
+            .where((cat) => cat['name'].toString().toLowerCase() == name.toLowerCase())
+            .firstOrNull;
+      }
+
+      final response = await client
+          .from(_categoriesTable)
+          .select('*')
+          .ilike('name', name)
+          .maybeSingle();
+
+      return response;
+    } catch (error) {
+      debugPrint('❌ Get category by name failed: $error');
+      return _getKhilonjijaCategories()
+          .where((cat) => cat['name'].toString().toLowerCase() == name.toLowerCase())
+          .firstOrNull;
+    }
+  }
+
+  /// Get all categories as flat list
+  Future<List<Map<String, dynamic>>> getAllCategories() async {
+    try {
+      final client = _client;
+      if (client == null) {
+        return _getKhilonjijaCategories();
+      }
+
+      final response = await client
+          .from(_categoriesTable)
+          .select('*')
+          .order('sort_order', ascending: true);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (error) {
+      debugPrint('❌ Get all categories failed: $error');
+      return _getKhilonjijaCategories();
+    }
+  }
+
+  /// Check if category exists
+  Future<bool> categoryExists(String categoryId) async {
+    try {
+      final category = await getCategoryById(categoryId);
+      return category != null;
+    } catch (error) {
+      debugPrint('❌ Check category exists failed: $error');
+      return false;
     }
   }
 
@@ -145,17 +220,104 @@ class CategoryService {
     return rootCategories;
   }
 
-  /// Get fallback categories when database is unavailable
-  List<Map<String, dynamic>> _getFallbackCategories() {
+  /// Get khilonjiya.com specific categories - EXACTLY AS REQUESTED
+  List<Map<String, dynamic>> _getKhilonjijaCategories() {
     return [
-      {'id': '1', 'name': 'Electronics', 'parent_id': null},
-      {'id': '2', 'name': 'Furniture', 'parent_id': null},
-      {'id': '3', 'name': 'Fashion', 'parent_id': null},
-      {'id': '4', 'name': 'Sports', 'parent_id': null},
-      {'id': '5', 'name': 'Automotive', 'parent_id': null},
-      {'id': '6', 'name': 'Books', 'parent_id': null},
-      {'id': '7', 'name': 'Home & Garden', 'parent_id': null},
-      {'id': '8', 'name': 'Jobs', 'parent_id': null},
+      {
+        'id': '1',
+        'name': 'Jobs',
+        'description': 'Job listings and employment opportunities',
+        'parent_id': null,
+        'icon_name': 'work',
+        'color_code': '#4CAF50',
+        'sort_order': 1,
+        'is_active': true,
+        'created_at': DateTime.now().toIso8601String(),
+      },
+      {
+        'id': '2',
+        'name': 'Electronics',
+        'description': 'Electronic devices, gadgets, and accessories',
+        'parent_id': null,
+        'icon_name': 'devices',
+        'color_code': '#2196F3',
+        'sort_order': 2,
+        'is_active': true,
+        'created_at': DateTime.now().toIso8601String(),
+      },
+      {
+        'id': '3',
+        'name': 'Furniture',
+        'description': 'Home and office furniture',
+        'parent_id': null,
+        'icon_name': 'chair',
+        'color_code': '#FF9800',
+        'sort_order': 3,
+        'is_active': true,
+        'created_at': DateTime.now().toIso8601String(),
+      },
+      {
+        'id': '4',
+        'name': 'Properties',
+        'description': 'Real estate properties for sale and rent',
+        'parent_id': null,
+        'icon_name': 'home',
+        'color_code': '#9C27B0',
+        'sort_order': 4,
+        'is_active': true,
+        'created_at': DateTime.now().toIso8601String(),
+      },
+      {
+        'id': '5',
+        'name': 'Room for Rent',
+        'description': 'Rooms available for rent',
+        'parent_id': null,
+        'icon_name': 'bed',
+        'color_code': '#E91E63',
+        'sort_order': 5,
+        'is_active': true,
+        'created_at': DateTime.now().toIso8601String(),
+      },
+      {
+        'id': '6',
+        'name': 'Room for PG',
+        'description': 'Paying guest accommodations',
+        'parent_id': null,
+        'icon_name': 'people',
+        'color_code': '#607D8B',
+        'sort_order': 6,
+        'is_active': true,
+        'created_at': DateTime.now().toIso8601String(),
+      },
     ];
+  }
+
+  /// Get fallback categories (same as main categories for consistency)
+  List<Map<String, dynamic>> _getFallbackCategories() {
+    return _getKhilonjijaCategories();
+  }
+
+  /// Get category icons mapping
+  Map<String, String> getCategoryIcons() {
+    return {
+      'Jobs': 'work',
+      'Electronics': 'devices',
+      'Furniture': 'chair',
+      'Properties': 'home',
+      'Room for Rent': 'bed',
+      'Room for PG': 'people',
+    };
+  }
+
+  /// Get category colors mapping
+  Map<String, String> getCategoryColors() {
+    return {
+      'Jobs': '#4CAF50',
+      'Electronics': '#2196F3',
+      'Furniture': '#FF9800',
+      'Properties': '#9C27B0',
+      'Room for Rent': '#E91E63',
+      'Room for PG': '#607D8B',
+    };
   }
 }
