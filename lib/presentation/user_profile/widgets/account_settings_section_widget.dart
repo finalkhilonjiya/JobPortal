@@ -69,7 +69,13 @@ class AccountSettingsSectionWidget extends StatelessWidget {
                   title: 'Notifications',
                   subtitle: 'Manage notification preferences',
                   onTap: () {
-                    // Navigate to notification settings
+                    // TODO: Implement notification settings screen
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Notification settings coming soon!'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
                   },
                 ),
                 _buildDivider(),
