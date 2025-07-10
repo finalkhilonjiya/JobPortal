@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../utils/supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ListingService {
   static final ListingService _instance = ListingService._internal();

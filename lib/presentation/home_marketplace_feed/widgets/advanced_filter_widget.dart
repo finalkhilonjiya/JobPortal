@@ -606,4 +606,58 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
         ),
         boxShadow: [
           BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          ElevatedButton(
+            onPressed: _clearAllFilters,
+            child: Text('Reset'),
+          ),
+          ElevatedButton(
+            onPressed: _applyFilters,
+            child: Text('Apply'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onResetFilters() {
+    setState(() {
+      _priceRange = const RangeValues(0, 100000);
+      _selectedConditions.clear();
+      _selectedSort = 'newest';
+      _selectedTimeFilter = 'any';
+      _selectedDistance = 5.0;
+    });
+    HapticFeedback.lightImpact();
+  }
+
+  void _onApplyFilters() {
+    final filters = <String, dynamic>{
+      'min_price': _priceRange.start.round(),
+      'max_price': _priceRange.end.round(),
+      'conditions': _selectedConditions.toList(),
+      'sort': _selectedSort,
+      'time_filter': _selectedTimeFilter,
+    };
+
+    // Remove empty filters
+    filters.removeWhere((key, value) {
+      if (value is List) return value.isEmpty;
+      if (value is String) return value.isEmpty;
+      return false;
+    });
+
+    HapticFeedback.lightImpact();
+    widget.onFiltersApplied(filters, _selectedDistance);
+    Navigator.of(context).pop();
+  }
+}
       

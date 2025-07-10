@@ -9,6 +9,7 @@ import 'routes/app_routes.dart';
 import 'theme/app_theme.dart';
 import 'utils/auth_service.dart';
 import 'utils/supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Enhanced Configuration Management
 class AppConfig {

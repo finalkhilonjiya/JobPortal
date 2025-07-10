@@ -665,124 +665,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     );
   }
 
- Widget _buildSocialLoginSection() {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Divider(
-                color: AppTheme.lightTheme.colorScheme.outline,
-                thickness: 1,
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4.w),
-              child: Text(
-                'Or continue with',
-                style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                  color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-            Expanded(
-              child: Divider(
-                color: AppTheme.lightTheme.colorScheme.outline,
-                thickness: 1,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 3.h),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _isLoading ? null : _handleGoogleLogin,
-                icon: Icon(
-                  Icons.g_mobiledata,
-                  size: 24,
-                  color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-                ),
-                label: Text(
-                  'Google',
-                  style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
-                    color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 3.w),
-                  side: BorderSide(
-                    color: AppTheme.lightTheme.colorScheme.outline,
-                    width: 1,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(width: 3.w),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _isLoading ? null : _handleFacebookLogin,
-                icon: Icon(
-                  Icons.facebook,
-                  size: 24,
-                  color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-                ),
-                label: Text(
-                  'Facebook',
-                  style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
-                    color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 3.w),
-                  side: BorderSide(
-                    color: AppTheme.lightTheme.colorScheme.outline,
-                    width: 1,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSignUpLink() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          'Don\'t have an account? ',
-          style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-            color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        GestureDetector(
-          onTap: _isLoading ? null : () {
-            HapticFeedback.lightImpact();
-            Navigator.pushNamed(context, AppRoutes.registrationScreen);
-          },
-          child: Text(
-            'Sign Up',
-            style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-              color: AppTheme.lightTheme.colorScheme.primary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-  // ADD THESE METHODS TO YOUR EXISTING LoginScreen CLASS (before the final closing brace)
-
   Widget _buildSocialLoginSection() {
     return Column(
       children: [
@@ -798,7 +680,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
               padding: EdgeInsets.symmetric(horizontal: 4.w),
               child: Text(
                 'Or continue with',
-                style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
                   color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
                 ),
               ),
