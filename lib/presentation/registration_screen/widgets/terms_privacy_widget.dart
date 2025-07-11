@@ -125,7 +125,7 @@ class _TermsPrivacyWidgetState extends State<TermsPrivacyWidget>
                     padding: EdgeInsets.all(2.w),
                     decoration: BoxDecoration(
                       color: AppTheme.lightTheme.colorScheme.outline
-                          .withValues(alpha: 0.1),
+                          .withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: CustomIconWidget(
@@ -144,7 +144,7 @@ class _TermsPrivacyWidgetState extends State<TermsPrivacyWidget>
             margin: EdgeInsets.symmetric(horizontal: 4.w),
             decoration: BoxDecoration(
               color: AppTheme.lightTheme.colorScheme.outline
-                  .withValues(alpha: 0.1),
+                  .withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: TabBar(
@@ -205,7 +205,7 @@ class _TermsPrivacyWidgetState extends State<TermsPrivacyWidget>
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: AppTheme.lightTheme.colorScheme.outline
-                  .withValues(alpha: 0.2),
+                  .withOpacity(0.2),
               width: 1,
             ),
           ),

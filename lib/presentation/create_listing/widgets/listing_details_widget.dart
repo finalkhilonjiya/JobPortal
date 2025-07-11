@@ -292,7 +292,7 @@ class _ListingDetailsWidgetState extends State<ListingDetailsWidget> {
             padding: EdgeInsets.all(4.w),
             decoration: BoxDecoration(
               color: AppTheme.lightTheme.colorScheme.primaryContainer
-                  .withValues(alpha: 0.3),
+                  .withOpacity(0.3),
               borderRadius: BorderRadius.circular(3.w),
             ),
             child: Column(
