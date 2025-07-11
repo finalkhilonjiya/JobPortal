@@ -1,10 +1,10 @@
 Clean build
-39s
+1m 13s
 
 
 
 Show command
-Cleaning Xcode workspace...                                      2,628ms
+Cleaning Xcode workspace...                                         3.1s
 Reinstalled 161 packages.
 Resolving dependencies...
 Downloading packages...
@@ -169,8 +169,7 @@ Changed 156 dependencies!
 Try `flutter pub outdated` for more information.
 Analyzing clone...                                              
 
-  error • The name 'TextDirection' is defined in the libraries 'dart:ui' and 'package:intl/src/intl/text_direction.dart' • lib/core/app_export.dart:14:8 • ambiguous_export
-  error • The name 'ServiceStatus' is defined in the libraries 'package:geolocator_platform_interface/src/enums/location_service.dart' and 'package:permission_handler_platform_interface/permission_handler_platform_interface.dart' • lib/core/app_export.dart:20:8 • ambiguous_export
+  error • The name 'AuthException' is defined in the libraries 'package:gotrue/src/types/auth_exception.dart' and 'package:khilonjiya_com/utils/auth_service.dart' • lib/core/app_export.dart:30:8 • ambiguous_export
    info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:1:8 • unnecessary_import
    info • The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:2:8 • unnecessary_import
    info • The import of 'package:provider/provider.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:3:8 • unnecessary_import
@@ -178,9 +177,10 @@ Analyzing clone...
    info • The import of 'widgets/custom_error_widget.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:7:8 • unnecessary_import
    info • The import of 'routes/app_routes.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:8:8 • unnecessary_import
    info • The import of 'theme/app_theme.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:9:8 • unnecessary_import
+   info • The import of 'utils/auth_service.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:10:8 • unnecessary_import
    info • The import of 'utils/supabase_service.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:11:8 • unnecessary_import
    info • The import of 'package:supabase_flutter/supabase_flutter.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:12:8 • unnecessary_import
-   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/main.dart:526:69 • deprecated_member_use
+  error • The argument type 'int' can't be assigned to the parameter type 'double?'.  • lib/main.dart:526:87 • argument_type_not_assignable
    info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/chat_messaging/chat_messaging.dart:1:8 • unnecessary_import
    info • The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/chat_messaging/chat_messaging.dart:2:8 • unnecessary_import
    info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/chat_messaging/chat_messaging.dart:3:8 • unnecessary_import
@@ -232,4 +232,406 @@ warning • The value of the field '_isLoading' isn't used • lib/presentation/
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/configuration_setup/widgets/folder_structure_widget.dart:215:52 • deprecated_member_use
    info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/configuration_setup/widgets/navigation_breadcrumb_widget.dart:1:8 • unnecessary_import
    info • The import of 'package:google_fonts/google_fonts.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/configuration_setup/widgets/navigation_breadcrumb_widget.dart:2:8 • unnecessary_import
-   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/configuration_setup/widgets/navigation_breadcru
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/configuration_setup/widgets/navigation_breadcrumb_widget.dart:3:8 • unnecessary_import
+   info • The import of '../../../widgets/custom_icon_widget.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/configuration_setup/widgets/navigation_breadcrumb_widget.dart:6:8 • unnecessary_import
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/create_listing/create_listing.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/create_listing/create_listing.dart:2:8 • unnecessary_import
+  error • The argument type 'Future<bool> Function()' can't be assigned to the parameter type 'bool'.  • lib/presentation/create_listing/create_listing.dart:258:15 • argument_type_not_assignable
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/create_listing/widgets/additional_details_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/create_listing/widgets/additional_details_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/create_listing/widgets/additional_details_widget.dart:302:22 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/create_listing/widgets/additional_details_widget.dart:366:22 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/create_listing/widgets/category_selection_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/create_listing/widgets/category_selection_widget.dart:2:8 • unnecessary_import
+warning • The value of the field '_categoryService' isn't used • lib/presentation/create_listing/widgets/category_selection_widget.dart:23:25 • unused_field
+warning • The declaration '_getIconForCategory' isn't referenced • lib/presentation/create_listing/widgets/category_selection_widget.dart:55:10 • unused_element
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/create_listing/widgets/listing_details_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/create_listing/widgets/listing_details_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/create_listing/widgets/listing_details_widget.dart:295:20 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/create_listing/widgets/location_picker_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/create_listing/widgets/location_picker_widget.dart:2:8 • unnecessary_import
+warning • The value of the field '_useCurrentLocation' isn't used • lib/presentation/create_listing/widgets/location_picker_widget.dart:22:8 • unused_field
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/create_listing/widgets/location_picker_widget.dart:233:20 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/create_listing/widgets/location_picker_widget.dart:379:20 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/create_listing/widgets/photo_upload_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/create_listing/widgets/photo_upload_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/create_listing/widgets/photo_upload_widget.dart:305:37 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/create_listing/widgets/preview_listing_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/create_listing/widgets/preview_listing_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/create_listing/widgets/preview_listing_widget.dart:135:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/create_listing/widgets/preview_listing_widget.dart:253:20 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/create_listing/widgets/price_condition_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/create_listing/widgets/price_condition_widget.dart:2:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/create_listing/widgets/price_condition_widget.dart:3:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/create_listing/widgets/price_condition_widget.dart:347:20 • deprecated_member_use
+warning • The value of the field '_isRefreshing' isn't used • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:23:8 • unused_field
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:192:22 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_FavoritesAndSavedItemsState' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:205:29 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:207:38 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:239:22 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_FavoritesAndSavedItemsState' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:254:29 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:256:38 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:284:32 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_FavoritesAndSavedItemsState' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:369:13 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:372:22 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:377:22 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:378:24 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:385:22 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:386:24 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_FavoritesAndSavedItemsState' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:469:21 • undefined_method
+  error • The method 'CustomIconWidget' isn't defined for the type '_FavoritesAndSavedItemsState' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:563:17 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:572:28 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_FavoritesAndSavedItemsState' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:577:25 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:579:28 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:592:29 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:594:31 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_FavoritesAndSavedItemsState' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:638:21 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:640:24 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_FavoritesAndSavedItemsState' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:647:21 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:649:24 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_FavoritesAndSavedItemsState' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:655:21 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:657:24 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_FavoritesAndSavedItemsState' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:675:26 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:677:28 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_FavoritesAndSavedItemsState' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:687:31 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:690:31 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:706:22 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:709:24 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_FavoritesAndSavedItemsState' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:720:23 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:724:31 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:725:31 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_FavoritesAndSavedItemsState' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:736:23 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:740:31 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:741:31 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_FavoritesAndSavedItemsState' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:770:21 • undefined_method
+  error • The method 'CustomIconWidget' isn't defined for the type '_FavoritesAndSavedItemsState' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:793:24 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:795:24 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_FavoritesAndSavedItemsState' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:805:24 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:807:24 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_FavoritesAndSavedItemsState' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:817:24 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:819:24 • undefined_identifier
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/favorites_and_saved_items/widgets/collection_folder_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/favorites_and_saved_items/widgets/collection_folder_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/favorites_and_saved_items/widgets/collection_folder_widget.dart:55:34 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/favorites_and_saved_items/widgets/favorite_item_card_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/favorites_and_saved_items/widgets/favorite_item_card_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/favorites_and_saved_items/widgets/favorite_item_card_widget.dart:77:22 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/favorites_and_saved_items/widgets/price_alert_dialog_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/favorites_and_saved_items/widgets/price_alert_dialog_widget.dart:2:8 • unnecessary_import
+warning • The value of the field '_isPercentage' isn't used • lib/presentation/favorites_and_saved_items/widgets/price_alert_dialog_widget.dart:23:8 • unused_field
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1:8 • unnecessary_import
+   info • The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:2:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:3:8 • unnecessary_import
+   info • The import of '../../routes/app_routes.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:7:8 • unnecessary_import
+   info • The import of '../../theme/app_theme.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:8:8 • unnecessary_import
+   info • The import of '../../utils/category_service.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:9:8 • unnecessary_import
+   info • The import of '../../utils/listing_service.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:10:8 • unnecessary_import
+   info • The import of '../../utils/favorite_service.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:11:8 • unnecessary_import
+   info • The import of '../../utils/auth_service.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:12:8 • unnecessary_import
+warning • Unused import: '../../widgets/custom_icon_widget.dart' • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:13:8 • unused_import
+warning • The value of the field '_headerFadeAnimation' isn't used • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:33:26 • unused_field
+warning • The value of the field '_listSlideAnimation' isn't used • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:34:26 • unused_field
+warning • The receiver can't be null, so the null-aware operator '?[' is unnecessary • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:221:28 • invalid_null_aware_operator
+warning • The receiver can't be null, so the null-aware operator '?[' is unnecessary • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:225:31 • invalid_null_aware_operator
+warning • The declaration '_onDistanceChanged' isn't referenced • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:579:8 • unused_element
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:886:73 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:889:66 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:969:75 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1013:59 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1072:65 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1089:65 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1106:65 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1123:65 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1157:65 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:172:60 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:262:69 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:294:76 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:299:69 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:416:72 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:421:65 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:466:65 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:531:65 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:603:60 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/advanced_filter_widget.dart:609:33 • deprecated_member_use
+warning • Unused import: '../../../widgets/custom_icon_widget.dart' • lib/presentation/home_marketplace_feed/widgets/compact_listing_card_widget.dart:8:8 • unused_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/compact_listing_card_widget.dart:42:61 • deprecated_member_use
+   info • 'surfaceVariant' is deprecated and shouldn't be used. Use surfaceContainerHighest instead. This feature was deprecated after v3.18.0-0.1.pre • lib/presentation/home_marketplace_feed/widgets/compact_listing_card_widget.dart:68:64 • deprecated_member_use
+   info • 'surfaceVariant' is deprecated and shouldn't be used. Use surfaceContainerHighest instead. This feature was deprecated after v3.18.0-0.1.pre • lib/presentation/home_marketplace_feed/widgets/compact_listing_card_widget.dart:77:64 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/compact_listing_card_widget.dart:118:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/compact_listing_card_widget.dart:140:47 • deprecated_member_use
+   info • 'surfaceVariant' is deprecated and shouldn't be used. Use surfaceContainerHighest instead. This feature was deprecated after v3.18.0-0.1.pre • lib/presentation/home_marketplace_feed/widgets/compact_listing_card_widget.dart:264:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/compact_listing_card_widget.dart:264:71 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/enhanced_category_chip_widget.dart:38:31 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/enhanced_category_chip_widget.dart:43:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/enhanced_category_chip_widget.dart:49:42 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/enhanced_category_chip_widget.dart:64:36 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/enhanced_category_chip_widget.dart:65:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/enhanced_category_chip_widget.dart:96:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/enhanced_category_chip_widget.dart:97:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/enhanced_location_selector_widget.dart:33:67 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/enhanced_location_selector_widget.dart:37:59 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/enhanced_location_selector_widget.dart:38:59 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/enhanced_location_selector_widget.dart:199:80 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/location_selector_widget.dart:27:60 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/quick_action_widget.dart:80:59 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/quick_action_widget.dart:191:24 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/quick_action_widget.dart:194:26 • deprecated_member_use
+   info • 'surfaceVariant' is deprecated and shouldn't be used. Use surfaceContainerHighest instead. This feature was deprecated after v3.18.0-0.1.pre • lib/presentation/home_marketplace_feed/widgets/quick_action_widget.dart:288:62 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/quick_action_widget.dart:399:24 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/quick_action_widget.dart:402:26 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/trending_section_widget.dart:147:64 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/trending_section_widget.dart:152:61 • deprecated_member_use
+   info • 'surfaceVariant' is deprecated and shouldn't be used. Use surfaceContainerHighest instead. This feature was deprecated after v3.18.0-0.1.pre • lib/presentation/home_marketplace_feed/widgets/trending_section_widget.dart:178:64 • deprecated_member_use
+   info • 'surfaceVariant' is deprecated and shouldn't be used. Use surfaceContainerHighest instead. This feature was deprecated after v3.18.0-0.1.pre • lib/presentation/home_marketplace_feed/widgets/trending_section_widget.dart:187:64 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/trending_section_widget.dart:213:67 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/trending_section_widget.dart:253:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/trending_section_widget.dart:257:51 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/trending_section_widget.dart:282:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/home_marketplace_feed/widgets/trending_section_widget.dart:347:67 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/listing_detail/listing_detail.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/listing_detail/listing_detail.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/listing_detail.dart:163:58 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/listing_detail.dart:167:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/listing_detail.dart:187:57 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/listing_detail.dart:191:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/listing_detail.dart:210:57 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/listing_detail.dart:214:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/listing_detail.dart:259:20 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/listing_detail.dart:263:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/listing_detail.dart:294:35 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/listing_detail/widgets/image_gallery_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/listing_detail/widgets/image_gallery_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/image_gallery_widget.dart:79:42 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/image_gallery_widget.dart:92:39 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/listing_detail/widgets/item_details_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/listing_detail/widgets/item_details_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/item_details_widget.dart:67:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/item_details_widget.dart:97:53 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/item_details_widget.dart:141:22 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/item_details_widget.dart:144:24 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/item_details_widget.dart:163:14 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/item_details_widget.dart:218:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/item_details_widget.dart:284:33 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/listing_detail/widgets/location_info_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/listing_detail/widgets/location_info_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/location_info_widget.dart:28:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/location_info_widget.dart:121:20 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/listing_detail/widgets/related_items_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/listing_detail/widgets/related_items_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/related_items_widget.dart:78:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/related_items_widget.dart:94:22 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/related_items_widget.dart:138:34 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/listing_detail/widgets/safety_tips_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/listing_detail/widgets/safety_tips_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/safety_tips_widget.dart:64:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/safety_tips_widget.dart:86:58 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/safety_tips_widget.dart:137:26 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/safety_tips_widget.dart:164:20 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/listing_detail/widgets/seller_profile_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/listing_detail/widgets/seller_profile_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/seller_profile_widget.dart:26:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/listing_detail/widgets/seller_profile_widget.dart:102:32 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/login_screen/login_screen.dart:1:8 • unnecessary_import
+   info • The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/login_screen/login_screen.dart:2:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/login_screen/login_screen.dart:3:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/login_screen/login_screen.dart:640:66 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/login_screen/login_screen.dart:643:55 • deprecated_member_use
+  error • The method 'CustomIconWidget' isn't defined for the type '_OnboardingTutorialState' • lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:116:15 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:118:24 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:124:24 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:130:20 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:140:26 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_OnboardingTutorialState' • lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:162:13 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:164:22 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:171:26 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:221:24 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:256:26 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:257:28 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:302:44 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:305:40 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:318:38 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_OnboardingTutorialState' • lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:326:31 • undefined_method
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/onboarding_tutorial/widgets/feature_list_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/onboarding_tutorial/widgets/feature_list_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/onboarding_tutorial/widgets/feature_list_widget.dart:111:58 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/onboarding_tutorial/widgets/feature_list_widget.dart:116:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/onboarding_tutorial/widgets/feature_list_widget.dart:129:55 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/onboarding_tutorial/widgets/gesture_demo_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/onboarding_tutorial/widgets/gesture_demo_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/onboarding_tutorial/widgets/gesture_demo_widget.dart:106:29 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/onboarding_tutorial/widgets/gesture_demo_widget.dart:109:31 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/onboarding_tutorial/widgets/onboarding_page_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/onboarding_tutorial/widgets/onboarding_page_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/onboarding_tutorial/widgets/onboarding_page_widget.dart:109:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/onboarding_tutorial/widgets/onboarding_page_widget.dart:135:44 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/onboarding_tutorial/widgets/page_indicator_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/onboarding_tutorial/widgets/page_indicator_widget.dart:2:8 • unnecessary_import
+   info • The import of '../../../theme/app_theme.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/onboarding_tutorial/widgets/page_indicator_widget.dart:5:8 • unnecessary_import
+  error • The argument type 'int' can't be assigned to the parameter type 'double?'.  • lib/presentation/onboarding_tutorial/widgets/page_indicator_widget.dart:86:67 • argument_type_not_assignable
+  error • The argument type 'int' can't be assigned to the parameter type 'double?'.  • lib/presentation/onboarding_tutorial/widgets/page_indicator_widget.dart:90:71 • argument_type_not_assignable
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/registration_screen/registration_screen.dart:1:8 • unnecessary_import
+   info • The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/registration_screen/registration_screen.dart:2:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/registration_screen/registration_screen.dart:3:8 • unnecessary_import
+   info • The import of '../../routes/app_routes.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/registration_screen/registration_screen.dart:6:8 • unnecessary_import
+   info • The import of '../../theme/app_theme.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/registration_screen/registration_screen.dart:7:8 • unnecessary_import
+   info • The import of '../../utils/auth_service.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/registration_screen/registration_screen.dart:8:8 • unnecessary_import
+warning • Unused import: '../../widgets/custom_icon_widget.dart' • lib/presentation/registration_screen/registration_screen.dart:9:8 • unused_import
+warning • The declaration '_toggleContactMethod' isn't referenced • lib/presentation/registration_screen/registration_screen.dart:424:8 • unused_element
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:575:64 • deprecated_member_use
+   info • 'onPopInvoked' is deprecated and shouldn't be used. Use onPopInvokedWithResult instead. This feature was deprecated after v3.22.0-12.0.pre • lib/presentation/registration_screen/registration_screen.dart:732:7 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:778:59 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:874:67 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:933:54 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:936:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1221:70 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1240:73 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1314:61 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1366:63 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1397:80 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1454:80 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1503:57 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1504:57 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1509:59 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1522:61 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1523:61 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1585:73 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1587:75 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1600:55 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1605:57 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1606:57 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1721:59 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1774:63 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1779:70 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/registration_screen.dart:1850:67 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/registration_screen/widgets/otp_verification_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/registration_screen/widgets/otp_verification_widget.dart:2:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/registration_screen/widgets/otp_verification_widget.dart:3:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/widgets/otp_verification_widget.dart:189:20 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/widgets/otp_verification_widget.dart:292:26 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/widgets/otp_verification_widget.dart:342:20 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/widgets/otp_verification_widget.dart:346:22 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/registration_screen/widgets/password_strength_indicator_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/registration_screen/widgets/password_strength_indicator_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/widgets/password_strength_indicator_widget.dart:40:54 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/widgets/password_strength_indicator_widget.dart:80:58 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/registration_screen/widgets/password_strength_indicator_widget.dart:115:30 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/registration_screen/widgets/profile_photo_upload_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/registration_screen/widgets/profile_photo_upload_widget.dart:2:8 • unnecessary_import
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/registration_screen/widgets/terms_privacy_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/registration_screen/widgets/terms_privacy_widget.dart:2:8 • unnecessary_import
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/search_and_filters/search_and_filters.dart:1:8 • unnecessary_import
+   info • The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/search_and_filters/search_and_filters.dart:2:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/search_and_filters/search_and_filters.dart:3:8 • unnecessary_import
+warning • The value of the field '_isSearching' isn't used • lib/presentation/search_and_filters/search_and_filters.dart:32:8 • unused_field
+warning • The value of the field '_searchSuggestions' isn't used • lib/presentation/search_and_filters/search_and_filters.dart:39:16 • unused_field
+warning • The value of the field '_categories' isn't used • lib/presentation/search_and_filters/search_and_filters.dart:42:30 • unused_field
+warning • The declaration '_onSuggestionTap' isn't referenced • lib/presentation/search_and_filters/search_and_filters.dart:220:8 • unused_element
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/search_and_filters/widgets/filter_chips_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/search_and_filters/widgets/filter_chips_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/search_and_filters/widgets/filter_chips_widget.dart:63:49 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/search_and_filters/widgets/filter_modal_widget.dart:1:8 • unnecessary_import
+warning • The value of the local variable 'isSelected' isn't used • lib/presentation/search_and_filters/widgets/filter_modal_widget.dart:404:17 • unused_local_variable
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/search_and_filters/widgets/recent_searches_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/search_and_filters/widgets/recent_searches_widget.dart:2:8 • unnecessary_import
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/search_and_filters/widgets/search_bar_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/search_and_filters/widgets/search_bar_widget.dart:2:8 • unnecessary_import
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/search_and_filters/widgets/search_results_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/search_and_filters/widgets/search_results_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/search_and_filters/widgets/search_results_widget.dart:236:34 • deprecated_member_use
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/search_and_filters/widgets/trending_keywords_widget.dart:1:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/search_and_filters/widgets/trending_keywords_widget.dart:47:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/search_and_filters/widgets/trending_keywords_widget.dart:51:58 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/splash_screen/splash_screen.dart:1:8 • unnecessary_import
+   info • The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/splash_screen/splash_screen.dart:2:8 • unnecessary_import
+   info • The import of 'package:shared_preferences/shared_preferences.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/splash_screen/splash_screen.dart:3:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/splash_screen/splash_screen.dart:4:8 • unnecessary_import
+   info • The import of '../../utils/auth_service.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/splash_screen/splash_screen.dart:7:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/splash_screen/splash_screen.dart:264:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/splash_screen/splash_screen.dart:325:48 • deprecated_member_use
+  error • Undefined name 'AppTheme' • lib/presentation/user_profile/user_profile.dart:155:20 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/user_profile/user_profile.dart:159:20 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/user_profile/user_profile.dart:186:24 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/user_profile/user_profile.dart:192:22 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_UserProfileState' • lib/presentation/user_profile/user_profile.dart:217:27 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/user_profile/user_profile.dart:220:29 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/user_profile/user_profile.dart:221:29 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_UserProfileState' • lib/presentation/user_profile/user_profile.dart:227:27 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/user_profile/user_profile.dart:230:29 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/user_profile/user_profile.dart:231:29 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_UserProfileState' • lib/presentation/user_profile/user_profile.dart:237:27 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/user_profile/user_profile.dart:240:29 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/user_profile/user_profile.dart:241:29 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_UserProfileState' • lib/presentation/user_profile/user_profile.dart:247:27 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/user_profile/user_profile.dart:250:29 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/user_profile/user_profile.dart:251:29 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_UserProfileState' • lib/presentation/user_profile/user_profile.dart:257:27 • undefined_method
+  error • Undefined name 'AppTheme' • lib/presentation/user_profile/user_profile.dart:260:29 • undefined_identifier
+  error • Undefined name 'AppTheme' • lib/presentation/user_profile/user_profile.dart:261:29 • undefined_identifier
+  error • The method 'CustomIconWidget' isn't defined for the type '_UserProfileState' • lib/presentation/user_profile/user_profile.dart:353:16 • undefined_method
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/user_profile/widgets/account_settings_section_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/user_profile/widgets/account_settings_section_widget.dart:2:8 • unnecessary_import
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/user_profile/widgets/favorites_section_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/user_profile/widgets/favorites_section_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/user_profile/widgets/favorites_section_widget.dart:194:37 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/user_profile/widgets/my_listings_section_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/user_profile/widgets/my_listings_section_widget.dart:2:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/user_profile/widgets/profile_header_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/user_profile/widgets/recent_views_section_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/user_profile/widgets/recent_views_section_widget.dart:2:8 • unnecessary_import
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/user_profile/widgets/statistics_cards_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/user_profile/widgets/statistics_cards_widget.dart:2:8 • unnecessary_import
+  error • The argument type 'int' can't be assigned to the parameter type 'double?'.  • lib/presentation/user_profile/widgets/statistics_cards_widget.dart:78:46 • argument_type_not_assignable
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/user_profile/widgets/verification_center_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/user_profile/widgets/verification_center_widget.dart:2:8 • unnecessary_import
+warning • The value of the local variable 'args' isn't used • lib/routes/app_routes.dart:278:15 • unused_local_variable
+warning • The value of the local variable 'args' isn't used • lib/routes/app_routes.dart:285:15 • unused_local_variable
+warning • The value of the local variable 'response' isn't used • lib/utils/auth_service.dart:837:13 • unused_local_variable
+warning • The declaration '_getFallbackCategories' isn't referenced • lib/utils/category_service.dart:302:30 • unused_element
+   info • The import of 'package:flutter_svg/svg.dart' is unnecessary because all of the used elements are also provided by the import of '../core/app_export.dart' • lib/widgets/custom_error_widget.dart:1:8 • unnecessary_import
+
+419 issues found. (ran in 24.5s)
+
+
+Build failed :|
+Step 4 script `Clean build` exited with status code 1
+mpp
+mpp
+github.com/bhabajit54321/mpp
+
+
+Start new build
+Build overview
+Artifacts
+Click on the build steps for details.
+
+Preparing build machine
+1m 0s
+Fetching app sources
+4s
+Installing SDKs
+1m 18s
+Set up Flutter
+1m 31s
+Build Debug APK
+< 1s
+Publishing
+< 1s
+Cleaning up
+< 1s
+Step 4 script `Clean build` exited with status code 1
+
+
+Applications
+Builds
+App Preview
+TRY DEMO
+Teams
+Billing
+Try enterprise
+Security statement
+Documentation
+Support
+
+
+Log out
+
