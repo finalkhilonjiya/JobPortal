@@ -133,7 +133,7 @@ class AuthService {
     try {
       final client = _client;
       if (client == null) {
-        throw AuthException('Supabase not available. Please check your connection.');
+        throw AppAuthException('Supabase not available. Please check your connection.');
       }
 
       String? email;
@@ -145,7 +145,7 @@ class AuthService {
         phone = _normalizePhoneNumber(username);
         email = '${phone.replaceAll('+', '')}@khilonjiya.placeholder';
       } else {
-        throw AuthException('Please enter a valid email address or phone number.');
+        throw AppAuthException('Please enter a valid email address or phone number.');
       }
 
       final signUpData = {
@@ -171,7 +171,7 @@ class AuthService {
       return response;
     } catch (error) {
       debugPrint('❌ Sign-up failed: $error');
-      throw AuthException('Sign-up failed: ${_getErrorMessage(error)}');
+      throw AppAuthException('Sign-up failed: ${_getErrorMessage(error)}');
     }
   }
 
@@ -183,7 +183,7 @@ class AuthService {
     try {
       final client = _client;
       if (client == null) {
-        throw AuthException('Supabase not available. Please check your connection.');
+        throw AppAuthException('Supabase not available. Please check your connection.');
       }
 
       String? email;
@@ -195,10 +195,10 @@ class AuthService {
         phone = _normalizePhoneNumber(username);
         email = await _getEmailFromPhone(phone);
         if (email == null) {
-          throw AuthException('No account found with this phone number. Please sign up first.');
+          throw AppAuthException('No account found with this phone number. Please sign up first.');
         }
       } else {
-        throw AuthException('Please enter a valid email address or phone number.');
+        throw AppAuthException('Please enter a valid email address or phone number.');
       }
 
       final response = await client.auth.signInWithPassword(
@@ -214,7 +214,7 @@ class AuthService {
       return response;
     } catch (error) {
       debugPrint('❌ Sign-in failed: $error');
-      throw AuthException('Sign-in failed: ${_getErrorMessage(error)}');
+      throw AppAuthException('Sign-in failed: ${_getErrorMessage(error)}');
     }
   }
 
@@ -348,17 +348,17 @@ class AuthService {
     try {
       final client = _client;
       if (client == null) {
-        throw AuthException('Supabase not available. Please check your connection.');
+        throw AppAuthException('Supabase not available. Please check your connection.');
       }
 
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        throw AuthException('Google sign-in was cancelled.');
+        throw AppAuthException('Google sign-in was cancelled.');
       }
 
       final googleAuth = await googleUser.authentication;
       if (googleAuth.accessToken == null || googleAuth.idToken == null) {
-        throw AuthException('Failed to get Google authentication tokens.');
+        throw AppAuthException('Failed to get Google authentication tokens.');
       }
 
       final response = await client.auth.signInWithIdToken(
@@ -380,7 +380,7 @@ class AuthService {
     } catch (error) {
       debugPrint('❌ Google sign-in failed: $error');
       await _googleSignIn.signOut();
-      throw AuthException('Google sign-in failed: ${_getErrorMessage(error)}');
+      throw AppAuthException('Google sign-in failed: ${_getErrorMessage(error)}');
     }
   }
 
@@ -390,7 +390,7 @@ class AuthService {
     try {
       final client = _client;
       if (client == null) {
-        throw AuthException('Supabase not available. Please check your connection.');
+        throw AppAuthException('Supabase not available. Please check your connection.');
       }
 
       final facebookResult = await _facebookAuth.login(
@@ -398,13 +398,13 @@ class AuthService {
       );
 
       if (facebookResult.status != LoginStatus.success) {
-        throw AuthException('Facebook sign-in was cancelled or failed.');
+        throw AppAuthException('Facebook sign-in was cancelled or failed.');
       }
 
       // Fixed: Use token instead of tokenString
       final accessToken = facebookResult.accessToken?.token;
       if (accessToken == null) {
-        throw AuthException('Failed to get Facebook access token.');
+        throw AppAuthException('Failed to get Facebook access token.');
       }
 
       final userData = await _facebookAuth.getUserData(
@@ -429,7 +429,7 @@ class AuthService {
     } catch (error) {
       debugPrint('❌ Facebook sign-in failed: $error');
       await _facebookAuth.logOut();
-      throw AuthException('Facebook sign-in failed: ${_getErrorMessage(error)}');
+      throw AppAuthException('Facebook sign-in failed: ${_getErrorMessage(error)}');
     }
   }
   /// Handle social login profile creation/update
@@ -475,7 +475,7 @@ class AuthService {
       debugPrint('✅ User signed out successfully');
     } catch (error) {
       debugPrint('❌ Sign-out failed: $error');
-      throw AuthException('Sign-out failed: ${_getErrorMessage(error)}');
+      throw AppAuthException('Sign-out failed: ${_getErrorMessage(error)}');
     }
   }
 
@@ -484,7 +484,7 @@ class AuthService {
     try {
       final client = _client;
       if (client == null) {
-        throw AuthException('Supabase not available. Please check your connection.');
+        throw AppAuthException('Supabase not available. Please check your connection.');
       }
 
       String? email;
@@ -495,17 +495,17 @@ class AuthService {
         final phone = _normalizePhoneNumber(username);
         email = await _getEmailFromPhone(phone);
         if (email == null) {
-          throw AuthException('No account found with this phone number.');
+          throw AppAuthException('No account found with this phone number.');
         }
       } else {
-        throw AuthException('Please enter a valid email address or phone number.');
+        throw AppAuthException('Please enter a valid email address or phone number.');
       }
 
       await client.auth.resetPasswordForEmail(email);
       debugPrint('✅ Password reset email sent to: $email');
     } catch (error) {
       debugPrint('❌ Password reset failed: $error');
-      throw AuthException('Password reset failed: ${_getErrorMessage(error)}');
+      throw AppAuthException('Password reset failed: ${_getErrorMessage(error)}');
     }
   }
 
@@ -571,7 +571,7 @@ class AuthService {
     try {
       final client = _client;
       if (client == null) {
-        throw AuthException('Supabase not available. Please check your connection.');
+        throw AppAuthException('Supabase not available. Please check your connection.');
       }
 
       final response = await client.auth.updateUser(
@@ -591,7 +591,7 @@ class AuthService {
       return response;
     } catch (error) {
       debugPrint('❌ Profile update failed: $error');
-      throw AuthException('Profile update failed: ${_getErrorMessage(error)}');
+      throw AppAuthException('Profile update failed: ${_getErrorMessage(error)}');
     }
   }
 
@@ -637,7 +637,7 @@ class AuthService {
     try {
       final client = _client;
       if (client == null) {
-        throw AuthException('Supabase not available.');
+        throw AppAuthException('Supabase not available.');
       }
 
       final session = await client.auth.refreshSession();
@@ -646,7 +646,7 @@ class AuthService {
       }
     } catch (error) {
       debugPrint('❌ Session refresh failed: $error');
-      throw AuthException('Session refresh failed: ${_getErrorMessage(error)}');
+      throw AppAuthException('Session refresh failed: ${_getErrorMessage(error)}');
     }
   }
 
@@ -1070,12 +1070,12 @@ class UserProfileService {
 }
 
 // Custom exceptions
-class AuthException implements Exception {
+class AppAuthException implements Exception {
   final String message;
-  const AuthException(this.message);
+  const AppAuthException(this.message);
   
   @override
-  String toString() => 'AuthException: $message';
+  String toString() => 'AppAuthException: $message';
 }
 
 class ProfileException implements Exception {

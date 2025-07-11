@@ -174,7 +174,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         });
         _showErrorSnackBar('Authentication failed. Please try again.');
       }
-    } on AuthException catch (e) {
+    } on AppAuthException catch (e) {
       setState(() {
         _isLoading = false;
       });
@@ -208,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
         }
       }
-    } on AuthException catch (e) {
+    } on AppAuthException catch (e) {
       setState(() {
         _isLoading = false;
       });
@@ -242,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
         }
       }
-    } on AuthException catch (e) {
+    } on AppAuthException catch (e) {
       setState(() {
         _isLoading = false;
       });
