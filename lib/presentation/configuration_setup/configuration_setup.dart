@@ -1,7 +1,7 @@
-THIS SHOULD BE A LINTER ERRORimport 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:sizer/sizer.dart';
+// import 'package:flutter/material.dart'; // Unnecessary import
+// import 'package:flutter/services.dart'; // Unnecessary import
+// import 'package:google_fonts/google_fonts.dart'; // Unnecessary import
+// import 'package:sizer/sizer.dart'; // Unnecessary import
 
 import '../../core/app_export.dart';
 import './widgets/code_snippet_widget.dart';
