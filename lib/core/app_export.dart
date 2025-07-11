@@ -6,18 +6,18 @@ export 'package:flutter/services.dart';
 export 'package:sizer/sizer.dart';
 export 'package:provider/provider.dart';
 export 'package:shared_preferences/shared_preferences.dart';
-export 'package:geolocator/geolocator.dart';
+// export 'package:geolocator/geolocator.dart'; // Commented out to avoid ServiceStatus ambiguity. Import directly where needed.
 export 'package:image_picker/image_picker.dart';
 export 'package:cached_network_image/cached_network_image.dart';
 export 'package:google_fonts/google_fonts.dart';
 export 'package:flutter_svg/flutter_svg.dart';
-export 'package:intl/intl.dart';
+// export 'package:intl/intl.dart'; // Commented out to avoid TextDirection ambiguity. Import directly where needed.
 export 'package:url_launcher/url_launcher.dart';
 export 'package:http/http.dart';
 export 'package:sqflite/sqflite.dart';
 // export 'package:path/path.dart'; // Removed to prevent Context/BuildContext conflict. Import directly where needed.
 export 'package:flutter_local_notifications/flutter_local_notifications.dart';
-export 'package:permission_handler/permission_handler.dart';
+// export 'package:permission_handler/permission_handler.dart'; // Commented out to avoid ServiceStatus ambiguity. Import directly where needed.
 export 'package:supabase_flutter/supabase_flutter.dart';
 
 // App-specific exports

@@ -247,7 +247,7 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
                 onPressed: _skipOnboarding,
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                  backgroundColor: Colors.white.withOpacity(0.9),
+                  backgroundColor: Colors.white.withValues(alpha: (0.9 * 255).toInt()),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -269,14 +269,14 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
               child: Container(
                 padding: EdgeInsets.all(6.w),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.95),
+                  color: Colors.white.withValues(alpha: (0.95 * 255).toInt()),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(24),
                     topRight: Radius.circular(24),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: (0.1 * 255).toInt()),
                       blurRadius: 10,
                       offset: const Offset(0, -2),
                     ),
@@ -304,7 +304,7 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
                           foregroundColor: Colors.white,
                           elevation: 2,
                           shadowColor: AppTheme.lightTheme.primaryColor
-                              .withOpacity(0.3),
+                              .withValues(alpha: (0.3 * 255).toInt()),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
