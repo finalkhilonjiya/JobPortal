@@ -1,743 +1,235 @@
-Building Android
-3m 48s
+Clean build
+39s
 
 
 
+Show command
+Cleaning Xcode workspace...                                      2,628ms
+Reinstalled 161 packages.
+Resolving dependencies...
+Downloading packages...
++ app_links 6.4.0
++ app_links_linux 1.0.3
++ app_links_platform_interface 2.0.2
++ app_links_web 1.0.4
++ args 2.7.0
++ async 2.13.0
++ boolean_selector 2.1.2
++ cached_network_image 3.4.1
++ cached_network_image_platform_interface 4.1.1
++ cached_network_image_web 1.3.1
++ characters 1.4.0 (1.4.1 available)
++ clock 1.1.2
++ collection 1.19.1
++ cross_file 0.3.4+2
++ crypto 3.0.6
++ cupertino_icons 1.0.8
++ dbus 0.7.11
++ facebook_auth_desktop 1.0.3 (2.1.1 available)
++ fake_async 1.3.3
++ ffi 2.1.4
++ file 7.0.1
++ file_selector_linux 0.9.3+2
++ file_selector_macos 0.9.4+3
++ file_selector_platform_interface 2.6.2
++ file_selector_windows 0.9.3+4
++ fixnum 1.1.1
++ flutter 0.0.0 from sdk flutter
++ flutter_cache_manager 3.4.1
++ flutter_facebook_auth 6.2.0 (7.1.2 available)
++ flutter_facebook_auth_platform_interface 5.0.0 (6.1.2 available)
++ flutter_facebook_auth_web 5.0.0 (6.1.2 available)
++ flutter_lints 4.0.0 (6.0.0 available)
++ flutter_local_notifications 16.3.3 (19.3.0 available)
++ flutter_local_notifications_linux 4.0.1 (6.0.0 available)
++ flutter_local_notifications_platform_interface 7.2.0 (9.1.0 available)
++ flutter_plugin_android_lifecycle 2.0.28
++ flutter_secure_storage 9.2.4
++ flutter_secure_storage_linux 1.2.3 (2.0.1 available)
++ flutter_secure_storage_macos 3.1.3 (4.0.0 available)
++ flutter_secure_storage_platform_interface 1.1.2 (2.0.1 available)
++ flutter_secure_storage_web 1.2.1 (2.0.0 available)
++ flutter_secure_storage_windows 3.1.2 (4.0.0 available)
++ flutter_svg 2.2.0
++ flutter_test 0.0.0 from sdk flutter
++ flutter_web_plugins 0.0.0 from sdk flutter
++ functions_client 2.4.3
++ geolocator 11.1.0 (14.0.2 available)
++ geolocator_android 4.6.2 (5.0.2 available)
++ geolocator_apple 2.3.13
++ geolocator_platform_interface 4.2.6
++ geolocator_web 3.0.0 (4.1.3 available)
++ geolocator_windows 0.2.5
++ google_fonts 6.2.1
++ google_identity_services_web 0.3.3+1
++ google_sign_in 6.3.0 (7.1.0 available)
++ google_sign_in_android 6.2.1 (7.0.1 available)
++ google_sign_in_ios 5.9.0 (6.0.1 available)
++ google_sign_in_platform_interface 2.5.0 (3.0.0 available)
++ google_sign_in_web 0.12.4+4 (1.0.0 available)
++ gotrue 2.13.0
++ gtk 2.1.0
++ http 1.4.0
++ http_parser 4.1.2
++ image_picker 1.1.2
++ image_picker_android 0.8.12+23
++ image_picker_for_web 3.0.6
++ image_picker_ios 0.8.12+2
++ image_picker_linux 0.2.1+2
++ image_picker_macos 0.2.1+2
++ image_picker_platform_interface 2.10.1
++ image_picker_windows 0.2.1+1
++ intl 0.19.0 (0.20.2 available)
++ js 0.6.7 (0.7.2 available)
++ jwt_decode 0.3.1
++ leak_tracker 10.0.9 (11.0.1 available)
++ leak_tracker_flutter_testing 3.0.9 (3.0.10 available)
++ leak_tracker_testing 3.0.1 (3.0.2 available)
++ lints 4.0.0 (6.0.0 available)
++ logging 1.3.0
++ matcher 0.12.17
++ material_color_utilities 0.11.1 (0.13.0 available)
++ meta 1.16.0 (1.17.0 available)
++ mime 2.0.0
++ nested 1.0.0
++ octo_image 2.1.0
++ path 1.9.1
++ path_parsing 1.1.0
++ path_provider 2.1.5
++ path_provider_android 2.2.17
++ path_provider_foundation 2.4.1
++ path_provider_linux 2.2.1
++ path_provider_platform_interface 2.1.2
++ path_provider_windows 2.3.0
++ permission_handler 11.4.0 (12.0.1 available)
++ permission_handler_android 12.1.0 (13.0.1 available)
++ permission_handler_apple 9.4.7
++ permission_handler_html 0.1.3+5
++ permission_handler_platform_interface 4.3.0
++ permission_handler_windows 0.2.1
++ petitparser 6.1.0 (7.0.0 available)
++ platform 3.1.6
++ plugin_platform_interface 2.1.8
++ postgrest 2.4.2
++ provider 6.1.5
++ realtime_client 2.5.1
++ retry 3.1.2
++ rxdart 0.28.0
++ shared_preferences 2.5.3
++ shared_preferences_android 2.4.10
++ shared_preferences_foundation 2.5.4
++ shared_preferences_linux 2.4.1
++ shared_preferences_platform_interface 2.4.1
++ shared_preferences_web 2.4.3
++ shared_preferences_windows 2.4.1
++ sizer 2.0.15 (3.0.5 available)
++ sky_engine 0.0.0 from sdk flutter
++ source_span 1.10.1
++ sprintf 7.0.0
++ sqflite 2.4.2
++ sqflite_android 2.4.1
++ sqflite_common 2.5.5
++ sqflite_darwin 2.4.2
++ sqflite_platform_interface 2.4.0
++ stack_trace 1.12.1
++ storage_client 2.4.0
++ stream_channel 2.1.4
++ string_scanner 1.4.1
++ supabase 2.8.0
++ supabase_flutter 2.9.1
++ synchronized 3.4.0
++ term_glyph 1.2.2
++ test_api 0.7.4 (0.7.6 available)
++ timezone 0.9.4 (0.10.1 available)
++ typed_data 1.4.0
++ universal_io 2.2.2
++ url_launcher 6.3.2
++ url_launcher_android 6.3.16
++ url_launcher_ios 6.3.3
++ url_launcher_linux 3.2.1
++ url_launcher_macos 3.2.2
++ url_launcher_platform_interface 2.3.2
++ url_launcher_web 2.4.1
++ url_launcher_windows 3.1.4
++ uuid 4.5.1
++ vector_graphics 1.1.19
++ vector_graphics_codec 1.1.13
++ vector_graphics_compiler 1.1.17
++ vector_math 2.1.4 (2.2.0 available)
++ vm_service 15.0.0 (15.0.2 available)
++ web 1.1.1
++ web_socket 1.0.1
++ web_socket_channel 3.0.3
++ win32 5.14.0
++ xdg_directories 1.1.0
++ xml 6.5.0 (6.6.0 available)
++ yet_another_json_isolate 2.1.0
+Changed 156 dependencies!
+39 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Analyzing clone...                                              
 
-Warning: Flutter support for your project's Android Gradle Plugin version (Android Gradle Plugin version 8.1.4) will soon be dropped. Please upgrade your Android Gradle Plugin version to a version of at least Android Gradle Plugin version 8.3.0 soon.
-Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
-
-Potential fix: Your project's AGP version is typically defined in the plugins block of the `settings.gradle` file (/Users/builder/clone/android/settings.gradle), by a plugin with the id of com.android.application. 
-If you don't see a plugins block, your project was likely created with an older template version. In this case it is most likely defined in the top-level build.gradle file (/Users/builder/clone/android/build.gradle) by the following line in the dependencies block of the buildscript: "classpath 'com.android.tools.build:gradle:<version>'".
-
-Warning: The plugin flutter_plugin_android_lifecycle requires Android SDK version 35 or higher.
-For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
-Warning: The plugin geolocator_android requires Android SDK version 35 or higher.
-For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
-Warning: The plugin google_sign_in_android requires Android SDK version 35 or higher.
-For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
-Warning: The plugin image_picker_android requires Android SDK version 35 or higher.
-For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
-Warning: The plugin path_provider_android requires Android SDK version 35 or higher.
-For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
-Warning: The plugin shared_preferences_android requires Android SDK version 35 or higher.
-For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
-Warning: The plugin url_launcher_android requires Android SDK version 35 or higher.
-For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
-Your project is configured to compile against Android SDK 34, but the following plugin(s) require to be compiled against a higher Android SDK version:
-- flutter_plugin_android_lifecycle compiles against Android SDK 35
-- geolocator_android compiles against Android SDK 35
-- google_sign_in_android compiles against Android SDK 35
-- image_picker_android compiles against Android SDK 35
-- path_provider_android compiles against Android SDK 35
-- shared_preferences_android compiles against Android SDK 35
-- url_launcher_android compiles against Android SDK 35
-Fix this issue by compiling against the highest Android SDK version (they are backward compatible).
-Add the following to /Users/builder/clone/android/app/build.gradle:
-
-    android {
-        compileSdk = 35
-        ...
-    }
-Warning: SDK processing. This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
-Checking the license for package Android SDK Build-Tools 33.0.1 in /usr/local/share/android-sdk/licenses
-License for package Android SDK Build-Tools 33.0.1 accepted.
-Preparing "Install Android SDK Build-Tools 33.0.1 v.33.0.1".
-"Install Android SDK Build-Tools 33.0.1 v.33.0.1" ready.
-Installing Android SDK Build-Tools 33.0.1 in /usr/local/share/android-sdk/build-tools/33.0.1
-"Install Android SDK Build-Tools 33.0.1 v.33.0.1" complete.
-"Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
-lib/core/app_export.dart:21:1: Error: 'AuthException' is exported from both 'package:gotrue/src/types/auth_exception.dart' and 'package:khilonjiya_com/utils/auth_service.dart'.
-export 'package:supabase_flutter/supabase_flutter.dart';
-^
-lib/core/app_export.dart:9:1: Error: 'ServiceStatus' is exported from both 'package:geolocator_platform_interface/src/enums/location_service.dart' and 'package:permission_handler_platform_interface/permission_handler_platform_interface.dart'.
-export 'package:geolocator/geolocator.dart';
-^
-lib/main.dart:383:52: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    _stateNotifier = Provider.of<AppStateNotifier>(context, listen: false);
-                                                   ^
-lib/main.dart:541:39: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                      ^
-lib/main.dart:549:39: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      ^
-lib/main.dart:577:37: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    ^
-lib/main.dart:607:33: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                ^
-lib/main.dart:618:33: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                ^
-lib/main.dart:689:43: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          ^
-lib/main.dart:722:33: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                ^
-lib/main.dart:730:33: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                ^
-lib/presentation/splash_screen/splash_screen.dart:132:38: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      Navigator.pushReplacementNamed(context, nextRoute);
-                                     ^
-lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:111:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:159:26: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    ScaffoldMessenger.of(context).showSnackBar(
-                         ^
-lib/presentation/onboarding_tutorial/onboarding_tutorial.dart:206:36: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    Navigator.pushReplacementNamed(context, '/login-screen');
-                                   ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:517:29: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-        Navigator.pushNamed(context, AppRoutes.loginScreen);
-                            ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:617:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:637:25: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    Navigator.pushNamed(context, AppRoutes.listingDetail, arguments: listing);
-                        ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:647:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:696:26: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    ScaffoldMessenger.of(context).showSnackBar(
-                         ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:840:40: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                  ScaffoldMessenger.of(context).showSnackBar(
-                                       ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1052:37: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                Navigator.pushNamed(context, AppRoutes.searchAndFilters);
-                                    ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1055:37: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                Navigator.pushNamed(context, AppRoutes.createListing);
-                                    ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1058:37: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                Navigator.pushNamed(context, AppRoutes.chatMessaging);
-                                    ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1061:37: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                Navigator.pushNamed(context, AppRoutes.userProfile);
-                                    ^
-lib/presentation/home_marketplace_feed/home_marketplace_feed.dart:1231:41: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                    Navigator.pushNamed(context, AppRoutes.createListing);
-                                        ^
-lib/presentation/user_profile/user_profile.dart:151:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:181:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:228:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:277:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:393:37: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                Navigator.pushNamed(context, '/home-marketplace-feed');
-                                    ^
-lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:507:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:551:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/favorites_and_saved_items/favorites_and_saved_items.dart:784:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/listing_detail/listing_detail.dart:174:42: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-          onPressed: () => Navigator.pop(context),
-                                         ^
-lib/presentation/listing_detail/listing_detail.dart:415:26: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    ScaffoldMessenger.of(context).showSnackBar(
-                         ^
-lib/presentation/listing_detail/listing_detail.dart:427:26: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    ScaffoldMessenger.of(context).showSnackBar(
-                         ^
-lib/presentation/listing_detail/listing_detail.dart:445:27: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      Navigator.pushNamed(context, '/chat-messaging');
-                          ^
-lib/presentation/listing_detail/listing_detail.dart:451:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/listing_detail/listing_detail.dart:478:25: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    Navigator.pushNamed(context, '/user-profile');
-                        ^
-lib/presentation/listing_detail/listing_detail.dart:483:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/listing_detail/listing_detail.dart:563:25: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    Navigator.pushNamed(context, '/listing-detail');
-                        ^
-lib/presentation/listing_detail/listing_detail.dart:567:25: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    Navigator.pushNamed(context, '/create-listing');
-                        ^
-lib/presentation/listing_detail/listing_detail.dart:571:26: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    ScaffoldMessenger.of(context).showSnackBar(
-                         ^
-lib/presentation/listing_detail/listing_detail.dart:592:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/listing_detail/listing_detail.dart:620:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/create_listing/create_listing.dart:78:26: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    ScaffoldMessenger.of(context).showSnackBar(
-                         ^
-lib/presentation/create_listing/create_listing.dart:144:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/create_listing/create_listing.dart:224:18: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-        context: context,
-                 ^
-lib/presentation/chat_messaging/chat_messaging.dart:301:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/chat_messaging/chat_messaging.dart:312:25: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-        color: Theme.of(context).colorScheme.surface,
-                        ^
-lib/presentation/chat_messaging/chat_messaging.dart:324:33: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                color: Theme.of(context).colorScheme.outline,
-                                ^
-lib/presentation/chat_messaging/chat_messaging.dart:332:35: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                  color: Theme.of(context).colorScheme.onSurface,
-                                  ^
-lib/presentation/chat_messaging/chat_messaging.dart:337:35: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                  style: Theme.of(context).textTheme.bodyLarge,
-                                  ^
-lib/presentation/chat_messaging/chat_messaging.dart:341:33: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                  Navigator.pop(context);
-                                ^
-lib/presentation/chat_messaging/chat_messaging.dart:342:40: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                  ScaffoldMessenger.of(context).showSnackBar(
-                                       ^
-lib/presentation/chat_messaging/chat_messaging.dart:358:35: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  ^
-lib/presentation/chat_messaging/chat_messaging.dart:363:33: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                  Navigator.pop(context);
-                                ^
-lib/presentation/chat_messaging/chat_messaging.dart:376:35: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  ^
-lib/presentation/chat_messaging/chat_messaging.dart:381:33: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                  Navigator.pop(context);
-                                ^
-lib/presentation/chat_messaging/chat_messaging.dart:397:26: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    ScaffoldMessenger.of(context).showSnackBar(
-                         ^
-lib/presentation/chat_messaging/chat_messaging.dart:404:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/chat_messaging/chat_messaging.dart:443:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/chat_messaging/chat_messaging.dart:529:33: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      backgroundColor: Theme.of(context).colorScheme.surface,
-                                ^
-lib/presentation/chat_messaging/chat_messaging.dart:531:29: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      shadowColor: Theme.of(context).colorScheme.shadow,
-                            ^
-lib/presentation/chat_messaging/chat_messaging.dart:536:27: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-          color: Theme.of(context).colorScheme.onSurface,
-                          ^
-lib/presentation/chat_messaging/chat_messaging.dart:533:40: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-        onPressed: () => Navigator.pop(context),
-                                       ^
-lib/presentation/chat_messaging/chat_messaging.dart:546:43: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                backgroundColor: Theme.of(context).colorScheme.outline,
-                                          ^
-lib/presentation/chat_messaging/chat_messaging.dart:563:36: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                          Theme.of(context).brightness == Brightness.light),
-                                   ^
-lib/presentation/chat_messaging/chat_messaging.dart:566:41: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                        color: Theme.of(context).colorScheme.surface,
-                                        ^
-lib/presentation/chat_messaging/chat_messaging.dart:585:38: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                     ^
-lib/presentation/chat_messaging/chat_messaging.dart:605:35: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  ^
-lib/presentation/chat_messaging/chat_messaging.dart:608:42: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                                Theme.of(context).brightness ==
-                                         ^
-lib/presentation/chat_messaging/chat_messaging.dart:610:40: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                                       ^
-lib/presentation/chat_messaging/chat_messaging.dart:626:29: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-            color: Theme.of(context).colorScheme.onSurface,
-                            ^
-lib/presentation/chat_messaging/chat_messaging.dart:622:33: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-            Navigator.pushNamed(context, '/user-profile');
-                                ^
-lib/presentation/chat_messaging/chat_messaging.dart:665:29: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-            color: Theme.of(context).colorScheme.onSurface,
-                            ^
-lib/presentation/chat_messaging/chat_messaging.dart:677:25: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-        color: Theme.of(context).colorScheme.surface,
-                        ^
-lib/presentation/chat_messaging/chat_messaging.dart:680:29: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-            color: Theme.of(context).colorScheme.outline,
-                            ^
-lib/presentation/chat_messaging/chat_messaging.dart:703:35: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  ^
-lib/presentation/chat_messaging/chat_messaging.dart:714:39: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      ^
-lib/presentation/chat_messaging/chat_messaging.dart:725:42: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                                Theme.of(context).brightness ==
-                                         ^
-lib/presentation/chat_messaging/chat_messaging.dart:732:41: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        ^
-lib/presentation/chat_messaging/chat_messaging.dart:734:44: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                                  Theme.of(context).brightness ==
-                                           ^
-lib/presentation/chat_messaging/chat_messaging.dart:751:31: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ^
-lib/presentation/chat_messaging/chat_messaging.dart:747:35: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-              Navigator.pushNamed(context, '/listing-detail');
-                                  ^
-lib/presentation/search_and_filters/search_and_filters.dart:179:19: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    FocusScope.of(context).unfocus();
-                  ^
-lib/presentation/search_and_filters/search_and_filters.dart:214:28: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                           ^
-lib/presentation/search_and_filters/search_and_filters.dart:277:18: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-        context: context,
-                 ^
-lib/presentation/registration_screen/registration_screen.dart:403:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/registration_screen/registration_screen.dart:455:19: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    FocusScope.of(context).unfocus();
-                  ^
-lib/presentation/registration_screen/registration_screen.dart:563:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/registration_screen/registration_screen.dart:620:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/registration_screen/registration_screen.dart:647:28: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      ScaffoldMessenger.of(context).showSnackBar(
-                           ^
-lib/presentation/registration_screen/registration_screen.dart:667:28: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      ScaffoldMessenger.of(context).showSnackBar(
-                           ^
-lib/presentation/registration_screen/registration_screen.dart:687:28: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      ScaffoldMessenger.of(context).showSnackBar(
-                           ^
-lib/presentation/registration_screen/registration_screen.dart:796:30: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                Navigator.of(context).pop();
-                             ^
-lib/presentation/registration_screen/registration_screen.dart:1014:31: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                FocusScope.of(context).requestFocus(
-                              ^
-lib/presentation/registration_screen/registration_screen.dart:1041:37: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                      FocusScope.of(context).requestFocus(_passwordFocusNode);
-                                    ^
-lib/presentation/registration_screen/registration_screen.dart:1055:37: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                      FocusScope.of(context).requestFocus(_passwordFocusNode);
-                                    ^
-lib/presentation/registration_screen/registration_screen.dart:1086:31: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                FocusScope.of(context).requestFocus(_confirmPasswordFocusNode);
-                              ^
-lib/presentation/registration_screen/registration_screen.dart:1323:31: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                FocusScope.of(context).requestFocus(focusNode);
-                              ^
-lib/presentation/registration_screen/registration_screen.dart:1841:56: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                        Navigator.pushReplacementNamed(context, AppRoutes.loginScreen);
-                                                       ^
-lib/presentation/configuration_setup/configuration_setup.dart:247:26: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    ScaffoldMessenger.of(context).showSnackBar(
-                         ^
-lib/presentation/login_screen/login_screen.dart:146:19: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    FocusScope.of(context).unfocus();
-                  ^
-lib/presentation/login_screen/login_screen.dart:169:42: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-          Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
-                                         ^
-lib/presentation/login_screen/login_screen.dart:193:19: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    FocusScope.of(context).unfocus();
-                  ^
-lib/presentation/login_screen/login_screen.dart:208:42: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-          Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
-                                         ^
-lib/presentation/login_screen/login_screen.dart:227:19: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    FocusScope.of(context).unfocus();
-                  ^
-lib/presentation/login_screen/login_screen.dart:242:42: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-          Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
-                                         ^
-lib/presentation/login_screen/login_screen.dart:260:28: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      ScaffoldMessenger.of(context).showSnackBar(
-                           ^
-lib/presentation/login_screen/login_screen.dart:295:28: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      ScaffoldMessenger.of(context).showSnackBar(
-                           ^
-lib/presentation/login_screen/login_screen.dart:502:27: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-            FocusScope.of(context).requestFocus(_passwordFocusNode);
-                          ^
-lib/presentation/login_screen/login_screen.dart:606:25: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-          FocusScope.of(context).unfocus();
-                        ^
-lib/presentation/login_screen/login_screen.dart:769:39: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                  Navigator.pushNamed(context, AppRoutes.registrationScreen);
-                                      ^
-lib/presentation/user_profile/widgets/my_listings_section_widget.dart:146:29: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-        Navigator.pushNamed(context, '/listing-detail');
-                            ^
-lib/presentation/favorites_and_saved_items/widgets/price_alert_dialog_widget.dart:48:21: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      Navigator.pop(context);
-                    ^
-lib/presentation/listing_detail/widgets/image_gallery_widget.dart:111:18: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    Navigator.of(context).push(
-                 ^
-lib/presentation/create_listing/widgets/location_picker_widget.dart:77:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/create_listing/widgets/photo_upload_widget.dart:29:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/create_listing/widgets/price_condition_widget.dart:82:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-lib/presentation/chat_messaging/widgets/message_input_widget.dart:212:29: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-            style: Theme.of(context).textTheme.bodySmall,
-                            ^
-lib/presentation/chat_messaging/widgets/message_input_widget.dart:263:31: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ^
-lib/presentation/chat_messaging/widgets/message_input_widget.dart:270:33: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                color: Theme.of(context).colorScheme.surface,
-                                ^
-lib/presentation/chat_messaging/widgets/message_input_widget.dart:273:35: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-                  color: Theme.of(context).colorScheme.outline,
-                                  ^
-lib/presentation/search_and_filters/widgets/filter_modal_widget.dart:438:19: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-    Navigator.pop(context);
-                  ^
-lib/presentation/registration_screen/widgets/otp_verification_widget.dart:133:16: Error: The argument type 'Context' can't be assigned to the parameter type 'BuildContext'.
- - 'Context' is from 'package:path/src/context.dart' ('../.pub-cache/hosted/pub.dev/path-1.9.1/lib/src/context.dart').
- - 'BuildContext' is from 'package:flutter/src/widgets/framework.dart' ('../programs/flutter/packages/flutter/lib/src/widgets/framework.dart').
-      context: context,
-               ^
-Target kernel_snapshot_program failed: Exception
-
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':app:compileFlutterBuildDebug'.
-> Process 'command '/Users/builder/programs/flutter/bin/flutter'' finished with non-zero exit value 1
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
-
-BUILD FAILED in 3m 45s
-Running Gradle task 'bundleDebug'...                              225.8s
-Gradle task bundleDebug failed with exit code 1
-
-
-Build failed :|
-Failed to build for Android
-
-mpp
-mpp
-github.com/bhabajit54321/mpp
-
-
-Start new build
-Build overview
-Artifacts
-Current configuration
-Click on the build steps for details.
-
-Preparing build machine
-34s
-Fetching app sources
-2s
-Installing SDKs
-49s
-Installing dependencies
-13s
-Publishing
-< 1s
-Cleaning up
-< 1s
-Failed to build for Android
-
-
-Applications
-Builds
-App Preview
-TRY DEMO
-Teams
-Billing
-Try enterprise
-Security statement
-Documentation
-Support
-
-
-Log out
-
+  error • The name 'TextDirection' is defined in the libraries 'dart:ui' and 'package:intl/src/intl/text_direction.dart' • lib/core/app_export.dart:14:8 • ambiguous_export
+  error • The name 'ServiceStatus' is defined in the libraries 'package:geolocator_platform_interface/src/enums/location_service.dart' and 'package:permission_handler_platform_interface/permission_handler_platform_interface.dart' • lib/core/app_export.dart:20:8 • ambiguous_export
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:1:8 • unnecessary_import
+   info • The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:2:8 • unnecessary_import
+   info • The import of 'package:provider/provider.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:3:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:4:8 • unnecessary_import
+   info • The import of 'widgets/custom_error_widget.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:7:8 • unnecessary_import
+   info • The import of 'routes/app_routes.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:8:8 • unnecessary_import
+   info • The import of 'theme/app_theme.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:9:8 • unnecessary_import
+   info • The import of 'utils/supabase_service.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:11:8 • unnecessary_import
+   info • The import of 'package:supabase_flutter/supabase_flutter.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:12:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/main.dart:526:69 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/chat_messaging/chat_messaging.dart:1:8 • unnecessary_import
+   info • The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/chat_messaging/chat_messaging.dart:2:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/chat_messaging/chat_messaging.dart:3:8 • unnecessary_import
+warning • The value of the field '_isLoading' isn't used • lib/presentation/chat_messaging/chat_messaging.dart:28:8 • unused_field
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/chat_messaging/chat_messaging.dart:727:30 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/chat_messaging/widgets/location_message_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/chat_messaging/widgets/location_message_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/chat_messaging/widgets/location_message_widget.dart:88:50 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/chat_messaging/widgets/location_message_widget.dart:92:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/chat_messaging/widgets/location_message_widget.dart:104:53 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/chat_messaging/widgets/location_message_widget.dart:105:54 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/chat_messaging/widgets/location_message_widget.dart:115:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/chat_messaging/widgets/location_message_widget.dart:119:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/chat_messaging/widgets/location_message_widget.dart:134:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/chat_messaging/widgets/location_message_widget.dart:193:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/chat_messaging/widgets/location_message_widget.dart:216:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/chat_messaging/widgets/location_message_widget.dart:219:46 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/chat_messaging/widgets/message_bubble_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/chat_messaging/widgets/message_bubble_widget.dart:2:8 • unnecessary_import
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/chat_messaging/widgets/message_input_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/chat_messaging/widgets/message_input_widget.dart:2:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/chat_messaging/widgets/message_input_widget.dart:3:8 • unnecessary_import
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/chat_messaging/widgets/photo_message_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/chat_messaging/widgets/photo_message_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/chat_messaging/widgets/photo_message_widget.dart:250:49 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/chat_messaging/widgets/typing_indicator_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/chat_messaging/widgets/typing_indicator_widget.dart:2:8 • unnecessary_import
+   info • The import of '../../../widgets/custom_image_widget.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/chat_messaging/widgets/typing_indicator_widget.dart:6:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/chat_messaging/widgets/typing_indicator_widget.dart:140:18 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/chat_messaging/widgets/voice_message_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/chat_messaging/widgets/voice_message_widget.dart:2:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/chat_messaging/widgets/voice_message_widget.dart:164:50 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/chat_messaging/widgets/voice_message_widget.dart:166:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/chat_messaging/widgets/voice_message_widget.dart:200:62 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/chat_messaging/widgets/voice_message_widget.dart:292:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/chat_messaging/widgets/voice_message_widget.dart:296:30 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/configuration_setup/configuration_setup.dart:1:8 • unnecessary_import
+   info • The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/configuration_setup/configuration_setup.dart:2:8 • unnecessary_import
+   info • The import of 'package:google_fonts/google_fonts.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/configuration_setup/configuration_setup.dart:3:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../core/app_export.dart' • lib/presentation/configuration_setup/configuration_setup.dart:4:8 • unnecessary_import
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/configuration_setup/widgets/code_snippet_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:google_fonts/google_fonts.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/configuration_setup/widgets/code_snippet_widget.dart:2:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/configuration_setup/widgets/code_snippet_widget.dart:3:8 • unnecessary_import
+   info • The import of '../../../widgets/custom_icon_widget.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/configuration_setup/widgets/code_snippet_widget.dart:6:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/configuration_setup/widgets/code_snippet_widget.dart:308:45 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/configuration_setup/widgets/folder_structure_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:google_fonts/google_fonts.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/configuration_setup/widgets/folder_structure_widget.dart:2:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/configuration_setup/widgets/folder_structure_widget.dart:3:8 • unnecessary_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/presentation/configuration_setup/widgets/folder_structure_widget.dart:215:52 • deprecated_member_use
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/configuration_setup/widgets/navigation_breadcrumb_widget.dart:1:8 • unnecessary_import
+   info • The import of 'package:google_fonts/google_fonts.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/configuration_setup/widgets/navigation_breadcrumb_widget.dart:2:8 • unnecessary_import
+   info • The import of 'package:sizer/sizer.dart' is unnecessary because all of the used elements are also provided by the import of '../../../core/app_export.dart' • lib/presentation/configuration_setup/widgets/navigation_breadcru
