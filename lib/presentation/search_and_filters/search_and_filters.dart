@@ -29,17 +29,17 @@ class _SearchAndFiltersState extends State<SearchAndFilters>
   final CategoryService _categoryService = CategoryService();
 
   // State variables
-  bool _isSearching = false;
+  // bool _isSearching = false; // Unused field
   bool _isLoadingResults = false;
   bool _hasSearched = false;
   String _currentQuery = '';
 
   // Search results and suggestions
   List<Map<String, dynamic>> _searchResults = [];
-  List<String> _searchSuggestions = [];
+  // List<String> _searchSuggestions = []; // Unused field
   List<String> _trendingKeywords = [];
   List<Map<String, dynamic>> _recentSearches = [];
-  List<Map<String, dynamic>> _categories = [];
+  // List<Map<String, dynamic>> _categories = []; // Unused field
 
   // Filter state
   Map<String, dynamic> _activeFilters = {

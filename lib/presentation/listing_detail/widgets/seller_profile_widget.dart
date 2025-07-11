@@ -23,7 +23,7 @@ class SellerProfileWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05 * 255),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -99,7 +99,7 @@ class SellerProfileWidget extends StatelessWidget {
                             horizontal: 2.w, vertical: 0.5.h),
                         decoration: BoxDecoration(
                           color: AppTheme.lightTheme.colorScheme.primary
-                              .withOpacity(0.1),
+                              .withValues(alpha: 0.1 * 255),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(

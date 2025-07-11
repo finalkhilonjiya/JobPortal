@@ -305,7 +305,7 @@ class CodeSnippetWidget extends StatelessWidget {
         style: GoogleFonts.firaCode(
           fontSize: 11.sp,
           color: Colors.red[300],
-          backgroundColor: Colors.red[900]?.withOpacity(0.3),
+          backgroundColor: Colors.red[900]?.withValues(alpha: 0.3 * 255),
           fontWeight: FontWeight.w600,
         ),
       ));

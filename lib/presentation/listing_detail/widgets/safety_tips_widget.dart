@@ -61,7 +61,7 @@ class _SafetyTipsWidgetState extends State<SafetyTipsWidget> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05 * 255),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -83,7 +83,7 @@ class _SafetyTipsWidgetState extends State<SafetyTipsWidget> {
                     padding: EdgeInsets.all(2.w),
                     decoration: BoxDecoration(
                       color:
-                          AppTheme.getWarningColor(true).withOpacity(0.1),
+                          AppTheme.getWarningColor(true).withValues(alpha: 0.1 * 255),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: CustomIconWidget(
@@ -134,7 +134,7 @@ class _SafetyTipsWidgetState extends State<SafetyTipsWidget> {
                   Container(
                     height: 1,
                     color: AppTheme.lightTheme.colorScheme.outline
-                        .withOpacity(0.2),
+                        .withValues(alpha: 0.2 * 255),
                     margin: EdgeInsets.only(bottom: 3.h),
                   ),
                   ...safetyTips.map((tip) => _buildSafetyTipItem(tip)).toList(),
@@ -161,7 +161,7 @@ class _SafetyTipsWidgetState extends State<SafetyTipsWidget> {
             padding: EdgeInsets.all(2.w),
             decoration: BoxDecoration(
               color: AppTheme.lightTheme.colorScheme.primary
-                  .withOpacity(0.1),
+                  .withValues(alpha: 0.1 * 255),
               borderRadius: BorderRadius.circular(6),
             ),
             child: CustomIconWidget(

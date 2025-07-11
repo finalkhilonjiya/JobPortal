@@ -263,7 +263,7 @@ class _CreateListingState extends State<CreateListing>
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: () => _onWillPopSync(),
+      canPop: _onWillPopSync(),
       child: Scaffold(
         backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,
         appBar: AppBar(

@@ -730,16 +730,16 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     return PopScope(
       canPop: !_isLoading, // Disable back button while loading
       onPopInvokedWithResult: (didPop) async {
-        if (_isLoading) return false; // Prevent going back while loading
+        if (_isLoading) return; // Prevent going back while loading
         
         if (_nameController.text.isNotEmpty ||
             _emailController.text.isNotEmpty ||
             _phoneController.text.isNotEmpty ||
             _passwordController.text.isNotEmpty) {
           _showExitConfirmation();
-          return false;
+          return;
         }
-        return true;
+        // Allow pop to proceed
       },
       child: Scaffold(
         backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,
@@ -1519,8 +1519,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             padding: EdgeInsets.all(3.w),
             decoration: BoxDecoration(
               color: _isLocationEnabled
-                  ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1)
-                  : AppTheme.lightTheme.colorScheme.outline.withOpacity(0.1),
+                              ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1 * 255)
+            : AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.1 * 255),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -1582,9 +1582,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               value: _isLocationEnabled,
               onChanged: (value) => _toggleLocationServices(),
               activeColor: AppTheme.lightTheme.colorScheme.primary,
-              activeTrackColor: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
+              activeTrackColor: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3 * 255),
               inactiveThumbColor: AppTheme.lightTheme.colorScheme.outline,
-              inactiveTrackColor: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.3),
+              inactiveTrackColor: AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.3 * 255),
             ),
           ),
         ],
