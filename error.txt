@@ -1,10 +1,10 @@
 Clean build
-1m 13s
+27s
 
 
 
 Show command
-Cleaning Xcode workspace...                                         3.1s
+Cleaning Xcode workspace...                                      1,545ms
 Reinstalled 161 packages.
 Resolving dependencies...
 Downloading packages...
@@ -169,7 +169,6 @@ Changed 156 dependencies!
 Try `flutter pub outdated` for more information.
 Analyzing clone...                                              
 
-  error • The name 'AuthException' is defined in the libraries 'package:gotrue/src/types/auth_exception.dart' and 'package:khilonjiya_com/utils/auth_service.dart' • lib/core/app_export.dart:30:8 • ambiguous_export
    info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:1:8 • unnecessary_import
    info • The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:2:8 • unnecessary_import
    info • The import of 'package:provider/provider.dart' is unnecessary because all of the used elements are also provided by the import of 'core/app_export.dart' • lib/main.dart:3:8 • unnecessary_import
@@ -589,11 +588,12 @@ warning • The value of the local variable 'response' isn't used • lib/utils/
 warning • The declaration '_getFallbackCategories' isn't referenced • lib/utils/category_service.dart:302:30 • unused_element
    info • The import of 'package:flutter_svg/svg.dart' is unnecessary because all of the used elements are also provided by the import of '../core/app_export.dart' • lib/widgets/custom_error_widget.dart:1:8 • unnecessary_import
 
-419 issues found. (ran in 24.5s)
+418 issues found. (ran in 9.7s)
 
 
 Build failed :|
 Step 4 script `Clean build` exited with status code 1
+
 mpp
 mpp
 github.com/bhabajit54321/mpp
@@ -601,17 +601,42 @@ github.com/bhabajit54321/mpp
 
 Start new build
 Build overview
+Build overview
+ID:
+687111368c9ca4a04816dfd5
+Please provide this ID when you contact our support team
+Index:
+4
+Status:
+failed
+Workflow:
+Build Debug APK
+Started by:
+bhabajitventures@gmail.com
+
+bhabajitventures@gmail.com
+Started:
+9 minutes ago
+Jul 11th, 2025 at 18:57 IST
+Duration:
+8m 52s
+Machine:
+Mac mini M2
+Branch:
+main
+Commit:
+e7f08cf
 Artifacts
 Click on the build steps for details.
 
 Preparing build machine
-1m 0s
+30s
 Fetching app sources
-4s
+2s
 Installing SDKs
-1m 18s
+49s
 Set up Flutter
-1m 31s
+39s
 Build Debug APK
 < 1s
 Publishing
