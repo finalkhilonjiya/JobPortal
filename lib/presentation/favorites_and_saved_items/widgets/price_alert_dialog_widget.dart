@@ -20,7 +20,7 @@ class PriceAlertDialogWidget extends StatefulWidget {
 class _PriceAlertDialogWidgetState extends State<PriceAlertDialogWidget> {
   final TextEditingController _thresholdController = TextEditingController();
   String _alertType = 'below';
-  bool _isPercentage = false;
+  // bool _isPercentage = false; // Unused field
   double _currentPrice = 0.0;
 
   @override

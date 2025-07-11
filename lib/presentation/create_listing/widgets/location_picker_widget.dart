@@ -19,7 +19,7 @@ class LocationPickerWidget extends StatefulWidget {
 
 class _LocationPickerWidgetState extends State<LocationPickerWidget> {
   late TextEditingController _locationController;
-  bool _useCurrentLocation = false;
+  // bool _useCurrentLocation = false; // Unused field
   bool _showExactLocation = true;
   String _currentLocationText = '';
 

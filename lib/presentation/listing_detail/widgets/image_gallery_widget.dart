@@ -76,7 +76,7 @@ class _ImageGalleryWidgetState extends State<ImageGalleryWidget> {
                     decoration: BoxDecoration(
                       color: _currentIndex == index
                           ? AppTheme.lightTheme.colorScheme.primary
-                          : Colors.white.withOpacity(0.5),
+                          : Colors.white.withValues(alpha: 0.5 * 255),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -89,7 +89,7 @@ class _ImageGalleryWidgetState extends State<ImageGalleryWidget> {
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withValues(alpha: 0.6 * 255),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(

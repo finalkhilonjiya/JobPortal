@@ -20,7 +20,7 @@ class CategorySelectionWidget extends StatefulWidget {
 
 class _CategorySelectionWidgetState extends State<CategorySelectionWidget> {
   final TextEditingController _searchController = TextEditingController();
-  final CategoryService _categoryService = CategoryService();
+  // final CategoryService _categoryService = CategoryService(); // Unused field
 
   String _searchQuery = '';
   bool _isLoading = true;
