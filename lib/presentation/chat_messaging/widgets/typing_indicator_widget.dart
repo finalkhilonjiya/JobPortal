@@ -137,7 +137,7 @@ class _TypingIndicatorWidgetState extends State<TypingIndicatorWidget>
             color: Theme.of(context)
                 .colorScheme
                 .onSurfaceVariant
-                .withOpacity(opacity),
+                .withValues(alpha: (opacity * 255).toInt()),
             shape: BoxShape.circle,
           ),
         );

@@ -85,11 +85,11 @@ class LocationMessageWidget extends StatelessWidget {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               color: isMe
-                                  ? Colors.white.withOpacity(0.1)
+                                  ? Colors.white.withValues(alpha: (0.1 * 255).toInt())
                                   : Theme.of(context)
                                       .colorScheme
                                       .outline
-                                      .withOpacity(0.1),
+                                      .withValues(alpha: (0.1 * 255).toInt()),
                             ),
                             child: Stack(
                               children: [
@@ -101,8 +101,8 @@ class LocationMessageWidget extends StatelessWidget {
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                       colors: [
-                                        Colors.blue.withOpacity(0.1),
-                                        Colors.green.withOpacity(0.1),
+                                        Colors.blue.withValues(alpha: (0.1 * 255).toInt()),
+                                        Colors.green.withValues(alpha: (0.1 * 255).toInt()),
                                       ],
                                     ),
                                   ),
@@ -112,11 +112,11 @@ class LocationMessageWidget extends StatelessWidget {
                                   size: Size(double.infinity, 20.h),
                                   painter: MapPatternPainter(
                                     color: isMe
-                                        ? Colors.white.withOpacity(0.3)
+                                        ? Colors.white.withValues(alpha: (0.3 * 255).toInt())
                                         : Theme.of(context)
                                             .colorScheme
                                             .onSurfaceVariant
-                                            .withOpacity(0.3),
+                                            .withValues(alpha: (0.3 * 255).toInt()),
                                   ),
                                 ),
                                 // Location pin
@@ -130,8 +130,7 @@ class LocationMessageWidget extends StatelessWidget {
                                       shape: BoxShape.circle,
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black
-                                              .withOpacity(0.2),
+                                          color: Colors.black.withValues(alpha: (0.2 * 255).toInt()),
                                           blurRadius: 4,
                                           offset: const Offset(0, 2),
                                         ),
@@ -189,8 +188,7 @@ class LocationMessageWidget extends StatelessWidget {
                                             .bodySmall
                                             ?.copyWith(
                                               color: isMe
-                                                  ? Colors.white
-                                                      .withOpacity(0.8)
+                                                  ? Colors.white.withValues(alpha: (0.8 * 255).toInt())
                                                   : Theme.of(context)
                                                       .colorScheme
                                                       .onSurfaceVariant,
@@ -213,10 +211,10 @@ class LocationMessageWidget extends StatelessWidget {
                                   padding: EdgeInsets.symmetric(vertical: 1.h),
                                   decoration: BoxDecoration(
                                     color: isMe
-                                        ? Colors.white.withOpacity(0.2)
+                                        ? Colors.white.withValues(alpha: (0.2 * 255).toInt())
                                         : AppTheme
                                             .lightTheme.colorScheme.primary
-                                            .withOpacity(0.1),
+                                            .withValues(alpha: (0.1 * 255).toInt()),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Row(
