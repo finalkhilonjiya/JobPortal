@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
-import '../../core/app_export.dart';
+import '../../utils/auth_service.dart';
 import './widgets/account_settings_section_widget.dart';
 import './widgets/favorites_section_widget.dart';
 import './widgets/my_listings_section_widget.dart';
