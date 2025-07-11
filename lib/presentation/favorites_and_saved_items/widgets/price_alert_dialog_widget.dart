@@ -66,7 +66,7 @@ class _PriceAlertDialogWidgetState extends State<PriceAlertDialogWidget> {
               children: [
                 CustomIconWidget(
                   iconName: 'notifications',
-                  color: AppTheme.lightTheme.primaryColor,
+                  color: AppTheme.lightTheme.colorScheme.primary,
                   size: 24,
                 ),
                 SizedBox(width: 3.w),
@@ -125,7 +125,7 @@ class _PriceAlertDialogWidgetState extends State<PriceAlertDialogWidget> {
                           'Current Price: ${widget.item["price"]}',
                           style: AppTheme.lightTheme.textTheme.bodyMedium
                               ?.copyWith(
-                            color: AppTheme.lightTheme.primaryColor,
+                            color: AppTheme.lightTheme.colorScheme.primary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

@@ -212,13 +212,13 @@ class FolderStructureWidget extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: 1.h, horizontal: 2.w),
           decoration: BoxDecoration(
             color: isSelected
-                ? AppTheme.lightTheme.primaryColor.withOpacity(0.1)
+                ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1 * 255)
                 : isHighlighted
                     ? Colors.blue[50]
                     : Colors.transparent,
             borderRadius: BorderRadius.circular(4),
             border: isSelected
-                ? Border.all(color: AppTheme.lightTheme.primaryColor, width: 1)
+                ? Border.all(color: AppTheme.lightTheme.colorScheme.primary, width: 1)
                 : isHighlighted
                     ? Border.all(color: Colors.blue[200]!, width: 1)
                     : null,
@@ -229,7 +229,7 @@ class FolderStructureWidget extends StatelessWidget {
               CustomIconWidget(
                 iconName: _getFileIcon(name),
                 color: isSelected
-                    ? AppTheme.lightTheme.primaryColor
+                    ? AppTheme.lightTheme.colorScheme.primary
                     : isHighlighted
                         ? Colors.blue[600]!
                         : Colors.grey[600]!,
@@ -244,7 +244,7 @@ class FolderStructureWidget extends StatelessWidget {
                       ? FontWeight.w600
                       : FontWeight.w500,
                   color: isSelected
-                      ? AppTheme.lightTheme.primaryColor
+                      ? AppTheme.lightTheme.colorScheme.primary
                       : isHighlighted
                           ? Colors.blue[800]
                           : Colors.grey[700],

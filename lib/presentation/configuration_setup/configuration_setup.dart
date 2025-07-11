@@ -98,7 +98,7 @@ class MyApp extends StatelessWidget {
             color: Colors.white,
           ),
         ),
-        backgroundColor: AppTheme.lightTheme.primaryColor,
+        backgroundColor: AppTheme.lightTheme.colorScheme.primary,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -180,7 +180,7 @@ class MyApp extends StatelessWidget {
         children: [
           CustomIconWidget(
             iconName: 'code',
-            color: AppTheme.lightTheme.primaryColor,
+            color: AppTheme.lightTheme.colorScheme.primary,
             size: 5.w,
           ),
           SizedBox(width: 2.w),

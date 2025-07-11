@@ -23,7 +23,7 @@ class CollectionFolderWidget extends StatelessWidget {
     final int itemCount = collection["itemCount"] ?? 0;
     final String iconName = collection["icon"] ?? "folder";
     final Color iconColor =
-        collection["color"] ?? AppTheme.lightTheme.primaryColor;
+        collection["color"] ?? AppTheme.lightTheme.colorScheme.primary;
 
     return GestureDetector(
       onTap: onTap,

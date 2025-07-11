@@ -370,7 +370,7 @@ class _FilterModalWidgetState extends State<FilterModalWidget> {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected
-                        ? AppTheme.lightTheme.primaryColor
+                        ? AppTheme.lightTheme.colorScheme.primary
                         : AppTheme.lightTheme.colorScheme.outline,
                   ),
                 ),
