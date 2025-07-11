@@ -15,7 +15,7 @@ export 'package:intl/intl.dart';
 export 'package:url_launcher/url_launcher.dart';
 export 'package:http/http.dart';
 export 'package:sqflite/sqflite.dart';
-export 'package:path/path.dart';
+// export 'package:path/path.dart'; // Removed to prevent Context/BuildContext conflict. Import directly where needed.
 export 'package:flutter_local_notifications/flutter_local_notifications.dart';
 export 'package:permission_handler/permission_handler.dart';
 export 'package:supabase_flutter/supabase_flutter.dart';
@@ -27,7 +27,7 @@ export '../widgets/custom_image_widget.dart';
 export '../widgets/custom_error_widget.dart';
 export '../theme/app_theme.dart';
 export '../utils/supabase_service.dart';
-export '../utils/auth_service.dart';
+// export '../utils/auth_service.dart'; // Removed to prevent AuthException export conflict. Import directly where needed.
 export '../utils/listing_service.dart';
 export '../utils/category_service.dart';
 export '../utils/favorite_service.dart';
