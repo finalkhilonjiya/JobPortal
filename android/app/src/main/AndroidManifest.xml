@@ -21,8 +21,7 @@
         android:allowBackup="true"
         android:supportsRtl="true"
         android:theme="@style/LaunchTheme"
-        android:usesCleartextTraffic="true"
-        android:name="${applicationName}">
+        android:usesCleartextTraffic="true">
         
         <activity
             android:name=".MainActivity"
