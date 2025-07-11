@@ -21,7 +21,8 @@
         android:allowBackup="true"
         android:supportsRtl="true"
         android:theme="@style/LaunchTheme"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        android:name="${applicationName}">
         
         <activity
             android:name=".MainActivity"
@@ -44,7 +45,7 @@
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:name="androidx.core.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
     </application>
