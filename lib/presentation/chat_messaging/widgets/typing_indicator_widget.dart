@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:sizer/sizer.dart';
+// import 'package:flutter/material.dart'; // Unnecessary import
+// import 'package:sizer/sizer.dart'; // Unnecessary import
 import 'dart:math';
 
 import '../../../core/app_export.dart';
-import '../../../widgets/custom_image_widget.dart';
+// import '../../../widgets/custom_image_widget.dart'; // Unnecessary import
 
 class TypingIndicatorWidget extends StatefulWidget {
   final String senderName;

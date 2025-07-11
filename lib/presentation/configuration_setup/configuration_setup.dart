@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+THIS SHOULD BE A LINTER ERRORimport 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
