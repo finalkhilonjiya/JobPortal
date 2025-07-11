@@ -7,6 +7,9 @@ workflows:
       xcode: latest
       groups:
         - google_play
+      vars:
+        SUPABASE_URL: "https://rsskivonmfqrzxbmxrkl.supabase.co"
+        SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzc2tpdm9ubWZxcnp4Ym14cmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE2NTUxMTgsImV4cCI6MjA2NzIzMTExOH0.uYjeiqI7eNGZqnip4p-20AL6NT9YCos15gWY-lP82As"
     scripts:
       - name: Set up Flutter
         script: |
@@ -20,7 +23,7 @@ workflows:
           flutter analyze
       - name: Build Debug APK
         script: |
-          flutter build apk --debug -v
+          flutter build apk --debug -v --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
     artifacts:
       - build/app/outputs/flutter-apk/app-debug.apk
 
@@ -32,6 +35,10 @@ workflows:
       xcode: latest
       groups:
         - google_play
+      vars:
+      vars:
+        SUPABASE_URL: "https://rsskivonmfqrzxbmxrkl.supabase.co"
+        SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzc2tpdm9ubWZxcnp4Ym14cmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE2NTUxMTgsImV4cCI6MjA2NzIzMTExOH0.uYjeiqI7eNGZqnip4p-20AL6NT9YCos15gWY-lP82As"
     scripts:
       - name: Set up Flutter
         script: |
@@ -43,7 +50,7 @@ workflows:
           flutter pub get
       - name: Build Release APK
         script: |
-          flutter build apk --release
+          flutter build apk --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
 
@@ -55,6 +62,9 @@ workflows:
       xcode: latest
       groups:
         - google_play
+      vars:
+        SUPABASE_URL: "https://rsskivonmfqrzxbmxrkl.supabase.co"
+        SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzc2tpdm9ubWZxcnp4Ym14cmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE2NTUxMTgsImV4cCI6MjA2NzIzMTExOH0.uYjeiqI7eNGZqnip4p-20AL6NT9YCos15gWY-lP82As"
     scripts:
       - name: Set up Flutter
         script: |
@@ -66,6 +76,6 @@ workflows:
           flutter pub get
       - name: Build App Bundle
         script: |
-          flutter build appbundle --release
+          flutter build appbundle --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
     artifacts:
       - build/app/outputs/bundle/release/app-release.aab
