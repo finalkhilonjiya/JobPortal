@@ -553,9 +553,9 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
                     height: 40,
                     child: CircularProgressIndicator(
                       strokeWidth: 3,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppTheme.lightTheme.primaryColor,
-                      ),
+                                              valueColor: AlwaysStoppedAnimation<Color>(
+                          AppTheme.lightTheme.colorScheme.primary,
+                        ),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -626,7 +626,7 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
                           : const Icon(Icons.refresh),
                       label: Text(stateNotifier.isRetrying ? 'Retrying...' : 'Retry'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.lightTheme.primaryColor,
+                        backgroundColor: AppTheme.lightTheme.colorScheme.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -646,7 +646,7 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
                       label: const Text('Continue'),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: BorderSide(color: AppTheme.lightTheme.primaryColor),
+                        side: BorderSide(color: AppTheme.lightTheme.colorScheme.primary),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),

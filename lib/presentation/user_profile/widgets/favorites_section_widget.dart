@@ -191,7 +191,7 @@ class FavoritesSectionWidget extends StatelessWidget {
               child: Container(
                 padding: EdgeInsets.all(2.w),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: (0.1 * 255).toInt()),
+                  color: Colors.red.withValues(alpha: 0.1 * 255),
                   shape: BoxShape.circle,
                 ),
                 child: CustomIconWidget(
