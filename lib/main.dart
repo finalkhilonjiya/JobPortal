@@ -508,11 +508,11 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: AppTheme.lightTheme.primaryColor,
+                        color: AppTheme.lightTheme.colorScheme.primary,
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.lightTheme.primaryColor.withValues(alpha: 0.3 * 255),
+                            color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3 * 255),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -529,7 +529,7 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
                       AppConfig.appName,
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.lightTheme.primaryColor,
+                        color: AppTheme.lightTheme.colorScheme.primary,
                       ),
                     ),
                     const SizedBox(height: 8),
