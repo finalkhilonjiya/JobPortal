@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 
-import '../../utils/auth_service.dart';
 import './widgets/onboarding_page_widget.dart';
 import './widgets/page_indicator_widget.dart';
 
@@ -247,7 +246,7 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
                 onPressed: _skipOnboarding,
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                  backgroundColor: Colors.white.withValues(alpha: (0.9 * 255).toInt()),
+                  backgroundColor: Colors.white.withValues(alpha: (0.9 * 255).toDouble()),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -269,14 +268,14 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
               child: Container(
                 padding: EdgeInsets.all(6.w),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: (0.95 * 255).toInt()),
+                  color: Colors.white.withValues(alpha: (0.95 * 255).toDouble()),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(24),
                     topRight: Radius.circular(24),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: (0.1 * 255).toInt()),
+                      color: Colors.black.withValues(alpha: (0.1 * 255).toDouble()),
                       blurRadius: 10,
                       offset: const Offset(0, -2),
                     ),
@@ -304,7 +303,7 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
                           foregroundColor: Colors.white,
                           elevation: 2,
                           shadowColor: AppTheme.lightTheme.primaryColor
-                              .withValues(alpha: (0.3 * 255).toInt()),
+                              .withValues(alpha: (0.3 * 255).toDouble()),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),

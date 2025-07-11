@@ -53,19 +53,19 @@ class AppTheme {
       brightness: Brightness.light,
       primary: primaryLight,
       onPrimary: Colors.white,
-      primaryContainer: primaryLight.withValues(alpha: (26/255.0 * 255).toInt()),
+      primaryContainer: primaryLight.withValues(alpha: (26/255.0 * 255).toDouble()),
       onPrimaryContainer: primaryLight,
       secondary: secondaryLight,
       onSecondary: Colors.white,
-      secondaryContainer: secondaryLight.withValues(alpha: (26/255.0 * 255).toInt()),
+      secondaryContainer: secondaryLight.withValues(alpha: (26/255.0 * 255).toDouble()),
       onSecondaryContainer: secondaryLight,
       tertiary: accentLight,
       onTertiary: Colors.white,
-      tertiaryContainer: accentLight.withValues(alpha: (26/255.0 * 255).toInt()),
+      tertiaryContainer: accentLight.withValues(alpha: (26/255.0 * 255).toDouble()),
       onTertiaryContainer: accentLight,
       error: errorLight,
       onError: Colors.white,
-      errorContainer: errorLight.withValues(alpha: (26/255.0 * 255).toInt()),
+      errorContainer: errorLight.withValues(alpha: (26/255.0 * 255).toDouble()),
       onErrorContainer: errorLight,
       surface: surfaceLight,
       onSurface: textPrimaryLight,
@@ -215,7 +215,7 @@ class AppTheme {
         fontWeight: FontWeight.w400,
       ),
       hintStyle: GoogleFonts.inter(
-        color: textSecondaryLight.withValues(alpha: (153/255.0 * 255).toInt()),
+        color: textSecondaryLight.withValues(alpha: (153/255.0 * 255).toDouble()),
         fontSize: 16,
         fontWeight: FontWeight.w400,
       ),
@@ -236,7 +236,7 @@ class AppTheme {
       }),
       trackColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
-          return primaryLight.withValues(alpha: (77/255.0 * 255).toInt());
+          return primaryLight.withValues(alpha: (77/255.0 * 255).toDouble());
         }
         return Colors.grey[200];
       }),
@@ -278,7 +278,7 @@ class AppTheme {
     sliderTheme: SliderThemeData(
       activeTrackColor: primaryLight,
       thumbColor: primaryLight,
-      overlayColor: primaryLight.withValues(alpha: (51/255.0 * 255).toInt()),
+      overlayColor: primaryLight.withValues(alpha: (51/255.0 * 255).toDouble()),
       inactiveTrackColor: borderLight,
       trackHeight: 4.0,
     ),
@@ -302,7 +302,7 @@ class AppTheme {
     // Tooltip theme
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
-        color: textPrimaryLight.withValues(alpha: (230/255.0 * 255).toInt()),
+        color: textPrimaryLight.withValues(alpha: (230/255.0 * 255).toDouble()),
         borderRadius: BorderRadius.circular(8.0),
       ),
       textStyle: GoogleFonts.inter(
@@ -357,19 +357,19 @@ class AppTheme {
       brightness: Brightness.dark,
       primary: primaryDark,
       onPrimary: Colors.black,
-      primaryContainer: primaryDark.withValues(alpha: (51/255.0 * 255).toInt()),
+      primaryContainer: primaryDark.withValues(alpha: (51/255.0 * 255).toDouble()),
       onPrimaryContainer: primaryDark,
       secondary: secondaryDark,
       onSecondary: Colors.black,
-      secondaryContainer: secondaryDark.withValues(alpha: (51/255.0 * 255).toInt()),
+      secondaryContainer: secondaryDark.withValues(alpha: (51/255.0 * 255).toDouble()),
       onSecondaryContainer: secondaryDark,
       tertiary: accentDark,
       onTertiary: Colors.black,
-      tertiaryContainer: accentDark.withValues(alpha: (51/255.0 * 255).toInt()),
+      tertiaryContainer: accentDark.withValues(alpha: (51/255.0 * 255).toDouble()),
       onTertiaryContainer: accentDark,
       error: errorDark,
       onError: Colors.black,
-      errorContainer: errorDark.withValues(alpha: (51/255.0 * 255).toInt()),
+      errorContainer: errorDark.withValues(alpha: (51/255.0 * 255).toDouble()),
       onErrorContainer: errorDark,
       surface: surfaceDark,
       onSurface: textPrimaryDark,
@@ -518,7 +518,7 @@ class AppTheme {
         fontWeight: FontWeight.w400,
       ),
       hintStyle: GoogleFonts.inter(
-        color: textSecondaryDark.withValues(alpha: (153/255.0 * 255).toInt()),
+        color: textSecondaryDark.withValues(alpha: (153/255.0 * 255).toDouble()),
         fontSize: 16,
         fontWeight: FontWeight.w400,
       ),
@@ -539,7 +539,7 @@ class AppTheme {
       }),
       trackColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
-          return primaryDark.withValues(alpha: (77/255.0 * 255).toInt());
+          return primaryDark.withValues(alpha: (77/255.0 * 255).toDouble());
         }
         return Colors.grey[700];
       }),
@@ -581,7 +581,7 @@ class AppTheme {
     sliderTheme: SliderThemeData(
       activeTrackColor: primaryDark,
       thumbColor: primaryDark,
-      overlayColor: primaryDark.withValues(alpha: (51/255.0 * 255).toInt()),
+      overlayColor: primaryDark.withValues(alpha: (51/255.0 * 255).toDouble()),
       inactiveTrackColor: borderDark,
       trackHeight: 4.0,
     ),
@@ -605,7 +605,7 @@ class AppTheme {
     // Tooltip theme for dark mode
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
-        color: textPrimaryDark.withValues(alpha: (230/255.0 * 255).toInt()),
+        color: textPrimaryDark.withValues(alpha: (230/255.0 * 255).toDouble()),
         borderRadius: BorderRadius.circular(8.0),
       ),
       textStyle: GoogleFonts.inter(

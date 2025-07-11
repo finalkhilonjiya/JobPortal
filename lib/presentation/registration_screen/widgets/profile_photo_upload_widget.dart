@@ -106,11 +106,11 @@ class ProfilePhotoUploadWidget extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 4.w),
         decoration: BoxDecoration(
-          color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: (0.1 * 255).toInt()),
+          color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: (0.1 * 255).toDouble()),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color:
-                AppTheme.lightTheme.colorScheme.primary.withValues(alpha: (0.3 * 255).toInt()),
+                AppTheme.lightTheme.colorScheme.primary.withValues(alpha: (0.3 * 255).toDouble()),
             width: 1,
           ),
         ),
@@ -165,7 +165,7 @@ class ProfilePhotoUploadWidget extends StatelessWidget {
               child: currentPhotoPath != null
                   ? ClipOval(
                       child: Container(
-                        color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: (0.1 * 255).toInt()),
+                        color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: (0.1 * 255).toDouble()),
                         child: CustomIconWidget(
                           iconName: 'person',
                           color: AppTheme.lightTheme.colorScheme.primary,

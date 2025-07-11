@@ -27,7 +27,7 @@ export '../widgets/custom_image_widget.dart';
 export '../widgets/custom_error_widget.dart';
 export '../theme/app_theme.dart';
 export '../utils/supabase_service.dart';
-// export '../utils/auth_service.dart'; // Removed to prevent AuthException export conflict. Import directly where needed.
+export '../utils/auth_service.dart'; // Re-enabled to ensure AuthService is available everywhere
 export '../utils/listing_service.dart';
 export '../utils/category_service.dart';
 export '../utils/favorite_service.dart';

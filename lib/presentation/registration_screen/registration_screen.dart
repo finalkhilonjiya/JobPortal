@@ -737,9 +737,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             _phoneController.text.isNotEmpty ||
             _passwordController.text.isNotEmpty) {
           _showExitConfirmation();
-          return false;
+          return;
         }
-        return true;
+        return;
       },
       child: Scaffold(
         backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,

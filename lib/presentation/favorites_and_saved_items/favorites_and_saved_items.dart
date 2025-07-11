@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
-import '../../utils/auth_service.dart';
 import './widgets/collection_folder_widget.dart';
 import './widgets/favorite_item_card_widget.dart';
 import './widgets/price_alert_dialog_widget.dart';
