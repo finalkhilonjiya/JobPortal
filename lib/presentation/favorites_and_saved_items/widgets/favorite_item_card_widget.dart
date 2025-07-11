@@ -78,7 +78,7 @@ class FavoriteItemCardWidget extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
-                  ? AppTheme.lightTheme.primaryColor
+                  ? AppTheme.lightTheme.colorScheme.primary
                   : AppTheme.lightTheme.colorScheme.outline,
               width: isSelected ? 2 : 1,
             ),
@@ -179,7 +179,7 @@ class FavoriteItemCardWidget extends StatelessWidget {
                                 item["price"] ?? "",
                                 style: AppTheme.lightTheme.textTheme.titleMedium
                                     ?.copyWith(
-                                  color: AppTheme.lightTheme.primaryColor,
+                                  color: AppTheme.lightTheme.colorScheme.primary,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),

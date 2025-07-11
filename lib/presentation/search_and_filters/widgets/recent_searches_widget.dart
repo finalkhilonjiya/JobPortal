@@ -34,7 +34,7 @@ class RecentSearchesWidget extends StatelessWidget {
               child: Text(
                 'Clear',
                 style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                  color: AppTheme.lightTheme.primaryColor,
+                  color: AppTheme.lightTheme.colorScheme.primary,
                 ),
               ),
             ),

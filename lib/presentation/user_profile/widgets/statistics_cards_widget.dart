@@ -75,7 +75,7 @@ class StatisticsCardsWidget extends StatelessWidget {
             width: 12.w,
             height: 12.w,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: (0.1 * 255).toInt()),
+              color: color.withValues(alpha: 0.1 * 255),
               shape: BoxShape.circle,
             ),
             child: CustomIconWidget(

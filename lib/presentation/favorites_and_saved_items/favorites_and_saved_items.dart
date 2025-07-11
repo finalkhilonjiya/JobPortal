@@ -204,7 +204,7 @@ class _FavoritesAndSavedItemsState extends State<FavoritesAndSavedItems>
                       trailing: _sortBy == option
                           ? CustomIconWidget(
                               iconName: 'check',
-                              color: AppTheme.lightTheme.primaryColor,
+                              color: AppTheme.lightTheme.colorScheme.primary,
                               size: 20,
                             )
                           : null,
@@ -253,7 +253,7 @@ class _FavoritesAndSavedItemsState extends State<FavoritesAndSavedItems>
                       trailing: _filterBy == option
                           ? CustomIconWidget(
                               iconName: 'check',
-                              color: AppTheme.lightTheme.primaryColor,
+                              color: AppTheme.lightTheme.colorScheme.primary,
                               size: 20,
                             )
                           : null,
@@ -721,7 +721,7 @@ class _FavoritesAndSavedItemsState extends State<FavoritesAndSavedItems>
                         iconName: 'favorite',
                         size: 18,
                         color: _tabController.index == 0
-                            ? AppTheme.lightTheme.primaryColor
+                            ? AppTheme.lightTheme.colorScheme.primary
                             : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
                       ),
                       SizedBox(width: 2.w),
@@ -737,7 +737,7 @@ class _FavoritesAndSavedItemsState extends State<FavoritesAndSavedItems>
                         iconName: 'folder',
                         size: 18,
                         color: _tabController.index == 1
-                            ? AppTheme.lightTheme.primaryColor
+                            ? AppTheme.lightTheme.colorScheme.primary
                             : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
                       ),
                       SizedBox(width: 2.w),
@@ -804,7 +804,7 @@ class _FavoritesAndSavedItemsState extends State<FavoritesAndSavedItems>
             ListTile(
               leading: CustomIconWidget(
                 iconName: 'folder_open',
-                color: AppTheme.lightTheme.primaryColor,
+                color: AppTheme.lightTheme.colorScheme.primary,
                 size: 24,
               ),
               title: Text('Add to Collection'),
@@ -816,7 +816,7 @@ class _FavoritesAndSavedItemsState extends State<FavoritesAndSavedItems>
             ListTile(
               leading: CustomIconWidget(
                 iconName: 'share',
-                color: AppTheme.lightTheme.primaryColor,
+                color: AppTheme.lightTheme.colorScheme.primary,
                 size: 24,
               ),
               title: Text('Share Selected'),

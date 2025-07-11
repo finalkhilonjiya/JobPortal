@@ -83,11 +83,11 @@ class _PageIndicatorWidgetState extends State<PageIndicatorWidget>
       width: 8.w,
       height: 1.h,
       decoration: BoxDecoration(
-        color: AppTheme.lightTheme.primaryColor.withValues(alpha: (0.3 * 255).toInt()),
+        color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3 * 255),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.lightTheme.primaryColor.withValues(alpha: (0.3 * 255).toInt()),
+            color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3 * 255),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -101,7 +101,7 @@ class _PageIndicatorWidgetState extends State<PageIndicatorWidget>
       width: 2.w,
       height: 2.w,
       decoration: BoxDecoration(
-        color: AppTheme.lightTheme.colorScheme.onSurfaceVariant.withValues(alpha: (0.3 * 255).toDouble()),
+        color: AppTheme.lightTheme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3 * 255),
         shape: BoxShape.circle,
       ),
     );

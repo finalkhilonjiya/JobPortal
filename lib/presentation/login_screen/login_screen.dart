@@ -375,8 +375,8 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             shaderCallback: (Rect bounds) {
               return LinearGradient(
                 colors: [
-                  AppTheme.getPrimaryColor(true),
-                  AppTheme.getAccentColor(true),
+                  AppTheme.lightTheme.colorScheme.primary,
+                  AppTheme.lightTheme.colorScheme.tertiary,
                 ],
               ).createShader(bounds);
             },
@@ -416,7 +416,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             'Welcome Back!',
             style: AppTheme.lightTheme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w600,
-              color: AppTheme.getTextPrimaryColor(true),
+              color: AppTheme.lightTheme.colorScheme.onSurface,
             ),
           ),
           SizedBox(height: 1.h),

@@ -192,12 +192,12 @@ class _FilterModalWidgetState extends State<FilterModalWidget> {
               child: Container(
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppTheme.lightTheme.primaryColor
+                      ? AppTheme.lightTheme.colorScheme.primary
                       : AppTheme.lightTheme.cardColor,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: isSelected
-                        ? AppTheme.lightTheme.primaryColor
+                        ? AppTheme.lightTheme.colorScheme.primary
                         : AppTheme.lightTheme.colorScheme.outline,
                   ),
                 ),
@@ -288,7 +288,7 @@ class _FilterModalWidgetState extends State<FilterModalWidget> {
                 children: [
                   CustomIconWidget(
                     iconName: 'location_on',
-                    color: AppTheme.lightTheme.primaryColor,
+                    color: AppTheme.lightTheme.colorScheme.primary,
                     size: 20,
                   ),
                   SizedBox(width: 2.w),
@@ -365,12 +365,12 @@ class _FilterModalWidgetState extends State<FilterModalWidget> {
                 padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppTheme.lightTheme.primaryColor
+                      ? AppTheme.lightTheme.colorScheme.primary
                       : AppTheme.lightTheme.cardColor,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected
-                        ? AppTheme.lightTheme.primaryColor
+                        ? AppTheme.lightTheme.colorScheme.primary
                         : AppTheme.lightTheme.colorScheme.outline,
                   ),
                 ),

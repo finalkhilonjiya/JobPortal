@@ -51,7 +51,7 @@ class SearchBarWidget extends StatelessWidget {
                   padding: EdgeInsets.all(3.w),
                   child: CustomIconWidget(
                     iconName: 'mic',
-                    color: AppTheme.lightTheme.primaryColor,
+                    color: AppTheme.lightTheme.colorScheme.primary,
                     size: 20,
                   ),
                 ),
@@ -70,7 +70,7 @@ class SearchBarWidget extends StatelessWidget {
             height: 6.h,
             width: 6.h,
             decoration: BoxDecoration(
-              color: AppTheme.lightTheme.primaryColor,
+                              color: AppTheme.lightTheme.colorScheme.primary,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(

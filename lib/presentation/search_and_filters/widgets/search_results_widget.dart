@@ -119,7 +119,7 @@ class SearchResultsWidget extends StatelessWidget {
                       item['price'] as String,
                       style:
                           AppTheme.lightTheme.textTheme.titleMedium?.copyWith(
-                        color: AppTheme.lightTheme.primaryColor,
+                        color: AppTheme.lightTheme.colorScheme.primary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -195,7 +195,7 @@ class SearchResultsWidget extends StatelessWidget {
                         if (item['verified'] as bool)
                           CustomIconWidget(
                             iconName: 'verified',
-                            color: AppTheme.lightTheme.primaryColor,
+                            color: AppTheme.lightTheme.colorScheme.primary,
                             size: 16,
                           ),
                       ],
@@ -205,7 +205,7 @@ class SearchResultsWidget extends StatelessWidget {
                       item['price'] as String,
                       style:
                           AppTheme.lightTheme.textTheme.titleMedium?.copyWith(
-                        color: AppTheme.lightTheme.primaryColor,
+                        color: AppTheme.lightTheme.colorScheme.primary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -232,14 +232,14 @@ class SearchResultsWidget extends StatelessWidget {
                           padding: EdgeInsets.symmetric(
                               horizontal: 2.w, vertical: 0.5.h),
                           decoration: BoxDecoration(
-                            color: AppTheme.lightTheme.primaryColor.withValues(alpha: (0.1 * 255).toInt()),
+                            color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1 * 255),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             item['condition'] as String,
                             style: AppTheme.lightTheme.textTheme.bodySmall
                                 ?.copyWith(
-                              color: AppTheme.lightTheme.primaryColor,
+                              color: AppTheme.lightTheme.colorScheme.primary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),

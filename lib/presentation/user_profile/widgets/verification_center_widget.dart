@@ -117,8 +117,8 @@ class VerificationCenterWidget extends StatelessWidget {
         padding: EdgeInsets.all(3.w),
         decoration: BoxDecoration(
           color: isVerified
-              ? AppTheme.getSuccessColor(true).withValues(alpha: (0.1 * 255).toDouble())
-              : AppTheme.getWarningColor(true).withValues(alpha: (0.1 * 255).toDouble()),
+                      ? AppTheme.getSuccessColor(true).withValues(alpha: 0.1 * 255)
+        : AppTheme.getWarningColor(true).withValues(alpha: 0.1 * 255),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isVerified
