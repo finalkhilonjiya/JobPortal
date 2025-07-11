@@ -25,7 +25,6 @@ if (flutterVersionName == null) {
 android {
     namespace "com.khilonjiya.marketplace"
     compileSdk 34
-    // ✅ FIXED: Use explicit NDK version instead of flutter.ndkVersion
     ndkVersion "25.1.8937393"
 
     compileOptions {
@@ -55,12 +54,9 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.debug
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            minifyEnabled false
+            shrinkResources false
             debuggable false
-            jniDebuggable false
-            renderscriptDebuggable false
         }
         
         debug {
@@ -86,11 +82,6 @@ flutter {
 }
 
 dependencies {
-    // ✅ FIXED: Use explicit Kotlin version instead of variable
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22"
     implementation 'androidx.multidex:multidex:2.0.1'
-    
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test:runner:1.5.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
