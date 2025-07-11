@@ -12,6 +12,12 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.2
+  provider: ^6.1.2
+  sizer: ^2.0.15
+  google_fonts: ^6.1.0
+  cached_network_image: ^3.3.1
+  geolocator: ^10.1.0
+  supabase_flutter: ^2.5.2
 
 dev_dependencies:
   flutter_test:
