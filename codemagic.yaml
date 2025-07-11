@@ -20,7 +20,7 @@ workflows:
           flutter analyze
       - name: Build Debug APK
         script: |
-          flutter build apk --debug -v
+          flutter build apk --debug --verbose
     artifacts:
       - build/app/outputs/flutter-apk/app-debug.apk
 
