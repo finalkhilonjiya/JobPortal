@@ -299,7 +299,7 @@ class _AdditionalDetailsWidgetState extends State<AdditionalDetailsWidget> {
               padding: EdgeInsets.all(4.w),
               decoration: BoxDecoration(
                 color: AppTheme.lightTheme.colorScheme.primaryContainer
-                    .withOpacity(0.3),
+                    .withValues(alpha: 0.3 * 255),
                 borderRadius: BorderRadius.circular(3.w),
               ),
               child: Column(
@@ -363,7 +363,7 @@ class _AdditionalDetailsWidgetState extends State<AdditionalDetailsWidget> {
               padding: EdgeInsets.all(4.w),
               decoration: BoxDecoration(
                 color: AppTheme.lightTheme.colorScheme.primaryContainer
-                    .withOpacity(0.3),
+                    .withValues(alpha: 0.3 * 255),
                 borderRadius: BorderRadius.circular(3.w),
               ),
               child: Column(

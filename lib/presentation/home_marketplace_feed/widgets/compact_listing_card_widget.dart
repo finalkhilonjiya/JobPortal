@@ -39,7 +39,7 @@ class CompactListingCardWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.lightTheme.colorScheme.shadow.withOpacity(26/255.0),
+              color: AppTheme.lightTheme.colorScheme.shadow.withValues(alpha: 26),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -65,7 +65,7 @@ class CompactListingCardWidget extends StatelessWidget {
                       height: double.infinity,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
-                        color: AppTheme.lightTheme.colorScheme.surfaceVariant,
+                        color: AppTheme.lightTheme.colorScheme.surfaceContainerHighest,
                         child: Center(
                           child: CircularProgressIndicator(
                             color: AppTheme.lightTheme.colorScheme.primary,
@@ -74,7 +74,7 @@ class CompactListingCardWidget extends StatelessWidget {
                         ),
                       ),
                       errorWidget: (context, url, error) => Container(
-                        color: AppTheme.lightTheme.colorScheme.surfaceVariant,
+                        color: AppTheme.lightTheme.colorScheme.surfaceContainerHighest,
                         child: Icon(
                           Icons.image_not_supported,
                           color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
@@ -115,7 +115,7 @@ class CompactListingCardWidget extends StatelessWidget {
                       child: Container(
                         padding: EdgeInsets.all(1.5.w),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(230/255.0),
+                          color: Colors.white.withValues(alpha: 230),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -137,7 +137,7 @@ class CompactListingCardWidget extends StatelessWidget {
                       child: Container(
                         padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(153/255.0),
+                          color: Colors.black.withValues(alpha: 153),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Row(
@@ -261,7 +261,7 @@ class CompactListingCardWidget extends StatelessWidget {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 2.w),
               decoration: BoxDecoration(
-                color: AppTheme.lightTheme.colorScheme.surfaceVariant.withOpacity(77/255.0),
+                color: AppTheme.lightTheme.colorScheme.surfaceContainerHighest.withValues(alpha: 77),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(16),
                   bottomRight: Radius.circular(16),

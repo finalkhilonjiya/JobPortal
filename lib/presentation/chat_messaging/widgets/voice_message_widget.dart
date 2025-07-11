@@ -161,9 +161,9 @@ class _VoiceMessageWidgetState extends State<VoiceMessageWidget>
                             height: 40,
                             decoration: BoxDecoration(
                               color: isMe
-                                  ? Colors.white.withOpacity(0.2)
+                                  ? Colors.white.withValues(alpha: 0.2 * 255)
                                   : AppTheme.lightTheme.colorScheme.primary
-                                      .withOpacity(0.1),
+                                                                              .withValues(alpha: 0.1 * 255),
                               shape: BoxShape.circle,
                             ),
                             child: CustomIconWidget(
@@ -197,7 +197,7 @@ class _VoiceMessageWidgetState extends State<VoiceMessageWidget>
                                         .bodySmall
                                         ?.copyWith(
                                           color: isMe
-                                              ? Colors.white.withOpacity(0.8)
+                                              ? Colors.white.withValues(alpha: 0.8 * 255)
                                               : Theme.of(context)
                                                   .colorScheme
                                                   .onSurfaceVariant,
@@ -289,11 +289,11 @@ class _VoiceMessageWidgetState extends State<VoiceMessageWidget>
                         ? Colors.white
                         : AppTheme.lightTheme.colorScheme.primary)
                     : (isMe
-                        ? Colors.white.withOpacity(0.4)
+                        ? Colors.white.withValues(alpha: 0.4 * 255)
                         : Theme.of(context)
                             .colorScheme
                             .onSurfaceVariant
-                            .withOpacity(0.4)),
+                            .withValues(alpha: 0.4 * 255)),
                 borderRadius: BorderRadius.circular(1),
               ),
             );

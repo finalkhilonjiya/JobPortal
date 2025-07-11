@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:sizer/sizer.dart';
+import '../../core/app_export.dart';
 
 import './widgets/account_settings_section_widget.dart';
 import './widgets/favorites_section_widget.dart';

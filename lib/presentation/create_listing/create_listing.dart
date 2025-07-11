@@ -213,6 +213,14 @@ class _CreateListingState extends State<CreateListing>
     _tabController.animateTo(0);
   }
 
+  bool _onWillPopSync() {
+    if (_currentStep > 0) {
+      _previousStep();
+      return false;
+    }
+    return true;
+  }
+
   Future<bool> _onWillPop() async {
     if (_currentStep > 0) {
       _previousStep();
@@ -255,9 +263,7 @@ class _CreateListingState extends State<CreateListing>
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: () async {
-        return await _onWillPop();
-      },
+      canPop: () => _onWillPopSync(),
       child: Scaffold(
         backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,
         appBar: AppBar(

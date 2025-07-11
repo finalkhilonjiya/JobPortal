@@ -175,7 +175,7 @@ class TrendingSectionWidget extends StatelessWidget {
                       height: double.infinity,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
-                        color: AppTheme.lightTheme.colorScheme.surfaceVariant,
+                        color: AppTheme.lightTheme.colorScheme.surfaceContainerHighest,
                         child: Center(
                           child: CircularProgressIndicator(
                             color: AppTheme.lightTheme.colorScheme.primary,
@@ -184,7 +184,7 @@ class TrendingSectionWidget extends StatelessWidget {
                         ),
                       ),
                       errorWidget: (context, url, error) => Container(
-                        color: AppTheme.lightTheme.colorScheme.surfaceVariant,
+                        color: AppTheme.lightTheme.colorScheme.surfaceContainerHighest,
                         child: Icon(
                           Icons.image_not_supported,
                           color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,

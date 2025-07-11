@@ -572,7 +572,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
+                color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1 * 255),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -729,17 +729,17 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   Widget build(BuildContext context) {
     return PopScope(
       canPop: !_isLoading, // Disable back button while loading
-      onPopInvoked: (didPop) async {
-        if (_isLoading) return; // Prevent going back while loading
+      onPopInvokedWithResult: (didPop) async {
+        if (_isLoading) return false; // Prevent going back while loading
         
         if (_nameController.text.isNotEmpty ||
             _emailController.text.isNotEmpty ||
             _phoneController.text.isNotEmpty ||
             _passwordController.text.isNotEmpty) {
           _showExitConfirmation();
-          return;
+          return false;
         }
-        return;
+        return true;
       },
       child: Scaffold(
         backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,
@@ -775,9 +775,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         color: AppTheme.lightTheme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+                    color: AppTheme.lightTheme.colorScheme.shadow.withValues(alpha: 0.1 * 255),
+        blurRadius: 4,
+        offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -871,7 +871,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   decoration: BoxDecoration(
                     color: isActive
                         ? AppTheme.lightTheme.colorScheme.primary
-                        : AppTheme.lightTheme.colorScheme.outline.withOpacity(0.3),
+                        : AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.3 * 255),
                     borderRadius: BorderRadius.circular(3),
                   ),
                   child: isCurrent && _isLoading
@@ -930,10 +930,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       padding: EdgeInsets.all(3.w),
       margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
       decoration: BoxDecoration(
-        color: AppTheme.lightTheme.colorScheme.error.withOpacity(0.1),
+        color: AppTheme.lightTheme.colorScheme.error.withValues(alpha: 0.1 * 255),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: AppTheme.lightTheme.colorScheme.error.withOpacity(0.3),
+          color: AppTheme.lightTheme.colorScheme.error.withValues(alpha: 0.3 * 255),
           width: 1,
         ),
       ),
@@ -1218,7 +1218,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             boxShadow: hasFocus
                 ? [
                     BoxShadow(
-                      color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.2),
+                      color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.2 * 255),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     )
@@ -1237,7 +1237,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
-                color: AppTheme.lightTheme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                color: AppTheme.lightTheme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6 * 255),
               ),
               prefixIcon: prefixIcon != null
                   ? Icon(
@@ -1311,7 +1311,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               ),
               filled: true,
               fillColor: hasFocus
-                  ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.05)
+                  ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.05 * 255)
                   : AppTheme.lightTheme.colorScheme.surface,
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 4.w,
@@ -1363,7 +1363,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             ),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.05),
+                color: AppTheme.lightTheme.colorScheme.shadow.withValues(alpha: 0.05 * 255),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -1394,7 +1394,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       boxShadow: _selectedContactMethod == 'email'
                           ? [
                               BoxShadow(
-                                color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
+                                color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3 * 255),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               )
@@ -1451,7 +1451,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       boxShadow: _selectedContactMethod == 'phone'
                           ? [
                               BoxShadow(
-                                color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
+                                color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3 * 255),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               )
@@ -1500,13 +1500,13 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: _isLocationEnabled
-              ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3)
-              : AppTheme.lightTheme.colorScheme.outline.withOpacity(0.3),
+              ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3 * 255)
+              : AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.3 * 255),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.05),
+            color: AppTheme.lightTheme.colorScheme.shadow.withValues(alpha: 0.05 * 255),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1597,13 +1597,13 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       padding: EdgeInsets.all(3.w),
       decoration: BoxDecoration(
         color: _acceptTerms
-            ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.05)
+            ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.05 * 255)
             : AppTheme.lightTheme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: _acceptTerms
-              ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3)
-              : AppTheme.lightTheme.colorScheme.outline.withOpacity(0.3),
+              ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3 * 255)
+              : AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.3 * 255),
           width: 1,
         ),
       ),
@@ -1718,7 +1718,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         color: AppTheme.lightTheme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.1),
+            color: AppTheme.lightTheme.colorScheme.shadow.withValues(alpha: 0.1 * 255),
             blurRadius: 12,
             offset: const Offset(0, -4),
           ),
@@ -1771,12 +1771,12 @@ class _RegistrationScreenState extends State<RegistrationScreen>
               style: ElevatedButton.styleFrom(
                 backgroundColor: _isFormValid && !_isLoading
                     ? AppTheme.lightTheme.colorScheme.primary
-                    : AppTheme.lightTheme.colorScheme.outline.withOpacity(0.3),
+                    : AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.3 * 255),
                 foregroundColor: _isFormValid && !_isLoading
                     ? Colors.white
                     : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
                 elevation: _isFormValid && !_isLoading ? 4 : 0,
-                shadowColor: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
+                shadowColor: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3 * 255),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -1847,7 +1847,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                     borderRadius: BorderRadius.circular(8),
                     color: _isLoading
                         ? Colors.transparent
-                        : AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
+                        : AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1 * 255),
                   ),
                   child: Text(
                     'Sign In',

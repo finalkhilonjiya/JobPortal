@@ -37,7 +37,7 @@ class PasswordStrengthIndicatorWidget extends StatelessWidget {
       case 1:
         return AppTheme.lightTheme.colorScheme.error;
       case 2:
-        return AppTheme.lightTheme.colorScheme.error.withOpacity(0.7);
+        return AppTheme.lightTheme.colorScheme.error.withValues(alpha: 0.7 * 255);
       case 3:
         return Colors.orange;
       case 4:
@@ -77,7 +77,7 @@ class PasswordStrengthIndicatorWidget extends StatelessWidget {
         color: AppTheme.lightTheme.colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.3),
+          color: AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.3 * 255),
           width: 1,
         ),
       ),
@@ -112,7 +112,7 @@ class PasswordStrengthIndicatorWidget extends StatelessWidget {
                     color: index < strength
                         ? _strengthColor
                         : AppTheme.lightTheme.colorScheme.outline
-                            .withOpacity(0.3),
+                            .withValues(alpha: 0.3 * 255),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
