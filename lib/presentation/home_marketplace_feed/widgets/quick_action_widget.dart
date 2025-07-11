@@ -77,7 +77,7 @@ class QuickActionWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.lightTheme.colorScheme.shadow.withAlpha(26),
+            color: AppTheme.lightTheme.colorScheme.shadow.withOpacity(26/255.0),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -188,10 +188,10 @@ class QuickActionWidget extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 3.w),
         decoration: BoxDecoration(
-          color: color.withAlpha(26),
+          color: color.withOpacity(26/255.0),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: color.withAlpha(51),
+            color: color.withOpacity(51/255.0),
             width: 1,
           ),
         ),
@@ -396,10 +396,10 @@ class QuickActionWidget extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(3.w),
         decoration: BoxDecoration(
-          color: color.withAlpha(13),
+          color: color.withOpacity(13/255.0),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: color.withAlpha(26),
+            color: color.withOpacity(26/255.0),
             width: 1,
           ),
         ),

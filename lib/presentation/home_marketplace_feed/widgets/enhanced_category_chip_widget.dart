@@ -35,18 +35,18 @@ class EnhancedCategoryChipWidget extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected 
               ? categoryColor
-              : categoryColor.withAlpha(26),
+              : categoryColor.withOpacity(26/255.0),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected 
                 ? categoryColor
-                : categoryColor.withAlpha(51),
+                : categoryColor.withOpacity(51/255.0),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: categoryColor.withAlpha(51),
+                    color: categoryColor.withOpacity(51/255.0),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -61,8 +61,8 @@ class EnhancedCategoryChipWidget extends StatelessWidget {
               padding: EdgeInsets.all(2.w),
               decoration: BoxDecoration(
                 color: isSelected 
-                    ? Colors.white.withAlpha(51)
-                    : categoryColor.withAlpha(77),
+                    ? Colors.white.withOpacity(51/255.0)
+                    : categoryColor.withOpacity(77/255.0),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -93,8 +93,8 @@ class EnhancedCategoryChipWidget extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 1.5.w, vertical: 0.2.h),
                 decoration: BoxDecoration(
                   color: isSelected 
-                      ? Colors.white.withAlpha(77)
-                      : categoryColor.withAlpha(51),
+                      ? Colors.white.withOpacity(77/255.0)
+                      : categoryColor.withOpacity(51/255.0),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
