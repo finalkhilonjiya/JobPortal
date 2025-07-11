@@ -103,10 +103,10 @@ class _GestureDemoWidgetState extends State<GestureDemoWidget>
     return Container(
       padding: EdgeInsets.all(3.w),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.7),
+        color: Colors.black.withValues(alpha: (0.7 * 255).toInt()),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.white.withOpacity(0.2),
+          color: Colors.white.withValues(alpha: (0.2 * 255).toInt()),
           width: 1,
         ),
       ),

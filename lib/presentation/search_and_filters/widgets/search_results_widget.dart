@@ -232,8 +232,7 @@ class SearchResultsWidget extends StatelessWidget {
                           padding: EdgeInsets.symmetric(
                               horizontal: 2.w, vertical: 0.5.h),
                           decoration: BoxDecoration(
-                            color: AppTheme.lightTheme.primaryColor
-                                .withOpacity(0.1),
+                            color: AppTheme.lightTheme.primaryColor.withValues(alpha: (0.1 * 255).toInt()),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
