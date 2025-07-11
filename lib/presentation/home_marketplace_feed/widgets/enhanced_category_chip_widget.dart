@@ -35,18 +35,18 @@ class EnhancedCategoryChipWidget extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected 
               ? categoryColor
-              : categoryColor.withOpacity(26/255.0),
+              : categoryColor.withValues(alpha: 26),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected 
                 ? categoryColor
-                : categoryColor.withOpacity(51/255.0),
+                : categoryColor.withValues(alpha: 51),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: categoryColor.withOpacity(51/255.0),
+                    color: categoryColor.withValues(alpha: 51),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -61,8 +61,8 @@ class EnhancedCategoryChipWidget extends StatelessWidget {
               padding: EdgeInsets.all(2.w),
               decoration: BoxDecoration(
                 color: isSelected 
-                    ? Colors.white.withOpacity(51/255.0)
-                    : categoryColor.withOpacity(77/255.0),
+                    ? Colors.white.withValues(alpha: 51)
+                    : categoryColor.withValues(alpha: 77),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -93,8 +93,8 @@ class EnhancedCategoryChipWidget extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 1.5.w, vertical: 0.2.h),
                 decoration: BoxDecoration(
                   color: isSelected 
-                      ? Colors.white.withOpacity(77/255.0)
-                      : categoryColor.withOpacity(51/255.0),
+                      ? Colors.white.withValues(alpha: 77)
+                      : categoryColor.withValues(alpha: 51),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
