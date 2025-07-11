@@ -4,6 +4,7 @@ import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
 import '../../utils/search_service.dart';
+import '../../utils/category_service.dart';
 import './widgets/filter_chips_widget.dart';
 import './widgets/filter_modal_widget.dart';
 import './widgets/recent_searches_widget.dart';
@@ -29,17 +30,17 @@ class _SearchAndFiltersState extends State<SearchAndFilters>
   final CategoryService _categoryService = CategoryService();
 
   // State variables
-  // bool _isSearching = false; // Unused field
+  bool _isSearching = false;
   bool _isLoadingResults = false;
   bool _hasSearched = false;
   String _currentQuery = '';
 
   // Search results and suggestions
   List<Map<String, dynamic>> _searchResults = [];
-  // List<String> _searchSuggestions = []; // Unused field
+  List<String> _searchSuggestions = [];
   List<String> _trendingKeywords = [];
   List<Map<String, dynamic>> _recentSearches = [];
-  // List<Map<String, dynamic>> _categories = []; // Unused field
+  List<Map<String, dynamic>> _categories = [];
 
   // Filter state
   Map<String, dynamic> _activeFilters = {

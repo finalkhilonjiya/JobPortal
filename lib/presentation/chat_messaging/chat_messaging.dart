@@ -21,7 +21,7 @@ class _ChatMessagingState extends State<ChatMessaging>
 
   bool _isTyping = false;
   bool _isOtherUserTyping = false;
-  // bool _isLoading = false; // Unused field
+  bool _isLoading = false;
   String _selectedMessageId = '';
 
   // Mock data for chat messages

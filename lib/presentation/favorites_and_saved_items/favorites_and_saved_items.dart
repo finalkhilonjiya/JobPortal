@@ -19,7 +19,7 @@ class _FavoritesAndSavedItemsState extends State<FavoritesAndSavedItems>
   final Set<int> _selectedItems = {};
   String _sortBy = 'Recently Added';
   String _filterBy = 'All';
-  // bool _isRefreshing = false; // Unused field
+  bool _isRefreshing = false;
 
   // Mock data for favorites
   final List<Map<String, dynamic>> _favoriteItems = [
