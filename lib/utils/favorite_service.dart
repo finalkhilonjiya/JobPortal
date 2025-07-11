@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import './supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FavoriteService {
   static final FavoriteService _instance = FavoriteService._internal();

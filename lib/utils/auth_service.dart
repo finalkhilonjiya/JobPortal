@@ -5,6 +5,8 @@ import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
 import './supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();

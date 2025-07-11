@@ -101,7 +101,7 @@ class _PageIndicatorWidgetState extends State<PageIndicatorWidget>
       width: 2.w,
       height: 2.w,
       decoration: BoxDecoration(
-        color: AppTheme.lightTheme.colorScheme.onSurfaceVariant.withValues(alpha: (0.3 * 255).toInt()),
+        color: AppTheme.lightTheme.colorScheme.onSurfaceVariant.withValues(alpha: (0.3 * 255).toDouble()),
         shape: BoxShape.circle,
       ),
     );
