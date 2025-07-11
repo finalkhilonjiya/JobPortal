@@ -106,7 +106,7 @@ class _OnboardingPageWidgetState extends State<OnboardingPageWidget>
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: (0.1 * 255).toInt()),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -132,7 +132,7 @@ class _OnboardingPageWidgetState extends State<OnboardingPageWidget>
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              Colors.black.withOpacity(0.1),
+                              Colors.black.withValues(alpha: (0.1 * 255).toInt()),
                             ],
                           ),
                         ),
