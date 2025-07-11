@@ -239,7 +239,7 @@ class AuthService {
 
   /// Extract user-friendly error messages
   String _getErrorMessage(dynamic error) {
-    if (error is AuthException) {
+    if (error is AppAuthException) {
       switch (error.message) {
         case 'Invalid login credentials':
           return 'Invalid email/phone or password. Please check your credentials.';
