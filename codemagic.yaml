@@ -1,18 +1,72 @@
 workflows:
-  build_apk:
-    name: Build APK with latest Flutter
+  build_apk_debug:
+    name: Build Debug APK
     max_build_duration: 60
     environment:
       flutter: stable
       xcode: latest
       android: true
+      groups:
+        - google_play
     scripts:
+      - name: Set up Flutter
+        script: |
+          flutter --version
+          flutter doctor
       - name: Clean build
         script: |
           flutter clean
           flutter pub get
-      - name: Build APK
+      - name: Build Debug APK
         script: |
           flutter build apk --debug
     artifacts:
       - build/app/outputs/flutter-apk/app-debug.apk
+
+  build_apk_release:
+    name: Build Release APK
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      android: true
+      groups:
+        - google_play
+    scripts:
+      - name: Set up Flutter
+        script: |
+          flutter --version
+          flutter doctor
+      - name: Clean build
+        script: |
+          flutter clean
+          flutter pub get
+      - name: Build Release APK
+        script: |
+          flutter build apk --release
+    artifacts:
+      - build/app/outputs/flutter-apk/app-release.apk
+
+  build_app_bundle:
+    name: Build App Bundle
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      android: true
+      groups:
+        - google_play
+    scripts:
+      - name: Set up Flutter
+        script: |
+          flutter --version
+          flutter doctor
+      - name: Clean build
+        script: |
+          flutter clean
+          flutter pub get
+      - name: Build App Bundle
+        script: |
+          flutter build appbundle --release
+    artifacts:
+      - build/app/outputs/bundle/release/app-release.aab
