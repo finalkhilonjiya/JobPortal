@@ -15,12 +15,9 @@ workflows:
         script: |
           flutter --version
           flutter doctor
-      - name: Clean build
+      - name: Get dependencies
         script: |
-          flutter clean
-          flutter pub cache repair
           flutter pub get
-          flutter analyze
       - name: Build Debug APK
         script: |
           flutter build apk --debug -v --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
@@ -44,9 +41,8 @@ workflows:
         script: |
           flutter --version
           flutter doctor
-      - name: Clean build
+      - name: Get dependencies
         script: |
-          flutter clean
           flutter pub get
       - name: Build Release APK
         script: |
@@ -70,9 +66,8 @@ workflows:
         script: |
           flutter --version
           flutter doctor
-      - name: Clean build
+      - name: Get dependencies
         script: |
-          flutter clean
           flutter pub get
       - name: Build App Bundle
         script: |
