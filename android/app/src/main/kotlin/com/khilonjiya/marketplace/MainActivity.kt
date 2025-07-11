@@ -1,13 +1,8 @@
 package com.khilonjiya.marketplace
 
-import androidx.annotation.NonNull
 import io.flutter.embedding.android.FlutterActivity
-import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.plugins.GeneratedPluginRegistrant
 
 class MainActivity: FlutterActivity() {
-    override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
-        super.configureFlutterEngine(flutterEngine)
-        GeneratedPluginRegistrant.registerWith(flutterEngine)
-    }
+    // Flutter v2 embedding is automatically configured
+    // No need to override configureFlutterEngine for basic setup
 }
