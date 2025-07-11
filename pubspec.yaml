@@ -80,7 +80,7 @@ dependencies:
 
   # 📊 DATA VISUALIZATION & CHARTS
   fl_chart: ^1.0.0
-  syncfusion_flutter_charts: ^30.1.39
+  syncfusion_flutter_charts: ^29.1.39
 
   # 🔍 SEARCH & FILTERS
   flutter_typeahead: ^5.2.0
