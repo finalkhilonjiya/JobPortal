@@ -29,7 +29,6 @@ workflows:
     environment:
       flutter: stable
       xcode: latest
-      android: true
       groups:
         - google_play
     scripts:
@@ -53,7 +52,6 @@ workflows:
     environment:
       flutter: stable
       xcode: latest
-      android: true
       groups:
         - google_play
     scripts:
