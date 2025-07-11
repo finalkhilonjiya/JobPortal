@@ -253,7 +253,7 @@ class AccountSettingsSectionWidget extends StatelessWidget {
     return Container(
       height: 1,
       margin: EdgeInsets.symmetric(horizontal: 4.w),
-      color: AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.2),
+      color: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.2),
     );
   }
 }
