@@ -132,7 +132,7 @@ class PreviewListingWidget extends StatelessWidget {
                                   horizontal: 2.w, vertical: 0.5.h),
                               decoration: BoxDecoration(
                                 color: AppTheme.getSuccessColor(true)
-                                    .withOpacity(0.1),
+                                    .withValues(alpha: 0.1 * 255),
                                 borderRadius: BorderRadius.circular(1.w),
                               ),
                               child: Text(
@@ -250,7 +250,7 @@ class PreviewListingWidget extends StatelessWidget {
             padding: EdgeInsets.all(4.w),
             decoration: BoxDecoration(
               color: AppTheme.lightTheme.colorScheme.primaryContainer
-                  .withOpacity(0.3),
+                  .withValues(alpha: 0.3 * 255),
               borderRadius: BorderRadius.circular(3.w),
             ),
             child: Column(

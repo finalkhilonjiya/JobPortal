@@ -1,7 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:sizer/sizer.dart';
-
 import '../../core/app_export.dart';
 import './widgets/location_message_widget.dart';
 import './widgets/message_bubble_widget.dart';

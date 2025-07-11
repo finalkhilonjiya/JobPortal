@@ -285,7 +285,7 @@ class QuickActionWidget extends StatelessWidget {
                     errorBuilder: (context, error, stackTrace) => Container(
                       width: 15.w,
                       height: 15.w,
-                      color: AppTheme.lightTheme.colorScheme.surfaceVariant,
+                      color: AppTheme.lightTheme.colorScheme.surfaceContainerHighest,
                       child: Icon(
                         Icons.image_not_supported,
                         color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,

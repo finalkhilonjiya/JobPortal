@@ -186,7 +186,7 @@ class _OtpVerificationWidgetState extends State<OtpVerificationWidget> {
             height: 30.w,
             decoration: BoxDecoration(
               color: AppTheme.lightTheme.colorScheme.primary
-                  .withOpacity(0.1),
+                  .withValues(alpha: 0.1 * 255),
               shape: BoxShape.circle,
             ),
             child: CustomIconWidget(
@@ -289,7 +289,7 @@ class _OtpVerificationWidgetState extends State<OtpVerificationWidget> {
                 backgroundColor: _isOtpComplete
                     ? AppTheme.lightTheme.colorScheme.primary
                     : AppTheme.lightTheme.colorScheme.outline
-                        .withOpacity(0.3),
+                        .withValues(alpha: 0.3 * 255),
                 foregroundColor: _isOtpComplete
                     ? Colors.white
                     : AppTheme.lightTheme.colorScheme.onSurfaceVariant,
@@ -339,11 +339,11 @@ class _OtpVerificationWidgetState extends State<OtpVerificationWidget> {
             padding: EdgeInsets.all(3.w),
             decoration: BoxDecoration(
               color: AppTheme.lightTheme.colorScheme.primary
-                  .withOpacity(0.05),
+                  .withValues(alpha: 0.05 * 255),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: AppTheme.lightTheme.colorScheme.primary
-                    .withOpacity(0.2),
+                    .withValues(alpha: 0.2 * 255),
                 width: 1,
               ),
             ),

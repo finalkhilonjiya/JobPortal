@@ -74,7 +74,7 @@ class FavoriteItemCardWidget extends StatelessWidget {
             color: isAvailable
                 ? AppTheme.lightTheme.colorScheme.surface
                 : AppTheme.lightTheme.colorScheme.surface
-                    .withOpacity(0.6),
+                    .withValues(alpha: 0.6 * 255),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected

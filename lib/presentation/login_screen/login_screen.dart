@@ -637,10 +637,10 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         style: ElevatedButton.styleFrom(
           backgroundColor: _isFormValid && !_isLoading
               ? Colors.transparent
-              : AppTheme.lightTheme.colorScheme.onSurfaceVariant.withOpacity(0.3),
+              : AppTheme.lightTheme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3 * 255),
           foregroundColor: Colors.white,
           elevation: _isFormValid ? 3.0 : 0,
-          shadowColor: AppTheme.getPrimaryColor(true).withOpacity(0.3),
+                      shadowColor: AppTheme.getPrimaryColor(true).withValues(alpha: 0.3 * 255),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
