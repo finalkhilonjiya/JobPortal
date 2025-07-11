@@ -2,29 +2,18 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.khilonjiya.marketplace">
 
-    <!-- Internet permissions for marketplace functionality -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    
-    <!-- Location permissions for nearby listings -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    
-    <!-- Camera and storage permissions for listing photos -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
         android:maxSdkVersion="28" />
-    
-    <!-- Notification permissions -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    
-    <!-- Phone permission for contact features -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
-
-    <!-- ✅ REMOVED: uses-sdk (deprecated in manifest) - SDK versions now only in build.gradle -->
 
     <application
         android:label="khilonjiya.com"
@@ -35,7 +24,6 @@
         android:theme="@style/LaunchTheme"
         android:usesCleartextTraffic="true">
         
-        <!-- ✅ FIXED: Simplified MainActivity for Flutter v2 embedding -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -45,25 +33,12 @@
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
             
-            <!-- Standard launch intent -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            
-            <!-- Deep linking for marketplace features -->
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https"
-                      android:host="khilonjiya.com" />
-            </intent-filter>
-            
-            <!-- ✅ REMOVED: NormalTheme meta-data (optional and can cause issues) -->
         </activity>
         
-        <!-- File Provider for image sharing -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -73,49 +48,16 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-        
-        <!-- Google Sign-In Configuration -->
-        <meta-data 
-            android:name="com.google.android.gms.auth.api.signin.GoogleSignInOptions.clientId"
-            android:value="@string/google_sign_in_client_id" />
-            
-        <!-- Firebase Configuration -->
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/ic_notification" />
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_color"
-            android:resource="@color/notification_color" />
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="marketplace_notifications" />
     </application>
     
-    <!-- Required for devices running Android 6.0+ -->
     <queries>
-        <!-- Browser intent -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
         </intent>
-        
-        <!-- Phone intent -->
         <intent>
             <action android:name="android.intent.action.DIAL" />
             <data android:scheme="tel" />
         </intent>
-        
-        <!-- Email intent -->
-        <intent>
-            <action android:name="android.intent.action.SEND" />
-            <data android:mimeType="message/rfc822" />
-        </intent>
-        
-        <!-- Maps intent -->
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="geo" />
-        </intent>
     </queries>
-    
 </manifest>
