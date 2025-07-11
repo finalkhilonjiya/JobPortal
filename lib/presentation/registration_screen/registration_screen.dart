@@ -727,10 +727,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        // Enhanced back button handling
-        if (_isLoading) return false; // Prevent going back while loading
+    return PopScope(
+      canPop: !_isLoading, // Disable back button while loading
+      onPopInvoked: (didPop) async {
+        if (_isLoading) return; // Prevent going back while loading
         
         if (_nameController.text.isNotEmpty ||
             _emailController.text.isNotEmpty ||

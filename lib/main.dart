@@ -523,7 +523,7 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.lightTheme.primaryColor.withOpacity(0.3),
+                            color: AppTheme.lightTheme.primaryColor.withValues(alpha: (0.3 * 255).toInt()),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
