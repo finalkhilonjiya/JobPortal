@@ -25,7 +25,7 @@ class LocationInfoWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -118,7 +118,7 @@ class LocationInfoWidget extends StatelessWidget {
             padding: EdgeInsets.all(3.w),
             decoration: BoxDecoration(
               color: AppTheme.lightTheme.colorScheme.surfaceContainerHighest
-                  .withValues(alpha: 0.3),
+                  .withOpacity(0.3),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(

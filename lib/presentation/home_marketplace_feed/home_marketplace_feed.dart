@@ -883,10 +883,10 @@ void _onScroll() {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
               decoration: BoxDecoration(
-                color: AppTheme.lightTheme.colorScheme.primaryContainer.withAlpha(77),
+                color: AppTheme.lightTheme.colorScheme.primaryContainer.withOpacity(77/255.0),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppTheme.lightTheme.colorScheme.primary.withAlpha(77),
+                  color: AppTheme.lightTheme.colorScheme.primary.withOpacity(77/255.0),
                   width: 1,
                 ),
               ),
@@ -966,7 +966,7 @@ void _onScroll() {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
               decoration: BoxDecoration(
-                color: AppTheme.lightTheme.colorScheme.secondaryContainer.withAlpha(77),
+                color: AppTheme.lightTheme.colorScheme.secondaryContainer.withOpacity(77/255.0),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -1010,7 +1010,7 @@ Widget _buildEnhancedBottomNav() {
         color: AppTheme.lightTheme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: AppTheme.lightTheme.colorScheme.shadow.withAlpha(26),
+            color: AppTheme.lightTheme.colorScheme.shadow.withOpacity(26/255.0),
             blurRadius: 12,
             offset: const Offset(0, -4),
           ),
@@ -1069,7 +1069,7 @@ Widget _buildEnhancedBottomNav() {
                 padding: EdgeInsets.all(1.w),
                 decoration: BoxDecoration(
                   color: _currentIndex == 0
-                      ? AppTheme.lightTheme.colorScheme.primary.withAlpha(26)
+                      ? AppTheme.lightTheme.colorScheme.primary.withOpacity(26/255.0)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1086,7 +1086,7 @@ Widget _buildEnhancedBottomNav() {
                 padding: EdgeInsets.all(1.w),
                 decoration: BoxDecoration(
                   color: _currentIndex == 1
-                      ? AppTheme.lightTheme.colorScheme.primary.withAlpha(26)
+                      ? AppTheme.lightTheme.colorScheme.primary.withOpacity(26/255.0)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1103,7 +1103,7 @@ Widget _buildEnhancedBottomNav() {
                 padding: EdgeInsets.all(1.w),
                 decoration: BoxDecoration(
                   color: _currentIndex == 2
-                      ? AppTheme.lightTheme.colorScheme.primary.withAlpha(26)
+                      ? AppTheme.lightTheme.colorScheme.primary.withOpacity(26/255.0)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1120,7 +1120,7 @@ Widget _buildEnhancedBottomNav() {
                 padding: EdgeInsets.all(1.w),
                 decoration: BoxDecoration(
                   color: _currentIndex == 3
-                      ? AppTheme.lightTheme.colorScheme.primary.withAlpha(26)
+                      ? AppTheme.lightTheme.colorScheme.primary.withOpacity(26/255.0)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1154,7 +1154,7 @@ Widget _buildEnhancedBottomNav() {
                 padding: EdgeInsets.all(1.w),
                 decoration: BoxDecoration(
                   color: _currentIndex == 4
-                      ? AppTheme.lightTheme.colorScheme.primary.withAlpha(26)
+                      ? AppTheme.lightTheme.colorScheme.primary.withOpacity(26/255.0)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),

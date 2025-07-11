@@ -161,9 +161,9 @@ class _VoiceMessageWidgetState extends State<VoiceMessageWidget>
                             height: 40,
                             decoration: BoxDecoration(
                               color: isMe
-                                  ? Colors.white.withValues(alpha: 0.2)
+                                  ? Colors.white.withOpacity(0.2)
                                   : AppTheme.lightTheme.colorScheme.primary
-                                      .withValues(alpha: 0.1),
+                                      .withOpacity(0.1),
                               shape: BoxShape.circle,
                             ),
                             child: CustomIconWidget(
@@ -197,8 +197,7 @@ class _VoiceMessageWidgetState extends State<VoiceMessageWidget>
                                         .bodySmall
                                         ?.copyWith(
                                           color: isMe
-                                              ? Colors.white
-                                                  .withValues(alpha: 0.8)
+                                              ? Colors.white.withOpacity(0.8)
                                               : Theme.of(context)
                                                   .colorScheme
                                                   .onSurfaceVariant,
@@ -290,11 +289,11 @@ class _VoiceMessageWidgetState extends State<VoiceMessageWidget>
                         ? Colors.white
                         : AppTheme.lightTheme.colorScheme.primary)
                     : (isMe
-                        ? Colors.white.withValues(alpha: 0.4)
+                        ? Colors.white.withOpacity(0.4)
                         : Theme.of(context)
                             .colorScheme
                             .onSurfaceVariant
-                            .withValues(alpha: 0.4)),
+                            .withOpacity(0.4)),
                 borderRadius: BorderRadius.circular(1),
               ),
             );

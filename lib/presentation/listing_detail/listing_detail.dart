@@ -160,11 +160,11 @@ class _ListingDetailState extends State<ListingDetail> {
       leading: Container(
         margin: EdgeInsets.all(2.w),
         decoration: BoxDecoration(
-          color: AppTheme.lightTheme.colorScheme.surface.withValues(alpha: 0.9),
+          color: AppTheme.lightTheme.colorScheme.surface.withOpacity(0.9),
           borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -184,11 +184,11 @@ class _ListingDetailState extends State<ListingDetail> {
           margin: EdgeInsets.all(2.w),
           decoration: BoxDecoration(
             color:
-                AppTheme.lightTheme.colorScheme.surface.withValues(alpha: 0.9),
+                AppTheme.lightTheme.colorScheme.surface.withOpacity(0.9),
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
+                color: Colors.black.withOpacity(0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -207,11 +207,11 @@ class _ListingDetailState extends State<ListingDetail> {
           margin: EdgeInsets.only(right: 4.w, top: 2.w, bottom: 2.w),
           decoration: BoxDecoration(
             color:
-                AppTheme.lightTheme.colorScheme.surface.withValues(alpha: 0.9),
+                AppTheme.lightTheme.colorScheme.surface.withOpacity(0.9),
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
+                color: Colors.black.withOpacity(0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -256,11 +256,11 @@ class _ListingDetailState extends State<ListingDetail> {
             margin: EdgeInsets.only(right: 4.w, top: 2.w, bottom: 2.w),
             decoration: BoxDecoration(
               color: AppTheme.lightTheme.colorScheme.surface
-                  .withValues(alpha: 0.9),
+                  .withOpacity(0.9),
               borderRadius: BorderRadius.circular(8),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: Colors.black.withOpacity(0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -291,7 +291,7 @@ class _ListingDetailState extends State<ListingDetail> {
           color: AppTheme.lightTheme.colorScheme.surface,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 8,
               offset: const Offset(0, -2),
             ),

@@ -169,7 +169,7 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: AppTheme.lightTheme.colorScheme.outline.withAlpha(77),
+            color: AppTheme.lightTheme.colorScheme.outline.withOpacity(77/255.0),
             width: 1,
           ),
         ),
@@ -259,7 +259,7 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
             data: SliderThemeData(
               activeTrackColor: AppTheme.lightTheme.colorScheme.primary,
               thumbColor: AppTheme.lightTheme.colorScheme.primary,
-              overlayColor: AppTheme.lightTheme.colorScheme.primary.withAlpha(51),
+              overlayColor: AppTheme.lightTheme.colorScheme.primary.withOpacity(51/255.0),
               trackHeight: 4,
             ),
             child: Slider(
@@ -291,12 +291,12 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppTheme.lightTheme.colorScheme.primary
-                        : AppTheme.lightTheme.colorScheme.primaryContainer.withAlpha(77),
+                        : AppTheme.lightTheme.colorScheme.primaryContainer.withOpacity(77/255.0),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isSelected
                           ? AppTheme.lightTheme.colorScheme.primary
-                          : AppTheme.lightTheme.colorScheme.outline.withAlpha(77),
+                          : AppTheme.lightTheme.colorScheme.outline.withOpacity(77/255.0),
                       width: 1,
                     ),
                   ),
@@ -413,12 +413,12 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
               decoration: BoxDecoration(
                 color: isSelected
                     ? AppTheme.lightTheme.colorScheme.primary
-                    : AppTheme.lightTheme.colorScheme.primaryContainer.withAlpha(77),
+                    : AppTheme.lightTheme.colorScheme.primaryContainer.withOpacity(77/255.0),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isSelected
                       ? AppTheme.lightTheme.colorScheme.primary
-                      : AppTheme.lightTheme.colorScheme.outline.withAlpha(77),
+                      : AppTheme.lightTheme.colorScheme.outline.withOpacity(77/255.0),
                   width: 1,
                 ),
               ),
@@ -463,7 +463,7 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                 border: Border.all(
                   color: isSelected
                       ? AppTheme.lightTheme.colorScheme.primary
-                      : AppTheme.lightTheme.colorScheme.outline.withAlpha(77),
+                      : AppTheme.lightTheme.colorScheme.outline.withOpacity(77/255.0),
                   width: 1,
                 ),
               ),
@@ -528,7 +528,7 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
                 border: Border.all(
                   color: isSelected
                       ? AppTheme.lightTheme.colorScheme.primary
-                      : AppTheme.lightTheme.colorScheme.outline.withAlpha(77),
+                      : AppTheme.lightTheme.colorScheme.outline.withOpacity(77/255.0),
                   width: 1,
                 ),
               ),
@@ -600,13 +600,13 @@ class _AdvancedFilterWidgetState extends State<AdvancedFilterWidget> {
         color: AppTheme.lightTheme.colorScheme.surface,
         border: Border(
           top: BorderSide(
-            color: AppTheme.lightTheme.colorScheme.outline.withAlpha(77),
+            color: AppTheme.lightTheme.colorScheme.outline.withOpacity(77/255.0),
             width: 1,
           ),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(10),
+            color: Colors.black.withOpacity(10/255.0),
             blurRadius: 8,
             offset: Offset(0, -2),
           ),

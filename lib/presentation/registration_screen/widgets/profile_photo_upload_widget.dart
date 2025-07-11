@@ -106,11 +106,11 @@ class ProfilePhotoUploadWidget extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 4.w),
         decoration: BoxDecoration(
-          color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1),
+          color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color:
-                AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3),
+                AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
             width: 1,
           ),
         ),
@@ -166,7 +166,7 @@ class ProfilePhotoUploadWidget extends StatelessWidget {
                   ? ClipOval(
                       child: Container(
                         color: AppTheme.lightTheme.colorScheme.primary
-                            .withValues(alpha: 0.1),
+                            .withOpacity(0.1),
                         child: CustomIconWidget(
                           iconName: 'person',
                           color: AppTheme.lightTheme.colorScheme.primary,

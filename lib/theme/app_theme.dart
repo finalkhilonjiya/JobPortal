@@ -53,19 +53,19 @@ class AppTheme {
       brightness: Brightness.light,
       primary: primaryLight,
       onPrimary: Colors.white,
-      primaryContainer: primaryLight.withAlpha(26),
+      primaryContainer: primaryLight.withOpacity(26/255.0),
       onPrimaryContainer: primaryLight,
       secondary: secondaryLight,
       onSecondary: Colors.white,
-      secondaryContainer: secondaryLight.withAlpha(26),
+      secondaryContainer: secondaryLight.withOpacity(26/255.0),
       onSecondaryContainer: secondaryLight,
       tertiary: accentLight,
       onTertiary: Colors.white,
-      tertiaryContainer: accentLight.withAlpha(26),
+      tertiaryContainer: accentLight.withOpacity(26/255.0),
       onTertiaryContainer: accentLight,
       error: errorLight,
       onError: Colors.white,
-      errorContainer: errorLight.withAlpha(26),
+      errorContainer: errorLight.withOpacity(26/255.0),
       onErrorContainer: errorLight,
       surface: surfaceLight,
       onSurface: textPrimaryLight,
@@ -215,7 +215,7 @@ class AppTheme {
         fontWeight: FontWeight.w400,
       ),
       hintStyle: GoogleFonts.inter(
-        color: textSecondaryLight.withAlpha(153),
+        color: textSecondaryLight.withOpacity(153/255.0),
         fontSize: 16,
         fontWeight: FontWeight.w400,
       ),
@@ -236,7 +236,7 @@ class AppTheme {
       }),
       trackColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
-          return primaryLight.withAlpha(77);
+          return primaryLight.withOpacity(77/255.0);
         }
         return Colors.grey[200];
       }),
@@ -278,7 +278,7 @@ class AppTheme {
     sliderTheme: SliderThemeData(
       activeTrackColor: primaryLight,
       thumbColor: primaryLight,
-      overlayColor: primaryLight.withAlpha(51),
+      overlayColor: primaryLight.withOpacity(51/255.0),
       inactiveTrackColor: borderLight,
       trackHeight: 4.0,
     ),
@@ -302,7 +302,7 @@ class AppTheme {
     // Tooltip theme
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
-        color: textPrimaryLight.withAlpha(230),
+        color: textPrimaryLight.withOpacity(230/255.0),
         borderRadius: BorderRadius.circular(8.0),
       ),
       textStyle: GoogleFonts.inter(
@@ -357,19 +357,19 @@ class AppTheme {
       brightness: Brightness.dark,
       primary: primaryDark,
       onPrimary: Colors.black,
-      primaryContainer: primaryDark.withAlpha(51),
+      primaryContainer: primaryDark.withOpacity(51/255.0),
       onPrimaryContainer: primaryDark,
       secondary: secondaryDark,
       onSecondary: Colors.black,
-      secondaryContainer: secondaryDark.withAlpha(51),
+      secondaryContainer: secondaryDark.withOpacity(51/255.0),
       onSecondaryContainer: secondaryDark,
       tertiary: accentDark,
       onTertiary: Colors.black,
-      tertiaryContainer: accentDark.withAlpha(51),
+      tertiaryContainer: accentDark.withOpacity(51/255.0),
       onTertiaryContainer: accentDark,
       error: errorDark,
       onError: Colors.black,
-      errorContainer: errorDark.withAlpha(51),
+      errorContainer: errorDark.withOpacity(51/255.0),
       onErrorContainer: errorDark,
       surface: surfaceDark,
       onSurface: textPrimaryDark,
@@ -518,7 +518,7 @@ class AppTheme {
         fontWeight: FontWeight.w400,
       ),
       hintStyle: GoogleFonts.inter(
-        color: textSecondaryDark.withAlpha(153),
+        color: textSecondaryDark.withOpacity(153/255.0),
         fontSize: 16,
         fontWeight: FontWeight.w400,
       ),
@@ -539,7 +539,7 @@ class AppTheme {
       }),
       trackColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
-          return primaryDark.withAlpha(77);
+          return primaryDark.withOpacity(77/255.0);
         }
         return Colors.grey[700];
       }),
@@ -581,7 +581,7 @@ class AppTheme {
     sliderTheme: SliderThemeData(
       activeTrackColor: primaryDark,
       thumbColor: primaryDark,
-      overlayColor: primaryDark.withAlpha(51),
+      overlayColor: primaryDark.withOpacity(51/255.0),
       inactiveTrackColor: borderDark,
       trackHeight: 4.0,
     ),
@@ -605,7 +605,7 @@ class AppTheme {
     // Tooltip theme for dark mode
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
-        color: textPrimaryDark.withAlpha(230),
+        color: textPrimaryDark.withOpacity(230/255.0),
         borderRadius: BorderRadius.circular(8.0),
       ),
       textStyle: GoogleFonts.inter(

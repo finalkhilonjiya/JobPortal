@@ -144,12 +144,12 @@ class TrendingSectionWidget extends StatelessWidget {
             end: Alignment.bottomRight,
             colors: [
               Colors.white,
-              AppTheme.lightTheme.colorScheme.primaryContainer.withAlpha(26),
+              AppTheme.lightTheme.colorScheme.primaryContainer.withOpacity(26/255.0),
             ],
           ),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.lightTheme.colorScheme.shadow.withAlpha(51),
+              color: AppTheme.lightTheme.colorScheme.shadow.withOpacity(51/255.0),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -210,7 +210,7 @@ class TrendingSectionWidget extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.getWarningColor(true).withAlpha(77),
+                            color: AppTheme.getWarningColor(true).withOpacity(77/255.0),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -250,11 +250,11 @@ class TrendingSectionWidget extends StatelessWidget {
                       child: Container(
                         padding: EdgeInsets.all(2.w),
                         decoration: BoxDecoration(
-                          color: Colors.white.withAlpha(230),
+                          color: Colors.white.withOpacity(230/255.0),
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withAlpha(26),
+                              color: Colors.black.withOpacity(26/255.0),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -279,7 +279,7 @@ class TrendingSectionWidget extends StatelessWidget {
                       child: Container(
                         padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
                         decoration: BoxDecoration(
-                          color: Colors.black.withAlpha(179),
+                          color: Colors.black.withOpacity(179/255.0),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -344,7 +344,7 @@ class TrendingSectionWidget extends StatelessWidget {
                         Container(
                           padding: EdgeInsets.symmetric(horizontal: 1.5.w, vertical: 0.2.h),
                           decoration: BoxDecoration(
-                            color: AppTheme.getSuccessColor(true).withAlpha(26),
+                            color: AppTheme.getSuccessColor(true).withOpacity(26/255.0),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Row(

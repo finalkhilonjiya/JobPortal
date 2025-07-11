@@ -45,11 +45,11 @@ class TrendingKeywordsWidget extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
                 decoration: BoxDecoration(
                   color:
-                      AppTheme.lightTheme.primaryColor.withValues(alpha: 0.1),
+                      AppTheme.lightTheme.primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color:
-                        AppTheme.lightTheme.primaryColor.withValues(alpha: 0.3),
+                        AppTheme.lightTheme.primaryColor.withOpacity(0.3),
                     width: 1,
                   ),
                 ),

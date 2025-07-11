@@ -233,7 +233,7 @@ class SearchResultsWidget extends StatelessWidget {
                               horizontal: 2.w, vertical: 0.5.h),
                           decoration: BoxDecoration(
                             color: AppTheme.lightTheme.primaryColor
-                                .withValues(alpha: 0.1),
+                                .withOpacity(0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(

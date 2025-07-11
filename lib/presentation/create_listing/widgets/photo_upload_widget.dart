@@ -302,7 +302,7 @@ class _PhotoUploadWidgetState extends State<PhotoUploadWidget> {
             child: Container(
               padding: EdgeInsets.all(1.w),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.5),
+                color: Colors.black.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(1.w),
               ),
               child: CustomIconWidget(

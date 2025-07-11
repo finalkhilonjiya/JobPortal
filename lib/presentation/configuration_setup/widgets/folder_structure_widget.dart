@@ -212,7 +212,7 @@ class FolderStructureWidget extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: 1.h, horizontal: 2.w),
           decoration: BoxDecoration(
             color: isSelected
-                ? AppTheme.lightTheme.primaryColor.withValues(alpha: 0.1)
+                ? AppTheme.lightTheme.primaryColor.withOpacity(0.1)
                 : isHighlighted
                     ? Colors.blue[50]
                     : Colors.transparent,

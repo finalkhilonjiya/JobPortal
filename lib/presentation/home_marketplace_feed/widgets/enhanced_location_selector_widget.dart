@@ -30,12 +30,12 @@ class EnhancedLocationSelectorWidget extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 2.w),
         decoration: BoxDecoration(
-          color: AppTheme.lightTheme.colorScheme.primaryContainer.withAlpha(77),
+          color: AppTheme.lightTheme.colorScheme.primaryContainer.withOpacity(77/255.0),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: useGpsLocation 
-                ? AppTheme.lightTheme.colorScheme.primary.withAlpha(77)
-                : AppTheme.lightTheme.colorScheme.outline.withAlpha(77),
+                ? AppTheme.lightTheme.colorScheme.primary.withOpacity(77/255.0)
+                : AppTheme.lightTheme.colorScheme.outline.withOpacity(77/255.0),
             width: 1,
           ),
         ),
@@ -196,7 +196,7 @@ class EnhancedLocationSelectorWidget extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppTheme.lightTheme.colorScheme.primary
-                            : AppTheme.lightTheme.colorScheme.primaryContainer.withAlpha(77),
+                            : AppTheme.lightTheme.colorScheme.primaryContainer.withOpacity(77/255.0),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(

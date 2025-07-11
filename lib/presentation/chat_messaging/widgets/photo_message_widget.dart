@@ -247,7 +247,7 @@ class PhotoMessageWidget extends StatelessWidget {
                       Positioned.fill(
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.6),
+                            color: Colors.black.withOpacity(0.6),
                             borderRadius: const BorderRadius.only(
                               bottomRight: Radius.circular(12),
                             ),
