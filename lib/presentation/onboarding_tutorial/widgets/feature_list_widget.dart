@@ -108,12 +108,12 @@ class _FeatureListWidgetState extends State<FeatureListWidget>
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.lightTheme.colorScheme.outline.withValues(alpha: (0.2 * 255).toInt()),
+          color: AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.2 * 255),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: (0.05 * 255).toInt()),
+            color: Colors.black.withValues(alpha: 0.05 * 255),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -126,13 +126,13 @@ class _FeatureListWidgetState extends State<FeatureListWidget>
             width: 12.w,
             height: 12.w,
             decoration: BoxDecoration(
-              color: AppTheme.lightTheme.primaryColor.withValues(alpha: (0.1 * 255).toInt()),
+              color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1 * 255),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
               child: CustomIconWidget(
                 iconName: feature["icon"] as String,
-                color: AppTheme.lightTheme.primaryColor,
+                color: AppTheme.lightTheme.colorScheme.primary,
                 size: 24,
               ),
             ),

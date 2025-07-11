@@ -36,7 +36,7 @@ class FilterChipsWidget extends StatelessWidget {
               child: Text(
                 'Clear All',
                 style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                  color: AppTheme.lightTheme.primaryColor,
+                  color: AppTheme.lightTheme.colorScheme.primary,
                 ),
               ),
             ),
@@ -60,10 +60,10 @@ class FilterChipsWidget extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
       decoration: BoxDecoration(
-        color: AppTheme.lightTheme.primaryColor.withValues(alpha: (0.1 * 255).toInt()),
+        color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1 * 255),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppTheme.lightTheme.primaryColor,
+          color: AppTheme.lightTheme.colorScheme.primary,
           width: 1,
         ),
       ),
@@ -73,7 +73,7 @@ class FilterChipsWidget extends StatelessWidget {
           Text(
             displayText,
             style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-              color: AppTheme.lightTheme.primaryColor,
+              color: AppTheme.lightTheme.colorScheme.primary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -82,7 +82,7 @@ class FilterChipsWidget extends StatelessWidget {
             onTap: () => onRemoveFilter(key),
             child: CustomIconWidget(
               iconName: 'close',
-              color: AppTheme.lightTheme.primaryColor,
+              color: AppTheme.lightTheme.colorScheme.primary,
               size: 16,
             ),
           ),

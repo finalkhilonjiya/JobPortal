@@ -23,7 +23,7 @@ class TrendingKeywordsWidget extends StatelessWidget {
           children: [
             CustomIconWidget(
               iconName: 'trending_up',
-              color: AppTheme.lightTheme.primaryColor,
+              color: AppTheme.lightTheme.colorScheme.primary,
               size: 20,
             ),
             SizedBox(width: 2.w),
@@ -44,11 +44,11 @@ class TrendingKeywordsWidget extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
                 decoration: BoxDecoration(
                   color:
-                      AppTheme.lightTheme.primaryColor.withValues(alpha: (0.1 * 255).toInt()),
+                      AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1 * 255),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color:
-                        AppTheme.lightTheme.primaryColor.withValues(alpha: (0.3 * 255).toInt()),
+                        AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3 * 255),
                     width: 1,
                   ),
                 ),
@@ -58,14 +58,14 @@ class TrendingKeywordsWidget extends StatelessWidget {
                     Text(
                       keyword,
                       style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.lightTheme.primaryColor,
+                        color: AppTheme.lightTheme.colorScheme.primary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     SizedBox(width: 2.w),
                     CustomIconWidget(
                       iconName: 'north_west',
-                      color: AppTheme.lightTheme.primaryColor,
+                      color: AppTheme.lightTheme.colorScheme.primary,
                       size: 14,
                     ),
                   ],

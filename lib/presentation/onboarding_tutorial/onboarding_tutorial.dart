@@ -115,7 +115,7 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
             children: [
               CustomIconWidget(
                 iconName: 'location_on',
-                color: AppTheme.lightTheme.primaryColor,
+                color: AppTheme.lightTheme.colorScheme.primary,
                 size: 24,
               ),
               SizedBox(width: 2.w),
@@ -246,7 +246,7 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
                 onPressed: _skipOnboarding,
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                  backgroundColor: Colors.white.withValues(alpha: (0.9 * 255).toDouble()),
+                  backgroundColor: Colors.white.withValues(alpha: 0.9 * 255),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -268,14 +268,14 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
               child: Container(
                 padding: EdgeInsets.all(6.w),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: (0.95 * 255).toDouble()),
+                  color: Colors.white.withValues(alpha: 0.95 * 255),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(24),
                     topRight: Radius.circular(24),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: (0.1 * 255).toDouble()),
+                      color: Colors.black.withValues(alpha: 0.1 * 255),
                       blurRadius: 10,
                       offset: const Offset(0, -2),
                     ),
@@ -299,11 +299,11 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
                       child: ElevatedButton(
                         onPressed: _nextPage,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.lightTheme.primaryColor,
+                          backgroundColor: AppTheme.lightTheme.colorScheme.primary,
                           foregroundColor: Colors.white,
                           elevation: 2,
-                          shadowColor: AppTheme.lightTheme.primaryColor
-                              .withValues(alpha: (0.3 * 255).toDouble()),
+                          shadowColor: AppTheme.lightTheme.colorScheme.primary
+                              .withValues(alpha: 0.3 * 255),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),

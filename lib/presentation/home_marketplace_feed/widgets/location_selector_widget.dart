@@ -24,7 +24,7 @@ class LocationSelectorWidget extends StatelessWidget {
           color: AppTheme.lightTheme.colorScheme.surface,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: AppTheme.lightTheme.colorScheme.outline.withValues(alpha: (0.3 * 255).toInt()),
+            color: AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.3 * 255),
             width: 1,
           ),
         ),

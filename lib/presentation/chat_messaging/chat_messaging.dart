@@ -724,7 +724,7 @@ class _ChatMessagingState extends State<ChatMessaging>
                         color: AppTheme.getSuccessColor(
                                 Theme.of(context).brightness ==
                                     Brightness.light)
-                            .withValues(alpha: (0.1 * 255).toInt()),
+                            .withValues(alpha: 0.1 * 255),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
