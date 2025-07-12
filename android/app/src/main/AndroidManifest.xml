@@ -32,6 +32,11 @@
         <meta-data
             android:name="io.flutter.embedding.android.EnableImpeller"
             android:value="false" />
+        
+        <!-- Enable Skia rendering backend -->
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableSkia"
+            android:value="true" />
 
         <activity
             android:name=".MainActivity"
