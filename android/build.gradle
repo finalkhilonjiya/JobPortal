@@ -16,8 +16,8 @@ allprojects {
         google()
         mavenCentral()
     }
-    projects.configurations.all {
-        resolution Strategy  {
+    configurations.all {
+        resolutionStrategy  {
            cacheChangingModulesFor 0, 'seconds'
            cacheDynamicVersionsFor 0, 'seconds'
         }
