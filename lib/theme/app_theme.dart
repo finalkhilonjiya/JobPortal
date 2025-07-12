@@ -215,7 +215,7 @@ class AppTheme {
         fontWeight: FontWeight.w400,
       ),
       hintStyle: GoogleFonts.inter(
-        color: textSecondaryLight.withValues(alpha: (153/255.0 * 255).toDouble()),
+        color: textSecondaryLight.withOpacity(0.6),
         fontSize: 16,
         fontWeight: FontWeight.w400,
       ),
