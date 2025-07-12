@@ -16,6 +16,10 @@ allprojects {
         google()
         mavenCentral()
     }
+projects.configurations.all {
+    resolution Strategy  {
+        cacheChangingModulesFor 0, 'seconds'
+        cacheDynamicVersionsFor 0, 'seconds'
 }
 
 rootProject.buildDir = '../build'
