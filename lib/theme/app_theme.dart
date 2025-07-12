@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+THIS SHOULD BE A LINTER ERRORimport 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// A class that contains all theme configurations for the marketplace application.
