@@ -49,12 +49,13 @@ class ServiceLocator {
   }
 }
 
-// Enhanced App State Management (Auth Removed)
+// Enhanced App State Management
 enum AppState {
   initializing,
   initialized,
   error,
-  ready,        // Simplified - no auth states
+  authenticated,
+  unauthenticated,
   offline,
   maintenance
 }
@@ -115,10 +116,11 @@ class AppStateNotifier extends ChangeNotifier {
   }
 }
 
-// Enhanced App Initialization Service (Auth Removed)
+// Enhanced App Initialization Service
 class AppInitializationService {
   final ServiceLocator _serviceLocator = ServiceLocator();
   final AppStateNotifier _stateNotifier;
+  late final AuthService _authService;
   
   bool _isInitialized = false;
   bool get isInitialized => _isInitialized;
@@ -131,11 +133,16 @@ class AppInitializationService {
     try {
       debugPrint('🚀 Starting app initialization...');
       
-      // Register services (auth removed)
+      // Register services
       _registerServices();
       
       // Initialize Supabase with enhanced retry logic
       await _initializeSupabaseWithRetry();
+      
+      // Set up auth state listener if not offline
+      if (!_stateNotifier.isOfflineMode) {
+        _setupAuthStateListener();
+      }
       
       _isInitialized = true;
       _stateNotifier.setState(AppState.initialized);
@@ -155,7 +162,8 @@ class AppInitializationService {
   }
 
   void _registerServices() {
-    // Auth service registration removed
+    _authService = AuthService();
+    _serviceLocator.register<AuthService>(_authService);
     _serviceLocator.register<AppStateNotifier>(_stateNotifier);
   }
 
@@ -191,13 +199,51 @@ class AppInitializationService {
     }
   }
 
+  void _setupAuthStateListener() {
+    try {
+      _authService.authStateChanges.listen(
+        (data) {
+          final event = data.event;
+          debugPrint('🔄 Auth state changed: $event');
+
+          switch (event) {
+            case AuthChangeEvent.signedIn:
+              _stateNotifier.setState(AppState.authenticated);
+              break;
+            case AuthChangeEvent.signedOut:
+              _stateNotifier.setState(AppState.unauthenticated);
+              break;
+            case AuthChangeEvent.tokenRefreshed:
+              debugPrint('🔄 Token refreshed');
+              break;
+            default:
+              debugPrint('🔄 Unknown auth event: $event');
+          }
+        },
+        onError: (error) {
+          debugPrint('❌ Auth state listener error: $error');
+          _stateNotifier.setError('Authentication error: $error');
+        },
+      );
+    } catch (e) {
+      debugPrint('❌ Failed to setup auth listener: $e');
+      _stateNotifier.setError('Failed to setup authentication: $e');
+    }
+  }
+
   AppState determineInitialState() {
     if (_stateNotifier.isOfflineMode) {
       return AppState.offline;
     }
     
-    // Simplified - no auth check, just return ready state
-    return AppState.ready;
+    try {
+      return _authService.isAuthenticated() 
+          ? AppState.authenticated 
+          : AppState.unauthenticated;
+    } catch (e) {
+      debugPrint('❌ Error determining auth state: $e');
+      return AppState.unauthenticated;
+    }
   }
 }
 
@@ -318,6 +364,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
 class AppInitializer extends StatefulWidget {
   const AppInitializer({Key? key}) : super(key: key);
 
@@ -370,19 +417,20 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
       final initialState = _initializationService.determineInitialState();
       _stateNotifier.setState(initialState);
       
-      // Simplified navigation - no auth checks
+      // Navigation flow: AppInitializer → splash → onboarding → auth → home
       switch (initialState) {
-        case AppState.ready:
-          debugPrint('✅ App ready, navigating to home');
+        case AppState.authenticated:
+          debugPrint('🔐 User already authenticated, navigating directly to home');
           NavigationService.pushReplacementNamed(AppRoutes.homeMarketplaceFeed);
           break;
         case AppState.offline:
-          debugPrint('🌐 Offline mode, navigating to splash');
+          debugPrint('🌐 Offline mode, navigating to splash (limited features)');
           NavigationService.pushReplacementNamed(AppRoutes.splashScreen);
           break;
+        case AppState.unauthenticated:
         case AppState.initialized:
         default:
-          debugPrint('📱 Navigating to splash screen');
+          debugPrint('🔓 New user flow: navigating to splash → onboarding → auth');
           NavigationService.pushReplacementNamed(AppRoutes.splashScreen);
       }
     } catch (e) {
@@ -398,7 +446,11 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
     
     switch (state) {
       case AppLifecycleState.resumed:
-        debugPrint('📱 App resumed');
+        debugPrint('📱 App resumed - checking auth state');
+        // Optionally refresh auth state when app comes to foreground
+        if (_initializationService.isInitialized && !_stateNotifier.isOfflineMode) {
+          _checkAuthStateOnResume();
+        }
         break;
       case AppLifecycleState.paused:
         debugPrint('📱 App paused');
@@ -409,6 +461,18 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
         break;
       default:
         break;
+    }
+  }
+
+  Future<void> _checkAuthStateOnResume() async {
+    try {
+      final currentState = _initializationService.determineInitialState();
+      if (currentState != _stateNotifier.state) {
+        debugPrint('🔄 Auth state changed while app was in background');
+        _stateNotifier.setState(currentState);
+      }
+    } catch (e) {
+      debugPrint('❌ Error checking auth state on resume: $e');
     }
   }
 
