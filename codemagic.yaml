@@ -7,10 +7,7 @@ workflows:
       xcode: latest
       groups:
         - google_play
-      vars:
-        # Store these in Codemagic environment variables for security
-        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      # No vars section needed - credentials come from environment variables
     scripts:
       - name: Set up Flutter
         script: |
@@ -35,9 +32,6 @@ workflows:
       xcode: latest
       groups:
         - google_play
-      vars:
-        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
     scripts:
       - name: Set up Flutter
         script: |
@@ -49,7 +43,7 @@ workflows:
       - name: Clean and Build Release APK
         script: |
           flutter clean
-          flutter pub get  # Fixed: was "flitter"
+          flutter pub get
           flutter build apk --release --verbose --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
@@ -62,9 +56,6 @@ workflows:
       xcode: latest
       groups:
         - google_play
-      vars:
-        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
     scripts:
       - name: Set up Flutter
         script: |
@@ -76,7 +67,7 @@ workflows:
       - name: Clean and Build App Bundle
         script: |
           flutter clean
-          flutter pub get  # Fixed: was "flitter"
+          flutter pub get
           flutter build appbundle --release --verbose --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
     artifacts:
       - build/app/outputs/bundle/release/app-release.aab
