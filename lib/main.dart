@@ -284,6 +284,11 @@ class NavigationService {
 }
 
 void main() async {
+  // Enable performance profiling in debug mode
+  if (kDebugMode) {
+    debugPrintRebuildDirtyWidgets = true;
+  }
+  
   WidgetsFlutterBinding.ensureInitialized();
 
   // 🚨 CRITICAL: Enhanced error handling
@@ -306,6 +311,12 @@ void main() async {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
+
+  // Set up error handling
+  FlutterError.onError = (FlutterErrorDetails details) {
+    debugPrint('❌ Flutter error: ${details.exception}');
+    debugPrint('Stack trace: ${details.stack}');
+  };
 
   runApp(MyApp());
 }
