@@ -3,13 +3,13 @@
     <!-- App name -->
     <string name="app_name">khilonjiya.com</string>
     
-    <!-- Google Sign-In Client ID (replace with your actual client ID) -->
-    <string name="google_sign_in_client_id">YOUR_GOOGLE_SIGN_IN_CLIENT_ID</string>
+    <!-- Google Sign-In Client ID (dummy value) -->
+    <string name="google_sign_in_client_id">123456789012-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com</string>
     
-    <!-- Facebook Configuration (replace with your actual values) -->
-    <string name="facebook_app_id">YOUR_FACEBOOK_APP_ID</string>
-    <string name="facebook_client_token">YOUR_FACEBOOK_CLIENT_TOKEN</string>
-    <string name="fb_login_protocol_scheme">fbYOUR_FACEBOOK_APP_ID</string>
+    <!-- Facebook Configuration (dummy values) -->
+    <string name="facebook_app_id">1234567890123456</string>
+    <string name="facebook_client_token">abcdef1234567890abcdef1234567890</string>
+    <string name="fb_login_protocol_scheme">fb1234567890123456</string>
     
     <!-- Notification channels -->
     <string name="default_notification_channel_id">marketplace_notifications</string>
