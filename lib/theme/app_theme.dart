@@ -1,4 +1,4 @@
-THIS SHOULD BE A LINTER ERRORimport 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// A class that contains all theme configurations for the marketplace application.
@@ -70,6 +70,11 @@ class AppTheme {
       surface: surfaceLight,
       onSurface: textPrimaryLight,
       onSurfaceVariant: textSecondaryLight,
+      surfaceContainerHighest: surfaceLight,
+      surfaceContainerHigh: surfaceLight,
+      surfaceContainer: surfaceLight,
+      surfaceContainerLow: surfaceLight,
+      surfaceContainerLowest: surfaceLight,
       outline: outlineLight,
       outlineVariant: borderLight,
       shadow: shadowLight,
@@ -228,15 +233,15 @@ class AppTheme {
 
     // Switch theme for settings
     switchTheme: SwitchThemeData(
-      thumbColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
+      thumbColor: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.selected)) {
           return primaryLight;
         }
         return Colors.grey[300];
       }),
-      trackColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
-          return primaryLight.withValues(alpha: (77/255.0 * 255).toDouble());
+      trackColor: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.selected)) {
+          return primaryLight.withOpacity(0.3);
         }
         return Colors.grey[200];
       }),
@@ -244,13 +249,13 @@ class AppTheme {
 
     // Checkbox theme
     checkboxTheme: CheckboxThemeData(
-      fillColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
+      fillColor: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.selected)) {
           return primaryLight;
         }
         return Colors.transparent;
       }),
-      checkColor: WidgetStateProperty.all(Colors.white),
+      checkColor: MaterialStateProperty.all(Colors.white),
       side: const BorderSide(color: borderLight, width: 1.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(4.0),
@@ -259,8 +264,8 @@ class AppTheme {
 
     // Radio theme
     radioTheme: RadioThemeData(
-      fillColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
+      fillColor: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.selected)) {
           return primaryLight;
         }
         return textSecondaryLight;
@@ -278,7 +283,7 @@ class AppTheme {
     sliderTheme: SliderThemeData(
       activeTrackColor: primaryLight,
       thumbColor: primaryLight,
-      overlayColor: primaryLight.withValues(alpha: (51/255.0 * 255).toDouble()),
+      overlayColor: primaryLight.withOpacity(0.2),
       inactiveTrackColor: borderLight,
       trackHeight: 4.0,
     ),
@@ -302,7 +307,7 @@ class AppTheme {
     // Tooltip theme
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
-        color: textPrimaryLight.withValues(alpha: (230/255.0 * 255).toDouble()),
+        color: textPrimaryLight.withOpacity(0.9),
         borderRadius: BorderRadius.circular(8.0),
       ),
       textStyle: GoogleFonts.inter(
@@ -357,23 +362,28 @@ class AppTheme {
       brightness: Brightness.dark,
       primary: primaryDark,
       onPrimary: Colors.black,
-      primaryContainer: primaryDark.withValues(alpha: (51/255.0 * 255).toDouble()),
+      primaryContainer: primaryDark.withOpacity(0.2),
       onPrimaryContainer: primaryDark,
       secondary: secondaryDark,
       onSecondary: Colors.black,
-      secondaryContainer: secondaryDark.withValues(alpha: (51/255.0 * 255).toDouble()),
+      secondaryContainer: secondaryDark.withOpacity(0.2),
       onSecondaryContainer: secondaryDark,
       tertiary: accentDark,
       onTertiary: Colors.black,
-      tertiaryContainer: accentDark.withValues(alpha: (51/255.0 * 255).toDouble()),
+      tertiaryContainer: accentDark.withOpacity(0.2),
       onTertiaryContainer: accentDark,
       error: errorDark,
       onError: Colors.black,
-      errorContainer: errorDark.withValues(alpha: (51/255.0 * 255).toDouble()),
+      errorContainer: errorDark.withOpacity(0.2),
       onErrorContainer: errorDark,
       surface: surfaceDark,
       onSurface: textPrimaryDark,
       onSurfaceVariant: textSecondaryDark,
+      surfaceContainerHighest: surfaceDark,
+      surfaceContainerHigh: surfaceDark,
+      surfaceContainer: surfaceDark,
+      surfaceContainerLow: surfaceDark,
+      surfaceContainerLowest: surfaceDark,
       outline: outlineDark,
       outlineVariant: borderDark,
       shadow: shadowDark,
@@ -518,7 +528,7 @@ class AppTheme {
         fontWeight: FontWeight.w400,
       ),
       hintStyle: GoogleFonts.inter(
-        color: textSecondaryDark.withValues(alpha: (153/255.0 * 255).toDouble()),
+        color: textSecondaryDark.withOpacity(0.6),
         fontSize: 16,
         fontWeight: FontWeight.w400,
       ),
@@ -531,15 +541,15 @@ class AppTheme {
 
     // Switch theme for dark mode
     switchTheme: SwitchThemeData(
-      thumbColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
+      thumbColor: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.selected)) {
           return primaryDark;
         }
         return Colors.grey[600];
       }),
-      trackColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
-          return primaryDark.withValues(alpha: (77/255.0 * 255).toDouble());
+      trackColor: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.selected)) {
+          return primaryDark.withOpacity(0.3);
         }
         return Colors.grey[700];
       }),
@@ -547,13 +557,13 @@ class AppTheme {
 
     // Checkbox theme for dark mode
     checkboxTheme: CheckboxThemeData(
-      fillColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
+      fillColor: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.selected)) {
           return primaryDark;
         }
         return Colors.transparent;
       }),
-      checkColor: WidgetStateProperty.all(Colors.black),
+      checkColor: MaterialStateProperty.all(Colors.black),
       side: const BorderSide(color: borderDark, width: 1.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(4.0),
@@ -562,8 +572,8 @@ class AppTheme {
 
     // Radio theme for dark mode
     radioTheme: RadioThemeData(
-      fillColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
+      fillColor: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.selected)) {
           return primaryDark;
         }
         return textSecondaryDark;
@@ -581,7 +591,7 @@ class AppTheme {
     sliderTheme: SliderThemeData(
       activeTrackColor: primaryDark,
       thumbColor: primaryDark,
-      overlayColor: primaryDark.withValues(alpha: (51/255.0 * 255).toDouble()),
+      overlayColor: primaryDark.withOpacity(0.2),
       inactiveTrackColor: borderDark,
       trackHeight: 4.0,
     ),
@@ -605,7 +615,7 @@ class AppTheme {
     // Tooltip theme for dark mode
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
-        color: textPrimaryDark.withValues(alpha: (230/255.0 * 255).toDouble()),
+        color: textPrimaryDark.withOpacity(0.9),
         borderRadius: BorderRadius.circular(8.0),
       ),
       textStyle: GoogleFonts.inter(

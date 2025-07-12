@@ -2,6 +2,13 @@
 export 'package:flutter/material.dart';
 export 'package:flutter/services.dart';
 
+// Color extension for withValues method
+extension ColorExtension on Color {
+  Color withValues({double? alpha}) {
+    return alpha != null ? withOpacity(alpha / 255.0) : this;
+  }
+}
+
 // Third-party package exports
 export 'package:sizer/sizer.dart';
 export 'package:provider/provider.dart';
@@ -35,6 +42,7 @@ export '../utils/message_service.dart';
 
 // Presentation layer exports
 export '../presentation/splash_screen/splash_screen.dart';
+export '../presentation/login_screen/login_screen.dart';
 export '../presentation/onboarding_tutorial/onboarding_tutorial.dart';
 export '../presentation/home_marketplace_feed/home_marketplace_feed.dart';
 export '../presentation/user_profile/user_profile.dart';
