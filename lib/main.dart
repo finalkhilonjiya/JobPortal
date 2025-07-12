@@ -1,4 +1,5 @@
 import 'core/app_export.dart';
+import 'package:flutter/foundation.dart';
 
 // Enhanced Configuration Management
 class AppConfig {
