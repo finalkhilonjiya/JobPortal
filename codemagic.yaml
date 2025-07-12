@@ -8,8 +8,9 @@ workflows:
       groups:
         - google_play
       vars:
-        SUPABASE_URL: "https://rsskivonmfqrzxbmxrkl.supabase.co"
-        SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzc2tpdm9ubWZxcnp4Ym14cmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE2NTUxMTgsImV4cCI6MjA2NzIzMTExOH0.uYjeiqI7eNGZqnip4p-20AL6NT9YCos15gWY-lP82As"
+        # Store these in Codemagic environment variables for security
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
     scripts:
       - name: Set up Flutter
         script: |
@@ -35,8 +36,8 @@ workflows:
       groups:
         - google_play
       vars:
-        SUPABASE_URL: "https://rsskivonmfqrzxbmxrkl.supabase.co"
-        SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzc2tpdm9ubWZxcnp4Ym14cmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE2NTUxMTgsImV4cCI6MjA2NzIzMTExOH0.uYjeiqI7eNGZqnip4p-20AL6NT9YCos15gWY-lP82As"
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
     scripts:
       - name: Set up Flutter
         script: |
@@ -48,7 +49,7 @@ workflows:
       - name: Clean and Build Release APK
         script: |
           flutter clean
-          flitter pub get
+          flutter pub get  # Fixed: was "flitter"
           flutter build apk --release --verbose --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
@@ -62,8 +63,8 @@ workflows:
       groups:
         - google_play
       vars:
-        SUPABASE_URL: "https://rsskivonmfqrzxbmxrkl.supabase.co"
-        SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzc2tpdm9ubWZxcnp4Ym14cmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE2NTUxMTgsImV4cCI6MjA2NzIzMTExOH0.uYjeiqI7eNGZqnip4p-20AL6NT9YCos15gWY-lP82As"
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
     scripts:
       - name: Set up Flutter
         script: |
@@ -75,7 +76,7 @@ workflows:
       - name: Clean and Build App Bundle
         script: |
           flutter clean
-          flitter pub get
+          flutter pub get  # Fixed: was "flitter"
           flutter build appbundle --release --verbose --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
     artifacts:
       - build/app/outputs/bundle/release/app-release.aab
