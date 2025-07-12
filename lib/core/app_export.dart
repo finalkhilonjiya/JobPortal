@@ -27,7 +27,7 @@ export '../widgets/custom_image_widget.dart';
 export '../widgets/custom_error_widget.dart';
 export '../theme/app_theme.dart';
 export '../utils/supabase_service.dart';
-export '../utils/auth_service.dart'; // Re-enabled to ensure AuthService is available everywhere
+// export '../utils/auth_service.dart'; // REMOVED - Auth service temporarily disabled
 export '../utils/listing_service.dart';
 export '../utils/category_service.dart';
 export '../utils/favorite_service.dart';
@@ -44,4 +44,4 @@ export '../presentation/create_listing/create_listing.dart';
 export '../presentation/chat_messaging/chat_messaging.dart';
 export '../presentation/search_and_filters/search_and_filters.dart';
 export '../presentation/registration_screen/registration_screen.dart';
-export '../presentation/configuration_setup/configuration_setup.dart';
+export '../presentation/configuration_setup/configuration_setup.dart;
