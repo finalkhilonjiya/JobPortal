@@ -16,6 +16,14 @@ allprojects {
         google()
         mavenCentral()
     }
+    
+    // Memory optimization for all projects
+    project.configurations.all {
+        resolutionStrategy {
+            cacheChangingModulesFor 0, 'seconds'
+            cacheDynamicVersionsFor 0, 'seconds'
+        }
+    }
 }
 
 rootProject.buildDir = '../build'

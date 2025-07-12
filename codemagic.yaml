@@ -1,7 +1,7 @@
 workflows:
   build_apk_debug:
     name: Build Debug APK
-    max_build_duration: 60
+    max_build_duration: 120
     environment:
       flutter: stable
       xcode: latest
@@ -20,13 +20,14 @@ workflows:
           flutter pub get
       - name: Build Debug APK
         script: |
+          export GRADLE_OPTS="-Xmx8g -XX:MaxMetaspaceSize=1g -XX:+UseParallelGC"
           flutter build apk --debug -v --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
     artifacts:
       - build/app/outputs/flutter-apk/app-debug.apk
 
   build_apk_release:
     name: Build Release APK
-    max_build_duration: 60
+    max_build_duration: 120
     environment:
       flutter: stable
       xcode: latest
@@ -46,13 +47,14 @@ workflows:
           flutter pub get
       - name: Build Release APK
         script: |
+          export GRADLE_OPTS="-Xmx8g -XX:MaxMetaspaceSize=1g -XX:+UseParallelGC"
           flutter build apk --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
 
   build_app_bundle:
     name: Build App Bundle
-    max_build_duration: 60
+    max_build_duration: 120
     environment:
       flutter: stable
       xcode: latest
@@ -71,6 +73,7 @@ workflows:
           flutter pub get
       - name: Build App Bundle
         script: |
+          export GRADLE_OPTS="-Xmx8g -XX:MaxMetaspaceSize=1g -XX:+UseParallelGC"
           flutter build appbundle --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
     artifacts:
       - build/app/outputs/bundle/release/app-release.aab
