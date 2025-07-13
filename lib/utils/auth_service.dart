@@ -124,99 +124,60 @@ class AuthService {
   }
 
   /// Sign up with email/phone and password
-  Future<AuthResponse> signUp({
-    required String username,
-    required String password,
-    String? fullName,
-    String? role,
-  }) async {
-    try {
-      final client = _client;
-      if (client == null) {
-        throw AppAuthException('Supabase not available. Please check your connection.');
-      }
+ Future<AuthResponse> signUp({
+  required String email,
+  required String password,
+  required String fullName,
+}) async {
+  final response = await Supabase.instance.client.auth.signUp(
+    email: email,
+    password: password,
+    data: {
+      'full_name': fullName,
+      'role': 'buyer',
+    },
+  );
 
-      String? email;
-      String? phone;
+  print("📤 Supabase signUp() response:");
+  print("user: ${response.user}");
+  print("session: ${response.session}");
+  print("error: ${response.error?.message}");
 
-      if (_isEmail(username)) {
-        email = username.toLowerCase().trim();
-      } else if (_isPhoneNumber(username)) {
-        phone = _normalizePhoneNumber(username);
-        email = '${phone.replaceAll('+', '')}@khilonjiya.placeholder';
-      } else {
-        throw AppAuthException('Please enter a valid email address or phone number.');
-      }
-
-      final signUpData = {
-        'full_name': fullName ?? (phone != null ? phone : email.split('@')[0]),
-        'role': role ?? 'buyer',
-        'username_type': phone != null ? 'phone' : 'email',
-        'phone_number': phone,
-        'display_email': phone != null ? null : email,
-      };
-
-      final response = await client.auth.signUp(
-        email: email,
-        password: password,
-        phone: phone,
-        data: signUpData,
-      );
-
-      if (response.user != null) {
-        debugPrint('✅ User signed up successfully: ${phone ?? email}');
-        await _createUserProfile(response.user!, signUpData);
-      }
-
-      return response;
-    } catch (error) {
-      debugPrint('❌ Sign-up failed: $error');
-      throw AppAuthException('Sign-up failed: ${_getErrorMessage(error)}');
-    }
+  if (response.error != null) {
+    throw AppAuthException(response.error!.message);
   }
 
+  if (response.session != null || response.user != null) {
+    return response;
+  }
+
+  throw AppAuthException('Signup failed. Try again.');
+}
   /// Sign in with email/phone and password
   Future<AuthResponse> signIn({
-    required String username,
-    required String password,
-  }) async {
-    try {
-      final client = _client;
-      if (client == null) {
-        throw AppAuthException('Supabase not available. Please check your connection.');
-      }
+  required String email,
+  required String password,
+}) async {
+  final response = await Supabase.instance.client.auth.signInWithPassword(
+    email: email,
+    password: password,
+  );
 
-      String? email;
-      String? phone;
+  print("📥 Supabase signIn() response:");
+  print("user: ${response.user}");
+  print("session: ${response.session}");
+  print("error: ${response.error?.message}");
 
-      if (_isEmail(username)) {
-        email = username.toLowerCase().trim();
-      } else if (_isPhoneNumber(username)) {
-        phone = _normalizePhoneNumber(username);
-        email = await _getEmailFromPhone(phone);
-        if (email == null) {
-          throw AppAuthException('No account found with this phone number. Please sign up first.');
-        }
-      } else {
-        throw AppAuthException('Please enter a valid email address or phone number.');
-      }
-
-      final response = await client.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
-
-      if (response.user != null) {
-        debugPrint('✅ User signed in successfully: ${phone ?? email}');
-        _startSessionMonitoring();
-      }
-
-      return response;
-    } catch (error) {
-      debugPrint('❌ Sign-in failed: $error');
-      throw AppAuthException('Sign-in failed: ${_getErrorMessage(error)}');
-    }
+  if (response.error != null) {
+    throw AppAuthException(response.error!.message);
   }
+
+  if (response.session != null) {
+    return response;
+  }
+
+  throw AppAuthException('Login failed. Please try again.');
+}
 
   /// Get email from phone number for login
   Future<String?> _getEmailFromPhone(String phone) async {
