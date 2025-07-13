@@ -158,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       debugPrint('📊 Health status: $health');
       
       // Debug credentials
-      SupabaseService.debugCredentials();
+      //SupabaseService.debugCredentials();
       
       // Test a simple query
       final connected = await SupabaseService().checkConnection();
