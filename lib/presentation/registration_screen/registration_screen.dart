@@ -288,10 +288,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
       // Use email as username for Supabase
       final response = await _authService.signUp(
-        username: email,
-        password: password,
-        fullName: email.split('@')[0], // Use email prefix as name
-      );
+  email: email,
+  password: password,
+  fullName: email.split('@')[0],
+);
 
       if (response.user != null) {
         // Upload profile image if selected
