@@ -168,8 +168,14 @@ class AppInitializationService {
   }
 
   Future<void> _initializeSupabaseWithRetry({int maxRetries = 3}) async {
+    // Debug environment variables
+    debugPrint('🔍 Checking Supabase credentials...');
+    debugPrint('🔍 SUPABASE_URL: ${AppConfig.supabaseUrl.isNotEmpty ? "SET" : "NOT SET"}');
+    debugPrint('🔍 SUPABASE_ANON_KEY: ${AppConfig.supabaseAnonKey.isNotEmpty ? "SET" : "NOT SET"}');
+    
     if (!AppConfig.hasSupabaseCredentials) {
       debugPrint('⚠️ Supabase credentials not found, enabling offline mode');
+      debugPrint('⚠️ Please ensure SUPABASE_URL and SUPABASE_ANON_KEY are set in Codemagic environment variables');
       _stateNotifier.setOfflineMode(true);
       return;
     }
@@ -177,18 +183,27 @@ class AppInitializationService {
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         debugPrint('🔄 Supabase initialization attempt $attempt/$maxRetries');
+        debugPrint('🔍 URL: ${AppConfig.supabaseUrl.substring(0, 20)}...');
+        debugPrint('🔍 Key: ${AppConfig.supabaseAnonKey.substring(0, 10)}...');
         
         await SupabaseService.initialize()
             .timeout(AppConfig.initializationTimeout);
             
-        debugPrint('✅ Supabase initialization completed');
+        debugPrint('✅ Supabase initialization completed successfully');
+        
+        // Verify connection
+        final healthStatus = await SupabaseService().getHealthStatus();
+        debugPrint('🔍 Health check: $healthStatus');
+        
         return;
         
       } catch (e) {
         debugPrint('❌ Supabase attempt $attempt failed: $e');
+        debugPrint('❌ Error type: ${e.runtimeType}');
         
         if (attempt == maxRetries) {
           debugPrint('🔄 All attempts failed, enabling offline mode');
+          debugPrint('🔄 Please check your Supabase project settings and network connection');
           _stateNotifier.setOfflineMode(true);
           return;
         }

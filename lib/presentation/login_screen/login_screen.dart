@@ -459,7 +459,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         TextFormField(
           controller: _usernameController,
           focusNode: _usernameFocusNode,
-          keyboardType: _isEmailInput ? TextInputType.emailAddress : TextInputType.phone,
+          keyboardType: TextInputType.emailAddress, // Always use email keyboard for better UX
           textInputAction: TextInputAction.next,
           autocorrect: false,
           enableSuggestions: true,
