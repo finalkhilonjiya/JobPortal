@@ -3,8 +3,9 @@ import 'package:flutter/foundation.dart';
 
 // Enhanced Configuration Management
 class AppConfig {
-  static const String supabaseUrl = String.fromEnvironment('SUPABASE_URL');
-  static const String supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+  // Change from const to getters that use SupabaseService
+  static String get supabaseUrl => SupabaseService.supabaseUrl;
+  static String get supabaseAnonKey => SupabaseService.supabaseAnonKey;
   
   // Timeouts and delays
   static const Duration initializationTimeout = Duration(seconds: 15);
