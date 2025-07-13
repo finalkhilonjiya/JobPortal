@@ -20,7 +20,10 @@ workflows:
         script: |
           flutter clean
           flutter pub get 
-          flutter build apk --debug --verbose --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+          echo "🔍 Environment variables check:"
+          echo "SUPABASE_URL length: ${#SUPABASE_URL}"
+          echo "SUPABASE_ANON_KEY length: ${#SUPABASE_ANON_KEY}"
+          flutter build apk --debug --verbose --dart-define=SUPABASE_URL="$SUPABASE_URL" --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
     artifacts:
       - build/app/outputs/flutter-apk/app-debug.apk
 
@@ -44,7 +47,10 @@ workflows:
         script: |
           flutter clean
           flutter pub get
-          flutter build apk --release --verbose --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+          echo "🔍 Environment variables check:"
+          echo "SUPABASE_URL length: ${#SUPABASE_URL}"
+          echo "SUPABASE_ANON_KEY length: ${#SUPABASE_ANON_KEY}"
+          flutter build apk --release --verbose --dart-define=SUPABASE_URL="$SUPABASE_URL" --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
 
@@ -68,6 +74,9 @@ workflows:
         script: |
           flutter clean
           flutter pub get
-          flutter build appbundle --release --verbose --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+          echo "🔍 Environment variables check:"
+          echo "SUPABASE_URL length: ${#SUPABASE_URL}"
+          echo "SUPABASE_ANON_KEY length: ${#SUPABASE_ANON_KEY}"
+          flutter build appbundle --release --verbose --dart-define=SUPABASE_URL="$SUPABASE_URL" --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
     artifacts:
       - build/app/outputs/bundle/release/app-release.aab

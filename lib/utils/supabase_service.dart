@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:math';
 
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
@@ -34,6 +35,13 @@ class SupabaseService {
     _initializationInProgress = true;
 
     try {
+      // Enhanced debugging for environment variables
+      debugPrint('🔍 Supabase initialization started');
+      debugPrint('🔍 SUPABASE_URL length: ${supabaseUrl.length}');
+      debugPrint('🔍 SUPABASE_ANON_KEY length: ${supabaseAnonKey.length}');
+      debugPrint('🔍 URL starts with: ${supabaseUrl.substring(0, min(20, supabaseUrl.length))}...');
+      debugPrint('🔍 Key starts with: ${supabaseAnonKey.substring(0, min(10, supabaseAnonKey.length))}...');
+
       // Validate environment variables
       if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
         throw SupabaseException(
@@ -55,8 +63,15 @@ class SupabaseService {
 
       debugPrint('✅ Supabase initialized successfully');
       debugPrint('🔗 Connected to: ${_maskUrl(supabaseUrl)}');
+      
+      // Test connection immediately
+      final connectionTest = await _instance.checkConnection();
+      debugPrint('🔍 Connection test result: $connectionTest');
+      
     } catch (e) {
       debugPrint('❌ Supabase initialization failed: $e');
+      debugPrint('❌ Error type: ${e.runtimeType}');
+      debugPrint('❌ Error details: ${e.toString()}');
       rethrow;
     } finally {
       _initializationInProgress = false;
