@@ -14,6 +14,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController(); // Changed from email to username
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authService = AuthService();
 
@@ -155,8 +156,8 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
       // Use enhanced auth service with username (email/phone) support
       final response = await _authService.signIn(
-  email: email,
-  password: password,
+  email: _emailController.text,
+password: _passwordController.text,
 );
 
       if (response.user != null) {
