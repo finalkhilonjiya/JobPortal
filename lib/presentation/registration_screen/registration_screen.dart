@@ -295,14 +295,15 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
       if (response.user != null) {
         // Upload profile image if selected
-        if (_profileImage != null) {
-          try {
-            await _authService.uploadProfilePicture(_profileImage!);
-          } catch (e) {
-            debugPrint('Profile picture upload failed: $e');
-            // Continue registration even if profile picture upload fails
-          }
-        }
+        // (Profile picture upload temporarily disabled)
+        // if (_profileImage != null) {
+        //   try {
+        //     await _authService.uploadProfilePicture(_profileImage!);
+        //   } catch (e) {
+        //     debugPrint('Profile picture upload failed: $e');
+        //     // Continue registration even if profile picture upload fails
+        //   }
+        // }
 
         HapticFeedback.lightImpact();
         _showSuccessSnackBar('Registration successful! Please verify your email.');
