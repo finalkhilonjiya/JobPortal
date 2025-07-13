@@ -13,6 +13,12 @@
 migrate_working_dir/
 pubspec.lock
 
+# Environment variables (IMPORTANT: Keep secrets out of version control)
+.env
+.env.local
+.env.production
+.env.staging
+
 # IntelliJ related
 *.iml
 *.ipr

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:math';
 
 class SupabaseService {
@@ -15,15 +16,40 @@ class SupabaseService {
 
   SupabaseService._internal();
 
-  // Environment variables with fallback handling
-  static const String supabaseUrl = String.fromEnvironment(
-    'SUPABASE_URL',
-    defaultValue: '',
-  );
-  static const String supabaseAnonKey = String.fromEnvironment(
-    'SUPABASE_ANON_KEY',
-    defaultValue: '',
-  );
+  // Environment variables with multiple fallback sources
+  static String get supabaseUrl {
+    // Try dart-define first (for production builds)
+    final dartDefineUrl = const String.fromEnvironment('SUPABASE_URL', defaultValue: '');
+    if (dartDefineUrl.isNotEmpty) {
+      return dartDefineUrl;
+    }
+    
+    // Try .env file (for development)
+    final envUrl = dotenv.env['SUPABASE_URL'] ?? '';
+    if (envUrl.isNotEmpty) {
+      return envUrl;
+    }
+    
+    // Return empty string if not found
+    return '';
+  }
+
+  static String get supabaseAnonKey {
+    // Try dart-define first (for production builds)
+    final dartDefineKey = const String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '');
+    if (dartDefineKey.isNotEmpty) {
+      return dartDefineKey;
+    }
+    
+    // Try .env file (for development)
+    final envKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+    if (envKey.isNotEmpty) {
+      return envKey;
+    }
+    
+    // Return empty string if not found
+    return '';
+  }
 
   // Static initialization method with improved error handling
   static Future<void> initialize() async {
@@ -35,18 +61,36 @@ class SupabaseService {
     _initializationInProgress = true;
 
     try {
+      // Load .env file if it exists (for development)
+      try {
+        await dotenv.load(fileName: '.env');
+        debugPrint('✅ .env file loaded successfully');
+      } catch (e) {
+        debugPrint('⚠️ .env file not found or could not be loaded: $e');
+        debugPrint('⚠️ This is normal for production builds using dart-define');
+      }
+
       // Enhanced debugging for environment variables
       debugPrint('🔍 Supabase initialization started');
       debugPrint('🔍 SUPABASE_URL length: ${supabaseUrl.length}');
       debugPrint('🔍 SUPABASE_ANON_KEY length: ${supabaseAnonKey.length}');
-      debugPrint('🔍 URL starts with: ${supabaseUrl.substring(0, min(20, supabaseUrl.length))}...');
-      debugPrint('🔍 Key starts with: ${supabaseAnonKey.substring(0, min(10, supabaseAnonKey.length))}...');
+      
+      if (supabaseUrl.isNotEmpty) {
+        debugPrint('🔍 URL starts with: ${supabaseUrl.substring(0, min(20, supabaseUrl.length))}...');
+      }
+      if (supabaseAnonKey.isNotEmpty) {
+        debugPrint('🔍 Key starts with: ${supabaseAnonKey.substring(0, min(10, supabaseAnonKey.length))}...');
+      }
 
       // Validate environment variables
       if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
         throw SupabaseException(
-          'Environment variables SUPABASE_URL and SUPABASE_ANON_KEY must be defined. '
-          'Use --dart-define=SUPABASE_URL=your_url --dart-define=SUPABASE_ANON_KEY=your_key when running the app.',
+          'Environment variables SUPABASE_URL and SUPABASE_ANON_KEY must be defined.\n'
+          'For development: Add them to your .env file\n'
+          'For production: Use --dart-define=SUPABASE_URL=your_url --dart-define=SUPABASE_ANON_KEY=your_key\n'
+          'Current values:\n'
+          'SUPABASE_URL: ${supabaseUrl.isEmpty ? "NOT SET" : "SET"}\n'
+          'SUPABASE_ANON_KEY: ${supabaseAnonKey.isEmpty ? "NOT SET" : "SET"}',
         );
       }
 
