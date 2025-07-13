@@ -107,29 +107,29 @@ class _RegistrationScreenState extends State<RegistrationScreen>
            _acceptTerms;
   }
 
-  String? _validateEmail(String value) {
-    if (value.isEmpty) return 'Email is required';
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) return 'Email is required';
     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
       return 'Please enter a valid email address';
     }
     return null;
   }
 
-  String? _validatePhone(String value) {
-    if (value.isEmpty) return 'Phone number is required';
+  String? _validatePhone(String? value) {
+    if (value == null || value.isEmpty) return 'Phone number is required';
     final cleaned = value.replaceAll(RegExp(r'[^\d]'), '');
     if (cleaned.length < 10) return 'Please enter a valid phone number';
     return null;
   }
 
-  String? _validatePassword(String value) {
-    if (value.isEmpty) return 'Password is required';
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) return 'Password is required';
     if (value.length < 6) return 'Password must be at least 6 characters';
     return null;
   }
 
-  String? _validateConfirmPassword(String value) {
-    if (value.isEmpty) return 'Please confirm your password';
+  String? _validateConfirmPassword(String? value) {
+    if (value == null || value.isEmpty) return 'Please confirm your password';
     if (value != _passwordController.text) return 'Passwords do not match';
     return null;
   }
@@ -245,10 +245,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 4.w),
         decoration: BoxDecoration(
-          color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1 * 255),
+          color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 26),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3 * 255),
+            color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 77),
             width: 1,
           ),
         ),
