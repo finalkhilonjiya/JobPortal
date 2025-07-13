@@ -155,9 +155,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
       // Use enhanced auth service with username (email/phone) support
       final response = await _authService.signIn(
-        username: username,
-        password: password,
-      );
+  email: email,
+  password: password,
+);
 
       if (response.user != null) {
         HapticFeedback.lightImpact();
