@@ -7,6 +7,7 @@ import 'dart:io';
 import './supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:gotrue/gotrue.dart'; // ✅ needed for GoTrueException
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
