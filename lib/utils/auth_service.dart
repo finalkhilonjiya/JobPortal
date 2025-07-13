@@ -129,54 +129,60 @@ class AuthService {
   required String password,
   required String fullName,
 }) async {
-  final response = await Supabase.instance.client.auth.signUp(
-    email: email,
-    password: password,
-    data: {
-      'full_name': fullName,
-      'role': 'buyer',
-    },
-  );
+  try {
+    final response = await Supabase.instance.client.auth.signUp(
+      email: email,
+      password: password,
+      data: {
+        'full_name': fullName,
+        'role': 'buyer',
+      },
+    );
 
-  print("📤 Supabase signUp() response:");
-  print("user: ${response.user}");
-  print("session: ${response.session}");
-  print("error: ${response.error?.message}");
+    print("📤 Supabase signUp() success:");
+    print("user: ${response.user}");
+    print("session: ${response.session}");
 
-  if (response.error != null) {
-    throw AppAuthException(response.error!.message);
+    if (response.session != null || response.user != null) {
+      return response;
+    }
+
+    throw AppAuthException('Signup failed. Please try again.');
+  } on GoTrueException catch (e) {
+    print("❌ Supabase signUp() error: ${e.message}");
+    throw AppAuthException(e.message);
+  } catch (e) {
+    print("❌ Unexpected error during signUp: $e");
+    throw AppAuthException('Unexpected error occurred.');
   }
-
-  if (response.session != null || response.user != null) {
-    return response;
-  }
-
-  throw AppAuthException('Signup failed. Try again.');
 }
   /// Sign in with email/phone and password
   Future<AuthResponse> signIn({
   required String email,
   required String password,
 }) async {
-  final response = await Supabase.instance.client.auth.signInWithPassword(
-    email: email,
-    password: password,
-  );
+  try {
+    final response = await Supabase.instance.client.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
 
-  print("📥 Supabase signIn() response:");
-  print("user: ${response.user}");
-  print("session: ${response.session}");
-  print("error: ${response.error?.message}");
+    print("📥 Supabase signIn() success:");
+    print("user: ${response.user}");
+    print("session: ${response.session}");
 
-  if (response.error != null) {
-    throw AppAuthException(response.error!.message);
+    if (response.session != null) {
+      return response;
+    }
+
+    throw AppAuthException('Login failed. Please try again.');
+  } on GoTrueException catch (e) {
+    print("❌ Supabase signIn() error: ${e.message}");
+    throw AppAuthException(e.message);
+  } catch (e) {
+    print("❌ Unexpected error during signIn: $e");
+    throw AppAuthException('Unexpected error occurred.');
   }
-
-  if (response.session != null) {
-    return response;
-  }
-
-  throw AppAuthException('Login failed. Please try again.');
 }
 
   /// Get email from phone number for login
