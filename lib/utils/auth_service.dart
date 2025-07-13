@@ -7,7 +7,6 @@ import 'dart:io';
 import './supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:gotrue/gotrue.dart'; // ✅ needed for GoTrueException
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -125,66 +124,118 @@ class AuthService {
   }
 
   /// Sign up with email/phone and password
- Future<AuthResponse> signUp({
-  required String email,
-  required String password,
-  required String fullName,
-}) async {
-  try {
-    final response = await _client.auth.signUp(
-      email: email,
-      password: password,
-      data: {
-        'full_name': fullName,
-        'role': 'buyer',
-      },
-    );
+  Future<AuthResponse> signUp({
+    required String email,
+    required String password,
+    required String fullName,
+  }) async {
+    try {
+      // Check if Supabase client is available
+      final client = _client;
+      if (client == null) {
+        throw AppAuthException('Supabase not initialized. Please check your connection.');
+      }
 
-    debugPrint('📤 Supabase signUp() response:');
-    debugPrint('user: ${response.user}');
-    debugPrint('session: ${response.session}');
+      debugPrint('📤 Attempting signup with email: $email');
 
-    if (response.session != null || response.user != null) {
-      return response;
+      final response = await client.auth.signUp(
+        email: email,
+        password: password,
+        data: {
+          'full_name': fullName,
+          'role': 'buyer',
+        },
+      );
+
+      debugPrint('📤 Supabase signUp() response:');
+      debugPrint('user: ${response.user}');
+      debugPrint('session: ${response.session}');
+
+      if (response.user != null) {
+        // Create user profile after successful signup
+        await _createUserProfile(response.user!, {
+          'full_name': fullName,
+          'role': 'buyer',
+        });
+        return response;
+      }
+
+      throw AppAuthException('Sign-up failed. Please try again.');
+    } on AuthException catch (e) {
+      debugPrint('❌ Sign-up failed (AuthException): ${e.message}');
+      throw AppAuthException(_getErrorMessage(e));
+    } catch (error) {
+      debugPrint('❌ Unexpected error during sign-up: $error');
+      if (error is AppAuthException) {
+        rethrow;
+      }
+      throw AppAuthException('Unexpected error: ${_getErrorMessage(error)}');
     }
-
-    throw AppAuthException('Sign-up failed. Please try again.');
-  } on AuthException catch (e) {
-    debugPrint('❌ Sign-up failed: ${e.message}');
-    throw AppAuthException(e.message);
-  } catch (error) {
-    debugPrint('❌ Unexpected error during sign-up: $error');
-    throw AppAuthException('Unexpected error: ${_getErrorMessage(error)}');
   }
-}
+
   /// Sign in with email/phone and password
-Future<AuthResponse> signIn({
-  required String email,
-  required String password,
-}) async {
-  try {
-    final response = await _client.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
+  Future<AuthResponse> signIn({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      // Check if Supabase client is available
+      final client = _client;
+      if (client == null) {
+        throw AppAuthException('Supabase not initialized. Please check your connection.');
+      }
 
-    debugPrint('📥 Supabase signIn() response:');
-    debugPrint('user: ${response.user}');
-    debugPrint('session: ${response.session}');
+      String loginEmail = email;
+      
+      // Check if input is phone number
+      if (_isPhoneNumber(email)) {
+        // Try to get email from phone number
+        final phoneEmail = await _getEmailFromPhone(email);
+        if (phoneEmail != null) {
+          loginEmail = phoneEmail;
+          debugPrint('📥 Found email for phone: $loginEmail');
+        } else {
+          throw AppAuthException('No account found with this phone number.');
+        }
+      }
 
-    if (response.session != null) {
-      return response;
+      debugPrint('📥 Attempting login with email: $loginEmail');
+
+      final response = await client.auth.signInWithPassword(
+        email: loginEmail,
+        password: password,
+      );
+
+      debugPrint('📥 Supabase signIn() response:');
+      debugPrint('user: ${response.user}');
+      debugPrint('session: ${response.session}');
+
+      if (response.session != null) {
+        return response;
+      }
+
+      throw AppAuthException('Login failed. Please try again.');
+    } on AuthException catch (e) {
+      debugPrint('❌ Sign-in failed (AuthException): ${e.message}');
+      
+      // Provide better error messages
+      if (e.message.contains('Invalid login credentials')) {
+        throw AppAuthException('Invalid email or password. Please check your credentials.');
+      } else if (e.message.contains('Email not confirmed')) {
+        throw AppAuthException('Please verify your email before logging in. Check your inbox for the verification link.');
+      }
+      
+      throw AppAuthException(_getErrorMessage(e));
+    } catch (error) {
+      debugPrint('❌ Unexpected error during sign-in: $error');
+      
+      if (error is AppAuthException) {
+        rethrow;
+      }
+      
+      throw AppAuthException('Login failed: ${_getErrorMessage(error)}');
     }
-
-    throw AppAuthException('Login failed. Please try again.');
-  } on AuthException catch (e) {
-    debugPrint('❌ Sign-in failed: ${e.message}');
-    throw AppAuthException(e.message);
-  } catch (error) {
-    debugPrint('❌ Unexpected error during sign-in: $error');
-    throw AppAuthException('Unexpected error: ${_getErrorMessage(error)}');
   }
-}
 
   /// Get email from phone number for login
   Future<String?> _getEmailFromPhone(String phone) async {
@@ -207,28 +258,55 @@ Future<AuthResponse> signIn({
 
   /// Extract user-friendly error messages
   String _getErrorMessage(dynamic error) {
-    if (error is AppAuthException) {
-      switch (error.message) {
-        case 'Invalid login credentials':
-          return 'Invalid email/phone or password. Please check your credentials.';
-        case 'Email not confirmed':
-          return 'Please check your email and click the confirmation link.';
-        case 'User already registered':
-          return 'An account with this email/phone already exists. Please sign in.';
-        case 'Password should be at least 6 characters':
-          return 'Password must be at least 6 characters long.';
-        default:
-          return error.message;
+    debugPrint('🔍 Processing error: $error');
+    debugPrint('🔍 Error type: ${error.runtimeType}');
+    
+    if (error is AuthException) {
+      // Handle Supabase AuthException specifically
+      final message = error.message.toLowerCase();
+      
+      if (message.contains('invalid login credentials') || 
+          message.contains('invalid email or password')) {
+        return 'Invalid email or password. Please check your credentials.';
       }
+      if (message.contains('email not confirmed')) {
+        return 'Please verify your email address. Check your inbox for the verification link.';
+      }
+      if (message.contains('user already registered')) {
+        return 'An account with this email already exists. Please sign in instead.';
+      }
+      if (message.contains('password should be at least')) {
+        return 'Password must be at least 6 characters long.';
+      }
+      if (message.contains('invalid email')) {
+        return 'Please enter a valid email address.';
+      }
+      if (message.contains('network')) {
+        return 'Network error. Please check your internet connection.';
+      }
+      
+      // Return the original message if no specific case matches
+      return error.message;
+    }
+    
+    if (error is AppAuthException) {
+      return error.message;
     }
 
-    final errorString = error.toString();
+    // Handle string errors
+    final errorString = error.toString().toLowerCase();
+    
     if (errorString.contains('network')) {
       return 'Network error. Please check your internet connection.';
-    } else if (errorString.contains('timeout')) {
+    }
+    if (errorString.contains('timeout')) {
       return 'Request timeout. Please try again.';
     }
-
+    if (errorString.contains('connection')) {
+      return 'Connection error. Please check your internet and try again.';
+    }
+    
+    // Generic error
     return 'An unexpected error occurred. Please try again.';
   }
 
@@ -309,8 +387,6 @@ Future<AuthResponse> signIn({
     }
   }
 
-// Add these methods to the AuthService class from Part 1
-
   /// Sign in with Google
   Future<AuthResponse> signInWithGoogle() async {
     try {
@@ -348,11 +424,14 @@ Future<AuthResponse> signIn({
     } catch (error) {
       debugPrint('❌ Google sign-in failed: $error');
       await _googleSignIn.signOut();
+      
+      if (error is AppAuthException) {
+        rethrow;
+      }
       throw AppAuthException('Google sign-in failed: ${_getErrorMessage(error)}');
     }
   }
 
-  /// Sign in with Facebook
   /// Sign in with Facebook
   Future<AuthResponse> signInWithFacebook() async {
     try {
@@ -397,9 +476,14 @@ Future<AuthResponse> signIn({
     } catch (error) {
       debugPrint('❌ Facebook sign-in failed: $error');
       await _facebookAuth.logOut();
+      
+      if (error is AppAuthException) {
+        rethrow;
+      }
       throw AppAuthException('Facebook sign-in failed: ${_getErrorMessage(error)}');
     }
   }
+
   /// Handle social login profile creation/update
   Future<void> _handleSocialLoginProfile(
     User user, 
@@ -473,6 +557,10 @@ Future<AuthResponse> signIn({
       debugPrint('✅ Password reset email sent to: $email');
     } catch (error) {
       debugPrint('❌ Password reset failed: $error');
+      
+      if (error is AppAuthException) {
+        rethrow;
+      }
       throw AppAuthException('Password reset failed: ${_getErrorMessage(error)}');
     }
   }
@@ -559,6 +647,10 @@ Future<AuthResponse> signIn({
       return response;
     } catch (error) {
       debugPrint('❌ Profile update failed: $error');
+      
+      if (error is AppAuthException) {
+        rethrow;
+      }
       throw AppAuthException('Profile update failed: ${_getErrorMessage(error)}');
     }
   }
@@ -614,6 +706,10 @@ Future<AuthResponse> signIn({
       }
     } catch (error) {
       debugPrint('❌ Session refresh failed: $error');
+      
+      if (error is AppAuthException) {
+        rethrow;
+      }
       throw AppAuthException('Session refresh failed: ${_getErrorMessage(error)}');
     }
   }
@@ -662,7 +758,6 @@ Future<AuthResponse> signIn({
     _authStateSubscription?.cancel();
   }
 }
-
 
 // User Profile Service for extended profile management
 class UserProfileService {
