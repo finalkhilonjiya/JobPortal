@@ -131,7 +131,7 @@ class AuthService {
   required String fullName,
 }) async {
   try {
-    final response = await Supabase.instance.client.auth.signUp(
+    final response = await _client.auth.signUp(
       email: email,
       password: password,
       data: {
@@ -140,49 +140,49 @@ class AuthService {
       },
     );
 
-    print("📤 Supabase signUp() success:");
-    print("user: ${response.user}");
-    print("session: ${response.session}");
+    debugPrint('📤 Supabase signUp() response:');
+    debugPrint('user: ${response.user}');
+    debugPrint('session: ${response.session}');
 
     if (response.session != null || response.user != null) {
       return response;
     }
 
-    throw AppAuthException('Signup failed. Please try again.');
-  } on GoTrueException catch (e) {
-    print("❌ Supabase signUp() error: ${e.message}");
+    throw AppAuthException('Sign-up failed. Please try again.');
+  } on AuthException catch (e) {
+    debugPrint('❌ Sign-up failed: ${e.message}');
     throw AppAuthException(e.message);
-  } catch (e) {
-    print("❌ Unexpected error during signUp: $e");
-    throw AppAuthException('Unexpected error occurred.');
+  } catch (error) {
+    debugPrint('❌ Unexpected error during sign-up: $error');
+    throw AppAuthException('Unexpected error: ${_getErrorMessage(error)}');
   }
 }
   /// Sign in with email/phone and password
-  Future<AuthResponse> signIn({
+Future<AuthResponse> signIn({
   required String email,
   required String password,
 }) async {
   try {
-    final response = await Supabase.instance.client.auth.signInWithPassword(
+    final response = await _client.auth.signInWithPassword(
       email: email,
       password: password,
     );
 
-    print("📥 Supabase signIn() success:");
-    print("user: ${response.user}");
-    print("session: ${response.session}");
+    debugPrint('📥 Supabase signIn() response:');
+    debugPrint('user: ${response.user}');
+    debugPrint('session: ${response.session}');
 
     if (response.session != null) {
       return response;
     }
 
     throw AppAuthException('Login failed. Please try again.');
-  } on GoTrueException catch (e) {
-    print("❌ Supabase signIn() error: ${e.message}");
+  } on AuthException catch (e) {
+    debugPrint('❌ Sign-in failed: ${e.message}');
     throw AppAuthException(e.message);
-  } catch (e) {
-    print("❌ Unexpected error during signIn: $e");
-    throw AppAuthException('Unexpected error occurred.');
+  } catch (error) {
+    debugPrint('❌ Unexpected error during sign-in: $error');
+    throw AppAuthException('Unexpected error: ${_getErrorMessage(error)}');
   }
 }
 
