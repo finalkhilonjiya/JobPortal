@@ -13,8 +13,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController(); // Changed from email to username
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController(); // Email or phone
   final _passwordController = TextEditingController();
   final _authService = AuthService();
 
@@ -45,6 +44,11 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     // Add focus listeners
     _usernameFocusNode.addListener(() => setState(() {}));
     _passwordFocusNode.addListener(() => setState(() {}));
+    
+    // Test Supabase connection on screen load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _testSupabaseConnection();
+    });
   }
 
   void _setupAnimations() {
@@ -141,6 +145,30 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     return null;
   }
 
+  Future<void> _testSupabaseConnection() async {
+    try {
+      debugPrint('🔍 Testing Supabase connection...');
+      
+      // Check if Supabase is initialized
+      final isInitialized = SupabaseService().isInitialized;
+      debugPrint('✅ Supabase initialized: $isInitialized');
+      
+      // Get health status
+      final health = await SupabaseService().getHealthStatus();
+      debugPrint('📊 Health status: $health');
+      
+      // Debug credentials
+      SupabaseService.debugCredentials();
+      
+      // Test a simple query
+      final connected = await SupabaseService().checkConnection();
+      debugPrint('🔗 Connection test: $connected');
+      
+    } catch (e) {
+      debugPrint('❌ Connection test failed: $e');
+    }
+  }
+
   Future<void> _handleLogin() async {
     if (!_isFormValid) return;
 
@@ -154,19 +182,24 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       final username = _usernameController.text.trim();
       final password = _passwordController.text;
 
-      // Use enhanced auth service with username (email/phone) support
+      debugPrint('🔐 Attempting login with username: $username');
+
+      // Use the username (email/phone) from the username controller
       final response = await _authService.signIn(
-  email: _emailController.text,
-password: _passwordController.text,
-);
+        email: username,  // This is correct - using username which can be email or phone
+        password: password,
+      );
 
       if (response.user != null) {
         HapticFeedback.lightImpact();
         setState(() {
           _isLoading = false;
         });
+        
+        _showSuccessSnackBar('Login successful!');
 
         if (mounted) {
+          await Future.delayed(Duration(milliseconds: 500));
           Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
         }
       } else {
@@ -184,6 +217,7 @@ password: _passwordController.text,
       setState(() {
         _isLoading = false;
       });
+      debugPrint('❌ Login error: $error');
       _showErrorSnackBar('Login failed. Please check your credentials.');
     }
   }
@@ -205,7 +239,10 @@ password: _passwordController.text,
           _isLoading = false;
         });
 
+        _showSuccessSnackBar('Google sign-in successful!');
+
         if (mounted) {
+          await Future.delayed(Duration(milliseconds: 500));
           Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
         }
       }
@@ -218,6 +255,7 @@ password: _passwordController.text,
       setState(() {
         _isLoading = false;
       });
+      debugPrint('❌ Google login error: $error');
       _showErrorSnackBar('Google sign-in failed. Please try again.');
     }
   }
@@ -239,7 +277,10 @@ password: _passwordController.text,
           _isLoading = false;
         });
 
+        _showSuccessSnackBar('Facebook sign-in successful!');
+
         if (mounted) {
+          await Future.delayed(Duration(milliseconds: 500));
           Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
         }
       }
@@ -252,6 +293,7 @@ password: _passwordController.text,
       setState(() {
         _isLoading = false;
       });
+      debugPrint('❌ Facebook login error: $error');
       _showErrorSnackBar('Facebook sign-in failed. Please try again.');
     }
   }
@@ -279,7 +321,7 @@ password: _passwordController.text,
               ),
             ],
           ),
-          backgroundColor: AppTheme.getErrorColor(true),
+          backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           margin: EdgeInsets.all(4.w),
           shape: RoundedRectangleBorder(
@@ -314,7 +356,7 @@ password: _passwordController.text,
               ),
             ],
           ),
-          backgroundColor: AppTheme.getSuccessColor(true),
+          backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
           margin: EdgeInsets.all(4.w),
           shape: RoundedRectangleBorder(
@@ -377,7 +419,7 @@ password: _passwordController.text,
               return LinearGradient(
                 colors: [
                   AppTheme.lightTheme.colorScheme.primary,
-                  AppTheme.lightTheme.colorScheme.tertiary,
+                  AppTheme.lightTheme.colorScheme.secondary,
                 ],
               ).createShader(bounds);
             },
@@ -398,7 +440,7 @@ password: _passwordController.text,
             style: TextStyle(
               fontSize: 3.5.w,
               fontWeight: FontWeight.w500,
-              color: AppTheme.getTextSecondaryColor(true),
+              color: Colors.grey[600],
               letterSpacing: 0.5,
             ),
           ),
@@ -408,23 +450,25 @@ password: _passwordController.text,
             style: TextStyle(
               fontSize: 3.w,
               fontWeight: FontWeight.w400,
-              color: AppTheme.getTextSecondaryColor(true),
+              color: Colors.grey[500],
               fontStyle: FontStyle.italic,
             ),
           ),
           SizedBox(height: 3.h),
           Text(
             'Welcome Back!',
-            style: AppTheme.lightTheme.textTheme.headlineSmall?.copyWith(
+            style: TextStyle(
+              fontSize: 6.w,
               fontWeight: FontWeight.w600,
-              color: AppTheme.lightTheme.colorScheme.onSurface,
+              color: Colors.black87,
             ),
           ),
           SizedBox(height: 1.h),
           Text(
             'Sign in to continue to your marketplace',
-            style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-              color: AppTheme.getTextSecondaryColor(true),
+            style: TextStyle(
+              fontSize: 3.5.w,
+              color: Colors.grey[600],
             ),
           ),
         ],
@@ -460,7 +504,7 @@ password: _passwordController.text,
         TextFormField(
           controller: _usernameController,
           focusNode: _usernameFocusNode,
-          keyboardType: TextInputType.emailAddress, // Always use email keyboard for better UX
+          keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
           autocorrect: false,
           enableSuggestions: true,
@@ -472,7 +516,7 @@ password: _passwordController.text,
               padding: EdgeInsets.all(3.w),
               child: Icon(
                 _isEmailInput ? Icons.email_outlined : Icons.phone_outlined,
-                color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                color: Colors.grey[600],
                 size: 5.w,
               ),
             ),
@@ -480,7 +524,7 @@ password: _passwordController.text,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: AppTheme.lightTheme.colorScheme.outline,
+                color: Colors.grey[300]!,
               ),
             ),
             focusedBorder: OutlineInputBorder(
@@ -493,7 +537,7 @@ password: _passwordController.text,
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: AppTheme.getErrorColor(true),
+                color: Colors.red,
                 width: 1,
               ),
             ),
@@ -509,8 +553,9 @@ password: _passwordController.text,
             padding: EdgeInsets.only(left: 3.w),
             child: Text(
               _usernameError!,
-              style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                color: AppTheme.getErrorColor(true),
+              style: TextStyle(
+                fontSize: 3.w,
+                color: Colors.red,
               ),
             ),
           ),
@@ -538,14 +583,14 @@ password: _passwordController.text,
               padding: EdgeInsets.all(3.w),
               child: Icon(
                 Icons.lock_outline,
-                color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                color: Colors.grey[600],
                 size: 5.w,
               ),
             ),
             suffixIcon: IconButton(
               icon: Icon(
                 _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-                color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                color: Colors.grey[600],
                 size: 5.w,
               ),
               onPressed: () {
@@ -558,7 +603,7 @@ password: _passwordController.text,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: AppTheme.lightTheme.colorScheme.outline,
+                color: Colors.grey[300]!,
               ),
             ),
             focusedBorder: OutlineInputBorder(
@@ -571,7 +616,7 @@ password: _passwordController.text,
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: AppTheme.getErrorColor(true),
+                color: Colors.red,
                 width: 1,
               ),
             ),
@@ -589,8 +634,9 @@ password: _passwordController.text,
             padding: EdgeInsets.only(left: 3.w),
             child: Text(
               _passwordError!,
-              style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                color: AppTheme.getErrorColor(true),
+              style: TextStyle(
+                fontSize: 3.w,
+                color: Colors.red,
               ),
             ),
           ),
@@ -610,8 +656,9 @@ password: _passwordController.text,
         },
         child: Text(
           'Forgot Password?',
-          style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-            color: AppTheme.lightTheme.primaryColor,
+          style: TextStyle(
+            fontSize: 3.5.w,
+            color: AppTheme.lightTheme.colorScheme.primary,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -627,8 +674,8 @@ password: _passwordController.text,
         gradient: _isFormValid && !_isLoading
             ? LinearGradient(
                 colors: [
-                  AppTheme.getPrimaryColor(true),
-                  AppTheme.getAccentColor(true),
+                  AppTheme.lightTheme.colorScheme.primary,
+                  AppTheme.lightTheme.colorScheme.secondary,
                 ],
               )
             : null,
@@ -638,10 +685,10 @@ password: _passwordController.text,
         style: ElevatedButton.styleFrom(
           backgroundColor: _isFormValid && !_isLoading
               ? Colors.transparent
-              : AppTheme.lightTheme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3 * 255),
+              : Colors.grey[300],
           foregroundColor: Colors.white,
           elevation: _isFormValid ? 3.0 : 0,
-                      shadowColor: AppTheme.getPrimaryColor(true).withValues(alpha: 0.3 * 255),
+          shadowColor: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -657,7 +704,8 @@ password: _passwordController.text,
               )
             : Text(
                 'Sign In',
-                style: AppTheme.lightTheme.textTheme.titleMedium?.copyWith(
+                style: TextStyle(
+                  fontSize: 4.w,
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
                 ),
@@ -673,7 +721,7 @@ password: _passwordController.text,
           children: [
             Expanded(
               child: Divider(
-                color: AppTheme.lightTheme.colorScheme.outline,
+                color: Colors.grey[300],
                 thickness: 1,
               ),
             ),
@@ -681,14 +729,15 @@ password: _passwordController.text,
               padding: EdgeInsets.symmetric(horizontal: 4.w),
               child: Text(
                 'Or continue with',
-                style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                  color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                style: TextStyle(
+                  fontSize: 3.w,
+                  color: Colors.grey[600],
                 ),
               ),
             ),
             Expanded(
               child: Divider(
-                color: AppTheme.lightTheme.colorScheme.outline,
+                color: Colors.grey[300],
                 thickness: 1,
               ),
             ),
@@ -707,14 +756,15 @@ password: _passwordController.text,
                 ),
                 label: Text(
                   'Google',
-                  style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
+                  style: TextStyle(
+                    fontSize: 3.5.w,
                     color: AppTheme.lightTheme.colorScheme.primary,
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 3.w),
                   side: BorderSide(
-                    color: AppTheme.lightTheme.colorScheme.outline,
+                    color: Colors.grey[300]!,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -733,14 +783,15 @@ password: _passwordController.text,
                 ),
                 label: Text(
                   'Facebook',
-                  style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
+                  style: TextStyle(
+                    fontSize: 3.5.w,
                     color: const Color(0xFF1877F2),
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 3.w),
                   side: BorderSide(
-                    color: AppTheme.lightTheme.colorScheme.outline,
+                    color: Colors.grey[300]!,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -760,7 +811,10 @@ password: _passwordController.text,
       children: [
         Text(
           'Don\'t have an account? ',
-          style: AppTheme.lightTheme.textTheme.bodyMedium,
+          style: TextStyle(
+            fontSize: 3.5.w,
+            color: Colors.grey[600],
+          ),
         ),
         GestureDetector(
           onTap: _isLoading
@@ -771,7 +825,8 @@ password: _passwordController.text,
                 },
           child: Text(
             'Sign Up',
-            style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+            style: TextStyle(
+              fontSize: 3.5.w,
               color: AppTheme.lightTheme.colorScheme.primary,
               fontWeight: FontWeight.w600,
             ),
