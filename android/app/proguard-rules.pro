@@ -48,6 +48,25 @@
     java.lang.Object readResolve();
 }
 
+# Keep our custom classes
+-keep class com.khilonjiya.marketplace.** { *; }
+-keep class com.khilonjiya.marketplace.MemoryOptimizationService { *; }
+-keep class com.khilonjiya.marketplace.MemoryOptimizationReceiver { *; }
+-keep class com.khilonjiya.marketplace.MemoryOptimizationWorker { *; }
+
+# Keep WorkManager classes
+-keep class androidx.work.** { *; }
+-keep class * extends androidx.work.Worker { *; }
+-keep class * extends androidx.work.ListenableWorker { *; }
+
+# Keep notification classes
+-keep class androidx.core.app.** { *; }
+-keep class android.app.** { *; }
+
+# Keep method channel classes
+-keep class io.flutter.plugin.common.** { *; }
+-keep class io.flutter.plugin.common.MethodChannel { *; }
+
 # Keep R classes
 -keep class **.R$* {
     public static <fields>;

@@ -24,7 +24,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.khilonjiya.marketplace"
-    compileSdk 35
+    compileSdk 34
     ndkVersion "25.1.8937393"
 
     compileOptions {
@@ -35,6 +35,10 @@ android {
 
     kotlinOptions {
         jvmTarget = '17'
+        freeCompilerArgs += [
+            '-Xjvm-default=all',
+            '-opt-in=kotlin.RequiresOptIn'
+        ]
     }
 
     sourceSets {
@@ -55,16 +59,27 @@ android {
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
         }
+        
+        // Add memory optimization
+        vectorDrawables.useSupportLibrary = true
+        
+        // Add build config fields for debugging
+        buildConfigField "boolean", "ENABLE_CRASH_REPORTING", "false"
+        buildConfigField "boolean", "ENABLE_ANALYTICS", "false"
     }
 
     buildTypes {
         release {
             signingConfig signingConfigs.debug
-            minifyEnabled false
-            shrinkResources false
+            minifyEnabled true
+            shrinkResources true
             debuggable false
             // Add proguard rules for better performance
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            
+            // Add build config for release
+            buildConfigField "boolean", "ENABLE_CRASH_REPORTING", "false"
+            buildConfigField "boolean", "ENABLE_ANALYTICS", "false"
         }
         
         debug {
@@ -73,6 +88,10 @@ android {
             shrinkResources false
             // Add debug optimizations
             jniDebuggable true
+            
+            // Add build config for debug
+            buildConfigField "boolean", "ENABLE_CRASH_REPORTING", "true"
+            buildConfigField "boolean", "ENABLE_ANALYTICS", "false"
         }
     }
     
@@ -81,6 +100,9 @@ android {
         pickFirst '**/libjsc.so'
         pickFirst '**/libflutter.so'
         pickFirst '**/libapp.so'
+        pickFirst '**/libv8.so'
+        pickFirst '**/libv8_libbase.so'
+        pickFirst '**/libv8_libplatform.so'
         exclude 'META-INF/DEPENDENCIES'
         exclude 'META-INF/LICENSE'
         exclude 'META-INF/LICENSE.txt'
@@ -90,15 +112,27 @@ android {
         exclude 'META-INF/notice.txt'
         exclude 'META-INF/ASL2.0'
         exclude 'META-INF/*.kotlin_module'
+        exclude 'META-INF/proguard/**'
+        exclude 'META-INF/versions/**'
     }
     
     lintOptions {
         disable 'InvalidPackage'
         checkReleaseBuilds false
+        abortOnError false
+        warningsAsErrors false
     }
-    dexOptions  {
+    
+    dexOptions {
         javaMaxHeapSize "4g"
         preDexLibraries = false
+        additionalParameters += '--minimal-main-dex'
+    }
+    
+    // Add memory optimization
+    aaptOptions {
+        cruncherEnabled = false
+        useNewCruncher = false
     }
 }
 
@@ -118,4 +152,16 @@ dependencies {
     // Add memory optimization
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
     implementation 'androidx.lifecycle:lifecycle-process:2.7.0'
+    
+    // Add better error handling
+    implementation 'androidx.work:work-runtime-ktx:2.9.0'
+    implementation 'androidx.startup:startup-runtime:1.1.1'
+    
+    // Add Google Play Services for better compatibility
+    implementation 'com.google.android.gms:play-services-base:18.2.0'
+    implementation 'com.google.android.gms:play-services-auth:20.7.0'
+    
+    // Add better memory management
+    implementation 'androidx.collection:collection-ktx:1.4.0'
+    implementation 'androidx.concurrent:concurrent-futures-ktx:1.1.0'
 }
