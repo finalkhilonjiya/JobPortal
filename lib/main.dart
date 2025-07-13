@@ -1,5 +1,7 @@
 import 'core/app_export.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 // Enhanced Configuration Management
 class AppConfig {
