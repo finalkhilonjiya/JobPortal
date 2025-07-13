@@ -24,6 +24,9 @@ dependencies:
   google_sign_in: ^6.2.1
   flutter_facebook_auth: ^6.1.1
   
+  # Environment Variables (IMPORTANT - Added for Supabase)
+  flutter_dotenv: ^5.1.0
+  
   # Storage & Preferences
   shared_preferences: ^2.2.2
   
@@ -64,6 +67,10 @@ flutter:
   uses-material-design: true
   
   assets:
+    # Environment configuration (IMPORTANT - Added for Supabase)
+    - .env
+    
+    # App assets
     - assets/images/
     - assets/icons/
     - assets/fonts/
