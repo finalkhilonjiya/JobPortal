@@ -7,8 +7,6 @@ import 'dart:io';
 import '../../core/app_export.dart';
 import '../../routes/app_routes.dart';
 import '../../theme/app_theme.dart';
-import '../../utils/auth_service.dart';
-import '../../widgets/custom_icon_widget.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({Key? key}) : super(key: key);
@@ -24,11 +22,13 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _fullNameController = TextEditingController(); // Added for full name
 
   final _emailFocusNode = FocusNode();
   final _phoneFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
   final _confirmPasswordFocusNode = FocusNode();
+  final _fullNameFocusNode = FocusNode(); // Added for full name
 
   final _authService = AuthService();
   final _imagePicker = ImagePicker();
@@ -90,6 +90,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     _phoneController.addListener(_validateForm);
     _passwordController.addListener(_validateForm);
     _confirmPasswordController.addListener(_validateForm);
+    _fullNameController.addListener(_validateForm);
   }
 
   void _validateForm() {
@@ -100,7 +101,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
   bool _isFormValid() {
     return _emailController.text.trim().isNotEmpty &&
-           _phoneController.text.trim().isNotEmpty &&
+           _fullNameController.text.trim().isNotEmpty &&
            _passwordController.text.isNotEmpty &&
            _confirmPasswordController.text.isNotEmpty &&
            _passwordController.text == _confirmPasswordController.text &&
@@ -115,8 +116,14 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     return null;
   }
 
+  String? _validateFullName(String? value) {
+    if (value == null || value.isEmpty) return 'Full name is required';
+    if (value.length < 2) return 'Name must be at least 2 characters';
+    return null;
+  }
+
   String? _validatePhone(String? value) {
-    if (value == null || value.isEmpty) return 'Phone number is required';
+    if (value == null || value.isEmpty) return null; // Phone is optional
     final cleaned = value.replaceAll(RegExp(r'[^\d]'), '');
     if (cleaned.length < 10) return 'Please enter a valid phone number';
     return null;
@@ -159,7 +166,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
-          color: AppTheme.lightTheme.colorScheme.surface,
+          color: Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: SafeArea(
@@ -171,7 +178,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                 height: 4,
                 margin: EdgeInsets.only(top: 2.h),
                 decoration: BoxDecoration(
-                  color: AppTheme.lightTheme.colorScheme.outline,
+                  color: Colors.grey[300],
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -181,7 +188,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   children: [
                     Text(
                       'Select Profile Photo',
-                      style: AppTheme.lightTheme.textTheme.titleLarge,
+                      style: TextStyle(
+                        fontSize: 5.w,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     SizedBox(height: 3.h),
                     Row(
@@ -245,10 +255,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 4.w),
         decoration: BoxDecoration(
-          color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 26),
+          color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 77),
+            color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
             width: 1,
           ),
         ),
@@ -262,7 +272,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             SizedBox(height: 1.h),
             Text(
               label,
-              style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
+              style: TextStyle(
+                fontSize: 3.5.w,
                 color: AppTheme.lightTheme.colorScheme.primary,
               ),
             ),
@@ -283,22 +294,24 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
     try {
       final email = _emailController.text.trim();
-      final phone = _phoneController.text.trim();
+      final fullName = _fullNameController.text.trim();
       final password = _passwordController.text;
 
-      // Use email as username for Supabase
+      debugPrint('📤 Attempting registration with email: $email');
+
+      // Use email and full name for Supabase
       final response = await _authService.signUp(
-  email: email,
-  password: password,
-  fullName: email.split('@')[0],
-);
+        email: email,
+        password: password,
+        fullName: fullName,
+      );
 
       if (response.user != null) {
         // Upload profile image if selected
         // (Profile picture upload temporarily disabled)
         // if (_profileImage != null) {
         //   try {
-        //     await _authService.uploadProfilePicture(_profileImage!);
+        //     await UserProfileService().uploadProfilePicture(_profileImage!);
         //   } catch (e) {
         //     debugPrint('Profile picture upload failed: $e');
         //     // Continue registration even if profile picture upload fails
@@ -306,9 +319,16 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         // }
 
         HapticFeedback.lightImpact();
-        _showSuccessSnackBar('Registration successful! Please verify your email.');
+        
+        // Check if email verification is required
+        if (response.session == null) {
+          _showSuccessSnackBar('Registration successful! Please check your email to verify your account.');
+        } else {
+          _showSuccessSnackBar('Registration successful!');
+        }
         
         if (mounted) {
+          await Future.delayed(Duration(seconds: 2));
           Navigator.pushReplacementNamed(context, AppRoutes.loginScreen);
         }
       }
@@ -321,6 +341,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       setState(() {
         _errorMessage = 'Registration failed. Please try again.';
       });
+      debugPrint('❌ Registration error: $error');
       _showErrorSnackBar('Registration failed. Please try again.');
     } finally {
       setState(() {
@@ -377,10 +398,12 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _fullNameController.dispose();
     _emailFocusNode.dispose();
     _phoneFocusNode.dispose();
     _passwordFocusNode.dispose();
     _confirmPasswordFocusNode.dispose();
+    _fullNameFocusNode.dispose();
     super.dispose();
   }
 
@@ -419,6 +442,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       _buildRegistrationForm(),
                       SizedBox(height: 3.h),
                       _buildTermsCheckbox(),
+                      if (_errorMessage.isNotEmpty) ...[
+                        SizedBox(height: 2.h),
+                        _buildErrorMessage(),
+                      ],
                       SizedBox(height: 3.h),
                       _buildRegisterButton(),
                       SizedBox(height: 2.h),
@@ -440,7 +467,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       children: [
         Text(
           'Create Account',
-          style: AppTheme.lightTheme.textTheme.headlineMedium?.copyWith(
+          style: TextStyle(
+            fontSize: 7.w,
             fontWeight: FontWeight.bold,
             color: AppTheme.lightTheme.colorScheme.primary,
           ),
@@ -448,8 +476,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         SizedBox(height: 1.h),
         Text(
           'Join our marketplace community',
-          style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
-            color: AppTheme.getTextSecondaryColor(true),
+          style: TextStyle(
+            fontSize: 4.w,
+            color: Colors.grey[600],
           ),
         ),
       ],
@@ -466,9 +495,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
             height: 25.w,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppTheme.lightTheme.colorScheme.surface,
+              color: Colors.grey[100],
               border: Border.all(
-                color: AppTheme.lightTheme.colorScheme.outline,
+                color: Colors.grey[300]!,
                 width: 2,
               ),
             ),
@@ -483,7 +512,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   )
                 : Icon(
                     Icons.add_a_photo,
-                    color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                    color: Colors.grey[400],
                     size: 32,
                   ),
           ),
@@ -493,7 +522,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           onTap: _showImagePickerBottomSheet,
           child: Text(
             _profileImage != null ? 'Change Photo' : 'Add Profile Photo',
-            style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
+            style: TextStyle(
+              fontSize: 3.5.w,
               color: AppTheme.lightTheme.colorScheme.primary,
             ),
           ),
@@ -501,7 +531,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         SizedBox(height: 0.5.h),
         Text(
           'Optional - helps build trust',
-          style: AppTheme.lightTheme.textTheme.bodySmall,
+          style: TextStyle(
+            fontSize: 3.w,
+            color: Colors.grey[500],
+          ),
           textAlign: TextAlign.center,
         ),
       ],
@@ -513,6 +546,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       key: _formKey,
       child: Column(
         children: [
+          _buildFullNameField(),
+          SizedBox(height: 2.h),
           _buildEmailField(),
           SizedBox(height: 2.h),
           _buildPhoneField(),
@@ -522,6 +557,28 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           _buildConfirmPasswordField(),
         ],
       ),
+    );
+  }
+
+  Widget _buildFullNameField() {
+    return TextFormField(
+      controller: _fullNameController,
+      focusNode: _fullNameFocusNode,
+      keyboardType: TextInputType.name,
+      textInputAction: TextInputAction.next,
+      textCapitalization: TextCapitalization.words,
+      decoration: InputDecoration(
+        labelText: 'Full Name',
+        hintText: 'Enter your full name',
+        prefixIcon: Icon(Icons.person_outline),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppTheme.lightTheme.colorScheme.primary, width: 2),
+        ),
+      ),
+      validator: _validateFullName,
+      onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_emailFocusNode),
     );
   }
 
@@ -554,7 +611,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       keyboardType: TextInputType.phone,
       textInputAction: TextInputAction.next,
       decoration: InputDecoration(
-        labelText: 'Phone Number',
+        labelText: 'Phone Number (Optional)',
         hintText: 'Enter your phone number',
         prefixIcon: Icon(Icons.phone_outlined),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -631,12 +688,44 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           activeColor: AppTheme.lightTheme.colorScheme.primary,
         ),
         Expanded(
-          child: Text(
-            'I agree to the Terms of Service and Privacy Policy',
-            style: AppTheme.lightTheme.textTheme.bodyMedium,
+          child: GestureDetector(
+            onTap: () => setState(() => _acceptTerms = !_acceptTerms),
+            child: Text(
+              'I agree to the Terms of Service and Privacy Policy',
+              style: TextStyle(
+                fontSize: 3.5.w,
+                color: Colors.grey[700],
+              ),
+            ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildErrorMessage() {
+    return Container(
+      padding: EdgeInsets.all(3.w),
+      decoration: BoxDecoration(
+        color: Colors.red[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red[200]!),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: Colors.red, size: 20),
+          SizedBox(width: 2.w),
+          Expanded(
+            child: Text(
+              _errorMessage,
+              style: TextStyle(
+                fontSize: 3.w,
+                color: Colors.red[700],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -646,7 +735,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       style: ElevatedButton.styleFrom(
         backgroundColor: AppTheme.lightTheme.colorScheme.primary,
         foregroundColor: Colors.white,
-        padding: EdgeInsets.symmetric(vertical: 4.h),
+        padding: EdgeInsets.symmetric(vertical: 4.w),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 2,
       ),
@@ -662,7 +751,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           : Text(
               'Create Account',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 4.w,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -675,13 +764,17 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       children: [
         Text(
           'Already have an account? ',
-          style: AppTheme.lightTheme.textTheme.bodyMedium,
+          style: TextStyle(
+            fontSize: 3.5.w,
+            color: Colors.grey[600],
+          ),
         ),
         GestureDetector(
           onTap: () => Navigator.pushReplacementNamed(context, AppRoutes.loginScreen),
           child: Text(
             'Sign In',
-            style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+            style: TextStyle(
+              fontSize: 3.5.w,
               color: AppTheme.lightTheme.colorScheme.primary,
               fontWeight: FontWeight.w600,
             ),
