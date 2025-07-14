@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 import 'package:geolocator/geolocator.dart';
+import 'dart:math' as math;
 
 import '../../core/app_export.dart';
 import '../../routes/app_routes.dart';
@@ -30,48 +31,130 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
   // Animation Controllers
   late AnimationController _headerAnimationController;
   late AnimationController _listAnimationController;
+  late AnimationController _floatingButtonController;
+  late AnimationController _searchBarController;
   late Animation<double> _headerFadeAnimation;
   late Animation<Offset> _listSlideAnimation;
+  late Animation<double> _floatingButtonAnimation;
+  late Animation<double> _searchBarAnimation;
+  
+  // Advanced Animation Controllers
+  late AnimationController _refreshAnimationController;
+  late Animation<double> _refreshRotationAnimation;
+  
   // Scroll and Loading States
   late ScrollController _scrollController;
+  double _scrollOffset = 0.0;
   bool _isLoading = false;
   bool _isRefreshing = false;
   bool _isLoadingCategories = false;
   bool _isLoadingLocation = false;
   bool _showBackToTop = false;
   bool _showSearch = false;
+  bool _hasMoreListings = true;
   String _searchQuery = '';
   Map<String, dynamic> _activeFilters = {};
   bool _useGpsLocation = false;
   Position? _currentPosition;
   double _selectedDistance = 5.0;
+  
+  // View Mode
+  enum ViewMode { grid, list, card }
+  ViewMode _viewMode = ViewMode.list;
+  
   // Navigation and Selection States
   int _currentIndex = 0;
   String _selectedCategory = 'All';
   String _selectedLocation = 'Detect Location';
   Set<String> _favoriteListings = {};
+  
   // Data Collections
   List<Map<String, dynamic>> _listings = [];
   List<Map<String, dynamic>> _categories = [];
   List<Map<String, dynamic>> _trendingListings = [];
+  List<Map<String, dynamic>> _recentlyViewed = [];
+  List<Map<String, dynamic>> _recommendedListings = [];
+  
   // Services
   final CategoryService _categoryService = CategoryService();
   final ListingService _listingService = ListingService();
   final FavoriteService _favoriteService = FavoriteService();
   final AuthService _authService = AuthService();
-  // Enhanced Categories for khilonjiya.com marketplace
+  
+  // Enhanced Categories with gradient colors
   final List<Map<String, dynamic>> _defaultCategories = [
-    {'id': 'all', 'name': 'All', 'icon': 'apps', 'color': '0xFF6366F1'},
-    {'id': 'electronics', 'name': 'Electronics', 'icon': 'devices', 'color': '0xFF3B82F6'},
-    {'id': 'fashion', 'name': 'Fashion', 'icon': 'checkroom', 'color': '0xFFEC4899'},
-    {'id': 'jobs', 'name': 'Jobs', 'icon': 'work', 'color': '0xFF10B981'},
-    {'id': 'automotive', 'name': 'Vehicles', 'icon': 'directions_car', 'color': '0xFFF59E0B'},
-    {'id': 'furniture', 'name': 'Furniture', 'icon': 'chair', 'color': '0xFF8B5CF6'},
-    {'id': 'books', 'name': 'Books', 'icon': 'menu_book', 'color': '0xFF06B6D4'},
-    {'id': 'sports', 'name': 'Sports', 'icon': 'sports_soccer', 'color': '0xFFF97316'},
-    {'id': 'food', 'name': 'Food', 'icon': 'restaurant', 'color': '0xFFEF4444'},
-    {'id': 'services', 'name': 'Services', 'icon': 'handyman', 'color': '0xFF84CC16'},
+    {
+      'id': 'all', 
+      'name': 'All', 
+      'icon': 'apps', 
+      'color': '0xFF6366F1',
+      'gradientColors': ['0xFF6366F1', '0xFF8B5CF6']
+    },
+    {
+      'id': 'electronics', 
+      'name': 'Electronics', 
+      'icon': 'devices', 
+      'color': '0xFF3B82F6',
+      'gradientColors': ['0xFF3B82F6', '0xFF1D4ED8']
+    },
+    {
+      'id': 'fashion', 
+      'name': 'Fashion', 
+      'icon': 'checkroom', 
+      'color': '0xFFEC4899',
+      'gradientColors': ['0xFFEC4899', '0xFFDB2777']
+    },
+    {
+      'id': 'jobs', 
+      'name': 'Jobs', 
+      'icon': 'work', 
+      'color': '0xFF10B981',
+      'gradientColors': ['0xFF10B981', '0xFF059669']
+    },
+    {
+      'id': 'automotive', 
+      'name': 'Vehicles', 
+      'icon': 'directions_car', 
+      'color': '0xFFF59E0B',
+      'gradientColors': ['0xFFF59E0B', '0xFFD97706']
+    },
+    {
+      'id': 'furniture', 
+      'name': 'Furniture', 
+      'icon': 'chair', 
+      'color': '0xFF8B5CF6',
+      'gradientColors': ['0xFF8B5CF6', '0xFF7C3AED']
+    },
+    {
+      'id': 'books', 
+      'name': 'Books', 
+      'icon': 'menu_book', 
+      'color': '0xFF06B6D4',
+      'gradientColors': ['0xFF06B6D4', '0xFF0891B2']
+    },
+    {
+      'id': 'sports', 
+      'name': 'Sports', 
+      'icon': 'sports_soccer', 
+      'color': '0xFFF97316',
+      'gradientColors': ['0xFFF97316', '0xFFEA580C']
+    },
+    {
+      'id': 'food', 
+      'name': 'Food', 
+      'icon': 'restaurant', 
+      'color': '0xFFEF4444',
+      'gradientColors': ['0xFFEF4444', '0xFFDC2626']
+    },
+    {
+      'id': 'services', 
+      'name': 'Services', 
+      'icon': 'handyman', 
+      'color': '0xFF84CC16',
+      'gradientColors': ['0xFF84CC16', '0xFF65A30D']
+    },
   ];
+  
   final List<String> _defaultLocations = [
     'Detect Location',
     'Guwahati, Assam',
@@ -83,6 +166,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
     'Bongaigaon, Assam',
     'Sivasagar, Assam',
   ];
+
   @override
   void initState() {
     super.initState();
@@ -93,13 +177,29 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
   }
 
   void _setupAnimations() {
+    // Header Animation
     _headerAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
     
     _listAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    
+    _floatingButtonController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    
+    _searchBarController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    
+    _refreshAnimationController = AnimationController(
+      duration: const Duration(seconds: 2),
       vsync: this,
     );
     
@@ -119,28 +219,59 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
       curve: Curves.easeOutCubic,
     ));
     
+    _floatingButtonAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _floatingButtonController,
+      curve: Curves.elasticOut,
+    ));
+    
+    _searchBarAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _searchBarController,
+      curve: Curves.easeInOutCubic,
+    ));
+    
+    _refreshRotationAnimation = Tween<double>(
+      begin: 0.0,
+      end: 2 * math.pi,
+    ).animate(CurvedAnimation(
+      parent: _refreshAnimationController,
+      curve: Curves.linear,
+    ));
+    
     // Start animations
     _headerAnimationController.forward();
     Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) _listAnimationController.forward();
+      if (mounted) {
+        _listAnimationController.forward();
+        _floatingButtonController.forward();
+      }
     });
   }
 
   void _setupScrollController() {
     _scrollController = ScrollController();
-    _scrollController.addListener(_onScroll);
     _scrollController.addListener(() {
       setState(() {
+        _scrollOffset = _scrollController.offset;
         _showBackToTop = _scrollController.offset > 500;
       });
+      
+      // Load more when reaching the end
+      if (_scrollController.position.pixels >= 
+          _scrollController.position.maxScrollExtent - 200) {
+        _loadMoreListings();
+      }
     });
   }
 
   Future<void> _requestLocationPermission() async {
     try {
-      setState(() {
-        _isLoadingLocation = true;
-      });
+      setState(() => _isLoadingLocation = true);
 
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -153,7 +284,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
       } else {
         setState(() {
           _useGpsLocation = false;
-          _selectedLocation = 'Guwahati, Assam'; // Default to Guwahati
+          _selectedLocation = 'Guwahati, Assam';
         });
       }
     } catch (e) {
@@ -163,9 +294,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
         _selectedLocation = 'Guwahati, Assam';
       });
     } finally {
-      setState(() {
-        _isLoadingLocation = false;
-      });
+      setState(() => _isLoadingLocation = false);
     }
   }
 
@@ -190,27 +319,24 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
     }
   }
 
-
-Future<void> _loadInitialData() async {
+  Future<void> _loadInitialData() async {
     await Future.wait([
       _loadCategories(),
       _loadTrendingListings(),
       _loadListings(),
       _loadFavorites(),
+      _loadRecommendedListings(),
     ]);
   }
 
   Future<void> _loadCategories() async {
     try {
-      setState(() {
-        _isLoadingCategories = true;
-      });
+      setState(() => _isLoadingCategories = true);
 
       final categories = await _categoryService.getMainCategories();
       
       setState(() {
         _categories = _defaultCategories.map((defaultCat) {
-          // Try to find matching category from service
           final serverCat = categories.firstWhere(
             (cat) => cat['name'].toString().toLowerCase() == 
                      defaultCat['name'].toString().toLowerCase(),
@@ -218,10 +344,8 @@ Future<void> _loadInitialData() async {
           );
           
           return {
+            ...defaultCat,
             'id': serverCat?['id'] ?? defaultCat['id'],
-            'name': defaultCat['name'],
-            'icon': defaultCat['icon'],
-            'color': defaultCat['color'],
             'count': serverCat?['listing_count'] ?? 0,
           };
         }).toList();
@@ -241,27 +365,36 @@ Future<void> _loadInitialData() async {
 
   Future<void> _loadTrendingListings() async {
     try {
-      final trending = await _listingService.getTrendingListings(limit: 5);
+      final trending = await _listingService.getTrendingListings(limit: 8);
       setState(() {
         _trendingListings = trending.map((listing) => _formatListing(listing)).toList();
       });
     } catch (error) {
       debugPrint('❌ Failed to load trending listings: $error');
+      setState(() => _trendingListings = []);
+    }
+  }
+
+  Future<void> _loadRecommendedListings() async {
+    try {
+      // This would ideally use user preferences and history
+      final recommended = await _listingService.getActiveListings(limit: 6);
       setState(() {
-        _trendingListings = [];
+        _recommendedListings = recommended.map((listing) => _formatListing(listing)).toList();
       });
+    } catch (error) {
+      debugPrint('❌ Failed to load recommended listings: $error');
     }
   }
 
   Future<void> _loadListings() async {
+    if (_isLoading) return;
+    
     try {
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
       List<Map<String, dynamic>> listings;
       
-      // Apply distance filter if GPS location is available
       if (_useGpsLocation && _currentPosition != null) {
         listings = await _listingService.getNearbyListings(
           latitude: _currentPosition!.latitude,
@@ -285,7 +418,7 @@ Future<void> _loadInitialData() async {
         }
       }
 
-      // Apply search filter if active
+      // Apply search filter
       if (_searchQuery.isNotEmpty) {
         listings = listings.where((listing) {
           final title = listing['title'].toString().toLowerCase();
@@ -295,8 +428,12 @@ Future<void> _loadInitialData() async {
         }).toList();
       }
 
+      // Apply advanced filters
+      listings = _applyAdvancedFilters(listings);
+
       setState(() {
         _listings = listings.map((listing) => _formatListing(listing)).toList();
+        _hasMoreListings = listings.length >= 20;
         _isLoading = false;
       });
     } catch (error) {
@@ -306,6 +443,30 @@ Future<void> _loadInitialData() async {
       });
       debugPrint('❌ Failed to load listings: $error');
     }
+  }
+
+  List<Map<String, dynamic>> _applyAdvancedFilters(List<Map<String, dynamic>> listings) {
+    if (_activeFilters.isEmpty) return listings;
+    
+    return listings.where((listing) {
+      // Price filter
+      if (_activeFilters['minPrice'] != null || _activeFilters['maxPrice'] != null) {
+        final price = double.tryParse(listing['price'].toString()) ?? 0;
+        final minPrice = _activeFilters['minPrice'] ?? 0;
+        final maxPrice = _activeFilters['maxPrice'] ?? double.infinity;
+        if (price < minPrice || price > maxPrice) return false;
+      }
+      
+      // Condition filter
+      if (_activeFilters['condition'] != null && 
+          listing['condition'] != _activeFilters['condition']) {
+        return false;
+      }
+      
+      // Sort by filter (applied after filtering)
+      
+      return true;
+    }).toList();
   }
 
   Map<String, dynamic> _formatListing(Map<String, dynamic> listing) {
@@ -321,13 +482,13 @@ Future<void> _loadInitialData() async {
         _currentPosition!.longitude,
         listing['latitude'].toDouble(),
         listing['longitude'].toDouble(),
-      ) / 1000; // Convert to kilometers
+      ) / 1000;
     }
 
     return {
       'id': listing['id'],
       'title': listing['title'],
-      'price': '\$${listing['price']}',
+      'price': '₹${listing['price']}',
       'location': listing['location'] ?? 'Unknown Location',
       'timePosted': _formatTimeAgo(DateTime.parse(listing['created_at'])),
       'imageUrl': firstImage,
@@ -341,7 +502,26 @@ Future<void> _loadInitialData() async {
       'description': listing['description'],
       'latitude': listing['latitude'],
       'longitude': listing['longitude'],
+      'rating': listing['rating'] ?? 4.5,
+      'isVerified': listing['is_verified'] ?? false,
     };
+  }
+
+  String _formatTimeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inDays > 30) {
+      return '${(difference.inDays / 30).floor()} month${(difference.inDays / 30).floor() > 1 ? 's' : ''} ago';
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
+    } else {
+      return 'Just now';
+    }
   }
 
   Future<void> _loadFavorites() async {
@@ -361,82 +541,11 @@ Future<void> _loadInitialData() async {
     }
   }
 
-  String _formatTimeAgo(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
-    } else {
-      return 'Just now';
-    }
-  }
-
-  List<Map<String, dynamic>> _getMockListings() {
-    return [
-      {
-        "id": "1",
-        "title": "iPhone 14 Pro Max - Excellent Condition",
-        "price": "₹89,999",
-        "location": "Fancy Bazar, Guwahati",
-        "timePosted": "2 hours ago",
-        "imageUrl": "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&h=300&fit=crop",
-        "category": "Electronics",
-        "isSponsored": true,
-        "isFavorite": false,
-        "distance": 2.5,
-        "condition": "excellent",
-        "seller": {"phone_number": "+918638527410"},
-      },
-      {
-        "id": "2",
-        "title": "Assamese Traditional Mekhela Chador",
-        "price": "₹12,500",
-        "location": "Paltan Bazar, Guwahati",
-        "timePosted": "4 hours ago",
-        "imageUrl": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400&h=300&fit=crop",
-        "category": "Fashion",
-        "isSponsored": false,
-        "isFavorite": false,
-        "distance": 1.8,
-        "condition": "new",
-        "seller": {"phone_number": null},
-      },
-      {
-        "id": "3",
-        "title": "Software Developer - Remote Work",
-        "price": "₹8,50,000/year",
-        "location": "Guwahati, Assam",
-        "timePosted": "6 hours ago",
-        "imageUrl": "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=300&fit=crop",
-        "category": "Jobs",
-        "isSponsored": false,
-        "isFavorite": true,
-        "distance": 0.5,
-        "condition": "new",
-        "seller": {"phone_number": "+919876543210"},
-      },
-    ];
-  }
-
-
-void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      _loadMoreListings();
-    }
-  }
-
   Future<void> _refreshListings() async {
     if (_isRefreshing) return;
 
-    setState(() {
-      _isRefreshing = true;
-    });
+    setState(() => _isRefreshing = true);
+    _refreshAnimationController.repeat();
 
     HapticFeedback.lightImpact();
     
@@ -445,19 +554,18 @@ void _onScroll() {
       _loadTrendingListings(),
       _loadListings(),
       _loadFavorites(),
+      _loadRecommendedListings(),
     ]);
 
-    setState(() {
-      _isRefreshing = false;
-    });
+    _refreshAnimationController.stop();
+    _refreshAnimationController.reset();
+    setState(() => _isRefreshing = false);
   }
 
   Future<void> _loadMoreListings() async {
-    if (_isLoading) return;
+    if (_isLoading || !_hasMoreListings) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       List<Map<String, dynamic>> moreListings;
@@ -499,12 +607,11 @@ void _onScroll() {
 
       setState(() {
         _listings.addAll(moreListings.map((listing) => _formatListing(listing)));
+        _hasMoreListings = moreListings.length >= 10;
         _isLoading = false;
       });
     } catch (error) {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
       debugPrint('❌ Failed to load more listings: $error');
     }
   }
@@ -518,44 +625,60 @@ void _onScroll() {
         return;
       }
 
-      if (_favoriteListings.contains(listingId.toString())) {
-        await _favoriteService.removeFavorite(listingId);
-        setState(() {
-          _favoriteListings.remove(listingId.toString());
-        });
-        _showSnackBar('Removed from favorites', Icons.favorite_border);
-      } else {
-        await _favoriteService.addFavorite(listingId);
-        setState(() {
-          _favoriteListings.add(listingId.toString());
-        });
-        _showSnackBar('Added to favorites', Icons.favorite, isSuccess: true);
-      }
-
-      // Update the listing's favorite status in the lists
       setState(() {
-        final index = _listings.indexWhere((listing) => listing['id'] == listingId);
-        if (index != -1) {
-          _listings[index]['isFavorite'] = _favoriteListings.contains(listingId.toString());
-        }
-        
-        final trendingIndex = _trendingListings.indexWhere((listing) => listing['id'] == listingId);
-        if (trendingIndex != -1) {
-          _trendingListings[trendingIndex]['isFavorite'] = _favoriteListings.contains(listingId.toString());
+        if (_favoriteListings.contains(listingId.toString())) {
+          _favoriteListings.remove(listingId.toString());
+        } else {
+          _favoriteListings.add(listingId.toString());
         }
       });
+
+      // Update the listing's favorite status
+      _updateListingFavoriteStatus(listingId);
+
+      // Make API call
+      if (_favoriteListings.contains(listingId.toString())) {
+        await _favoriteService.addFavorite(listingId);
+        _showAnimatedSnackBar('Added to favorites', Icons.favorite, isSuccess: true);
+      } else {
+        await _favoriteService.removeFavorite(listingId);
+        _showAnimatedSnackBar('Removed from favorites', Icons.favorite_border);
+      }
     } catch (error) {
+      // Revert on error
+      setState(() {
+        if (_favoriteListings.contains(listingId.toString())) {
+          _favoriteListings.remove(listingId.toString());
+        } else {
+          _favoriteListings.add(listingId.toString());
+        }
+      });
+      _updateListingFavoriteStatus(listingId);
+      
       debugPrint('❌ Failed to toggle favorite: $error');
-      _showSnackBar('Failed to update favorite', Icons.error, isError: true);
+      _showAnimatedSnackBar('Failed to update favorite', Icons.error, isError: true);
     }
+  }
+
+  void _updateListingFavoriteStatus(String listingId) {
+    setState(() {
+      final updateListing = (List<Map<String, dynamic>> list) {
+        final index = list.indexWhere((listing) => listing['id'] == listingId);
+        if (index != -1) {
+          list[index]['isFavorite'] = _favoriteListings.contains(listingId.toString());
+        }
+      };
+      
+      updateListing(_listings);
+      updateListing(_trendingListings);
+      updateListing(_recommendedListings);
+    });
   }
 
   void _onCategorySelected(String category) {
     if (_selectedCategory == category) return;
     
-    setState(() {
-      _selectedCategory = category;
-    });
+    setState(() => _selectedCategory = category);
     
     HapticFeedback.lightImpact();
     _loadListings();
@@ -577,9 +700,7 @@ void _onScroll() {
   }
 
   void _onDistanceChanged(double distance) {
-    setState(() {
-      _selectedDistance = distance;
-    });
+    setState(() => _selectedDistance = distance);
     
     if (_useGpsLocation) {
       _loadListings();
@@ -587,9 +708,7 @@ void _onScroll() {
   }
 
   void _onSearchChanged(String query) {
-    setState(() {
-      _searchQuery = query;
-    });
+    setState(() => _searchQuery = query);
     
     // Debounce search
     Future.delayed(const Duration(milliseconds: 500), () {
@@ -604,11 +723,31 @@ void _onScroll() {
       _showSearch = !_showSearch;
       if (!_showSearch) {
         _searchQuery = '';
+        _searchBarController.reverse();
         _loadListings();
+      } else {
+        _searchBarController.forward();
       }
     });
     
     HapticFeedback.lightImpact();
+  }
+
+  void _toggleViewMode() {
+    HapticFeedback.lightImpact();
+    setState(() {
+      switch (_viewMode) {
+        case ViewMode.list:
+          _viewMode = ViewMode.grid;
+          break;
+        case ViewMode.grid:
+          _viewMode = ViewMode.card;
+          break;
+        case ViewMode.card:
+          _viewMode = ViewMode.list;
+          break;
+      }
+    });
   }
 
   void _showAdvancedFilters() {
@@ -634,61 +773,36 @@ void _onScroll() {
 
   void _onListingTap(Map<String, dynamic> listing) {
     HapticFeedback.lightImpact();
-    Navigator.pushNamed(context, AppRoutes.listingDetail, arguments: listing);
-  }
-
-  void _onListingLongPress(Map<String, dynamic> listing) {
-    HapticFeedback.mediumImpact();
-    _showQuickActions(listing);
-  }
-
-  void _showQuickActions(Map<String, dynamic> listing) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => QuickActionWidget(
-        listing: listing,
-        onShare: () => _shareListing(listing),
-        onReport: () => _reportListing(listing),
-        onHide: () => _hideListing(listing),
-      ),
-    );
-  }
-
-  void _shareListing(Map<String, dynamic> listing) {
-    // Implement share functionality
-    _showSnackBar('Share functionality coming soon!', Icons.share);
-  }
-
-  void _reportListing(Map<String, dynamic> listing) {
-    // Implement report functionality
-    _showSnackBar('Listing reported', Icons.flag, isSuccess: true);
-  }
-
-  void _hideListing(Map<String, dynamic> listing) {
+    
+    // Add to recently viewed
     setState(() {
-      _listings.removeWhere((item) => item['id'] == listing['id']);
+      _recentlyViewed.removeWhere((item) => item['id'] == listing['id']);
+      _recentlyViewed.insert(0, listing);
+      if (_recentlyViewed.length > 10) {
+        _recentlyViewed = _recentlyViewed.take(10).toList();
+      }
     });
-    _showSnackBar('Listing hidden', Icons.visibility_off);
+    
+    Navigator.pushNamed(context, AppRoutes.listingDetail, arguments: listing);
   }
 
   void _scrollToTop() {
     HapticFeedback.lightImpact();
     _scrollController.animateTo(
       0,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeInOutCubic,
     );
   }
 
-  void _showSnackBar(String message, IconData icon, {bool isSuccess = false, bool isError = false}) {
+  void _showAnimatedSnackBar(String message, IconData icon, {bool isSuccess = false, bool isError = false}) {
     if (!mounted) return;
     
     Color backgroundColor;
     if (isSuccess) {
-      backgroundColor = AppTheme.getSuccessColor(true);
+      backgroundColor = Colors.green.shade600;
     } else if (isError) {
-      backgroundColor = AppTheme.lightTheme.colorScheme.error;
+      backgroundColor = Colors.red.shade600;
     } else {
       backgroundColor = AppTheme.lightTheme.colorScheme.primary;
     }
@@ -699,244 +813,530 @@ void _onScroll() {
           children: [
             Icon(icon, color: Colors.white, size: 20),
             SizedBox(width: 2.w),
-            Expanded(child: Text(message)),
+            Expanded(child: Text(message, style: const TextStyle(color: Colors.white))),
           ],
         ),
         backgroundColor: backgroundColor,
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.all(4.w),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         duration: const Duration(seconds: 2),
+        animation: CurvedAnimation(
+          parent: ModalRoute.of(context)!.animation!,
+          curve: Curves.elasticOut,
+        ),
       ),
     );
   }
 
-  List<Map<String, dynamic>> get _filteredListings {
-    return _listings;
+  List<Map<String, dynamic>> _getMockListings() {
+    return [
+      {
+        "id": "1",
+        "title": "iPhone 14 Pro Max - Excellent Condition",
+        "price": "₹89,999",
+        "location": "Fancy Bazar, Guwahati",
+        "timePosted": "2 hours ago",
+        "imageUrl": "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&h=300&fit=crop",
+        "category": "Electronics",
+        "isSponsored": true,
+        "isFavorite": false,
+        "distance": 2.5,
+        "condition": "excellent",
+        "seller": {"phone_number": "+918638527410"},
+        "rating": 4.8,
+        "isVerified": true,
+      },
+      {
+        "id": "2",
+        "title": "Assamese Traditional Mekhela Chador",
+        "price": "₹12,500",
+        "location": "Paltan Bazar, Guwahati",
+        "timePosted": "4 hours ago",
+        "imageUrl": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400&h=300&fit=crop",
+        "category": "Fashion",
+        "isSponsored": false,
+        "isFavorite": false,
+        "distance": 1.8,
+        "condition": "new",
+        "seller": {"phone_number": null},
+        "rating": 4.5,
+        "isVerified": false,
+      },
+      {
+        "id": "3",
+        "title": "Software Developer - Remote Work",
+        "price": "₹8,50,000/year",
+        "location": "Guwahati, Assam",
+        "timePosted": "6 hours ago",
+        "imageUrl": "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=300&fit=crop",
+        "category": "Jobs",
+        "isSponsored": false,
+        "isFavorite": true,
+        "distance": 0.5,
+        "condition": "new",
+        "seller": {"phone_number": "+919876543210"},
+        "rating": 5.0,
+        "isVerified": true,
+      },
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _refreshListings,
-          child: CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              SliverToBoxAdapter(
-                child: _buildEnhancedHeader(),
+        child: Stack(
+          children: [
+            // Background gradient
+            Container(
+              height: 30.h,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 26),
+                    AppTheme.lightTheme.colorScheme.secondary.withValues(alpha: 26),
+                  ],
+                ),
               ),
-              // Trending Section
-              if (_trendingListings.isNotEmpty)
-                SliverToBoxAdapter(
-                  child: TrendingSectionWidget(
-                    trendingListings: _trendingListings,
-                    onListingTap: _onListingTap,
-                    onFavoriteTap: _toggleFavorite,
+            ),
+            
+            RefreshIndicator(
+              onRefresh: _refreshListings,
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // Enhanced App Bar
+                  SliverAppBar(
+                    expandedHeight: _showSearch ? 22.h : 18.h,
+                    floating: true,
+                    pinned: true,
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    flexibleSpace: FlexibleSpaceBar(
+                      background: _buildEnhancedHeader(),
+                    ),
+                  ),
+                  
+                  // Categories Section
+                  SliverToBoxAdapter(
+                    child: _buildCategoriesSection(),
+                  ),
+                  
+                  // Trending Section
+                  if (_trendingListings.isNotEmpty)
+                    SliverToBoxAdapter(
+                      child: _buildTrendingSection(),
+                    ),
+                  
+                  // Recommended For You Section
+                  if (_recommendedListings.isNotEmpty)
+                    SliverToBoxAdapter(
+                      child: _buildRecommendedSection(),
+                    ),
+                  
+                  // Listings Header
+                  SliverToBoxAdapter(
+                    child: _buildListingsHeader(),
+                  ),
+                  
+                  // Listings Grid/List
+                  _buildListingsSection(),
+                  
+                  // Bottom padding
+                  SliverToBoxAdapter(
+                    child: SizedBox(height: 12.h),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Back to Top Button
+            if (_showBackToTop)
+              Positioned(
+                right: 4.w,
+                bottom: 12.h,
+                child: AnimatedScale(
+                  scale: _showBackToTop ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: FloatingActionButton.small(
+                    heroTag: "backToTop",
+                    onPressed: _scrollToTop,
+                    backgroundColor: Colors.white,
+                    elevation: 8,
+                    child: Icon(
+                      Icons.keyboard_arrow_up,
+                      color: AppTheme.lightTheme.colorScheme.primary,
+                    ),
                   ),
                 ),
-              // Listings
-              _filteredListings.isEmpty && !_isLoading
-                  ? SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: _buildEmptyState(),
-                    )
-                  : SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          if (index >= _filteredListings.length) {
-                            return _isLoading ? _buildLoadingIndicator() : null;
-                          }
-                          final listing = _filteredListings[index];
-                          final isFavorite = _favoriteListings.contains(listing['id'].toString());
-                          return CompactListingCardWidget(
-                            listing: listing,
-                            isFavorite: isFavorite,
-                            onTap: () => _onListingTap(listing),
-                            onLongPress: () => _onListingLongPress(listing),
-                            onFavoriteTap: () => _toggleFavorite(listing['id'].toString()),
-                            showDistance: _useGpsLocation,
-                          );
-                        },
-                        childCount: _filteredListings.length + (_isLoading ? 1 : 0),
-                      ),
-                    ),
-              // Bottom padding
-              SliverToBoxAdapter(
-                child: SizedBox(height: 10.h),
               ),
-            ],
+          ],
+        ),
+      ),
+      bottomNavigationBar: _buildModernBottomNav(),
+      floatingActionButton: AnimatedBuilder(
+        animation: _floatingButtonAnimation,
+        builder: (context, child) => Transform.scale(
+          scale: _floatingButtonAnimation.value,
+          child: FloatingActionButton.extended(
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.pushNamed(context, AppRoutes.createListing);
+            },
+            backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+            icon: const Icon(Icons.add, color: Colors.white),
+            label: const Text(
+              'Sell',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ),
       ),
-      bottomNavigationBar: _buildEnhancedBottomNav(),
-      floatingActionButton: _showBackToTop
-          ? FloatingActionButton.small(
-              onPressed: _scrollToTop,
-              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-              child: const Icon(Icons.keyboard_arrow_up, color: Colors.white),
-            )
-          : FloatingActionButton(
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                Navigator.pushNamed(context, AppRoutes.createListing);
-              },
-              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-              child: const Icon(Icons.add, color: Colors.white, size: 28),
-            ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
   Widget _buildEnhancedHeader() {
     return Container(
-      color: AppTheme.lightTheme.colorScheme.surface,
-      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+      padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 0),
       child: Column(
         children: [
-          // Top Row - Location, Search, Notifications
+          // Logo and Actions Row
           Row(
             children: [
-              Expanded(
-                child: EnhancedLocationSelectorWidget(
-                  selectedLocation: _selectedLocation,
-                  locations: _defaultLocations,
-                  isLoading: _isLoadingLocation,
-                  useGpsLocation: _useGpsLocation,
-                  onLocationChanged: _onLocationChanged,
+              // Logo
+              Text(
+                'khilonjiya',
+                style: TextStyle(
+                  fontSize: 24.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.lightTheme.colorScheme.primary,
                 ),
               ),
-              SizedBox(width: 3.w),
+              const Spacer(),
               
-              // Search Toggle Button
-              GestureDetector(
-                onTap: _toggleSearch,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: EdgeInsets.all(2.5.w),
-                  decoration: BoxDecoration(
-                    color: _showSearch 
-                        ? AppTheme.lightTheme.colorScheme.primary
-                        : AppTheme.lightTheme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    _showSearch ? Icons.close : Icons.search,
-                    color: _showSearch 
-                        ? Colors.white
-                        : AppTheme.lightTheme.colorScheme.primary,
-                    size: 24,
-                  ),
-                ),
+              // View Mode Toggle
+              _buildAnimatedIconButton(
+                icon: _viewMode == ViewMode.list 
+                    ? Icons.view_list 
+                    : _viewMode == ViewMode.grid 
+                    ? Icons.grid_view 
+                    : Icons.view_agenda,
+                onTap: _toggleViewMode,
               ),
               
               SizedBox(width: 2.w),
               
-              // Notifications Button
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  // TODO: Implement notifications screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Notifications feature coming soon!'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
-                child: Container(
-                  padding: EdgeInsets.all(2.5.w),
-                  decoration: BoxDecoration(
-                    color: AppTheme.lightTheme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Stack(
-                    children: [
-                      Icon(
-                        Icons.notifications_outlined,
-                        color: AppTheme.lightTheme.colorScheme.primary,
-                        size: 24,
-                      ),
-                      // Notification badge
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: AppTheme.lightTheme.colorScheme.error,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              // Search Toggle
+              _buildAnimatedIconButton(
+                icon: _showSearch ? Icons.close : Icons.search,
+                onTap: _toggleSearch,
+                isActive: _showSearch,
               ),
+              
+              SizedBox(width: 2.w),
+              
+              // Notifications
+              _buildNotificationButton(),
             ],
           ),
           
-          // Search Bar (when active)
-          if (_showSearch) ...[
-            SizedBox(height: 2.h),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-              decoration: BoxDecoration(
-                color: AppTheme.lightTheme.colorScheme.primaryContainer.withValues(alpha: 77),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 77),
-                  width: 1,
+          SizedBox(height: 2.h),
+          
+          // Location Selector
+          _buildLocationSelector(),
+          
+          // Animated Search Bar
+          if (_showSearch)
+            AnimatedBuilder(
+              animation: _searchBarAnimation,
+              builder: (context, child) => Transform.scale(
+                scaleY: _searchBarAnimation.value,
+                alignment: Alignment.topCenter,
+                child: Opacity(
+                  opacity: _searchBarAnimation.value,
+                  child: Container(
+                    margin: EdgeInsets.only(top: 2.h),
+                    child: _buildSearchBar(),
+                  ),
                 ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnimatedIconButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    bool isActive = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.all(2.5.w),
+        decoration: BoxDecoration(
+          color: isActive 
+              ? AppTheme.lightTheme.colorScheme.primary
+              : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 26),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(
+          icon,
+          color: isActive 
+              ? Colors.white
+              : AppTheme.lightTheme.colorScheme.primary,
+          size: 20,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationButton() {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        // Navigate to notifications
+      },
+      child: Container(
+        padding: EdgeInsets.all(2.5.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 26),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            Icon(
+              Icons.notifications_outlined,
+              color: AppTheme.lightTheme.colorScheme.primary,
+              size: 20,
+            ),
+            // Notification badge with animation
+            Positioned(
+              right: 0,
+              top: 0,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.red.withValues(alpha: 102),
+                      blurRadius: 4,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationSelector() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.5.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 13),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.location_on,
+            color: AppTheme.lightTheme.colorScheme.primary,
+            size: 20,
+          ),
+          SizedBox(width: 2.w),
+          Expanded(
+            child: Text(
+              _selectedLocation,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14.sp,
+              ),
+            ),
+          ),
+          if (_isLoadingLocation)
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppTheme.lightTheme.colorScheme.primary,
+              ),
+            )
+          else
+            Icon(
+              Icons.keyboard_arrow_down,
+              color: AppTheme.lightTheme.colorScheme.primary,
+              size: 20,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 13),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.search,
+            color: AppTheme.lightTheme.colorScheme.primary,
+            size: 20,
+          ),
+          SizedBox(width: 3.w),
+          Expanded(
+            child: TextField(
+              onChanged: _onSearchChanged,
+              decoration: InputDecoration(
+                hintText: 'Search products, services, jobs...',
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(vertical: 1.5.h),
+              ),
+              style: TextStyle(fontSize: 14.sp),
+              autofocus: true,
+            ),
+          ),
+          if (_searchQuery.isNotEmpty)
+            GestureDetector(
+              onTap: () {
+                setState(() => _searchQuery = '');
+                _loadListings();
+              },
+              child: Icon(
+                Icons.clear,
+                color: Colors.grey,
+                size: 20,
+              ),
+            ),
+          SizedBox(width: 2.w),
+          GestureDetector(
+            onTap: _showAdvancedFilters,
+            child: Container(
+              padding: EdgeInsets.all(2.w),
+              decoration: BoxDecoration(
+                color: AppTheme.lightTheme.colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
                   Icon(
-                    Icons.search,
+                    Icons.tune,
                     color: AppTheme.lightTheme.colorScheme.primary,
-                    size: 20,
+                    size: 16,
                   ),
-                  SizedBox(width: 3.w),
-                  Expanded(
-                    child: TextField(
-                      onChanged: _onSearchChanged,
-                      decoration: InputDecoration(
-                        hintText: 'Search in khilonjiya.com...',
-                        border: InputBorder.none,
-                        hintStyle: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      style: AppTheme.lightTheme.textTheme.bodyMedium,
-                      autofocus: true,
-                    ),
-                  ),
-                  if (_activeFilters.isNotEmpty)
+                  if (_activeFilters.isNotEmpty) ...[
+                    SizedBox(width: 1.w),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
+                      padding: EdgeInsets.symmetric(horizontal: 1.5.w, vertical: 0.2.h),
                       decoration: BoxDecoration(
                         color: AppTheme.lightTheme.colorScheme.primary,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         '${_activeFilters.length}',
-                        style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                        style: TextStyle(
                           color: Colors.white,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
+                  ],
                 ],
               ),
             ),
-          ],
-          
-          SizedBox(height: 2.h),
-          
-          // Enhanced Categories Section
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoriesSection() {
+    return Container(
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 1.h),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Categories',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    // Navigate to all categories
+                  },
+                  child: Text(
+                    'See All',
+                    style: TextStyle(
+                      color: AppTheme.lightTheme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           SizedBox(
-            height: 12.h, // Increased height for prominent look
+            height: 14.h,
             child: _isLoadingCategories
                 ? Center(
                     child: CircularProgressIndicator(
@@ -946,191 +1346,1156 @@ void _onScroll() {
                 : ListView.builder(
                     scrollDirection: Axis.horizontal,
                     physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.symmetric(horizontal: 4.w),
                     itemCount: _categories.length,
                     itemBuilder: (context, index) {
+                      final category = _categories[index];
+                      final isSelected = _selectedCategory == category['name'];
+                      
                       return Padding(
                         padding: EdgeInsets.only(right: 3.w),
-                        child: EnhancedCategoryChipWidget(
-                          category: _categories[index],
-                          isSelected: _selectedCategory == _categories[index]['name'],
-                          onTap: () => _onCategorySelected(_categories[index]['name']),
-                        ),
+                        child: _buildModernCategoryChip(category, isSelected),
                       );
                     },
                   ),
           ),
-          
-          // Distance Filter (when GPS is active)
-          if (_useGpsLocation && _currentPosition != null) ...[
-            SizedBox(height: 1.h),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-              decoration: BoxDecoration(
-                color: AppTheme.lightTheme.colorScheme.secondaryContainer.withValues(alpha: 77),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.location_on,
-                    color: AppTheme.lightTheme.colorScheme.primary,
-                    size: 16,
-                  ),
-                  SizedBox(width: 2.w),
-                  Text(
-                    'Within ${_selectedDistance.toInt()} km',
-                    style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: _showAdvancedFilters,
-                    child: Text(
-                      'Change',
-                      style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                        color: AppTheme.lightTheme.colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          SizedBox(height: 2.h),
         ],
       ),
     );
   }
 
+  Widget _buildModernCategoryChip(Map<String, dynamic> category, bool isSelected) {
+    final gradientColors = category['gradientColors'] as List<String>;
+    
+    return GestureDetector(
+      onTap: () => _onCategorySelected(category['name']),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        width: 25.w,
+        padding: EdgeInsets.all(2.w),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: gradientColors.map((c) => Color(int.parse(c))).toList(),
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isSelected ? null : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected 
+                ? Colors.transparent 
+                : Colors.grey.shade300,
+            width: 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Color(int.parse(gradientColors.first)).withValues(alpha: 102),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.all(2.5.w),
+              decoration: BoxDecoration(
+                color: isSelected 
+                    ? Colors.white.withValues(alpha: 51)
+                    : Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                IconData(
+                  _getIconCode(category['icon']),
+                  fontFamily: 'MaterialIcons',
+                ),
+                color: isSelected 
+                    ? Colors.white 
+                    : Color(int.parse(category['color'])),
+                size: 24,
+              ),
+            ),
+            SizedBox(height: 1.h),
+            Text(
+              category['name'],
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.black87,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                fontSize: 11.sp,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (category['count'] != null && category['count'] > 0)
+              Text(
+                '${category['count']}',
+                style: TextStyle(
+                  color: isSelected 
+                      ? Colors.white.withValues(alpha: 204)
+                      : Colors.grey,
+                  fontSize: 9.sp,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 
-Widget _buildEnhancedBottomNav() {
+  int _getIconCode(String iconName) {
+    const iconMap = {
+      'apps': 0xe01b,
+      'devices': 0xe1b1,
+      'checkroom': 0xf19e,
+      'work': 0xe8f9,
+      'directions_car': 0xe1d7,
+      'chair': 0xf1f3,
+      'menu_book': 0xe86e,
+      'sports_soccer': 0xea27,
+      'restaurant': 0xe56c,
+      'handyman': 0xf10b,
+    };
+    return iconMap[iconName] ?? 0xe01b;
+  }
+
+  Widget _buildTrendingSection() {
+    return Container(
+      margin: EdgeInsets.only(top: 2.h),
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 1.h),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(1.5.w),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.trending_up,
+                    color: Colors.orange,
+                    size: 16,
+                  ),
+                ),
+                SizedBox(width: 2.w),
+                Text(
+                  'Trending Now',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 28.h,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.symmetric(horizontal: 4.w),
+              itemCount: _trendingListings.length,
+              itemBuilder: (context, index) {
+                final listing = _trendingListings[index];
+                return _buildTrendingCard(listing);
+              },
+            ),
+          ),
+          SizedBox(height: 2.h),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTrendingCard(Map<String, dynamic> listing) {
+    return GestureDetector(
+      onTap: () => _onListingTap(listing),
+      child: Container(
+        width: 50.w,
+        margin: EdgeInsets.only(right: 3.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 13),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image with gradient overlay
+            Stack(
+              children: [
+                Container(
+                  height: 18.h,
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    image: DecorationImage(
+                      image: NetworkImage(listing['imageUrl']),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 2.w,
+                  right: 2.w,
+                  child: GestureDetector(
+                    onTap: () => _toggleFavorite(listing['id'].toString()),
+                    child: Container(
+                      padding: EdgeInsets.all(1.5.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 51),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        listing['isFavorite'] ? Icons.favorite : Icons.favorite_border,
+                        color: listing['isFavorite'] ? Colors.red : Colors.grey,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+                if (listing['isSponsored'])
+                  Positioned(
+                    top: 2.w,
+                    left: 2.w,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Colors.orange, Colors.deepOrange],
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'FEATURED',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 8.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            Padding(
+              padding: EdgeInsets.all(3.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    listing['title'],
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12.sp,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 0.5.h),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on_outlined, size: 12, color: Colors.grey),
+                      SizedBox(width: 1.w),
+                      Expanded(
+                        child: Text(
+                          listing['location'],
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 10.sp,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 1.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        listing['price'],
+                        style: TextStyle(
+                          color: AppTheme.lightTheme.colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                      if (listing['rating'] != null)
+                        Row(
+                          children: [
+                            Icon(Icons.star, size: 12, color: Colors.orange),
+                            SizedBox(width: 0.5.w),
+                            Text(
+                              listing['rating'].toString(),
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecommendedSection() {
+    return Container(
+      margin: EdgeInsets.only(top: 2.h),
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 1.h),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(1.5.w),
+                  decoration: BoxDecoration(
+                    color: Colors.purple.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.auto_awesome,
+                    color: Colors.purple,
+                    size: 16,
+                  ),
+                ),
+                SizedBox(width: 2.w),
+                Text(
+                  'Recommended For You',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            height: 15.h,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.symmetric(horizontal: 4.w),
+              itemCount: _recommendedListings.length,
+              itemBuilder: (context, index) {
+                final listing = _recommendedListings[index];
+                return _buildRecommendedCard(listing);
+              },
+            ),
+          ),
+          SizedBox(height: 2.h),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecommendedCard(Map<String, dynamic> listing) {
+    return GestureDetector(
+      onTap: () => _onListingTap(listing),
+      child: Container(
+        width: 70.w,
+        margin: EdgeInsets.only(right: 3.w),
+        padding: EdgeInsets.all(3.w),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.purple.shade50,
+              Colors.purple.shade100,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.purple.shade200,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 20.w,
+              height: 20.w,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                image: DecorationImage(
+                  image: NetworkImage(listing['imageUrl']),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            SizedBox(width: 3.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    listing['title'],
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12.sp,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 0.5.h),
+                  Text(
+                    listing['price'],
+                    style: TextStyle(
+                      color: Colors.purple,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.sp,
+                    ),
+                  ),
+                  SizedBox(height: 0.5.h),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on_outlined, size: 12, color: Colors.grey),
+                      SizedBox(width: 1.w),
+                      Expanded(
+                        child: Text(
+                          listing['location'],
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 10.sp,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildListingsHeader() {
+    return Container(
+      color: Colors.white,
+      padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 2.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'All Listings',
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Row(
+            children: [
+              if (_activeFilters.isNotEmpty)
+                Container(
+                  margin: EdgeInsets.only(right: 2.w),
+                  padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
+                  decoration: BoxDecoration(
+                    color: AppTheme.lightTheme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.filter_alt,
+                        size: 14,
+                        color: AppTheme.lightTheme.colorScheme.primary,
+                      ),
+                      SizedBox(width: 1.w),
+                      Text(
+                        '${_activeFilters.length} Active',
+                        style: TextStyle(
+                          color: AppTheme.lightTheme.colorScheme.primary,
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              Text(
+                '${_listings.length} Results',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12.sp,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListingsSection() {
+    if (_listings.isEmpty && !_isLoading) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: _buildEmptyState(),
+      );
+    }
+
+    switch (_viewMode) {
+      case ViewMode.grid:
+        return SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: 4.w),
+          sliver: SliverGrid(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.75,
+              crossAxisSpacing: 3.w,
+              mainAxisSpacing: 3.w,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                if (index >= _listings.length) {
+                  return _isLoading ? _buildLoadingCard() : null;
+                }
+                return _buildGridListingCard(_listings[index]);
+              },
+              childCount: _listings.length + (_isLoading ? 2 : 0),
+            ),
+          ),
+        );
+      
+      case ViewMode.card:
+        return SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              if (index >= _listings.length) {
+                return _isLoading ? _buildLoadingIndicator() : null;
+              }
+              return _buildEnhancedListingCard(_listings[index]);
+            },
+            childCount: _listings.length + (_isLoading ? 1 : 0),
+          ),
+        );
+      
+      case ViewMode.list:
+      default:
+        return SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              if (index >= _listings.length) {
+                return _isLoading ? _buildLoadingIndicator() : null;
+              }
+              return _buildModernListingCard(_listings[index]);
+            },
+            childCount: _listings.length + (_isLoading ? 1 : 0),
+          ),
+        );
+    }
+  }
+
+  Widget _buildGridListingCard(Map<String, dynamic> listing) {
+    return GestureDetector(
+      onTap: () => _onListingTap(listing),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 13),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                Container(
+                  height: 20.h,
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    image: DecorationImage(
+                      image: NetworkImage(listing['imageUrl']),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 2.w,
+                  right: 2.w,
+                  child: GestureDetector(
+                    onTap: () => _toggleFavorite(listing['id'].toString()),
+                    child: Container(
+                      padding: EdgeInsets.all(1.5.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        listing['isFavorite'] ? Icons.favorite : Icons.favorite_border,
+                        color: listing['isFavorite'] ? Colors.red : Colors.grey,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: EdgeInsets.all(3.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    listing['title'],
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11.sp,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 1.h),
+                  Text(
+                    listing['price'],
+                    style: TextStyle(
+                      color: AppTheme.lightTheme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13.sp,
+                    ),
+                  ),
+                  SizedBox(height: 0.5.h),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on_outlined, size: 12, color: Colors.grey),
+                      SizedBox(width: 1.w),
+                      Expanded(
+                        child: Text(
+                          listing['location'],
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 9.sp,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModernListingCard(Map<String, dynamic> listing) {
+    return GestureDetector(
+      onTap: () => _onListingTap(listing),
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 13),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Stack(
+              children: [
+                Container(
+                  width: 30.w,
+                  height: 30.w,
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+                    image: DecorationImage(
+                      image: NetworkImage(listing['imageUrl']),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                if (listing['isVerified'])
+                  Positioned(
+                    bottom: 1.w,
+                    left: 1.w,
+                    child: Container(
+                      padding: EdgeInsets.all(1.w),
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.verified,
+                        color: Colors.white,
+                        size: 14,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(3.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            listing['title'],
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13.sp,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => _toggleFavorite(listing['id'].toString()),
+                          child: Icon(
+                            listing['isFavorite'] ? Icons.favorite : Icons.favorite_border,
+                            color: listing['isFavorite'] ? Colors.red : Colors.grey,
+                            size: 20,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 0.5.h),
+                    Text(
+                      listing['price'],
+                      style: TextStyle(
+                        color: AppTheme.lightTheme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15.sp,
+                      ),
+                    ),
+                    SizedBox(height: 0.5.h),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
+                        SizedBox(width: 1.w),
+                        Expanded(
+                          child: Text(
+                            listing['location'],
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 11.sp,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (_useGpsLocation && listing['distance'] != null)
+                          Text(
+                            '${listing['distance'].toStringAsFixed(1)} km',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 11.sp,
+                            ),
+                          ),
+                      ],
+                    ),
+                    SizedBox(height: 0.5.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          listing['timePosted'],
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 10.sp,
+                          ),
+                        ),
+                        if (listing['views_count'] != null)
+                          Row(
+                            children: [
+                              Icon(Icons.remove_red_eye_outlined, size: 12, color: Colors.grey),
+                              SizedBox(width: 0.5.w),
+                              Text(
+                                '${listing['views_count']}',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 10.sp,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEnhancedListingCard(Map<String, dynamic> listing) {
+    return GestureDetector(
+      onTap: () => _onListingTap(listing),
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 13),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                Container(
+                  height: 25.h,
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    image: DecorationImage(
+                      image: NetworkImage(listing['imageUrl']),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 3.w,
+                  left: 3.w,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 153),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      listing['category'],
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 3.w,
+                  right: 3.w,
+                  child: GestureDetector(
+                    onTap: () => _toggleFavorite(listing['id'].toString()),
+                    child: Container(
+                      padding: EdgeInsets.all(2.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 51),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        listing['isFavorite'] ? Icons.favorite : Icons.favorite_border,
+                        color: listing['isFavorite'] ? Colors.red : Colors.grey,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: EdgeInsets.all(4.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    listing['title'],
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16.sp,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 1.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        listing['price'],
+                        style: TextStyle(
+                          color: AppTheme.lightTheme.colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18.sp,
+                        ),
+                      ),
+                      if (listing['condition'] != null)
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
+                          decoration: BoxDecoration(
+                            color: _getConditionColor(listing['condition']).withValues(alpha: 51),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            listing['condition'].toString().toUpperCase(),
+                            style: TextStyle(
+                              color: _getConditionColor(listing['condition']),
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: 1.h),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on_outlined, size: 16, color: Colors.grey),
+                      SizedBox(width: 1.w),
+                      Expanded(
+                        child: Text(
+                          listing['location'],
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12.sp,
+                          ),
+                        ),
+                      ),
+                      if (_useGpsLocation && listing['distance'] != null)
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.near_me, size: 12, color: Colors.blue),
+                              SizedBox(width: 0.5.w),
+                              Text(
+                                '${listing['distance'].toStringAsFixed(1)} km',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: 1.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.access_time, size: 14, color: Colors.grey),
+                          SizedBox(width: 1.w),
+                          Text(
+                            listing['timePosted'],
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 11.sp,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          if (listing['views_count'] != null) ...[
+                            Icon(Icons.remove_red_eye_outlined, size: 14, color: Colors.grey),
+                            SizedBox(width: 0.5.w),
+                            Text(
+                              '${listing['views_count']} views',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 11.sp,
+                              ),
+                            ),
+                          ],
+                          if (listing['rating'] != null) ...[
+                            SizedBox(width: 3.w),
+                            Icon(Icons.star, size: 14, color: Colors.orange),
+                            SizedBox(width: 0.5.w),
+                            Text(
+                              listing['rating'].toString(),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 11.sp,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getConditionColor(String condition) {
+    switch (condition.toLowerCase()) {
+      case 'new':
+        return Colors.green;
+      case 'excellent':
+        return Colors.blue;
+      case 'good':
+        return Colors.orange;
+      case 'fair':
+        return Colors.grey;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Widget _buildModernBottomNav() {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.lightTheme.colorScheme.surface,
+        color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: AppTheme.lightTheme.colorScheme.shadow.withValues(alpha: 26),
-            blurRadius: 12,
-            offset: const Offset(0, -4),
+            color: Colors.black.withValues(alpha: 13),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
           ),
         ],
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
         ),
       ),
       child: ClipRRect(
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.transparent,
-          selectedItemColor: AppTheme.lightTheme.colorScheme.primary,
-          unselectedItemColor: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-          selectedLabelStyle: AppTheme.lightTheme.textTheme.labelSmall?.copyWith(
-            fontWeight: FontWeight.w600,
+        child: BottomAppBar(
+          color: Colors.transparent,
+          elevation: 0,
+          notchMargin: 8.0,
+          shape: const CircularNotchedRectangle(),
+          child: Container(
+            height: 8.h,
+            padding: EdgeInsets.symmetric(horizontal: 4.w),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildNavItem(0, Icons.home, 'Home'),
+                _buildNavItem(1, Icons.search, 'Search'),
+                const SizedBox(width: 56), // Space for FAB
+                _buildNavItem(3, Icons.chat_bubble_outline, 'Messages', hasNotification: true),
+                _buildNavItem(4, Icons.person_outline, 'Profile'),
+              ],
+            ),
           ),
-          unselectedLabelStyle: AppTheme.lightTheme.textTheme.labelSmall?.copyWith(
-            fontWeight: FontWeight.w400,
-          ),
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
+        ),
+      ),
+    );
+  }
 
-            HapticFeedback.lightImpact();
-
-            switch (index) {
-              case 0:
-                // Already on Home
-                break;
-              case 1:
-                Navigator.pushNamed(context, AppRoutes.searchAndFilters);
-                break;
-              case 2:
-                Navigator.pushNamed(context, AppRoutes.createListing);
-                break;
-              case 3:
-                Navigator.pushNamed(context, AppRoutes.chatMessaging);
-                break;
-              case 4:
-                Navigator.pushNamed(context, AppRoutes.userProfile);
-                break;
-            }
-          },
-          items: [
-            BottomNavigationBarItem(
-              icon: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: EdgeInsets.all(1.w),
-                decoration: BoxDecoration(
-                  color: _currentIndex == 0
-                      ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 26)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  _currentIndex == 0 ? Icons.home : Icons.home_outlined,
-                  size: 24,
-                ),
+  Widget _buildNavItem(int index, IconData icon, String label, {bool hasNotification = false}) {
+    final isSelected = _currentIndex == index;
+    
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        setState(() => _currentIndex = index);
+        
+        switch (index) {
+          case 1:
+            Navigator.pushNamed(context, AppRoutes.searchAndFilters);
+            break;
+          case 3:
+            Navigator.pushNamed(context, AppRoutes.chatMessaging);
+            break;
+          case 4:
+            Navigator.pushNamed(context, AppRoutes.userProfile);
+            break;
+        }
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: EdgeInsets.all(2.w),
+              decoration: BoxDecoration(
+                color: isSelected 
+                    ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 26)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
               ),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: EdgeInsets.all(1.w),
-                decoration: BoxDecoration(
-                  color: _currentIndex == 1
-                      ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 26)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  _currentIndex == 1 ? Icons.search : Icons.search_outlined,
-                  size: 24,
-                ),
-              ),
-              label: 'Search',
-            ),
-            BottomNavigationBarItem(
-              icon: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: EdgeInsets.all(1.w),
-                decoration: BoxDecoration(
-                  color: _currentIndex == 2
-                      ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 26)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  _currentIndex == 2 ? Icons.add_circle : Icons.add_circle_outline,
-                  size: 24,
-                ),
-              ),
-              label: 'Sell',
-            ),
-            BottomNavigationBarItem(
-              icon: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: EdgeInsets.all(1.w),
-                decoration: BoxDecoration(
-                  color: _currentIndex == 3
-                      ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 26)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Stack(
-                  children: [
-                    Icon(
-                      _currentIndex == 3 ? Icons.chat : Icons.chat_outlined,
-                      size: 24,
-                    ),
-                    // Unread message badge
+              child: Stack(
+                children: [
+                  Icon(
+                    isSelected ? icon : icon,
+                    color: isSelected 
+                        ? AppTheme.lightTheme.colorScheme.primary 
+                        : Colors.grey,
+                    size: 24,
+                  ),
+                  if (hasNotification)
                     Positioned(
                       right: 0,
                       top: 0,
@@ -1138,32 +2503,24 @@ Widget _buildEnhancedBottomNav() {
                         width: 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: AppTheme.lightTheme.colorScheme.error,
+                          color: Colors.red,
                           shape: BoxShape.circle,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                ],
               ),
-              label: 'Messages',
             ),
-            BottomNavigationBarItem(
-              icon: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: EdgeInsets.all(1.w),
-                decoration: BoxDecoration(
-                  color: _currentIndex == 4
-                      ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 26)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  _currentIndex == 4 ? Icons.person : Icons.person_outlined,
-                  size: 24,
-                ),
+            SizedBox(height: 0.5.h),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected 
+                    ? AppTheme.lightTheme.colorScheme.primary 
+                    : Colors.grey,
+                fontSize: 10.sp,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               ),
-              label: 'Profile',
             ),
           ],
         ),
@@ -1173,42 +2530,49 @@ Widget _buildEnhancedBottomNav() {
 
   Widget _buildEmptyState() {
     return Center(
-      child: Padding(
+      child: Container(
         padding: EdgeInsets.all(8.w),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 80,
-              height: 80,
+              width: 120,
+              height: 120,
               decoration: BoxDecoration(
-                color: AppTheme.lightTheme.colorScheme.primaryContainer,
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.lightTheme.colorScheme.primaryContainer,
+                    AppTheme.lightTheme.colorScheme.secondaryContainer,
+                  ],
+                ),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.search_off,
-                size: 40,
+                size: 60,
                 color: AppTheme.lightTheme.colorScheme.primary,
               ),
             ),
-            SizedBox(height: 3.h),
+            SizedBox(height: 4.h),
             Text(
               'No listings found',
-              style: AppTheme.lightTheme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w600,
+              style: TextStyle(
+                fontSize: 20.sp,
+                fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: 1.h),
             Text(
               _searchQuery.isNotEmpty
                   ? 'No results found for "$_searchQuery"'
-                  : 'Try adjusting your location or category filters',
-              style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-                color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                  : 'Try adjusting your filters or search in a different category',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 14.sp,
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 3.h),
+            SizedBox(height: 4.h),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -1224,6 +2588,12 @@ Widget _buildEnhancedBottomNav() {
                   },
                   icon: const Icon(Icons.refresh),
                   label: const Text('Reset Filters'),
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
                 SizedBox(width: 3.w),
                 ElevatedButton.icon(
@@ -1231,7 +2601,13 @@ Widget _buildEnhancedBottomNav() {
                     Navigator.pushNamed(context, AppRoutes.createListing);
                   },
                   icon: const Icon(Icons.add),
-                  label: const Text('Add Listing'),
+                  label: const Text('Create Listing'),
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -1244,17 +2620,46 @@ Widget _buildEnhancedBottomNav() {
   Widget _buildLoadingIndicator() {
     return Container(
       padding: EdgeInsets.all(4.w),
+      child: Center(
+        child: CircularProgressIndicator(
+          color: AppTheme.lightTheme.colorScheme.primary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
-            color: AppTheme.lightTheme.colorScheme.primary,
+          Container(
+            height: 20.h,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            ),
           ),
-          SizedBox(height: 2.h),
-          Text(
-            'Loading more listings...',
-            style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-              color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+          Padding(
+            padding: EdgeInsets.all(3.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 2.h,
+                  width: double.infinity,
+                  color: Colors.grey.shade300,
+                ),
+                SizedBox(height: 1.h),
+                Container(
+                  height: 2.h,
+                  width: 20.w,
+                  color: Colors.grey.shade300,
+                ),
+              ],
             ),
           ),
         ],
@@ -1266,6 +2671,9 @@ Widget _buildEnhancedBottomNav() {
   void dispose() {
     _headerAnimationController.dispose();
     _listAnimationController.dispose();
+    _floatingButtonController.dispose();
+    _searchBarController.dispose();
+    _refreshAnimationController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
