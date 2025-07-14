@@ -543,7 +543,7 @@ void initState() {
                     SizedBox(
                       height: 100,
                       child: SvgPicture.asset(
-                        'assets/images/logo_full_assamese.svg',
+                        'assets/images/logo_k.svg',
                       ),
                     ),
                     const SizedBox(height: 32),

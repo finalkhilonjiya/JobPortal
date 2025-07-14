@@ -418,7 +418,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           SizedBox(
             height: 80,
             child: SvgPicture.asset(
-              'assets/images/logo_full_assamese.svg',
+              'assets/images/logo_k.svg',
             ),
           ),
           SizedBox(height: 1.h),
