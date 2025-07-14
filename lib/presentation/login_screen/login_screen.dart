@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/app_export.dart';
 
@@ -327,7 +328,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          duration: Duration(seconds: 4),
+          duration: Duration(milliseconds: 1500),
         ),
       );
     }
@@ -362,7 +363,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          duration: Duration(seconds: 3),
+          duration: Duration(milliseconds: 1500),
         ),
       );
     }
@@ -413,30 +414,17 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       opacity: _logoFadeAnimation,
       child: Column(
         children: [
-          // Khilonjiya.com logo text
-          ShaderMask(
-            shaderCallback: (Rect bounds) {
-              return LinearGradient(
-                colors: [
-                  AppTheme.lightTheme.colorScheme.primary,
-                  AppTheme.lightTheme.colorScheme.secondary,
-                ],
-              ).createShader(bounds);
-            },
-            child: Text(
-              'khilonjiya.com',
-              style: TextStyle(
-                fontSize: 8.w,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-                letterSpacing: 1.2,
-              ),
+          // New khilonjiya.com logo
+          SizedBox(
+            height: 80,
+            child: SvgPicture.asset(
+              'assets/images/logo_full_assamese.svg',
             ),
           ),
           SizedBox(height: 1.h),
           // Tagline
           Text(
-            'আমাৰ সংস্কৃতি, আমাৰ গৌৰৱ',
+            '\u0986\u09ae\u09be\u09f0 \u09b8\u0982\u09b8\u09cd\u0995\u09c3\u09a4\u09bf, \u0986\u09ae\u09be\u09f0 \u0997\u09cc\u09f0\u09f1',
             style: TextStyle(
               fontSize: 3.5.w,
               fontWeight: FontWeight.w500,

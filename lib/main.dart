@@ -1,6 +1,7 @@
 import 'core/app_export.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 
 // Enhanced Configuration Management
@@ -539,24 +540,10 @@ void initState() {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // App logo
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: AppTheme.lightTheme.colorScheme.primary,
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3 * 255),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.storefront,
-                        size: 60,
-                        color: Colors.white,
+                    SizedBox(
+                      height: 100,
+                      child: SvgPicture.asset(
+                        'assets/images/logo_full_assamese.svg',
                       ),
                     ),
                     const SizedBox(height: 32),
