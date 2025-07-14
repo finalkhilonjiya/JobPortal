@@ -19,6 +19,9 @@ import './widgets/enhanced_location_selector_widget.dart';
 import './widgets/trending_section_widget.dart';
 import './widgets/quick_action_widget.dart';
 import './widgets/advanced_filter_widget.dart';
+import './widgets/featured_banner_widget.dart';
+import './widgets/category_grid_widget.dart';
+import './widgets/product_list_widget.dart';
 
 enum ViewMode { grid, list, card }
 
@@ -1295,65 +1298,14 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
   }
 
   Widget _buildBannersSection() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-      child: Column(
-        children: [
-          _buildFeatureBanner(
-            icon: Icons.verified_user,
-            title: 'Safe & Trusted',
-            description: 'Buy, sell, and connect with confidence on khilonjiya.com.',
-            color: Colors.blue.shade50,
-          ),
-          SizedBox(height: 2.h),
-          _buildFeatureBanner(
-            icon: Icons.language,
-            title: 'Assamese Culture',
-            description: 'Celebrate and promote Assamese tradition and values.',
-            color: Colors.orange.shade50,
-          ),
-          SizedBox(height: 2.h),
-          _buildFeatureBanner(
-            icon: Icons.flash_on,
-            title: 'Fast & Easy',
-            description: 'Post ads, find jobs, and explore the marketplace instantly.',
-            color: Colors.green.shade50,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeatureBanner({required IconData icon, required String title, required String description, required Color color}) {
-    return Container(
-      padding: EdgeInsets.all(3.w),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 36, color: AppTheme.lightTheme.colorScheme.primary),
-          SizedBox(width: 4.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
-                SizedBox(height: 0.5.h),
-                Text(description, style: TextStyle(fontSize: 11.sp, color: Colors.grey[700])),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return Column(
+      children: const [
+        FeaturedBannerWidget(),
+        SizedBox(height: 16),
+        CategoryGridWidget(),
+        SizedBox(height: 16),
+        ProductListWidget(),
+      ],
     );
   }
 
