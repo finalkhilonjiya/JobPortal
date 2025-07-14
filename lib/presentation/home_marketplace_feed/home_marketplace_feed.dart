@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'dart:math' as math;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../core/app_export.dart';
 import '../../routes/app_routes.dart';
@@ -1913,12 +1914,12 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () async {
-                            final whatsappUrl = Uri.parse('https://wa.me/${phone.replaceAll('+', '')}');
+                            final whatsappUrl = Uri.parse('https://wa.me/	${(phone as String).replaceAll('+', '')}');
                             if (await canLaunchUrl(whatsappUrl)) {
                               await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
                             }
                           },
-                          icon: const Icon(Icons.whatsapp, color: Color(0xFF25D366), size: 18),
+                          icon: const Icon(FontAwesomeIcons.whatsapp, color: Color(0xFF25D366), size: 18),
                           label: const Text('WhatsApp', style: TextStyle(fontFamily: 'Poppins', color: Color(0xFF25D366))),
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: Color(0xFF25D366)),
@@ -2319,12 +2320,12 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () async {
-                            final whatsappUrl = Uri.parse('https://wa.me/${phone.replaceAll('+', '')}');
+                            final whatsappUrl = Uri.parse('https://wa.me/	${(phone as String).replaceAll('+', '')}');
                             if (await canLaunchUrl(whatsappUrl)) {
                               await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
                             }
                           },
-                          icon: const Icon(Icons.whatsapp, color: Color(0xFF25D366), size: 18),
+                          icon: const Icon(FontAwesomeIcons.whatsapp, color: Color(0xFF25D366), size: 18),
                           label: const Text('WhatsApp', style: TextStyle(fontFamily: 'Poppins', color: Color(0xFF25D366))),
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: Color(0xFF25D366)),
