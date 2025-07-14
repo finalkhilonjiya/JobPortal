@@ -698,21 +698,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
     });
   }
 
-  void _toggleSearch() {
-    setState(() {
-      _showSearch = !_showSearch;
-      if (!_showSearch) {
-        _searchQuery = '';
-        _searchBarController.reverse();
-        _loadListings();
-      } else {
-        _searchBarController.forward();
-      }
-    });
-    
-    HapticFeedback.lightImpact();
-  }
-
   void _toggleViewMode() {
     HapticFeedback.lightImpact();
     setState(() {
@@ -897,7 +882,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
                 slivers: [
                   // Enhanced App Bar
                   SliverAppBar(
-                    expandedHeight: _showSearch ? 22.h : 18.h,
+                    expandedHeight: 18.h,
                     floating: true,
                     pinned: true,
                     backgroundColor: Colors.transparent,
@@ -1016,7 +1001,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
                 ),
               ),
               const Spacer(),
-              
               // View Mode Toggle
               _buildAnimatedIconButton(
                 icon: _viewMode == ViewMode.list 
@@ -1026,44 +1010,17 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
                     : Icons.view_agenda,
                 onTap: _toggleViewMode,
               ),
-              
               SizedBox(width: 2.w),
-              
-              // Search Toggle
-              _buildAnimatedIconButton(
-                icon: _showSearch ? Icons.close : Icons.search,
-                onTap: _toggleSearch,
-                isActive: _showSearch,
-              ),
-              
-              SizedBox(width: 2.w),
-              
               // Notifications
               _buildNotificationButton(),
             ],
           ),
-          
           SizedBox(height: 2.h),
-          
+          // Always-visible Search Bar (OLX style)
+          _buildSearchBar(),
+          SizedBox(height: 2.h),
           // Location Selector
           _buildLocationSelector(),
-          
-          // Animated Search Bar
-          if (_showSearch)
-            AnimatedBuilder(
-              animation: _searchBarAnimation,
-              builder: (context, child) => Transform.scale(
-                scaleY: _searchBarAnimation.value,
-                alignment: Alignment.topCenter,
-                child: Opacity(
-                  opacity: _searchBarAnimation.value,
-                  child: Container(
-                    margin: EdgeInsets.only(top: 2.h),
-                    child: _buildSearchBar(),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
