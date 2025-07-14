@@ -5,6 +5,7 @@ import 'package:sizer/sizer.dart';
 import '../../../theme/app_theme.dart';
 import 'package:flutter_google_places_sdk/flutter_google_places_sdk.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class EnhancedLocationSelectorWidget extends StatelessWidget {
   final String selectedLocation;
@@ -156,7 +157,7 @@ class _LocationPickerModal extends StatefulWidget {
 
 class _LocationPickerModalState extends State<_LocationPickerModal> {
   final TextEditingController _searchController = TextEditingController();
-  final FlutterGooglePlacesSdk _places = FlutterGooglePlacesSdk('YOUR_GOOGLE_API_KEY');
+  late final FlutterGooglePlacesSdk _places;
   final Uuid _uuid = Uuid();
   String _sessionToken = '';
   List<AutocompletePrediction> _predictions = [];
@@ -165,6 +166,7 @@ class _LocationPickerModalState extends State<_LocationPickerModal> {
   @override
   void initState() {
     super.initState();
+    _places = FlutterGooglePlacesSdk(dotenv.env['GOOGLE_PLACES_API_KEY']!);
     _searchController.addListener(_onSearchChanged);
     _sessionToken = _uuid.v4();
   }
