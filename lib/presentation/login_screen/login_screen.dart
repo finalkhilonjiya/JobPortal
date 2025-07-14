@@ -418,7 +418,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           SizedBox(
             height: 80,
             child: SvgPicture.asset(
-              'assets/images/logo_full_assamese.svg',
+              'assets/images/logo_k.svg',
             ),
           ),
           SizedBox(height: 1.h),
@@ -443,15 +443,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             ),
           ),
           SizedBox(height: 3.h),
-          Text(
-            'Welcome Back!',
-            style: TextStyle(
-              fontSize: 6.w,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
-          SizedBox(height: 1.h),
           Text(
             'Sign in to continue to your marketplace',
             style: TextStyle(

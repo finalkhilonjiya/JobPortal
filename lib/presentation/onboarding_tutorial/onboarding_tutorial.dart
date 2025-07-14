@@ -243,16 +243,22 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
               child: TextButton(
                 onPressed: _skipOnboarding,
                 style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                  backgroundColor: Colors.white.withValues(alpha: 0.9 * 255),
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                  backgroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(24),
+                    side: BorderSide(color: AppTheme.primaryLight, width: 2),
                   ),
+                  elevation: 6,
+                  shadowColor: AppTheme.primaryLight.withOpacity(0.2),
                 ),
                 child: Text(
                   'Skip',
                   style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
-                    color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                    color: AppTheme.primaryLight,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    letterSpacing: 1.2,
                   ),
                 ),
               ),

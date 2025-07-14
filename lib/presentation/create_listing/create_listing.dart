@@ -23,7 +23,6 @@ class _CreateListingState extends State<CreateListing>
   late TabController _tabController;
   int _currentStep = 0;
   bool _isLoading = false;
-  bool _isDraftSaved = false;
 
   // Form data
   final Map<String, dynamic> _listingData = {
@@ -53,7 +52,6 @@ class _CreateListingState extends State<CreateListing>
     super.initState();
     _pageController = PageController();
     _tabController = TabController(length: _stepTitles.length, vsync: this);
-    _loadDraftData();
   }
 
   @override
@@ -63,27 +61,26 @@ class _CreateListingState extends State<CreateListing>
     super.dispose();
   }
 
-  void _loadDraftData() {
-    // Simulate loading draft data
-    setState(() {
-      _isDraftSaved = true;
-    });
-  }
-
-  void _saveDraft() {
-    // Auto-save functionality
-    setState(() {
-      _isDraftSaved = true;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Draft saved automatically'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
   void _nextStep() {
+    // Validation for required fields
+    if (_currentStep == 0 && (_listingData['photos'] as List).isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please add at least one photo.')),
+      );
+      return;
+    }
+    if (_currentStep == 2 && (_listingData['title'] as String).trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Title is required.')),
+      );
+      return;
+    }
+    if (_currentStep == 2 && (_listingData['description'] as String).trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Description is required.')),
+      );
+      return;
+    }
     if (_currentStep < _stepTitles.length - 1) {
       setState(() {
         _currentStep++;
@@ -93,7 +90,6 @@ class _CreateListingState extends State<CreateListing>
         curve: Curves.easeInOut,
       );
       _tabController.animateTo(_currentStep);
-      _saveDraft();
     }
   }
 
@@ -123,6 +119,25 @@ class _CreateListingState extends State<CreateListing>
   }
 
   Future<void> _publishListing() async {
+    // Final validation before publishing
+    if ((_listingData['photos'] as List).isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please add at least one photo.')),
+      );
+      return;
+    }
+    if ((_listingData['title'] as String).trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Title is required.')),
+      );
+      return;
+    }
+    if ((_listingData['description'] as String).trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Description is required.')),
+      );
+      return;
+    }
     setState(() {
       _isLoading = true;
     });
@@ -227,36 +242,6 @@ class _CreateListingState extends State<CreateListing>
       return false;
     }
 
-    if (_isDraftSaved) {
-      final result = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Save Draft?'),
-          content: const Text(
-            'You have unsaved changes. Would you like to save as draft before leaving?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Discard'),
-            ),
-            TextButton(
-              onPressed: () {
-                _saveDraft();
-                Navigator.of(context).pop(true);
-              },
-              child: const Text('Save Draft'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Continue Editing'),
-            ),
-          ],
-        ),
-      );
-      return result ?? false;
-    }
-
     return true;
   }
 
@@ -285,28 +270,6 @@ class _CreateListingState extends State<CreateListing>
             ),
           ),
           actions: [
-            if (_isDraftSaved)
-              TextButton(
-                onPressed: _saveDraft,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CustomIconWidget(
-                      iconName: 'save',
-                      color: AppTheme.lightTheme.colorScheme.primary,
-                      size: 16,
-                    ),
-                    SizedBox(width: 1.w),
-                    Text(
-                      'Draft',
-                      style: TextStyle(
-                        color: AppTheme.lightTheme.colorScheme.primary,
-                        fontSize: 12.sp,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
           ],
           bottom: PreferredSize(
             preferredSize: Size.fromHeight(8.h),
@@ -370,7 +333,6 @@ class _CreateListingState extends State<CreateListing>
                       setState(() {
                         _listingData['photos'] = photos;
                       });
-                      _saveDraft();
                     },
                   ),
                   CategorySelectionWidget(
@@ -379,7 +341,6 @@ class _CreateListingState extends State<CreateListing>
                       setState(() {
                         _listingData['category'] = category;
                       });
-                      _saveDraft();
                     },
                   ),
                   ListingDetailsWidget(
@@ -390,13 +351,11 @@ class _CreateListingState extends State<CreateListing>
                       setState(() {
                         _listingData['title'] = title;
                       });
-                      _saveDraft();
                     },
                     onDescriptionChanged: (description) {
                       setState(() {
                         _listingData['description'] = description;
                       });
-                      _saveDraft();
                     },
                   ),
                   PriceConditionWidget(
@@ -407,19 +366,16 @@ class _CreateListingState extends State<CreateListing>
                       setState(() {
                         _listingData['price'] = price;
                       });
-                      _saveDraft();
                     },
                     onNegotiableChanged: (isNegotiable) {
                       setState(() {
                         _listingData['isNegotiable'] = isNegotiable;
                       });
-                      _saveDraft();
                     },
                     onConditionChanged: (condition) {
                       setState(() {
                         _listingData['condition'] = condition;
                       });
-                      _saveDraft();
                     },
                   ),
                   LocationPickerWidget(
@@ -428,7 +384,6 @@ class _CreateListingState extends State<CreateListing>
                       setState(() {
                         _listingData['location'] = location;
                       });
-                      _saveDraft();
                     },
                   ),
                   AdditionalDetailsWidget(
@@ -439,7 +394,6 @@ class _CreateListingState extends State<CreateListing>
                       setState(() {
                         _listingData['additionalDetails'] = details;
                       });
-                      _saveDraft();
                     },
                   ),
                   PreviewListingWidget(

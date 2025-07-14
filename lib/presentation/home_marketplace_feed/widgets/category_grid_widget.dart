@@ -8,20 +8,17 @@ class CategoryGridWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final categories = [
-      {'name': 'Cars', 'icon': FontAwesomeIcons.car, 'color': AppTheme.secondaryLight},
-      {'name': 'Properties', 'icon': FontAwesomeIcons.building, 'color': AppTheme.successLight},
-      {'name': 'Mobiles', 'icon': FontAwesomeIcons.mobileScreen, 'color': Color(0xFF9C27B0)},
-      {'name': 'Jobs', 'icon': FontAwesomeIcons.briefcase, 'color': AppTheme.errorLight},
-      {'name': 'Bikes', 'icon': FontAwesomeIcons.motorcycle, 'color': Color(0xFF4CAF50)},
-      {'name': 'Electronics', 'icon': FontAwesomeIcons.tv, 'color': AppTheme.warningLight},
-      {'name': 'Furniture', 'icon': FontAwesomeIcons.couch, 'color': Color(0xFF795548)},
-      {'name': 'Fashion', 'icon': FontAwesomeIcons.shirt, 'color': Color(0xFFE91E63)},
-      {'name': 'Books', 'icon': FontAwesomeIcons.book, 'color': Color(0xFF607D8B)},
-      {'name': 'Sports', 'icon': FontAwesomeIcons.futbol, 'color': Color(0xFF009688)},
-      {'name': 'Pets', 'icon': FontAwesomeIcons.paw, 'color': Color(0xFF8BC34A)},
-      {'name': 'Services', 'icon': FontAwesomeIcons.handshake, 'color': Color(0xFF673AB7)},
+      {'name': 'Cars', 'icon': FontAwesomeIcons.car, 'color': AppTheme.secondaryLight, 'subcategories': ['Sedan', 'SUV', 'Hatchback', 'Convertible']},
+      {'name': 'Properties', 'icon': FontAwesomeIcons.building, 'color': AppTheme.successLight, 'subcategories': ['Apartment', 'House', 'Land', 'Commercial']},
+      {'name': 'Mobiles', 'icon': FontAwesomeIcons.mobileScreen, 'color': Color(0xFF9C27B0), 'subcategories': ['Smartphones', 'Feature Phones', 'Accessories']},
+      {'name': 'Jobs', 'icon': FontAwesomeIcons.briefcase, 'color': AppTheme.errorLight, 'subcategories': ['IT', 'Sales', 'Marketing', 'Education']},
+      {'name': 'Bikes', 'icon': FontAwesomeIcons.motorcycle, 'color': Color(0xFF4CAF50), 'subcategories': ['Sports Bike', 'Cruiser', 'Scooter']},
+      {'name': 'Electronics', 'icon': FontAwesomeIcons.tv, 'color': AppTheme.warningLight, 'subcategories': ['TV', 'Laptop', 'Camera', 'Audio']},
+      {'name': 'Furniture', 'icon': FontAwesomeIcons.couch, 'color': Color(0xFF795548), 'subcategories': ['Sofa', 'Table', 'Chair', 'Bed']},
+      {'name': 'Services', 'icon': FontAwesomeIcons.handshake, 'color': Color(0xFF673AB7), 'subcategories': ['Repair', 'Cleaning', 'Moving', 'Tutoring']},
     ];
     return Container(
+      color: Colors.white,
       padding: const EdgeInsets.all(16),
       child: GridView.builder(
         shrinkWrap: true,
@@ -36,8 +33,27 @@ class CategoryGridWidget extends StatelessWidget {
         itemBuilder: (context, index) {
           final category = categories[index];
           return GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: () {
-              // TODO: Navigate to category listing
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    backgroundColor: Colors.white,
+                    title: Text('${category['name']} Subcategories', style: const TextStyle(color: Colors.black)),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: (category['subcategories'] as List<String>).map((sub) => ListTile(
+                        title: Text(sub, style: const TextStyle(color: Colors.black)),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          // TODO: Handle subcategory tap
+                        },
+                      )).toList(),
+                    ),
+                  );
+                },
+              );
             },
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -46,8 +62,9 @@ class CategoryGridWidget extends StatelessWidget {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: (category['color'] as Color).withOpacity(0.1),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
                   ),
                   child: Icon(
                     category['icon'] as IconData,

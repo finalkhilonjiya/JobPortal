@@ -81,7 +81,7 @@ class _PhotoUploadWidgetState extends State<PhotoUploadWidget> {
   }
 
   void _addPhoto() {
-    if (widget.photos.length < 10) {
+    if (widget.photos.length < 5) {
       final newPhotos = List<String>.from(widget.photos);
       newPhotos.add(_mockPhotos[newPhotos.length % _mockPhotos.length]);
       widget.onPhotosChanged(newPhotos);
@@ -117,7 +117,7 @@ class _PhotoUploadWidgetState extends State<PhotoUploadWidget> {
           ),
           SizedBox(height: 1.h),
           Text(
-            'Add up to 10 photos. The first photo will be your cover image.',
+            'Add up to 5 photos. The first photo will be your cover image.',
             style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
               color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
             ),
