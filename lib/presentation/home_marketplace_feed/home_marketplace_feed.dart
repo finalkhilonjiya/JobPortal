@@ -4,6 +4,7 @@ import 'package:sizer/sizer.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:math' as math;
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/app_export.dart';
 import '../../routes/app_routes.dart';
@@ -1839,6 +1840,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
   }
 
   Widget _buildGridListingCard(Map<String, dynamic> listing) {
+    final phone = listing['seller']?['phone_number'] ?? '+911234567890';
     return GestureDetector(
       onTap: () => _onListingTap(listing),
       child: Container(
@@ -1926,6 +1928,46 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 1.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final uri = Uri.parse('tel:$phone');
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri);
+                            }
+                          },
+                          icon: const Icon(Icons.call, color: AppTheme.secondaryLight, size: 18),
+                          label: const Text('Call', style: TextStyle(fontFamily: 'Poppins', color: AppTheme.secondaryLight)),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppTheme.secondaryLight),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final whatsappUrl = Uri.parse('https://wa.me/${phone.replaceAll('+', '')}');
+                            if (await canLaunchUrl(whatsappUrl)) {
+                              await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+                            }
+                          },
+                          icon: const Icon(Icons.whatsapp, color: Color(0xFF25D366), size: 18),
+                          label: const Text('WhatsApp', style: TextStyle(fontFamily: 'Poppins', color: Color(0xFF25D366))),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF25D366)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
                         ),
                       ),
                     ],
@@ -2091,6 +2133,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
   }
 
   Widget _buildEnhancedListingCard(Map<String, dynamic> listing) {
+    final phone = listing['seller']?['phone_number'] ?? '+911234567890';
     return GestureDetector(
       onTap: () => _onListingTap(listing),
       child: Container(
@@ -2292,6 +2335,46 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
                             ),
                           ],
                         ],
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 1.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final uri = Uri.parse('tel:$phone');
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri);
+                            }
+                          },
+                          icon: const Icon(Icons.call, color: AppTheme.secondaryLight, size: 18),
+                          label: const Text('Call', style: TextStyle(fontFamily: 'Poppins', color: AppTheme.secondaryLight)),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppTheme.secondaryLight),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final whatsappUrl = Uri.parse('https://wa.me/${phone.replaceAll('+', '')}');
+                            if (await canLaunchUrl(whatsappUrl)) {
+                              await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+                            }
+                          },
+                          icon: const Icon(Icons.whatsapp, color: Color(0xFF25D366), size: 18),
+                          label: const Text('WhatsApp', style: TextStyle(fontFamily: 'Poppins', color: Color(0xFF25D366))),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF25D366)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                        ),
                       ),
                     ],
                   ),

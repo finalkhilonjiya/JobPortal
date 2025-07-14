@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../../../theme/app_theme.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProductListWidget extends StatelessWidget {
   const ProductListWidget({super.key});
@@ -14,12 +15,14 @@ class ProductListWidget extends StatelessWidget {
         'price': 12000,
         'image': 'https://via.placeholder.com/300',
         'location': 'ZOO TINIALI, GUWAHATI',
+        'phone': '+911234567890', // Placeholder phone
       },
       {
         'title': 'FLIP 6,256GB IN PRISTINE CONDITION',
         'price': 66000,
         'image': 'https://via.placeholder.com/300',
         'location': 'HATIGAON, GUWAHATI',
+        'phone': '+911234567891', // Placeholder phone
       },
     ];
     return Padding(
@@ -33,6 +36,7 @@ class ProductListWidget extends StatelessWidget {
         itemCount: products.length,
         itemBuilder: (context, index) {
           final product = products[index];
+          final phone = product['phone'] ?? '+911234567890'; // Placeholder phone
           return Card(
             color: AppTheme.surfaceLight,
             shape: RoundedRectangleBorder(
@@ -92,6 +96,46 @@ class ProductListWidget extends StatelessWidget {
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                final uri = Uri.parse('tel:$phone');
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(uri);
+                                }
+                              },
+                              icon: const Icon(Icons.call, color: AppTheme.secondaryLight, size: 18),
+                              label: const Text('Call', style: TextStyle(fontFamily: 'Poppins', color: AppTheme.secondaryLight)),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: AppTheme.secondaryLight),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                final whatsappUrl = Uri.parse('https://wa.me/${phone.replaceAll('+', '')}');
+                                if (await canLaunchUrl(whatsappUrl)) {
+                                  await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+                                }
+                              },
+                              icon: const Icon(Icons.whatsapp, color: Color(0xFF25D366), size: 18),
+                              label: const Text('WhatsApp', style: TextStyle(fontFamily: 'Poppins', color: Color(0xFF25D366))),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Color(0xFF25D366)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                              ),
                             ),
                           ),
                         ],
