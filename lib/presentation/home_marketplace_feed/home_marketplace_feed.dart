@@ -19,6 +19,8 @@ import './widgets/trending_section_widget.dart';
 import './widgets/quick_action_widget.dart';
 import './widgets/advanced_filter_widget.dart';
 
+enum ViewMode { grid, list, card }
+
 class HomeMarketplaceFeed extends StatefulWidget {
   const HomeMarketplaceFeed({Key? key}) : super(key: key);
 
@@ -59,7 +61,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
   double _selectedDistance = 5.0;
   
   // View Mode
-  enum ViewMode { grid, list, card }
   ViewMode _viewMode = ViewMode.list;
   
   // Navigation and Selection States
