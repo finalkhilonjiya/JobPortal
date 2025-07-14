@@ -57,6 +57,7 @@ dependencies:
   
   # Permissions
   permission_handler: ^11.3.0
+  flutter_google_places_sdk: ^0.4.2+1
 
 dev_dependencies:
   flutter_test:
