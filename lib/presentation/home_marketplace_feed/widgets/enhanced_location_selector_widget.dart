@@ -188,7 +188,6 @@ class _LocationPickerModalState extends State<_LocationPickerModal> {
     try {
       final result = await _places.findAutocompletePredictions(
         input,
-        sessionToken: _sessionToken,
         countries: ['IN'],
       );
       setState(() {
