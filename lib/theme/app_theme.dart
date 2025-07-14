@@ -81,6 +81,8 @@ class AppTheme {
     scaffoldBackgroundColor: backgroundLight,
     cardColor: surfaceLight,
     dividerColor: borderLight,
+    splashColor: Colors.transparent,
+    highlightColor: Colors.transparent,
 
     // AppBar with clean, professional appearance
     appBarTheme: AppBarTheme(
@@ -385,6 +387,8 @@ class AppTheme {
     scaffoldBackgroundColor: backgroundDark,
     cardColor: surfaceDark,
     dividerColor: borderDark,
+    splashColor: Colors.transparent,
+    highlightColor: Colors.transparent,
 
     // AppBar theme for dark mode
     appBarTheme: AppBarTheme(

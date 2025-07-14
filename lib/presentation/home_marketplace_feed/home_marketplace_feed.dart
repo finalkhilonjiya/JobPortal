@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:math' as math;
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/app_export.dart';
 import '../../routes/app_routes.dart';
@@ -85,74 +86,46 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
   // Enhanced Categories with gradient colors
   final List<Map<String, dynamic>> _defaultCategories = [
     {
-      'id': 'all', 
-      'name': 'All', 
-      'icon': 'apps', 
-      'color': '0xFF6366F1',
-      'gradientColors': ['0xFF6366F1', '0xFF8B5CF6']
-    },
-    {
-      'id': 'electronics', 
-      'name': 'Electronics', 
-      'icon': 'devices', 
+      'id': 'electronics',
+      'name': 'Electronics',
+      'icon': 'devices',
       'color': '0xFF3B82F6',
       'gradientColors': ['0xFF3B82F6', '0xFF1D4ED8']
     },
     {
-      'id': 'fashion', 
-      'name': 'Fashion', 
-      'icon': 'checkroom', 
-      'color': '0xFFEC4899',
-      'gradientColors': ['0xFFEC4899', '0xFFDB2777']
+      'id': 'properties',
+      'name': 'Properties',
+      'icon': 'home',
+      'color': '0xFF6366F1',
+      'gradientColors': ['0xFF6366F1', '0xFF8B5CF6']
     },
     {
-      'id': 'jobs', 
-      'name': 'Jobs', 
-      'icon': 'work', 
+      'id': 'room_rent',
+      'name': 'Room for Rent',
+      'icon': 'meeting_room',
       'color': '0xFF10B981',
       'gradientColors': ['0xFF10B981', '0xFF059669']
     },
     {
-      'id': 'automotive', 
-      'name': 'Vehicles', 
-      'icon': 'directions_car', 
+      'id': 'room_pg',
+      'name': 'Room for PG',
+      'icon': 'hotel',
       'color': '0xFFF59E0B',
       'gradientColors': ['0xFFF59E0B', '0xFFD97706']
     },
     {
-      'id': 'furniture', 
-      'name': 'Furniture', 
-      'icon': 'chair', 
+      'id': 'homestay',
+      'name': 'Homestay',
+      'icon': 'holiday_village',
       'color': '0xFF8B5CF6',
       'gradientColors': ['0xFF8B5CF6', '0xFF7C3AED']
     },
     {
-      'id': 'books', 
-      'name': 'Books', 
-      'icon': 'menu_book', 
+      'id': 'furniture',
+      'name': 'Furniture',
+      'icon': 'chair',
       'color': '0xFF06B6D4',
       'gradientColors': ['0xFF06B6D4', '0xFF0891B2']
-    },
-    {
-      'id': 'sports', 
-      'name': 'Sports', 
-      'icon': 'sports_soccer', 
-      'color': '0xFFF97316',
-      'gradientColors': ['0xFFF97316', '0xFFEA580C']
-    },
-    {
-      'id': 'food', 
-      'name': 'Food', 
-      'icon': 'restaurant', 
-      'color': '0xFFEF4444',
-      'gradientColors': ['0xFFEF4444', '0xFFDC2626']
-    },
-    {
-      'id': 'services', 
-      'name': 'Services', 
-      'icon': 'handyman', 
-      'color': '0xFF84CC16',
-      'gradientColors': ['0xFF84CC16', '0xFF65A30D']
     },
   ];
   
@@ -167,6 +140,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
     'Bongaigaon, Assam',
     'Sivasagar, Assam',
   ];
+
+  String _activeMainSection = 'marketplace';
 
   @override
   void initState() {
@@ -821,7 +796,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.all(4.w),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        duration: const Duration(seconds: 2),
+        duration: const Duration(milliseconds: 1500),
         animation: CurvedAnimation(
           parent: ModalRoute.of(context)!.animation!,
           curve: Curves.elasticOut,
@@ -885,6 +860,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
 
   @override
   Widget build(BuildContext context) {
+    // In the main build method, before building the UI:
+    final filteredListings = _activeMainSection == 'marketplace'
+      ? _listings
+      : _listings.where((item) => item['category'].toString().toLowerCase().contains(_activeMainSection)).toList();
+
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       body: SafeArea(
@@ -925,7 +905,12 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
                   
                   // Categories Section
                   SliverToBoxAdapter(
-                    child: _buildCategoriesSection(),
+                    child: _buildBannersSection(),
+                  ),
+                  
+                  // Main Sections (Jobs, Marketplace, Tradition)
+                  SliverToBoxAdapter(
+                    child: _buildMainSections(),
                   ),
                   
                   // Trending Section
@@ -945,8 +930,14 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
                     child: _buildListingsHeader(),
                   ),
                   
+                  // Featured Section
+                  if (filteredListings.any((ad) => ad['isSponsored'] == true || ad['is_featured'] == true))
+                    SliverToBoxAdapter(
+                      child: _buildFeaturedSection(filteredListings),
+                    ),
+                  
                   // Listings Grid/List
-                  _buildListingsSection(),
+                  _buildListingsSection(filteredListings),
                   
                   // Bottom padding
                   SliverToBoxAdapter(
@@ -1014,12 +1005,10 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
           Row(
             children: [
               // Logo
-              Text(
-                'khilonjiya',
-                style: TextStyle(
-                  fontSize: 24.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.lightTheme.colorScheme.primary,
+              SizedBox(
+                height: 40,
+                child: SvgPicture.asset(
+                  'assets/images/logo_icon_assamese.svg',
                 ),
               ),
               const Spacer(),
@@ -1216,13 +1205,15 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
 
   Widget _buildSearchBar() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 4.w),
+      margin: EdgeInsets.symmetric(vertical: 1.5.h),
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.2.h),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 13),
+            color: Colors.black.withOpacity(0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1242,7 +1233,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
               decoration: InputDecoration(
                 hintText: 'Search products, services, jobs...',
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(vertical: 1.5.h),
+                contentPadding: EdgeInsets.symmetric(vertical: 0),
               ),
               style: TextStyle(fontSize: 14.sp),
               autofocus: true,
@@ -1303,168 +1294,135 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
     );
   }
 
-  Widget _buildCategoriesSection() {
-    return Container(
-      color: Colors.white,
+  Widget _buildBannersSection() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 1.h),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Categories',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    // Navigate to all categories
-                  },
-                  child: Text(
-                    'See All',
-                    style: TextStyle(
-                      color: AppTheme.lightTheme.colorScheme.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(
-            height: 14.h,
-            child: _isLoadingCategories
-                ? Center(
-                    child: CircularProgressIndicator(
-                      color: AppTheme.lightTheme.colorScheme.primary,
-                    ),
-                  )
-                : ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.symmetric(horizontal: 4.w),
-                    itemCount: _categories.length,
-                    itemBuilder: (context, index) {
-                      final category = _categories[index];
-                      final isSelected = _selectedCategory == category['name'];
-                      
-                      return Padding(
-                        padding: EdgeInsets.only(right: 3.w),
-                        child: _buildModernCategoryChip(category, isSelected),
-                      );
-                    },
-                  ),
+          _buildFeatureBanner(
+            icon: Icons.verified_user,
+            title: 'Safe & Trusted',
+            description: 'Buy, sell, and connect with confidence on khilonjiya.com.',
+            color: Colors.blue.shade50,
           ),
           SizedBox(height: 2.h),
+          _buildFeatureBanner(
+            icon: Icons.language,
+            title: 'Assamese Culture',
+            description: 'Celebrate and promote Assamese tradition and values.',
+            color: Colors.orange.shade50,
+          ),
+          SizedBox(height: 2.h),
+          _buildFeatureBanner(
+            icon: Icons.flash_on,
+            title: 'Fast & Easy',
+            description: 'Post ads, find jobs, and explore the marketplace instantly.',
+            color: Colors.green.shade50,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildModernCategoryChip(Map<String, dynamic> category, bool isSelected) {
-    final gradientColors = category['gradientColors'] as List<String>;
-    
-    return GestureDetector(
-      onTap: () => _onCategorySelected(category['name']),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: 25.w,
-        padding: EdgeInsets.all(2.w),
-        decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  colors: gradientColors.map((c) => Color(int.parse(c))).toList(),
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color: isSelected ? null : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected 
-                ? Colors.transparent 
-                : Colors.grey.shade300,
-            width: 1,
+  Widget _buildFeatureBanner({required IconData icon, required String title, required String description, required Color color}) {
+    return Container(
+      padding: EdgeInsets.all(3.w),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Color(int.parse(gradientColors.first)).withValues(alpha: 102),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: EdgeInsets.all(2.5.w),
-              decoration: BoxDecoration(
-                color: isSelected 
-                    ? Colors.white.withValues(alpha: 51)
-                    : Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                IconData(
-                  _getIconCode(category['icon']),
-                  fontFamily: 'MaterialIcons',
-                ),
-                color: isSelected 
-                    ? Colors.white 
-                    : Color(int.parse(category['color'])),
-                size: 24,
-              ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 36, color: AppTheme.lightTheme.colorScheme.primary),
+          SizedBox(width: 4.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
+                SizedBox(height: 0.5.h),
+                Text(description, style: TextStyle(fontSize: 11.sp, color: Colors.grey[700])),
+              ],
             ),
-            SizedBox(height: 1.h),
-            Text(
-              category['name'],
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.black87,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                fontSize: 11.sp,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (category['count'] != null && category['count'] > 0)
-              Text(
-                '${category['count']}',
-                style: TextStyle(
-                  color: isSelected 
-                      ? Colors.white.withValues(alpha: 204)
-                      : Colors.grey,
-                  fontSize: 9.sp,
-                ),
-              ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  int _getIconCode(String iconName) {
-    const iconMap = {
-      'apps': 0xe01b,
-      'devices': 0xe1b1,
-      'checkroom': 0xf19e,
-      'work': 0xe8f9,
-      'directions_car': 0xe1d7,
-      'chair': 0xf1f3,
-      'menu_book': 0xe86e,
-      'sports_soccer': 0xea27,
-      'restaurant': 0xe56c,
-      'handyman': 0xf10b,
-    };
-    return iconMap[iconName] ?? 0xe01b;
+  Widget _buildMainSections() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildMainSectionButton(
+            icon: Icons.work_outline,
+            label: 'Jobs',
+            color: Colors.blue.shade100,
+            onTap: () => _onMainSectionTap('jobs'),
+          ),
+          _buildMainSectionButton(
+            icon: Icons.storefront_outlined,
+            label: 'Marketplace',
+            color: Colors.green.shade100,
+            onTap: () => _onMainSectionTap('marketplace'),
+          ),
+          _buildMainSectionButton(
+            icon: Icons.emoji_emotions_outlined,
+            label: 'Tradition',
+            color: Colors.orange.shade100,
+            onTap: () => _onMainSectionTap('tradition'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMainSectionButton({required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          margin: EdgeInsets.symmetric(horizontal: 1.w),
+          padding: EdgeInsets.symmetric(vertical: 2.2.h),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.18),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 32, color: AppTheme.lightTheme.colorScheme.primary),
+              SizedBox(height: 1.h),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.lightTheme.colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildTrendingSection() {
@@ -1867,8 +1825,9 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
     );
   }
 
-  Widget _buildListingsSection() {
-    if (_listings.isEmpty && !_isLoading) {
+  Widget _buildListingsSection([List<Map<String, dynamic>>? ads]) {
+    final listings = ads ?? _listings;
+    if (listings.isEmpty && !_isLoading) {
       return SliverFillRemaining(
         hasScrollBody: false,
         child: _buildEmptyState(),
@@ -1888,12 +1847,12 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
             ),
             delegate: SliverChildBuilderDelegate(
               (context, index) {
-                if (index >= _listings.length) {
+                if (index >= listings.length) {
                   return _isLoading ? _buildLoadingCard() : null;
                 }
-                return _buildGridListingCard(_listings[index]);
+                return _buildGridListingCard(listings[index]);
               },
-              childCount: _listings.length + (_isLoading ? 2 : 0),
+              childCount: listings.length + (_isLoading ? 2 : 0),
             ),
           ),
         );
@@ -1902,12 +1861,12 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
         return SliverList(
           delegate: SliverChildBuilderDelegate(
             (context, index) {
-              if (index >= _listings.length) {
+              if (index >= listings.length) {
                 return _isLoading ? _buildLoadingIndicator() : null;
               }
-              return _buildEnhancedListingCard(_listings[index]);
+              return _buildEnhancedListingCard(listings[index]);
             },
-            childCount: _listings.length + (_isLoading ? 1 : 0),
+            childCount: listings.length + (_isLoading ? 1 : 0),
           ),
         );
       
@@ -1916,12 +1875,12 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
         return SliverList(
           delegate: SliverChildBuilderDelegate(
             (context, index) {
-              if (index >= _listings.length) {
+              if (index >= listings.length) {
                 return _isLoading ? _buildLoadingIndicator() : null;
               }
-              return _buildModernListingCard(_listings[index]);
+              return _buildModernListingCard(listings[index]);
             },
-            childCount: _listings.length + (_isLoading ? 1 : 0),
+            childCount: listings.length + (_isLoading ? 1 : 0),
           ),
         );
     }
@@ -2408,6 +2367,15 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
     }
   }
 
+  void _onMainSectionTap(String section) {
+    HapticFeedback.lightImpact();
+    setState(() {
+      _activeMainSection = section;
+      // Optionally, you can also reset filters or search here
+    });
+    _loadListings();
+  }
+
   Widget _buildModernBottomNav() {
     return Container(
       decoration: BoxDecoration(
@@ -2664,6 +2632,97 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFeaturedSection([List<Map<String, dynamic>>? ads]) {
+    final featuredAds = (ads ?? _listings).where((ad) => ad['isSponsored'] == true || ad['is_featured'] == true).toList();
+    if (featuredAds.isEmpty) return SizedBox.shrink();
+    return Container(
+      margin: EdgeInsets.only(top: 2.h, bottom: 1.h),
+      padding: EdgeInsets.symmetric(vertical: 1.5.h),
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4.w),
+            child: Row(
+              children: [
+                Icon(Icons.star, color: Colors.amber, size: 22),
+                SizedBox(width: 2.w),
+                Text('Featured', style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          SizedBox(height: 1.5.h),
+          SizedBox(
+            height: 22.h,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: 4.w),
+              itemCount: featuredAds.length,
+              itemBuilder: (context, index) {
+                final ad = featuredAds[index];
+                return Container(
+                  width: 60.w,
+                  margin: EdgeInsets.only(right: 3.w),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.amber, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.amber.withOpacity(0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: _buildFeaturedAdCard(ad),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeaturedAdCard(Map<String, dynamic> ad) {
+    return InkWell(
+      onTap: () => _onListingTap(ad),
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: EdgeInsets.all(2.w),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                ad['imageUrl'],
+                width: 60,
+                height: 60,
+                fit: BoxFit.cover,
+              ),
+            ),
+            SizedBox(width: 3.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(ad['title'], maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.sp)),
+                  SizedBox(height: 0.5.h),
+                  Text(ad['price'], style: TextStyle(color: Colors.green, fontWeight: FontWeight.w600, fontSize: 11.sp)),
+                  SizedBox(height: 0.5.h),
+                  Text(ad['location'], maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.grey[600], fontSize: 10.sp)),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -365,6 +365,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           behavior: SnackBarBehavior.floating,
           margin: EdgeInsets.all(4.w),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: Duration(milliseconds: 1500),
         ),
       );
     }
@@ -385,6 +386,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           behavior: SnackBarBehavior.floating,
           margin: EdgeInsets.all(4.w),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: Duration(milliseconds: 1500),
         ),
       );
     }
