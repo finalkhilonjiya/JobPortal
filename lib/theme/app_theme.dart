@@ -6,24 +6,18 @@ class AppTheme {
   AppTheme._();
 
   // Trust-Forward Neutral Palette - Marketplace color system
-  static const Color primaryLight = Color(0xFF2B5CE6); // Trust-building blue
-  static const Color secondaryLight = Color(0xFF6B7280); // Neutral gray
-  static const Color successLight =
-      Color(0xFF10B981); // Clear positive feedback
-  static const Color warningLight =
-      Color(0xFFF59E0B); // Attention-drawing amber
-  static const Color errorLight =
-      Color(0xFFEF4444); // Clear error communication
-  static const Color backgroundLight = Color(0xFFFAFAFA); // Soft off-white
-  static const Color surfaceLight = Color(0xFFFFFFFF); // Pure white
-  static const Color textPrimaryLight =
-      Color(0xFF111827); // High contrast dark gray
-  static const Color textSecondaryLight = Color(0xFF6B7280); // Balanced gray
-  static const Color accentLight = Color(0xFF8B5CF6); // Purposeful purple
-
-  // Border and outline colors
-  static const Color borderLight = Color(0xFFE5E7EB); // Minimal borders
-  static const Color outlineLight = Color(0xFFE5E7EB);
+  static const Color primaryLight = Color(0xFF002F34); // OLX primary
+  static const Color secondaryLight = Color(0xFF3A77FF); // OLX secondary
+  static const Color successLight = Color(0xFF23E5DB); // OLX success
+  static const Color warningLight = Color(0xFFF7C12B); // OLX accent
+  static const Color errorLight = Color(0xFFFF4458); // OLX error
+  static const Color backgroundLight = Color(0xFFF5F5F5); // OLX background
+  static const Color surfaceLight = Color(0xFFFFFFFF); // OLX card background
+  static const Color textPrimaryLight = Color(0xFF002F34); // OLX text primary
+  static const Color textSecondaryLight = Color(0xFF406367); // OLX text secondary
+  static const Color accentLight = Color(0xFFF7C12B); // OLX accent
+  static const Color borderLight = Color(0xFFE0E0E0); // OLX divider
+  static const Color outlineLight = Color(0xFFE0E0E0);
 
   // Dark theme colors (adapted from light theme)
   static const Color primaryDark =
@@ -86,15 +80,16 @@ class AppTheme {
 
     // AppBar with clean, professional appearance
     appBarTheme: AppBarTheme(
-      backgroundColor: surfaceLight,
-      foregroundColor: textPrimaryLight,
+      backgroundColor: primaryLight,
+      foregroundColor: Colors.white,
       elevation: 0,
       shadowColor: shadowLight,
       surfaceTintColor: Colors.transparent,
-      titleTextStyle: GoogleFonts.inter(
-        fontSize: 18,
+      titleTextStyle: TextStyle(
+        fontFamily: 'Poppins',
+        fontSize: 20,
         fontWeight: FontWeight.w600,
-        color: textPrimaryLight,
+        color: Colors.white,
       ),
     ),
 
@@ -184,7 +179,23 @@ class AppTheme {
     ),
 
     // Typography with Inter font family
-    textTheme: _buildTextTheme(isLight: true),
+    textTheme: TextTheme(
+      displayLarge: TextStyle(fontFamily: 'Poppins'),
+      displayMedium: TextStyle(fontFamily: 'Poppins'),
+      displaySmall: TextStyle(fontFamily: 'Poppins'),
+      headlineLarge: TextStyle(fontFamily: 'Poppins'),
+      headlineMedium: TextStyle(fontFamily: 'Poppins'),
+      headlineSmall: TextStyle(fontFamily: 'Poppins'),
+      titleLarge: TextStyle(fontFamily: 'Poppins'),
+      titleMedium: TextStyle(fontFamily: 'Poppins'),
+      titleSmall: TextStyle(fontFamily: 'Poppins'),
+      bodyLarge: TextStyle(fontFamily: 'Poppins'),
+      bodyMedium: TextStyle(fontFamily: 'Poppins'),
+      bodySmall: TextStyle(fontFamily: 'Poppins'),
+      labelLarge: TextStyle(fontFamily: 'Poppins'),
+      labelMedium: TextStyle(fontFamily: 'Poppins'),
+      labelSmall: TextStyle(fontFamily: 'Poppins'),
+    ),
 
     // Input decoration with clear visual boundaries
     inputDecorationTheme: InputDecorationTheme(

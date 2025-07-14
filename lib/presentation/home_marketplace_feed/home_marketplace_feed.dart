@@ -4,6 +4,7 @@ import 'package:sizer/sizer.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:math' as math;
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/app_export.dart';
 import '../../routes/app_routes.dart';
@@ -19,6 +20,9 @@ import './widgets/enhanced_location_selector_widget.dart';
 import './widgets/trending_section_widget.dart';
 import './widgets/quick_action_widget.dart';
 import './widgets/advanced_filter_widget.dart';
+import './widgets/featured_banner_widget.dart';
+import './widgets/category_grid_widget.dart';
+import './widgets/product_list_widget.dart';
 
 enum ViewMode { grid, list, card }
 
@@ -694,21 +698,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
     });
   }
 
-  void _toggleSearch() {
-    setState(() {
-      _showSearch = !_showSearch;
-      if (!_showSearch) {
-        _searchQuery = '';
-        _searchBarController.reverse();
-        _loadListings();
-      } else {
-        _searchBarController.forward();
-      }
-    });
-    
-    HapticFeedback.lightImpact();
-  }
-
   void _toggleViewMode() {
     HapticFeedback.lightImpact();
     setState(() {
@@ -893,7 +882,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
                 slivers: [
                   // Enhanced App Bar
                   SliverAppBar(
-                    expandedHeight: _showSearch ? 22.h : 18.h,
+                    expandedHeight: 18.h,
                     floating: true,
                     pinned: true,
                     backgroundColor: Colors.transparent,
@@ -1012,7 +1001,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
                 ),
               ),
               const Spacer(),
-              
               // View Mode Toggle
               _buildAnimatedIconButton(
                 icon: _viewMode == ViewMode.list 
@@ -1022,44 +1010,17 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
                     : Icons.view_agenda,
                 onTap: _toggleViewMode,
               ),
-              
               SizedBox(width: 2.w),
-              
-              // Search Toggle
-              _buildAnimatedIconButton(
-                icon: _showSearch ? Icons.close : Icons.search,
-                onTap: _toggleSearch,
-                isActive: _showSearch,
-              ),
-              
-              SizedBox(width: 2.w),
-              
               // Notifications
               _buildNotificationButton(),
             ],
           ),
-          
           SizedBox(height: 2.h),
-          
+          // Always-visible Search Bar (OLX style)
+          _buildSearchBar(),
+          SizedBox(height: 2.h),
           // Location Selector
           _buildLocationSelector(),
-          
-          // Animated Search Bar
-          if (_showSearch)
-            AnimatedBuilder(
-              animation: _searchBarAnimation,
-              builder: (context, child) => Transform.scale(
-                scaleY: _searchBarAnimation.value,
-                alignment: Alignment.topCenter,
-                child: Opacity(
-                  opacity: _searchBarAnimation.value,
-                  child: Container(
-                    margin: EdgeInsets.only(top: 2.h),
-                    child: _buildSearchBar(),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -1295,65 +1256,14 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
   }
 
   Widget _buildBannersSection() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-      child: Column(
-        children: [
-          _buildFeatureBanner(
-            icon: Icons.verified_user,
-            title: 'Safe & Trusted',
-            description: 'Buy, sell, and connect with confidence on khilonjiya.com.',
-            color: Colors.blue.shade50,
-          ),
-          SizedBox(height: 2.h),
-          _buildFeatureBanner(
-            icon: Icons.language,
-            title: 'Assamese Culture',
-            description: 'Celebrate and promote Assamese tradition and values.',
-            color: Colors.orange.shade50,
-          ),
-          SizedBox(height: 2.h),
-          _buildFeatureBanner(
-            icon: Icons.flash_on,
-            title: 'Fast & Easy',
-            description: 'Post ads, find jobs, and explore the marketplace instantly.',
-            color: Colors.green.shade50,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeatureBanner({required IconData icon, required String title, required String description, required Color color}) {
-    return Container(
-      padding: EdgeInsets.all(3.w),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 36, color: AppTheme.lightTheme.colorScheme.primary),
-          SizedBox(width: 4.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
-                SizedBox(height: 0.5.h),
-                Text(description, style: TextStyle(fontSize: 11.sp, color: Colors.grey[700])),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return Column(
+      children: const [
+        FeaturedBannerWidget(),
+        SizedBox(height: 16),
+        CategoryGridWidget(),
+        SizedBox(height: 16),
+        ProductListWidget(),
+      ],
     );
   }
 
@@ -1887,6 +1797,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
   }
 
   Widget _buildGridListingCard(Map<String, dynamic> listing) {
+    final phone = listing['seller']?['phone_number'] ?? '+911234567890';
     return GestureDetector(
       onTap: () => _onListingTap(listing),
       child: Container(
@@ -1974,6 +1885,46 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 1.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final uri = Uri.parse('tel:$phone');
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri);
+                            }
+                          },
+                          icon: const Icon(Icons.call, color: AppTheme.secondaryLight, size: 18),
+                          label: const Text('Call', style: TextStyle(fontFamily: 'Poppins', color: AppTheme.secondaryLight)),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppTheme.secondaryLight),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final whatsappUrl = Uri.parse('https://wa.me/${phone.replaceAll('+', '')}');
+                            if (await canLaunchUrl(whatsappUrl)) {
+                              await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+                            }
+                          },
+                          icon: const Icon(Icons.whatsapp, color: Color(0xFF25D366), size: 18),
+                          label: const Text('WhatsApp', style: TextStyle(fontFamily: 'Poppins', color: Color(0xFF25D366))),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF25D366)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
                         ),
                       ),
                     ],
@@ -2139,6 +2090,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
   }
 
   Widget _buildEnhancedListingCard(Map<String, dynamic> listing) {
+    final phone = listing['seller']?['phone_number'] ?? '+911234567890';
     return GestureDetector(
       onTap: () => _onListingTap(listing),
       child: Container(
@@ -2340,6 +2292,46 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
                             ),
                           ],
                         ],
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 1.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final uri = Uri.parse('tel:$phone');
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri);
+                            }
+                          },
+                          icon: const Icon(Icons.call, color: AppTheme.secondaryLight, size: 18),
+                          label: const Text('Call', style: TextStyle(fontFamily: 'Poppins', color: AppTheme.secondaryLight)),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppTheme.secondaryLight),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final whatsappUrl = Uri.parse('https://wa.me/${phone.replaceAll('+', '')}');
+                            if (await canLaunchUrl(whatsappUrl)) {
+                              await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+                            }
+                          },
+                          icon: const Icon(Icons.whatsapp, color: Color(0xFF25D366), size: 18),
+                          label: const Text('WhatsApp', style: TextStyle(fontFamily: 'Poppins', color: Color(0xFF25D366))),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF25D366)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                        ),
                       ),
                     ],
                   ),
