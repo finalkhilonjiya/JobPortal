@@ -444,15 +444,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           ),
           SizedBox(height: 3.h),
           Text(
-            'Welcome Back!',
-            style: TextStyle(
-              fontSize: 6.w,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
-          SizedBox(height: 1.h),
-          Text(
             'Sign in to continue to your marketplace',
             style: TextStyle(
               fontSize: 3.5.w,
