@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import '../../widgets/bottom_nav_bar_widget.dart';
 import '../../theme/app_theme.dart';
+import 'package:shimmer/shimmer.dart';
 
 class HomeMarketplaceFeed extends StatefulWidget {
   const HomeMarketplaceFeed({Key? key}) : super(key: key);
@@ -12,6 +13,20 @@ class HomeMarketplaceFeed extends StatefulWidget {
 
 class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   int _currentIndex = 0;
+  bool _isLoadingPremium = true;
+  bool _isLoadingFeed = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Simulate loading
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _isLoadingPremium = false);
+    });
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _isLoadingFeed = false);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,14 +38,25 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
             SliverToBoxAdapter(child: _AppInfoBanner()),
             SliverToBoxAdapter(child: _ThreeOptionSection()),
             SliverToBoxAdapter(child: _SearchBarSection()),
-            SliverToBoxAdapter(child: _PremiumCardsSection()),
-            SliverToBoxAdapter(child: _CategoriesSection()),
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _ProductFeedCard(index: index),
-                childCount: 20, // Placeholder for infinite feed
-              ),
+            SliverToBoxAdapter(
+              child: _isLoadingPremium
+                  ? _ShimmerPremiumCardsSection()
+                  : _PremiumCardsSection(),
             ),
+            SliverToBoxAdapter(child: _CategoriesSection()),
+            _isLoadingFeed
+                ? SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _ShimmerProductFeedCard(),
+                      childCount: 8,
+                    ),
+                  )
+                : SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _ProductFeedCard(index: index),
+                      childCount: 20, // Placeholder for infinite feed
+                    ),
+                  ),
             SliverToBoxAdapter(child: SizedBox(height: 12.h)),
           ],
         ),
@@ -58,8 +84,19 @@ class _AppInfoBanner extends StatelessWidget {
       margin: EdgeInsets.all(4.w),
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: AppTheme.primaryLight,
+        gradient: LinearGradient(
+          colors: [AppTheme.primaryLight, AppTheme.successLight],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryLight.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,6 +107,7 @@ class _AppInfoBanner extends StatelessWidget {
               color: Colors.white,
               fontSize: 18.sp,
               fontWeight: FontWeight.bold,
+              fontFamily: 'Poppins',
             ),
           ),
           SizedBox(height: 1.h),
@@ -78,6 +116,7 @@ class _AppInfoBanner extends StatelessWidget {
             style: TextStyle(
               color: Colors.white.withOpacity(0.9),
               fontSize: 12.sp,
+              fontFamily: 'Poppins',
             ),
           ),
         ],
@@ -103,6 +142,7 @@ class _ThreeOptionSection extends StatelessWidget {
                     backgroundColor: AppTheme.primaryLight,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 2,
                   ),
                   child: const Text('Apply for Job'),
                 ),
@@ -134,6 +174,7 @@ class _ThreeOptionSection extends StatelessWidget {
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   padding: const EdgeInsets.symmetric(vertical: 18),
+                  elevation: 2,
                 ),
                 child: const Text('Assamese Traditional Marketplace', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ),
@@ -155,12 +196,20 @@ class _SearchBarSection extends StatelessWidget {
         onTap: () {
           // TODO: Open full search screen
         },
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
           height: 6.h,
           decoration: BoxDecoration(
             color: AppTheme.surfaceLight,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppTheme.outlineLight, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryLight.withOpacity(0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -171,16 +220,43 @@ class _SearchBarSection extends StatelessWidget {
               Expanded(
                 child: Text(
                   "Search 'Mobiles'",
-                  style: TextStyle(color: AppTheme.textSecondaryLight, fontSize: 12.sp),
+                  style: TextStyle(color: AppTheme.textSecondaryLight, fontSize: 12.sp, fontFamily: 'Poppins'),
                 ),
               ),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 3.w),
                 child: Icon(Icons.location_on, color: AppTheme.primaryLight, size: 20),
               ),
-              Text('Guwahati, Assam', style: TextStyle(color: AppTheme.primaryLight, fontSize: 11.sp)),
+              Text('Guwahati, Assam', style: TextStyle(color: AppTheme.primaryLight, fontSize: 11.sp, fontFamily: 'Poppins')),
               SizedBox(width: 2.w),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShimmerPremiumCardsSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 22.h,
+      child: ListView.builder(
+        key: const Key('shimmer_premium_cards_list'),
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+        itemCount: 3,
+        itemBuilder: (context, index) => Shimmer.fromColors(
+          baseColor: Colors.grey[300]!,
+          highlightColor: Colors.grey[100]!,
+          child: Container(
+            width: 60.w,
+            margin: EdgeInsets.only(right: 4.w),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
         ),
       ),
@@ -210,7 +286,8 @@ class _PremiumCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
       width: 60.w,
       margin: EdgeInsets.only(right: 4.w),
       decoration: BoxDecoration(
@@ -218,7 +295,7 @@ class _PremiumCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: AppTheme.primaryLight.withOpacity(0.06),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -244,21 +321,21 @@ class _PremiumCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text('Premium', style: TextStyle(color: AppTheme.successLight, fontWeight: FontWeight.bold, fontSize: 11.sp)),
+                    Text('Premium', style: TextStyle(color: AppTheme.successLight, fontWeight: FontWeight.bold, fontSize: 11.sp, fontFamily: 'Poppins')),
                     const SizedBox(width: 8),
                     Icon(Icons.verified, color: AppTheme.successLight, size: 16),
                   ],
                 ),
                 SizedBox(height: 0.5.h),
-                Text('Featured Product $index', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.sp)),
+                Text('Featured Product $index', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.sp, fontFamily: 'Poppins')),
                 SizedBox(height: 0.5.h),
-                Text('₹${(index + 1) * 10000}', style: TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold, fontSize: 12.sp)),
+                Text('₹${(index + 1) * 10000}', style: TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold, fontSize: 12.sp, fontFamily: 'Poppins')),
                 SizedBox(height: 0.5.h),
                 Row(
                   children: [
                     Icon(Icons.location_on, color: AppTheme.textSecondaryLight, size: 14),
                     SizedBox(width: 4),
-                    Text('Guwahati', style: TextStyle(color: AppTheme.textSecondaryLight, fontSize: 10.sp)),
+                    Text('Guwahati', style: TextStyle(color: AppTheme.textSecondaryLight, fontSize: 10.sp, fontFamily: 'Poppins')),
                   ],
                 ),
               ],
@@ -294,18 +371,39 @@ class _CategoriesSection extends StatelessWidget {
         separatorBuilder: (_, __) => SizedBox(width: 4.w),
         itemBuilder: (context, index) {
           final cat = categories[index];
-          return Column(
-            children: [
-              CircleAvatar(
-                backgroundColor: (cat['color'] as Color).withOpacity(0.1),
-                radius: 26,
-                child: Icon(cat['icon'] as IconData, color: cat['color'] as Color, size: 24),
-              ),
-              SizedBox(height: 0.8.h),
-              Text(cat['name'] as String, style: TextStyle(fontSize: 10.sp, color: AppTheme.textPrimaryLight)),
-            ],
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  backgroundColor: (cat['color'] as Color).withOpacity(0.1),
+                  radius: 26,
+                  child: Icon(cat['icon'] as IconData, color: cat['color'] as Color, size: 24),
+                ),
+                SizedBox(height: 0.8.h),
+                Text(cat['name'] as String, style: TextStyle(fontSize: 10.sp, color: AppTheme.textPrimaryLight, fontFamily: 'Poppins')),
+              ],
+            ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _ShimmerProductFeedCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          elevation: 2,
+          child: SizedBox(height: 90, width: double.infinity),
+        ),
       ),
     );
   }
@@ -317,57 +415,60 @@ class _ProductFeedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      key: Key('product_feed_card_$index'),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
       margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      elevation: 2,
-      child: Padding(
-        padding: EdgeInsets.all(3.w),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.network(
-                'https://source.unsplash.com/random/400x300?sig=$index',
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
+      child: Card(
+        key: Key('product_feed_card_$index'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        elevation: 2,
+        child: Padding(
+          padding: EdgeInsets.all(3.w),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.network(
+                  'https://source.unsplash.com/random/400x300?sig=$index',
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.cover,
+                ),
               ),
-            ),
-            SizedBox(width: 4.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text('₹${(index + 1) * 5000}', style: TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold, fontSize: 13.sp)),
-                      SizedBox(width: 8),
-                      Icon(Icons.verified, color: AppTheme.successLight, size: 16),
-                    ],
-                  ),
-                  SizedBox(height: 0.5.h),
-                  Text('Product Title $index', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.sp)),
-                  SizedBox(height: 0.5.h),
-                  Text('Guwahati, Assam', style: TextStyle(color: AppTheme.textSecondaryLight, fontSize: 10.sp)),
-                  SizedBox(height: 0.5.h),
-                  Row(
-                    children: [
-                      Icon(Icons.access_time, size: 12, color: AppTheme.textSecondaryLight),
-                      SizedBox(width: 4),
-                      Text('2 hours ago', style: TextStyle(color: AppTheme.textSecondaryLight, fontSize: 9.sp)),
-                    ],
-                  ),
-                ],
+              SizedBox(width: 4.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text('₹${(index + 1) * 5000}', style: TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold, fontSize: 13.sp, fontFamily: 'Poppins')),
+                        SizedBox(width: 8),
+                        Icon(Icons.verified, color: AppTheme.successLight, size: 16),
+                      ],
+                    ),
+                    SizedBox(height: 0.5.h),
+                    Text('Product Title $index', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.sp, fontFamily: 'Poppins')),
+                    SizedBox(height: 0.5.h),
+                    Text('Guwahati, Assam', style: TextStyle(color: AppTheme.textSecondaryLight, fontSize: 10.sp, fontFamily: 'Poppins')),
+                    SizedBox(height: 0.5.h),
+                    Row(
+                      children: [
+                        Icon(Icons.access_time, size: 12, color: AppTheme.textSecondaryLight),
+                        SizedBox(width: 4),
+                        Text('2 hours ago', style: TextStyle(color: AppTheme.textSecondaryLight, fontSize: 9.sp, fontFamily: 'Poppins')),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            IconButton(
-              key: Key('favorite_icon_$index'),
-              icon: Icon(Icons.favorite_border, color: AppTheme.primaryLight),
-              onPressed: () {},
-            ),
-          ],
+              IconButton(
+                key: Key('favorite_icon_$index'),
+                icon: Icon(Icons.favorite_border, color: AppTheme.primaryLight),
+                onPressed: () {},
+              ),
+            ],
+          ),
         ),
       ),
     );
