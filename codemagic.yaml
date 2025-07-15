@@ -16,6 +16,9 @@ workflows:
       - name: Get dependencies
         script: |
           flutter pub get
+      - name: Generate Native Splash
+        script: |
+          flutter pub run flutter_native_splash:create
       - name: Clean and Build Debug APK
         script: |
           flutter clean
@@ -23,7 +26,7 @@ workflows:
           echo "🔍 Environment variables check:"
           echo "SUPABASE_URL length: ${#SUPABASE_URL}"
           echo "SUPABASE_ANON_KEY length: ${#SUPABASE_ANON_KEY}"
-          flutter build apk --debug --verbose --dart-define=SUPABASE_URL="$SUPABASE_URL" --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
+          flutter build apk --debug --split-per-abi --tree-shake-icons --verbose --dart-define=SUPABASE_URL="$SUPABASE_URL" --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
     artifacts:
       - build/app/outputs/flutter-apk/app-debug.apk
 
@@ -43,6 +46,9 @@ workflows:
       - name: Get dependencies
         script: |
           flutter pub get
+      - name: Generate Native Splash
+        script: |
+          flutter pub run flutter_native_splash:create
       - name: Clean and Build Release APK
         script: |
           flutter clean
@@ -50,7 +56,7 @@ workflows:
           echo "🔍 Environment variables check:"
           echo "SUPABASE_URL length: ${#SUPABASE_URL}"
           echo "SUPABASE_ANON_KEY length: ${#SUPABASE_ANON_KEY}"
-          flutter build apk --release --verbose --dart-define=SUPABASE_URL="$SUPABASE_URL" --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
+          flutter build apk --release --split-per-abi --tree-shake-icons --verbose --dart-define=SUPABASE_URL="$SUPABASE_URL" --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
 
@@ -70,6 +76,9 @@ workflows:
       - name: Get dependencies
         script: |
           flutter pub get
+      - name: Generate Native Splash
+        script: |
+          flutter pub run flutter_native_splash:create
       - name: Clean and Build App Bundle
         script: |
           flutter clean
