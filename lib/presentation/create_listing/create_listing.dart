@@ -6,8 +6,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_google_places/flutter_google_places.dart';
-import 'package:google_maps_webservice/places.dart';
 
 class CreateListingScreen extends StatefulWidget {
   const CreateListingScreen({Key? key}) : super(key: key);
@@ -74,29 +72,20 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   }
 
   Future<void> _handleLocationAutocomplete() async {
-    final apiKey = dotenv.env['GOOGLE_PLACES_API_KEY'];
-    if (apiKey == null || apiKey.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Google Places API key not set.')));
-      return;
-    }
-    Prediction? p = await PlacesAutocomplete.show(
+    // TODO: Replace with a new location autocomplete solution
+    showDialog(
       context: context,
-      apiKey: apiKey,
-      mode: Mode.overlay,
-      language: 'en',
-      components: [Component(Component.country, 'in')],
-      hint: 'Search location',
+      builder: (context) => AlertDialog(
+        title: const Text('Location Autocomplete'),
+        content: const Text('This feature is temporarily unavailable. Please enter your location manually.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
-    if (p != null) {
-      final places = GoogleMapsPlaces(apiKey: apiKey);
-      final detail = await places.getDetailsByPlaceId(p.placeId!);
-      final loc = detail.result.geometry?.location;
-      setState(() {
-        _locationController.text = detail.result.formattedAddress ?? p.description ?? '';
-        _latitude = loc?.lat;
-        _longitude = loc?.lng;
-      });
-    }
   }
 
   Future<void> _submit() async {

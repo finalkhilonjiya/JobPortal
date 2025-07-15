@@ -159,7 +159,7 @@ class AppRoutes {
     // jobApplicationScreen: (context) => const JobApplicationScreen(),
     
     // 📝 Listing Management Routes
-    createListing: (context) => const CreateListing(),
+    createListing: (context) => const CreateListingScreen(),
     // myListingsScreen: (context) => const MyListingsScreen(),
     // editListingScreen: (context) => const EditListingScreen(),
     
