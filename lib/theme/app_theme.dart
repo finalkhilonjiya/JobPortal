@@ -6,7 +6,7 @@ class AppTheme {
   AppTheme._();
 
   // Trust-Forward Neutral Palette - Marketplace color system
-  static const Color primaryLight = Color(0xFF002F34); // OLX primary
+  static const Color primaryLight = Color(0xFF2563EB); // Light blue for all buttons
   static const Color secondaryLight = Color(0xFF3A77FF); // OLX secondary
   static const Color successLight = Color(0xFF23E5DB); // OLX success
   static const Color warningLight = Color(0xFFF7C12B); // OLX accent
@@ -151,7 +151,8 @@ class AppTheme {
 
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: primaryLight,
+        foregroundColor: Colors.white,
+        backgroundColor: primaryLight,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         side: const BorderSide(color: primaryLight, width: 1.0),
         shape: RoundedRectangleBorder(
