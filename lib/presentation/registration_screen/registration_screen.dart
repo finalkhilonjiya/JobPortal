@@ -392,6 +392,22 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     }
   }
 
+  // --- Added for build error fix: UI-only, no backend logic changed ---
+  Widget _buildProfileImagePicker() {
+    // Reuse the profile photo section for design
+    return _buildProfilePhotoSection();
+  }
+
+  Widget _buildForm() {
+    // Reuse the registration form for design
+    return _buildRegistrationForm();
+  }
+
+  Widget _buildTermsAndConditions() {
+    // Reuse the terms checkbox for design
+    return _buildTermsCheckbox();
+  }
+
   @override
   void dispose() {
     _fadeController.dispose();
