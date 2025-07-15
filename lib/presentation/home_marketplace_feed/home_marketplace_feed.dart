@@ -31,49 +31,26 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       _isLoadingPremium = true;
       _isLoadingFeed = true;
     });
-    try {
-      final supabase = SupabaseService();
-      // Fetch categories
-      final catRes = await supabase.client.from('categories').select();
-      final categories = List<Map<String, dynamic>>.from(catRes);
-      // Fetch listings
-      final listRes = await supabase.client.from('listings').select('*, categories(name)');
-      final listings = List<Map<String, dynamic>>.from(listRes);
-      setState(() {
-        _categories = [
-          {'name': 'All', 'icon': Icons.apps, 'color': Colors.green}.cast<String, Object>(),
-          ...categories.map((c) => {
-            'name': c['name'],
-            'icon': Icons.category,
-            'color': Colors.green
-          }.cast<String, Object>())
-        ];
-        _listings = listings;
-        _isLoadingPremium = false;
-        _isLoadingFeed = false;
+    // Always use mock data
+    setState(() {
+      _categories = [
+        {'name': 'All', 'icon': Icons.apps, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
+        {'name': 'Electronics', 'icon': Icons.devices, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
+        {'name': 'Vehicles', 'icon': Icons.directions_car, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
+        {'name': 'Jobs', 'icon': Icons.work, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
+        {'name': 'Properties', 'icon': Icons.home, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
+      ];
+      _listings = List.generate(20, (i) => {
+        'title': 'Product Title $i',
+        'price': (i + 1) * 5000,
+        'location': 'Guwahati, Assam',
+        'category': i % 2 == 0 ? 'Electronics' : 'Vehicles',
+        'image': 'https://source.unsplash.com/random/400x300?sig=$i',
+        'is_featured': i < 3,
       });
-    } catch (e) {
-      // Use mock data if error
-      setState(() {
-        _categories = [
-          {'name': 'All', 'icon': Icons.apps, 'color': Colors.green}.cast<String, Object>(),
-          {'name': 'Electronics', 'icon': Icons.devices, 'color': Colors.green}.cast<String, Object>(),
-          {'name': 'Vehicles', 'icon': Icons.directions_car, 'color': Colors.green}.cast<String, Object>(),
-          {'name': 'Jobs', 'icon': Icons.work, 'color': Colors.green}.cast<String, Object>(),
-          {'name': 'Properties', 'icon': Icons.home, 'color': Colors.green}.cast<String, Object>(),
-        ];
-        _listings = List.generate(20, (i) => {
-          'title': 'Product Title $i',
-          'price': (i + 1) * 5000,
-          'location': 'Guwahati, Assam',
-          'category': i % 2 == 0 ? 'Electronics' : 'Vehicles',
-          'image': 'https://source.unsplash.com/random/400x300?sig=$i',
-          'is_featured': i < 3,
-        });
-        _isLoadingPremium = false;
-        _isLoadingFeed = false;
-      });
-    }
+      _isLoadingPremium = false;
+      _isLoadingFeed = false;
+    });
   }
 
   void _onCategorySelected(String name) {

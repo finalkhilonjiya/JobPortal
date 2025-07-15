@@ -762,7 +762,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       child: ElevatedButton(
         onPressed: _isFormValid() && !_isLoading ? _handleRegistration : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF10B981),
+          backgroundColor: Color(0xFF2563EB), // Blue
           foregroundColor: Colors.white,
           padding: EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

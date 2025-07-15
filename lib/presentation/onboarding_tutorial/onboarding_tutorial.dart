@@ -21,11 +21,22 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
   final List<Map<String, dynamic>> _onboardingData = [
     {
       "id": 1,
+      "title": "Apply for Jobs & Get Notified",
+      "description": "Apply for jobs, list jobs, and get notifications when new jobs appear. Stay updated and never miss an opportunity!",
+      "illustration": "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
+      "features": [
+        {"icon": "work", "text": "Apply for jobs easily"},
+        {"icon": "notifications", "text": "Get instant job alerts"},
+        {"icon": "add", "text": "List your own jobs"}
+      ],
+      "gesture": "tap_notification",
+      "gestureText": "Tap to get job notifications"
+    },
+    {
+      "id": 2,
       "title": "Buy & Sell with Ease",
-      "description":
-          "Discover amazing deals and sell your items quickly in our trusted marketplace community.",
-      "illustration":
-          "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
+      "description": "Discover amazing deals and sell your items quickly in our trusted marketplace community.",
+      "illustration": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
       "features": [
         {"icon": "shopping_cart", "text": "Browse thousands of listings"},
         {"icon": "sell", "text": "List items in minutes"},
@@ -35,27 +46,10 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
       "gestureText": "Swipe to browse listings"
     },
     {
-      "id": 2,
-      "title": "Find Items Near You",
-      "description":
-          "Use location-based search to discover great deals in your neighborhood and nearby areas.",
-      "illustration":
-          "https://images.unsplash.com/photo-1524661135-423995f22d0b?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
-      "features": [
-        {"icon": "location_on", "text": "GPS-powered search"},
-        {"icon": "map", "text": "Interactive map view"},
-        {"icon": "near_me", "text": "Distance-based results"}
-      ],
-      "gesture": "tap_favorite",
-      "gestureText": "Tap ♥ to save favorites"
-    },
-    {
       "id": 3,
       "title": "Safe & Secure Trading",
-      "description":
-          "Trade with confidence using our safety features, verified profiles, and secure messaging system.",
-      "illustration":
-          "https://images.unsplash.com/photo-1563013544-824ae1b704d3?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
+      "description": "Trade with confidence using our safety features, verified profiles, and secure messaging system.",
+      "illustration": "https://images.unsplash.com/photo-1563013544-824ae1b704d3?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
       "features": [
         {"icon": "security", "text": "Secure transactions"},
         {"icon": "chat", "text": "In-app messaging"},
@@ -82,7 +76,7 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
       curve: Curves.easeInOut,
     ));
     _animationController.forward();
-    _checkLocationPermission();
+    // Removed location permission check
   }
 
   @override
@@ -90,86 +84,6 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
     _pageController.dispose();
     _animationController.dispose();
     super.dispose();
-  }
-
-  void _checkLocationPermission() async {
-    // Simulate location permission check
-    if (_currentPage == 1) {
-      // Show location permission dialog when on location screen
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (mounted) {
-        _showLocationPermissionDialog();
-      }
-    }
-  }
-
-  void _showLocationPermissionDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            children: [
-              CustomIconWidget(
-                iconName: 'location_on',
-                color: AppTheme.lightTheme.colorScheme.primary,
-                size: 24,
-              ),
-              SizedBox(width: 2.w),
-              Text(
-                'Location Access',
-                style: AppTheme.lightTheme.textTheme.titleMedium,
-              ),
-            ],
-          ),
-          content: Text(
-            'Allow MarketPlace Pro to access your location to find items near you and provide better search results.',
-            style: AppTheme.lightTheme.textTheme.bodyMedium,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                'Not Now',
-                style: TextStyle(
-                  color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _showLocationGrantedFeedback();
-              },
-              child: const Text('Allow'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showLocationGrantedFeedback() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            CustomIconWidget(
-              iconName: 'check_circle',
-              color: AppTheme.getSuccessColor(true),
-              size: 20,
-            ),
-            SizedBox(width: 2.w),
-            const Text('Location access granted!'),
-          ],
-        ),
-        backgroundColor: AppTheme.getSuccessColor(true),
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 
   void _nextPage() async {
@@ -183,9 +97,7 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
-      if (_currentPage == 1) {
-        _checkLocationPermission();
-      }
+      // Removed location permission check
     } else {
       _completeOnboarding();
     }
@@ -243,21 +155,19 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
               child: TextButton(
                 onPressed: _skipOnboarding,
                 style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                  backgroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                  backgroundColor: Color(0xFF2563EB), // Blue
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
-                    side: BorderSide(color: AppTheme.primaryLight, width: 2),
                   ),
-                  elevation: 6,
-                  shadowColor: AppTheme.primaryLight.withOpacity(0.2),
+                  elevation: 2,
                 ),
                 child: Text(
                   'Skip',
-                  style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
-                    color: AppTheme.primaryLight,
+                  style: TextStyle(
+                    color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 20,
+                    fontSize: 14,
                     letterSpacing: 1.2,
                   ),
                 ),
