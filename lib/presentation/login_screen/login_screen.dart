@@ -442,7 +442,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       opacity: _logoFadeAnimation,
       child: Column(
         children: [
-          // New khilonjiya.com logo
           SizedBox(
             height: 80,
             child: SvgPicture.asset(
@@ -450,24 +449,13 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             ),
           ),
           SizedBox(height: 1.h),
-          // Tagline
           Text(
-            '\u0986\u09ae\u09be\u09f0 \u09b8\u0982\u09b8\u09cd\u0995\u09c3\u09a4\u09bf, \u0986\u09ae\u09be\u09f0 \u0997\u09cc\u09f0\u09f1',
+            'khilonjiya.com',
             style: TextStyle(
-              fontSize: 3.5.w,
-              fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
-              letterSpacing: 0.5,
-            ),
-          ),
-          SizedBox(height: 0.5.h),
-          Text(
-            'Our Culture, Our Pride',
-            style: TextStyle(
-              fontSize: 3.w,
-              fontWeight: FontWeight.w400,
-              color: Colors.grey[500],
-              fontStyle: FontStyle.italic,
+              fontSize: 6.w,
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
+              letterSpacing: 1.2,
             ),
           ),
           SizedBox(height: 3.h),
@@ -679,7 +667,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       child: ElevatedButton(
         onPressed: _isFormValid && !_isLoading ? _handleLogin : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF10B981),
+          backgroundColor: Color(0xFF2563EB), // Blue
           foregroundColor: Colors.white,
           padding: EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

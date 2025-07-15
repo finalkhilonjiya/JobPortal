@@ -292,7 +292,7 @@ class _SplashScreenState extends State<SplashScreen>
               SizedBox(height: 2.h),
               if (_isInitializing)
                 Text(
-                  'Loading... Please wait',
+                  'Loading...',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 12.sp,

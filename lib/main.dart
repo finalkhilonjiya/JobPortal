@@ -428,13 +428,11 @@ void initState() {
   }
 
   Future<void> _handleInitialNavigation() async {
-    // Ensure minimum splash duration for smooth UX
-    final elapsed = _splashStopwatch.elapsedMilliseconds;
-    final minimumMs = AppConfig.splashMinimumDuration.inMilliseconds;
-    final delay = elapsed < minimumMs ? minimumMs - elapsed : 0;
-
-    await Future.delayed(Duration(milliseconds: delay));
-    
+    // Remove enforced minimum splash duration for instant splash
+    // final elapsed = _splashStopwatch.elapsedMilliseconds;
+    // final minimumMs = AppConfig.splashMinimumDuration.inMilliseconds;
+    // final delay = elapsed < minimumMs ? minimumMs - elapsed : 0;
+    // await Future.delayed(Duration(milliseconds: delay));
     if (!mounted) return;
 
     try {

@@ -4,6 +4,8 @@ import '../../widgets/bottom_nav_bar_widget.dart';
 import '../../theme/app_theme.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../utils/supabase_service.dart';
+import 'dart:async'; // Added for Timer
+import 'package:khilonjiya/presentation/app_routes.dart'; // Added for AppRoutes
 
 class HomeMarketplaceFeed extends StatefulWidget {
   const HomeMarketplaceFeed({Key? key}) : super(key: key);
@@ -31,49 +33,26 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       _isLoadingPremium = true;
       _isLoadingFeed = true;
     });
-    try {
-      final supabase = SupabaseService();
-      // Fetch categories
-      final catRes = await supabase.client.from('categories').select();
-      final categories = List<Map<String, dynamic>>.from(catRes);
-      // Fetch listings
-      final listRes = await supabase.client.from('listings').select('*, categories(name)');
-      final listings = List<Map<String, dynamic>>.from(listRes);
-      setState(() {
-        _categories = [
-          {'name': 'All', 'icon': Icons.apps, 'color': Colors.green}.cast<String, Object>(),
-          ...categories.map((c) => {
-            'name': c['name'],
-            'icon': Icons.category,
-            'color': Colors.green
-          }.cast<String, Object>())
-        ];
-        _listings = listings;
-        _isLoadingPremium = false;
-        _isLoadingFeed = false;
+    // Always use mock data
+    setState(() {
+      _categories = [
+        {'name': 'All', 'icon': Icons.grid_view_rounded, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
+        {'name': 'Electronics', 'icon': Icons.devices_other_rounded, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
+        {'name': 'Vehicles', 'icon': Icons.directions_car_filled_rounded, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
+        {'name': 'Jobs', 'icon': Icons.work_outline_rounded, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
+        {'name': 'Properties', 'icon': Icons.apartment_rounded, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
+      ];
+      _listings = List.generate(20, (i) => {
+        'title': 'Product Title $i',
+        'price': (i + 1) * 5000,
+        'location': 'Guwahati, Assam',
+        'category': i % 2 == 0 ? 'Electronics' : 'Vehicles',
+        'image': 'https://source.unsplash.com/random/400x300?sig=$i',
+        'is_featured': i < 3,
       });
-    } catch (e) {
-      // Use mock data if error
-      setState(() {
-        _categories = [
-          {'name': 'All', 'icon': Icons.apps, 'color': Colors.green}.cast<String, Object>(),
-          {'name': 'Electronics', 'icon': Icons.devices, 'color': Colors.green}.cast<String, Object>(),
-          {'name': 'Vehicles', 'icon': Icons.directions_car, 'color': Colors.green}.cast<String, Object>(),
-          {'name': 'Jobs', 'icon': Icons.work, 'color': Colors.green}.cast<String, Object>(),
-          {'name': 'Properties', 'icon': Icons.home, 'color': Colors.green}.cast<String, Object>(),
-        ];
-        _listings = List.generate(20, (i) => {
-          'title': 'Product Title $i',
-          'price': (i + 1) * 5000,
-          'location': 'Guwahati, Assam',
-          'category': i % 2 == 0 ? 'Electronics' : 'Vehicles',
-          'image': 'https://source.unsplash.com/random/400x300?sig=$i',
-          'is_featured': i < 3,
-        });
-        _isLoadingPremium = false;
-        _isLoadingFeed = false;
-      });
-    }
+      _isLoadingPremium = false;
+      _isLoadingFeed = false;
+    });
   }
 
   void _onCategorySelected(String name) {
@@ -128,10 +107,24 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         currentIndex: _currentIndex,
         onTabSelected: (index) {
           setState(() => _currentIndex = index);
-          // TODO: Handle navigation
+          switch (index) {
+            case 0:
+              Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
+              break;
+            case 1:
+              Navigator.pushNamed(context, AppRoutes.searchAndFilters);
+              break;
+            case 3:
+              // Packages: For now, go to favorites
+              Navigator.pushNamed(context, AppRoutes.favoritesAndSavedItems);
+              break;
+            case 4:
+              Navigator.pushNamed(context, AppRoutes.userProfile);
+              break;
+          }
         },
         onFabPressed: () {
-          // TODO: Navigate to create listing
+          Navigator.pushNamed(context, AppRoutes.createListing);
         },
         hasMessageNotification: false,
       ),
@@ -145,41 +138,63 @@ class _AppInfoBanner extends StatelessWidget {
     return Container(
       width: double.infinity,
       margin: EdgeInsets.all(4.w),
-      padding: EdgeInsets.all(4.w),
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppTheme.primaryLight, AppTheme.successLight],
+          colors: [AppTheme.primaryLight, AppTheme.secondaryLight, AppTheme.successLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryLight.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: AppTheme.primaryLight.withOpacity(0.12),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'Welcome to khilonjiya.com',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18.sp,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Poppins',
-            ),
+          CircleAvatar(
+            radius: 36,
+            backgroundColor: Colors.white,
+            child: Icon(Icons.verified, color: AppTheme.primaryLight, size: 40),
           ),
-          SizedBox(height: 1.h),
-          Text(
-            'Your trusted Assamese marketplace for buying, selling, and more.',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
-              fontSize: 12.sp,
-              fontFamily: 'Poppins',
+          SizedBox(width: 5.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome to khilonjiya.com',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22.sp,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                SizedBox(height: 1.h),
+                Text(
+                  'আমাৰ সংস্কৃতি, আমাৰ গৌৰৱ',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.95),
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                SizedBox(height: 0.5.h),
+                Text(
+                  'Your trusted Assamese marketplace for buying, selling, and more.',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.85),
+                    fontSize: 10.sp,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -202,7 +217,7 @@ class _ThreeOptionSection extends StatelessWidget {
                   key: const Key('btn_apply_job'),
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: Color(0xFF2563EB),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 2,
@@ -217,8 +232,8 @@ class _ThreeOptionSection extends StatelessWidget {
                   onPressed: () {},
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
-                    backgroundColor: Colors.green,
-                    side: const BorderSide(color: Colors.green),
+                    backgroundColor: Color(0xFF2563EB),
+                    side: const BorderSide(color: Color(0xFF2563EB)),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Text('List Jobs'),
@@ -234,7 +249,7 @@ class _ThreeOptionSection extends StatelessWidget {
                 key: const Key('btn_assamese_marketplace'),
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: Color(0xFF2563EB),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   padding: const EdgeInsets.symmetric(vertical: 18),
@@ -289,9 +304,9 @@ class _SearchBarSection extends StatelessWidget {
               ),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 3.w),
-                child: Icon(Icons.location_on, color: AppTheme.primaryLight, size: 20),
+                child: Icon(Icons.location_on, color: Color(0xFF2563EB), size: 20),
               ),
-              Text('Guwahati, Assam', style: TextStyle(color: AppTheme.primaryLight, fontSize: 11.sp, fontFamily: 'Poppins')),
+              Text('Guwahati, Assam', style: TextStyle(color: Color(0xFF2563EB), fontSize: 11.sp, fontFamily: 'Poppins')),
               SizedBox(width: 2.w),
             ],
           ),
@@ -333,14 +348,18 @@ class _PremiumCardsSection extends StatelessWidget {
   const _PremiumCardsSection({required this.listings});
   @override
   Widget build(BuildContext context) {
+    if (listings.isEmpty) return SizedBox.shrink();
     return SizedBox(
-      height: 22.h,
-      child: ListView.builder(
-        key: const Key('premium_cards_list'),
+      height: 120,
+      child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
         itemCount: listings.length,
-        itemBuilder: (context, index) => _PremiumCard(data: listings[index]),
+        separatorBuilder: (_, __) => SizedBox(width: 4.w),
+        itemBuilder: (context, index) => SizedBox(
+          width: 320,
+          child: _ProductFeedCard(data: listings[index]),
+        ),
       ),
     );
   }
@@ -357,11 +376,11 @@ class _PremiumCard extends StatelessWidget {
       width: 60.w,
       margin: EdgeInsets.only(right: 4.w),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.1),
+        color: Color(0xFF2563EB).withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withOpacity(0.06),
+            color: Color(0xFF2563EB).withOpacity(0.06),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -387,21 +406,21 @@ class _PremiumCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text('Premium', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 11.sp, fontFamily: 'Poppins')),
+                    Text('Premium', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 11.sp, fontFamily: 'Poppins')),
                     const SizedBox(width: 8),
-                    Icon(Icons.verified, color: Colors.green, size: 16),
+                    Icon(Icons.verified, color: Color(0xFF2563EB), size: 16),
                   ],
                 ),
                 SizedBox(height: 0.5.h),
                 Text(data['title'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.sp, fontFamily: 'Poppins')),
                 SizedBox(height: 0.5.h),
-                Text('₹${data['price']}', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12.sp, fontFamily: 'Poppins')),
+                Text('₹${data['price']}', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 12.sp, fontFamily: 'Poppins')),
                 SizedBox(height: 0.5.h),
                 Row(
                   children: [
-                    Icon(Icons.location_on, color: Colors.green, size: 14),
+                    Icon(Icons.location_on, color: Color(0xFF2563EB), size: 14),
                     SizedBox(width: 4),
-                    Text(data['location'] ?? '', style: TextStyle(color: Colors.green, fontSize: 10.sp, fontFamily: 'Poppins')),
+                    Text(data['location'] ?? '', style: TextStyle(color: Color(0xFF2563EB), fontSize: 10.sp, fontFamily: 'Poppins')),
                   ],
                 ),
               ],
@@ -436,7 +455,7 @@ class _CategoriesSection extends StatelessWidget {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               decoration: BoxDecoration(
-                color: isSelected ? Colors.green : Colors.green.withOpacity(0.1),
+                color: isSelected ? Color(0xFF2563EB) : Color(0xFF2563EB).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -445,10 +464,10 @@ class _CategoriesSection extends StatelessWidget {
                   CircleAvatar(
                     backgroundColor: Colors.white,
                     radius: 26,
-                    child: Icon(cat['icon'] as IconData, color: Colors.green, size: 24),
+                    child: Icon(cat['icon'] as IconData, color: Color(0xFF2563EB), size: 24),
                   ),
                   SizedBox(height: 0.8.h),
-                  Text(cat['name'] as String, style: TextStyle(fontSize: 10.sp, color: isSelected ? Colors.white : Colors.green, fontFamily: 'Poppins')),
+                  Text(cat['name'] as String, style: TextStyle(fontSize: 10.sp, color: isSelected ? Colors.white : Color(0xFF2563EB), fontFamily: 'Poppins')),
                 ],
               ),
             ),
@@ -510,21 +529,21 @@ class _ProductFeedCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text('₹${data['price']}', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13.sp, fontFamily: 'Poppins')),
+                        Text('₹${data['price']}', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 13.sp, fontFamily: 'Poppins')),
                         SizedBox(width: 8),
-                        Icon(Icons.verified, color: Colors.green, size: 16),
+                        Icon(Icons.verified, color: Color(0xFF2563EB), size: 16),
                       ],
                     ),
                     SizedBox(height: 0.5.h),
                     Text(data['title'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.sp, fontFamily: 'Poppins')),
                     SizedBox(height: 0.5.h),
-                    Text(data['location'] ?? '', style: TextStyle(color: Colors.green, fontSize: 10.sp, fontFamily: 'Poppins')),
+                    Text(data['location'] ?? '', style: TextStyle(color: Color(0xFF2563EB), fontSize: 10.sp, fontFamily: 'Poppins')),
                     SizedBox(height: 0.5.h),
                     Row(
                       children: [
-                        Icon(Icons.access_time, size: 12, color: Colors.green),
+                        Icon(Icons.access_time, size: 12, color: Color(0xFF2563EB)),
                         SizedBox(width: 4),
-                        Text('2 hours ago', style: TextStyle(color: Colors.green, fontSize: 9.sp, fontFamily: 'Poppins')),
+                        Text('2 hours ago', style: TextStyle(color: Color(0xFF2563EB), fontSize: 9.sp, fontFamily: 'Poppins')),
                       ],
                     ),
                   ],
@@ -532,7 +551,7 @@ class _ProductFeedCard extends StatelessWidget {
               ),
               IconButton(
                 key: Key('favorite_icon_${data['title']}'),
-                icon: Icon(Icons.favorite_border, color: Colors.green),
+                icon: Icon(Icons.favorite_border, color: Color(0xFF2563EB)),
                 onPressed: () {},
               ),
             ],
