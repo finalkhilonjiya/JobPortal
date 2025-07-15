@@ -26,8 +26,8 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
       "illustration": "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
       "features": [
         {"icon": "work", "text": "Apply for jobs easily"},
-        {"icon": "notifications", "text": "Get instant job alerts"},
-        {"icon": "add", "text": "List your own jobs"}
+        {"icon": "notifications", "text": "Get  job alerts when listed"},
+        {"icon": "add", "text": "List your jobs"}
       ],
       "gesture": "tap_notification",
       "gestureText": "Tap to get job notifications"
@@ -47,13 +47,13 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
     },
     {
       "id": 3,
-      "title": "Safe & Secure Trading",
+      "title": "Safe & Secure Deals",
       "description": "Trade with confidence using our safety features, verified profiles, and secure messaging system.",
       "illustration": "https://images.unsplash.com/photo-1563013544-824ae1b704d3?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
       "features": [
-        {"icon": "security", "text": "Secure transactions"},
+        {"icon": "security", "text": "Genuine Sellers"},
         {"icon": "chat", "text": "In-app messaging"},
-        {"icon": "report", "text": "Report & block users"}
+        {"icon": "report", "text": "Get available deals nearby"}
       ],
       "gesture": "pull_refresh",
       "gestureText": "Pull down to refresh"
