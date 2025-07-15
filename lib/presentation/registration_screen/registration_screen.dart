@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 
 import '../../core/app_export.dart';
 import '../../routes/app_routes.dart';
@@ -31,14 +29,12 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   final _fullNameFocusNode = FocusNode(); // Added for full name
 
   final _authService = AuthService();
-  final _imagePicker = ImagePicker();
 
   // State variables
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
   String _errorMessage = '';
-  File? _profileImage;
   bool _acceptTerms = false;
 
   // Animation controllers
@@ -102,6 +98,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   bool _isFormValid() {
     return _emailController.text.trim().isNotEmpty &&
            _fullNameController.text.trim().isNotEmpty &&
+           _phoneController.text.trim().isNotEmpty &&
            _passwordController.text.isNotEmpty &&
            _confirmPasswordController.text.isNotEmpty &&
            _passwordController.text == _confirmPasswordController.text &&
@@ -123,7 +120,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   }
 
   String? _validatePhone(String? value) {
-    if (value == null || value.isEmpty) return null; // Phone is optional
+    if (value == null || value.isEmpty) return 'Phone number is required';
     final cleaned = value.replaceAll(RegExp(r'[^\d]'), '');
     if (cleaned.length < 10) return 'Please enter a valid phone number';
     return null;
@@ -141,148 +138,6 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     return null;
   }
 
-  Future<void> _pickImage(ImageSource source) async {
-    try {
-      final XFile? image = await _imagePicker.pickImage(
-        source: source,
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 80,
-      );
-      
-      if (image != null) {
-        setState(() {
-          _profileImage = File(image.path);
-        });
-      }
-    } catch (e) {
-      _showErrorSnackBar('Failed to pick image: $e');
-    }
-  }
-
-  void _showImagePickerBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: EdgeInsets.only(top: 2.h),
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.all(4.w),
-                child: Column(
-                  children: [
-                    Text(
-                      'Select Profile Photo',
-                      style: TextStyle(
-                        fontSize: 5.w,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 3.h),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildImageOption(
-                            icon: Icons.camera_alt,
-                            label: 'Camera',
-                            onTap: () {
-                              Navigator.pop(context);
-                              _pickImage(ImageSource.camera);
-                            },
-                          ),
-                        ),
-                        SizedBox(width: 4.w),
-                        Expanded(
-                          child: _buildImageOption(
-                            icon: Icons.photo_library,
-                            label: 'Gallery',
-                            onTap: () {
-                              Navigator.pop(context);
-                              _pickImage(ImageSource.gallery);
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (_profileImage != null) ...[
-                      SizedBox(height: 2.h),
-                      SizedBox(
-                        width: double.infinity,
-                        child: TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            setState(() {
-                              _profileImage = null;
-                            });
-                          },
-                          child: const Text('Remove Photo'),
-                        ),
-                      ),
-                    ],
-                    SizedBox(height: 2.h),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImageOption({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 4.w),
-        decoration: BoxDecoration(
-          color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: AppTheme.lightTheme.colorScheme.primary,
-              size: 32,
-            ),
-            SizedBox(height: 1.h),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 3.5.w,
-                color: AppTheme.lightTheme.colorScheme.primary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _handleRegistration() async {
     if (!_isFormValid()) return;
 
@@ -296,14 +151,16 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       final email = _emailController.text.trim();
       final fullName = _fullNameController.text.trim();
       final password = _passwordController.text;
+      final phone = _phoneController.text.trim();
 
       debugPrint('📤 Attempting registration with email: $email');
 
-      // Use email and full name for Supabase
+      // Use email, full name, and phone for Supabase
       final response = await _authService.signUp(
         email: email,
         password: password,
         fullName: fullName,
+        phone: phone,
       );
 
       if (response.user != null) {
@@ -395,17 +252,113 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   // --- Added for build error fix: UI-only, no backend logic changed ---
   Widget _buildProfileImagePicker() {
     // Reuse the profile photo section for design
-    return _buildProfilePhotoSection();
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: () {
+            // This method is no longer used for image picking
+          },
+          child: Container(
+            width: 25.w,
+            height: 25.w,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.grey[100],
+              border: Border.all(
+                color: Colors.grey[300]!,
+                width: 2,
+              ),
+            ),
+            child: Icon(
+              Icons.add_a_photo,
+              color: Colors.grey[400],
+              size: 32,
+            ),
+          ),
+        ),
+        SizedBox(height: 1.h),
+        GestureDetector(
+          onTap: () {
+            // This method is no longer used for image picking
+          },
+          child: Text(
+            'Add Profile Photo',
+            style: TextStyle(
+              fontSize: 3.5.w,
+              color: AppTheme.lightTheme.colorScheme.primary,
+            ),
+          ),
+        ),
+        SizedBox(height: 0.5.h),
+        Text(
+          'Optional - helps build trust',
+          style: TextStyle(
+            fontSize: 3.w,
+            color: Colors.grey[500],
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  // Add a method to calculate password strength
+  int _calculatePasswordStrength(String password) {
+    int strength = 0;
+    if (password.length >= 8) strength++;
+    if (RegExp(r'[A-Z]').hasMatch(password)) strength++;
+    if (RegExp(r'[a-z]').hasMatch(password)) strength++;
+    if (RegExp(r'[0-9]').hasMatch(password)) strength++;
+    if (RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(password)) strength++;
+    return strength;
   }
 
   Widget _buildForm() {
-    // Reuse the registration form for design
-    return _buildRegistrationForm();
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          _buildFullNameField(),
+          SizedBox(height: 2.h),
+          _buildEmailField(),
+          SizedBox(height: 2.h),
+          _buildPhoneField(),
+          SizedBox(height: 2.h),
+          _buildPasswordField(),
+          PasswordStrengthIndicatorWidget(
+            password: _passwordController.text,
+            strength: _calculatePasswordStrength(_passwordController.text),
+          ),
+          SizedBox(height: 2.h),
+          _buildConfirmPasswordField(),
+        ],
+      ),
+    );
   }
 
   Widget _buildTermsAndConditions() {
     // Reuse the terms checkbox for design
-    return _buildTermsCheckbox();
+    return Row(
+      children: [
+        Checkbox(
+          value: _acceptTerms,
+          onChanged: (value) => setState(() => _acceptTerms = value ?? false),
+          activeColor: AppTheme.lightTheme.colorScheme.primary,
+        ),
+        Expanded(
+          child: GestureDetector(
+            onTap: () => setState(() => _acceptTerms = !_acceptTerms),
+            child: Text(
+              'I agree to the Terms of Service and Privacy Policy',
+              style: TextStyle(
+                fontSize: 3.5.w,
+                color: Colors.grey[700],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -462,8 +415,6 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           ),
                         ),
                         SizedBox(height: 2.h),
-                        _buildProfileImagePicker(),
-                        SizedBox(height: 2.h),
                         _buildForm(),
                         SizedBox(height: 2.h),
                         _buildTermsAndConditions(),
@@ -509,81 +460,6 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildProfilePhotoSection() {
-    return Column(
-      children: [
-        GestureDetector(
-          onTap: _showImagePickerBottomSheet,
-          child: Container(
-            width: 25.w,
-            height: 25.w,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.grey[100],
-              border: Border.all(
-                color: Colors.grey[300]!,
-                width: 2,
-              ),
-            ),
-            child: _profileImage != null
-                ? ClipOval(
-                    child: Image.file(
-                      _profileImage!,
-                      fit: BoxFit.cover,
-                      width: 25.w,
-                      height: 25.w,
-                    ),
-                  )
-                : Icon(
-                    Icons.add_a_photo,
-                    color: Colors.grey[400],
-                    size: 32,
-                  ),
-          ),
-        ),
-        SizedBox(height: 1.h),
-        GestureDetector(
-          onTap: _showImagePickerBottomSheet,
-          child: Text(
-            _profileImage != null ? 'Change Photo' : 'Add Profile Photo',
-            style: TextStyle(
-              fontSize: 3.5.w,
-              color: AppTheme.lightTheme.colorScheme.primary,
-            ),
-          ),
-        ),
-        SizedBox(height: 0.5.h),
-        Text(
-          'Optional - helps build trust',
-          style: TextStyle(
-            fontSize: 3.w,
-            color: Colors.grey[500],
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRegistrationForm() {
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          _buildFullNameField(),
-          SizedBox(height: 2.h),
-          _buildEmailField(),
-          SizedBox(height: 2.h),
-          _buildPhoneField(),
-          SizedBox(height: 2.h),
-          _buildPasswordField(),
-          SizedBox(height: 2.h),
-          _buildConfirmPasswordField(),
-        ],
-      ),
     );
   }
 
@@ -638,7 +514,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       keyboardType: TextInputType.phone,
       textInputAction: TextInputAction.next,
       decoration: InputDecoration(
-        labelText: 'Phone Number (Optional)',
+        labelText: 'Phone Number',
         hintText: 'Enter your phone number',
         prefixIcon: Icon(Icons.phone_outlined),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

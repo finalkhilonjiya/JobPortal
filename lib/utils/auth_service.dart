@@ -128,6 +128,7 @@ class AuthService {
     required String email,
     required String password,
     required String fullName,
+    String? phone,
   }) async {
     try {
       // Check if Supabase client is available
@@ -144,11 +145,12 @@ class AuthService {
         data: {
           'full_name': fullName,
           'role': 'buyer',
+          if (phone != null && phone.isNotEmpty) 'phone_number': phone,
         },
       );
 
       debugPrint('📤 Supabase signUp() response:');
-      debugPrint('user: ${response.user}');
+      debugPrint('user:  [38;5;10m [1m [4m [7m${response.user} [0m');
       debugPrint('session: ${response.session}');
 
       if (response.user != null) {
@@ -156,6 +158,7 @@ class AuthService {
         await _createUserProfile(response.user!, {
           'full_name': fullName,
           'role': 'buyer',
+          if (phone != null && phone.isNotEmpty) 'phone_number': phone,
         });
         return response;
       }
