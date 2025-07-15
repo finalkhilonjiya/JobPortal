@@ -4,6 +4,7 @@ import '../../widgets/bottom_nav_bar_widget.dart';
 import '../../theme/app_theme.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../utils/supabase_service.dart';
+import 'dart:async'; // Added for Timer
 
 class HomeMarketplaceFeed extends StatefulWidget {
   const HomeMarketplaceFeed({Key? key}) : super(key: key);
@@ -77,7 +78,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
             SliverToBoxAdapter(
               child: _isLoadingPremium
                   ? _ShimmerPremiumCardsSection()
-                  : _PremiumCardsSection(listings: _listings.where((l) => l['is_featured'] == true).toList()),
+                  : _PremiumCarouselSection(listings: _listings.where((l) => l['is_featured'] == true).toList()),
             ),
             SliverToBoxAdapter(child: _CategoriesSection(
               categories: _categories,
@@ -305,20 +306,75 @@ class _ShimmerPremiumCardsSection extends StatelessWidget {
   }
 }
 
-class _PremiumCardsSection extends StatelessWidget {
+class _PremiumCarouselSection extends StatefulWidget {
   final List<Map<String, dynamic>> listings;
-  const _PremiumCardsSection({required this.listings});
+  const _PremiumCarouselSection({required this.listings});
+  @override
+  State<_PremiumCarouselSection> createState() => _PremiumCarouselSectionState();
+}
+
+class _PremiumCarouselSectionState extends State<_PremiumCarouselSection> {
+  late final PageController _pageController;
+  int _currentPage = 0;
+  late final List<Map<String, dynamic>> _premiumListings;
+  late final Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _premiumListings = widget.listings;
+    _pageController = PageController(viewportFraction: 0.88);
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (_premiumListings.isEmpty) return;
+      int nextPage = (_currentPage + 1) % _premiumListings.length;
+      _pageController.animateToPage(
+        nextPage,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+    });
+    _pageController.addListener(() {
+      int page = _pageController.page?.round() ?? 0;
+      if (page != _currentPage) {
+        setState(() => _currentPage = page);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 22.h,
-      child: ListView.builder(
-        key: const Key('premium_cards_list'),
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-        itemCount: listings.length,
-        itemBuilder: (context, index) => _PremiumCard(data: listings[index]),
-      ),
+    if (_premiumListings.isEmpty) return SizedBox.shrink();
+    return Column(
+      children: [
+        SizedBox(
+          height: 22.h,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: _premiumListings.length,
+            itemBuilder: (context, index) => _PremiumCard(data: _premiumListings[index]),
+          ),
+        ),
+        SizedBox(height: 1.h),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(_premiumListings.length, (i) => Container(
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: i == _currentPage ? Color(0xFF2563EB) : Colors.grey[300],
+            ),
+          )),
+        ),
+      ],
     );
   }
 }
