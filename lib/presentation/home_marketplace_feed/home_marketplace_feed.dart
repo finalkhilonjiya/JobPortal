@@ -16,7 +16,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   int _currentIndex = 0;
   bool _isLoadingPremium = true;
   bool _isLoadingFeed = true;
-  List<Map<String, dynamic>> _categories = [];
+  List<Map<String, Object>> _categories = [];
   List<Map<String, dynamic>> _listings = [];
   String _selectedCategory = 'All';
 
@@ -40,11 +40,14 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       final listRes = await supabase.client.from('listings').select('*, categories(name)');
       final listings = List<Map<String, dynamic>>.from(listRes);
       setState(() {
-        _categories = [{'name': 'All', 'icon': Icons.apps, 'color': Colors.green}] + List<Map<String, dynamic>>.from(categories.map((c) => {
-          'name': c['name'],
-          'icon': Icons.category,
-          'color': Colors.green
-        }).toList());
+        _categories = [
+          {'name': 'All', 'icon': Icons.apps, 'color': Colors.green}.cast<String, Object>(),
+          ...categories.map((c) => {
+            'name': c['name'],
+            'icon': Icons.category,
+            'color': Colors.green
+          }.cast<String, Object>())
+        ];
         _listings = listings;
         _isLoadingPremium = false;
         _isLoadingFeed = false;
@@ -53,11 +56,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       // Use mock data if error
       setState(() {
         _categories = [
-          {'name': 'All', 'icon': Icons.apps, 'color': Colors.green},
-          {'name': 'Electronics', 'icon': Icons.devices, 'color': Colors.green},
-          {'name': 'Vehicles', 'icon': Icons.directions_car, 'color': Colors.green},
-          {'name': 'Jobs', 'icon': Icons.work, 'color': Colors.green},
-          {'name': 'Properties', 'icon': Icons.home, 'color': Colors.green},
+          {'name': 'All', 'icon': Icons.apps, 'color': Colors.green}.cast<String, Object>(),
+          {'name': 'Electronics', 'icon': Icons.devices, 'color': Colors.green}.cast<String, Object>(),
+          {'name': 'Vehicles', 'icon': Icons.directions_car, 'color': Colors.green}.cast<String, Object>(),
+          {'name': 'Jobs', 'icon': Icons.work, 'color': Colors.green}.cast<String, Object>(),
+          {'name': 'Properties', 'icon': Icons.home, 'color': Colors.green}.cast<String, Object>(),
         ];
         _listings = List.generate(20, (i) => {
           'title': 'Product Title $i',
@@ -411,7 +414,7 @@ class _PremiumCard extends StatelessWidget {
 }
 
 class _CategoriesSection extends StatelessWidget {
-  final List<Map<String, dynamic>> categories;
+  final List<Map<String, Object>> categories;
   final String selected;
   final void Function(String) onSelect;
   const _CategoriesSection({required this.categories, required this.selected, required this.onSelect});
@@ -429,7 +432,7 @@ class _CategoriesSection extends StatelessWidget {
           final cat = categories[index];
           final isSelected = cat['name'] == selected;
           return GestureDetector(
-            onTap: () => onSelect(cat['name']),
+            onTap: () => onSelect(cat['name'] as String),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               decoration: BoxDecoration(

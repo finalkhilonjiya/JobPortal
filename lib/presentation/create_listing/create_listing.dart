@@ -31,7 +31,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   String? _selectedCondition;
   double? _latitude;
   double? _longitude;
-  List<Map<String, dynamic>> _categories = [];
+  List<Map<String, Object>> _categories = [];
 
   @override
   void initState() {
@@ -46,7 +46,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         .eq('is_active', true)
         .order('sort_order');
     setState(() {
-      _categories = List<Map<String, dynamic>>.from(response);
+      _categories = List<Map<String, Object>>.from(response.map((c) => c.cast<String, Object>()));
     });
   }
 
@@ -236,7 +236,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                       items: _categories
                           .map((cat) => DropdownMenuItem<String>(
                                 value: cat['id'] as String,
-                                child: Text(cat['name']),
+                                child: Text(cat['name'] as String),
                               ))
                           .toList(),
                       onChanged: (v) => setState(() => _selectedCategoryId = v),

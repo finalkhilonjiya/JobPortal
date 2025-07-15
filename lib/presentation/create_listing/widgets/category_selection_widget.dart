@@ -24,7 +24,7 @@ class _CategorySelectionWidgetState extends State<CategorySelectionWidget> {
 
   String _searchQuery = '';
   bool _isLoading = true;
-  List<Map<String, dynamic>> _categories = [];
+  List<Map<String, Object>> _categories = [];
 
   @override
   void initState() {
@@ -71,7 +71,7 @@ class _CategorySelectionWidgetState extends State<CategorySelectionWidget> {
     return iconMap[categoryName] ?? 'category';
   }
 
-  List<Map<String, dynamic>> _getMockCategories() {
+  List<Map<String, Object>> _getMockCategories() {
     return [
       {
         'id': '1',
@@ -115,10 +115,10 @@ class _CategorySelectionWidgetState extends State<CategorySelectionWidget> {
         'icon': 'menu_book',
         'subcategories': ['Fiction', 'Non-fiction', 'Textbooks', 'Comics'],
       },
-    ];
+    ].map((c) => c.cast<String, Object>()).toList();
   }
 
-  List<Map<String, dynamic>> get _filteredCategories {
+  List<Map<String, Object>> get _filteredCategories {
     if (_searchQuery.isEmpty) {
       return _categories;
     }
