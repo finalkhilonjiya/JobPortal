@@ -721,13 +721,12 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                 icon: Icon(
                   Icons.g_mobiledata,
                   size: 24,
-                  color: AppTheme.lightTheme.colorScheme.primary,
+              
                 ),
                 label: Text(
                   'Google',
                   style: TextStyle(
                     fontSize: 3.5.w,
-                    color: AppTheme.lightTheme.colorScheme.primary,
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
@@ -748,13 +747,11 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                 icon: Icon(
                   Icons.facebook,
                   size: 24,
-                  color: const Color(0xFF1877F2),
                 ),
                 label: Text(
                   'Facebook',
                   style: TextStyle(
                     fontSize: 3.5.w,
-                    color: const Color(0xFF1877F2),
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
