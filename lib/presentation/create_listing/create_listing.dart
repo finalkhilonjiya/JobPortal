@@ -6,8 +6,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_google_places/flutter_google_places.dart';
-import 'package:google_maps_webservice/places.dart';
+import 'package:flutter_google_places_hoc081098/flutter_google_places_hoc081098.dart';
+import 'package:flutter_google_places_hoc081098/google_maps_webservice_places.dart';
+import 'package:google_api_headers/google_api_headers.dart';
 
 class CreateListingScreen extends StatefulWidget {
   const CreateListingScreen({Key? key}) : super(key: key);
@@ -88,7 +89,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       hint: 'Search location',
     );
     if (p != null) {
-      final places = GoogleMapsPlaces(apiKey: apiKey);
+      final places = GoogleMapsPlaces(
+        apiKey: apiKey,
+        apiHeaders: await const GoogleApiHeaders().getHeaders(),
+      );
       final detail = await places.getDetailsByPlaceId(p.placeId!);
       final loc = detail.result.geometry?.location;
       setState(() {
