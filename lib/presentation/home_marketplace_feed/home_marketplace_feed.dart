@@ -5,7 +5,7 @@ import '../../theme/app_theme.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../utils/supabase_service.dart';
 import 'dart:async'; // Added for Timer
-import 'package:khilonjiya/presentation/app_routes.dart'; // Added for AppRoutes
+import '../../routes/app_routes.dart'; // Fixed import for AppRoutes
 
 class HomeMarketplaceFeed extends StatefulWidget {
   const HomeMarketplaceFeed({Key? key}) : super(key: key);
