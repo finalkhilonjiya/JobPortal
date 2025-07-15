@@ -16,6 +16,9 @@ workflows:
       - name: Get dependencies
         script: |
           flutter pub get
+      - name: Generate Native Splash
+        script: |
+          flutter pub run flutter_native_splash:create
       - name: Clean and Build Debug APK
         script: |
           flutter clean
@@ -43,6 +46,9 @@ workflows:
       - name: Get dependencies
         script: |
           flutter pub get
+      - name: Generate Native Splash
+        script: |
+          flutter pub run flutter_native_splash:create
       - name: Clean and Build Release APK
         script: |
           flutter clean
@@ -70,6 +76,9 @@ workflows:
       - name: Get dependencies
         script: |
           flutter pub get
+      - name: Generate Native Splash
+        script: |
+          flutter pub run flutter_native_splash:create
       - name: Clean and Build App Bundle
         script: |
           flutter clean
