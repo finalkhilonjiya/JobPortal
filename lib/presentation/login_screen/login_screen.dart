@@ -396,7 +396,8 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
+                          _build_Logo(),
+                          Text(
                           'Sign In',
                           style: TextStyle(
                             fontSize: 22.sp,
@@ -478,8 +479,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             SizedBox(height: 1.h),
             _buildForgotPasswordLink(),
             SizedBox(height: 3.h),
-            _buildLoginButton(),
-            SizedBox(height: 2.h),
             _buildSocialLoginSection(),
             SizedBox(height: 2.h),
             _buildSignUpLink(),
