@@ -78,6 +78,7 @@ flutter:
     
     # App assets
     - assets/images/
+    - assets/images/splash/
     - assets/icons/
     - assets/fonts/
   fonts:
