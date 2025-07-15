@@ -24,6 +24,7 @@ import './widgets/advanced_filter_widget.dart';
 import './widgets/featured_banner_widget.dart';
 import './widgets/category_grid_widget.dart';
 import './widgets/product_list_widget.dart';
+import '../../widgets/bottom_nav_bar_widget.dart';
 
 enum ViewMode { grid, list, card }
 
@@ -855,6 +856,62 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
       body: SafeArea(
         child: Column(
           children: [
+            // TODO: App info banner (static or carousel)
+            SizedBox(height: 16),
+            // TODO: Three-option section (Apply for job, List jobs, Assamese marketplace button)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          key: const Key('btn_apply_job'),
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryLight,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text('Apply for Job'),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton(
+                          key: const Key('btn_list_jobs'),
+                          onPressed: () {},
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppTheme.primaryLight,
+                            side: const BorderSide(color: AppTheme.primaryLight),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text('List Jobs'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12),
+                  Center(
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        key: const Key('btn_assamese_marketplace'),
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.successLight,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                        ),
+                        child: const Text('Assamese Traditional Marketplace', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             // Main Menu (Main Sections)
             _buildMainSections(),
             // Categories Grid
@@ -862,7 +919,17 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed>
           ],
         ),
       ),
-      bottomNavigationBar: _buildModernBottomNav(),
+      bottomNavigationBar: BottomNavBarWidget(
+        currentIndex: _currentIndex,
+        onTabSelected: (index) {
+          setState(() => _currentIndex = index);
+          // TODO: Handle navigation
+        },
+        onFabPressed: () {
+          // TODO: Navigate to create listing
+        },
+        hasMessageNotification: false, // TODO: wire up real notification state
+      ),
     );
   }
 
