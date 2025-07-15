@@ -40,11 +40,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       final listRes = await supabase.client.from('listings').select('*, categories(name)');
       final listings = List<Map<String, dynamic>>.from(listRes);
       setState(() {
-        _categories = [{'name': 'All', 'icon': Icons.apps, 'color': Colors.green}] + categories.map((c) => {
+        _categories = [{'name': 'All', 'icon': Icons.apps, 'color': Colors.green}] + List<Map<String, dynamic>>.from(categories.map((c) => {
           'name': c['name'],
           'icon': Icons.category,
           'color': Colors.green
-        }).toList();
+        }).toList());
         _listings = listings;
         _isLoadingPremium = false;
         _isLoadingFeed = false;
