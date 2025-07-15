@@ -179,7 +179,7 @@ class _ThreeOptionSection extends StatelessWidget {
                   key: const Key('btn_apply_job'),
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: Color(0xFF2563EB),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 2,
@@ -194,8 +194,8 @@ class _ThreeOptionSection extends StatelessWidget {
                   onPressed: () {},
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
-                    backgroundColor: Colors.green,
-                    side: const BorderSide(color: Colors.green),
+                    backgroundColor: Color(0xFF2563EB),
+                    side: const BorderSide(color: Color(0xFF2563EB)),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Text('List Jobs'),
@@ -211,7 +211,7 @@ class _ThreeOptionSection extends StatelessWidget {
                 key: const Key('btn_assamese_marketplace'),
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: Color(0xFF2563EB),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   padding: const EdgeInsets.symmetric(vertical: 18),
@@ -266,9 +266,9 @@ class _SearchBarSection extends StatelessWidget {
               ),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 3.w),
-                child: Icon(Icons.location_on, color: AppTheme.primaryLight, size: 20),
+                child: Icon(Icons.location_on, color: Color(0xFF2563EB), size: 20),
               ),
-              Text('Guwahati, Assam', style: TextStyle(color: AppTheme.primaryLight, fontSize: 11.sp, fontFamily: 'Poppins')),
+              Text('Guwahati, Assam', style: TextStyle(color: Color(0xFF2563EB), fontSize: 11.sp, fontFamily: 'Poppins')),
               SizedBox(width: 2.w),
             ],
           ),
@@ -334,11 +334,11 @@ class _PremiumCard extends StatelessWidget {
       width: 60.w,
       margin: EdgeInsets.only(right: 4.w),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.1),
+        color: Color(0xFF2563EB).withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withOpacity(0.06),
+            color: Color(0xFF2563EB).withOpacity(0.06),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -364,21 +364,21 @@ class _PremiumCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text('Premium', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 11.sp, fontFamily: 'Poppins')),
+                    Text('Premium', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 11.sp, fontFamily: 'Poppins')),
                     const SizedBox(width: 8),
-                    Icon(Icons.verified, color: Colors.green, size: 16),
+                    Icon(Icons.verified, color: Color(0xFF2563EB), size: 16),
                   ],
                 ),
                 SizedBox(height: 0.5.h),
                 Text(data['title'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.sp, fontFamily: 'Poppins')),
                 SizedBox(height: 0.5.h),
-                Text('₹${data['price']}', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12.sp, fontFamily: 'Poppins')),
+                Text('₹${data['price']}', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 12.sp, fontFamily: 'Poppins')),
                 SizedBox(height: 0.5.h),
                 Row(
                   children: [
-                    Icon(Icons.location_on, color: Colors.green, size: 14),
+                    Icon(Icons.location_on, color: Color(0xFF2563EB), size: 14),
                     SizedBox(width: 4),
-                    Text(data['location'] ?? '', style: TextStyle(color: Colors.green, fontSize: 10.sp, fontFamily: 'Poppins')),
+                    Text(data['location'] ?? '', style: TextStyle(color: Color(0xFF2563EB), fontSize: 10.sp, fontFamily: 'Poppins')),
                   ],
                 ),
               ],
@@ -413,7 +413,7 @@ class _CategoriesSection extends StatelessWidget {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               decoration: BoxDecoration(
-                color: isSelected ? Colors.green : Colors.green.withOpacity(0.1),
+                color: isSelected ? Color(0xFF2563EB) : Color(0xFF2563EB).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -422,10 +422,10 @@ class _CategoriesSection extends StatelessWidget {
                   CircleAvatar(
                     backgroundColor: Colors.white,
                     radius: 26,
-                    child: Icon(cat['icon'] as IconData, color: Colors.green, size: 24),
+                    child: Icon(cat['icon'] as IconData, color: Color(0xFF2563EB), size: 24),
                   ),
                   SizedBox(height: 0.8.h),
-                  Text(cat['name'] as String, style: TextStyle(fontSize: 10.sp, color: isSelected ? Colors.white : Colors.green, fontFamily: 'Poppins')),
+                  Text(cat['name'] as String, style: TextStyle(fontSize: 10.sp, color: isSelected ? Colors.white : Color(0xFF2563EB), fontFamily: 'Poppins')),
                 ],
               ),
             ),
@@ -487,21 +487,21 @@ class _ProductFeedCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text('₹${data['price']}', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13.sp, fontFamily: 'Poppins')),
+                        Text('₹${data['price']}', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 13.sp, fontFamily: 'Poppins')),
                         SizedBox(width: 8),
-                        Icon(Icons.verified, color: Colors.green, size: 16),
+                        Icon(Icons.verified, color: Color(0xFF2563EB), size: 16),
                       ],
                     ),
                     SizedBox(height: 0.5.h),
                     Text(data['title'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.sp, fontFamily: 'Poppins')),
                     SizedBox(height: 0.5.h),
-                    Text(data['location'] ?? '', style: TextStyle(color: Colors.green, fontSize: 10.sp, fontFamily: 'Poppins')),
+                    Text(data['location'] ?? '', style: TextStyle(color: Color(0xFF2563EB), fontSize: 10.sp, fontFamily: 'Poppins')),
                     SizedBox(height: 0.5.h),
                     Row(
                       children: [
-                        Icon(Icons.access_time, size: 12, color: Colors.green),
+                        Icon(Icons.access_time, size: 12, color: Color(0xFF2563EB)),
                         SizedBox(width: 4),
-                        Text('2 hours ago', style: TextStyle(color: Colors.green, fontSize: 9.sp, fontFamily: 'Poppins')),
+                        Text('2 hours ago', style: TextStyle(color: Color(0xFF2563EB), fontSize: 9.sp, fontFamily: 'Poppins')),
                       ],
                     ),
                   ],
@@ -509,7 +509,7 @@ class _ProductFeedCard extends StatelessWidget {
               ),
               IconButton(
                 key: Key('favorite_icon_${data['title']}'),
-                icon: Icon(Icons.favorite_border, color: Colors.green),
+                icon: Icon(Icons.favorite_border, color: Color(0xFF2563EB)),
                 onPressed: () {},
               ),
             ],
