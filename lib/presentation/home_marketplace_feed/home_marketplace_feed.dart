@@ -5,6 +5,7 @@ import '../../theme/app_theme.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../utils/supabase_service.dart';
 import 'dart:async'; // Added for Timer
+import 'package:khilonjiya/presentation/app_routes.dart'; // Added for AppRoutes
 
 class HomeMarketplaceFeed extends StatefulWidget {
   const HomeMarketplaceFeed({Key? key}) : super(key: key);
@@ -35,11 +36,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     // Always use mock data
     setState(() {
       _categories = [
-        {'name': 'All', 'icon': Icons.apps, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
-        {'name': 'Electronics', 'icon': Icons.devices, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
-        {'name': 'Vehicles', 'icon': Icons.directions_car, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
-        {'name': 'Jobs', 'icon': Icons.work, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
-        {'name': 'Properties', 'icon': Icons.home, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
+        {'name': 'All', 'icon': Icons.grid_view_rounded, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
+        {'name': 'Electronics', 'icon': Icons.devices_other_rounded, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
+        {'name': 'Vehicles', 'icon': Icons.directions_car_filled_rounded, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
+        {'name': 'Jobs', 'icon': Icons.work_outline_rounded, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
+        {'name': 'Properties', 'icon': Icons.apartment_rounded, 'color': Color(0xFF2563EB)}.cast<String, Object>(),
       ];
       _listings = List.generate(20, (i) => {
         'title': 'Product Title $i',
@@ -78,7 +79,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
             SliverToBoxAdapter(
               child: _isLoadingPremium
                   ? _ShimmerPremiumCardsSection()
-                  : _PremiumCarouselSection(listings: _listings.where((l) => l['is_featured'] == true).toList()),
+                  : _PremiumCardsSection(listings: _listings.where((l) => l['is_featured'] == true).toList()),
             ),
             SliverToBoxAdapter(child: _CategoriesSection(
               categories: _categories,
@@ -106,10 +107,24 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         currentIndex: _currentIndex,
         onTabSelected: (index) {
           setState(() => _currentIndex = index);
-          // TODO: Handle navigation
+          switch (index) {
+            case 0:
+              Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
+              break;
+            case 1:
+              Navigator.pushNamed(context, AppRoutes.searchAndFilters);
+              break;
+            case 3:
+              // Packages: For now, go to favorites
+              Navigator.pushNamed(context, AppRoutes.favoritesAndSavedItems);
+              break;
+            case 4:
+              Navigator.pushNamed(context, AppRoutes.userProfile);
+              break;
+          }
         },
         onFabPressed: () {
-          // TODO: Navigate to create listing
+          Navigator.pushNamed(context, AppRoutes.createListing);
         },
         hasMessageNotification: false,
       ),
@@ -123,41 +138,63 @@ class _AppInfoBanner extends StatelessWidget {
     return Container(
       width: double.infinity,
       margin: EdgeInsets.all(4.w),
-      padding: EdgeInsets.all(4.w),
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppTheme.primaryLight, AppTheme.successLight],
+          colors: [AppTheme.primaryLight, AppTheme.secondaryLight, AppTheme.successLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryLight.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: AppTheme.primaryLight.withOpacity(0.12),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'Welcome to khilonjiya.com',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18.sp,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Poppins',
-            ),
+          CircleAvatar(
+            radius: 36,
+            backgroundColor: Colors.white,
+            child: Icon(Icons.verified, color: AppTheme.primaryLight, size: 40),
           ),
-          SizedBox(height: 1.h),
-          Text(
-            'Your trusted Assamese marketplace for buying, selling, and more.',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
-              fontSize: 12.sp,
-              fontFamily: 'Poppins',
+          SizedBox(width: 5.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome to khilonjiya.com',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22.sp,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                SizedBox(height: 1.h),
+                Text(
+                  'আমাৰ সংস্কৃতি, আমাৰ গৌৰৱ',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.95),
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                SizedBox(height: 0.5.h),
+                Text(
+                  'Your trusted Assamese marketplace for buying, selling, and more.',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.85),
+                    fontSize: 10.sp,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -306,75 +343,24 @@ class _ShimmerPremiumCardsSection extends StatelessWidget {
   }
 }
 
-class _PremiumCarouselSection extends StatefulWidget {
+class _PremiumCardsSection extends StatelessWidget {
   final List<Map<String, dynamic>> listings;
-  const _PremiumCarouselSection({required this.listings});
-  @override
-  State<_PremiumCarouselSection> createState() => _PremiumCarouselSectionState();
-}
-
-class _PremiumCarouselSectionState extends State<_PremiumCarouselSection> {
-  late final PageController _pageController;
-  int _currentPage = 0;
-  late final List<Map<String, dynamic>> _premiumListings;
-  late final Timer _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _premiumListings = widget.listings;
-    _pageController = PageController(viewportFraction: 0.88);
-    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (_premiumListings.isEmpty) return;
-      int nextPage = (_currentPage + 1) % _premiumListings.length;
-      _pageController.animateToPage(
-        nextPage,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
-    });
-    _pageController.addListener(() {
-      int page = _pageController.page?.round() ?? 0;
-      if (page != _currentPage) {
-        setState(() => _currentPage = page);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer.cancel();
-    _pageController.dispose();
-    super.dispose();
-  }
-
+  const _PremiumCardsSection({required this.listings});
   @override
   Widget build(BuildContext context) {
-    if (_premiumListings.isEmpty) return SizedBox.shrink();
-    return Column(
-      children: [
-        SizedBox(
-          height: 22.h,
-          child: PageView.builder(
-            controller: _pageController,
-            itemCount: _premiumListings.length,
-            itemBuilder: (context, index) => _PremiumCard(data: _premiumListings[index]),
-          ),
+    if (listings.isEmpty) return SizedBox.shrink();
+    return SizedBox(
+      height: 120,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+        itemCount: listings.length,
+        separatorBuilder: (_, __) => SizedBox(width: 4.w),
+        itemBuilder: (context, index) => SizedBox(
+          width: 320,
+          child: _ProductFeedCard(data: listings[index]),
         ),
-        SizedBox(height: 1.h),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(_premiumListings.length, (i) => Container(
-            margin: const EdgeInsets.symmetric(horizontal: 3),
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: i == _currentPage ? Color(0xFF2563EB) : Colors.grey[300],
-            ),
-          )),
-        ),
-      ],
+      ),
     );
   }
 }
