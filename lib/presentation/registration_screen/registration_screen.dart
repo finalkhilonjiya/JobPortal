@@ -413,53 +413,62 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SafeArea(
-        child: GestureDetector(
-          onTap: () => FocusScope.of(context).unfocus(),
-          child: SingleChildScrollView(
-            physics: const ClampingScrollPhysics(),
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 6.w),
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      SizedBox(height: 2.h),
-                      _buildHeader(),
-                      SizedBox(height: 4.h),
-                      _buildProfilePhotoSection(),
-                      SizedBox(height: 4.h),
-                      _buildRegistrationForm(),
-                      SizedBox(height: 3.h),
-                      _buildTermsCheckbox(),
-                      if (_errorMessage.isNotEmpty) ...[
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF10B981).withOpacity(0.08), Color(0xFF6366F1).withOpacity(0.04)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+          Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+                child: Card(
+                  elevation: 8,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Create Account',
+                          style: TextStyle(
+                            fontSize: 22.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF10B981),
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
                         SizedBox(height: 2.h),
-                        _buildErrorMessage(),
+                        _buildProfileImagePicker(),
+                        SizedBox(height: 2.h),
+                        _buildForm(),
+                        SizedBox(height: 2.h),
+                        _buildTermsAndConditions(),
+                        SizedBox(height: 2.h),
+                        _buildRegisterButton(),
+                        if (_errorMessage.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12.0),
+                            child: Text(
+                              _errorMessage,
+                              style: TextStyle(color: Colors.red, fontSize: 12.sp),
+                            ),
+                          ),
                       ],
-                      SizedBox(height: 3.h),
-                      _buildRegisterButton(),
-                      SizedBox(height: 2.h),
-                      _buildLoginLink(),
-                      SizedBox(height: 4.h),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -732,31 +741,28 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   }
 
   Widget _buildRegisterButton() {
-    return ElevatedButton(
-      onPressed: _isLoading || !_isFormValid() ? null : _handleRegistration,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-        foregroundColor: Colors.white,
-        padding: EdgeInsets.symmetric(vertical: 4.w),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 2,
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _isFormValid() && !_isLoading ? _handleRegistration : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Color(0xFF10B981),
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 2,
+        ),
+        child: _isLoading
+            ? SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  strokeWidth: 2.5,
+                ),
+              )
+            : Text('Register', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
       ),
-      child: _isLoading
-          ? SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            )
-          : Text(
-              'Create Account',
-              style: TextStyle(
-                fontSize: 4.w,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
     );
   }
 
