@@ -459,13 +459,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             ),
           ),
           SizedBox(height: 3.h),
-          Text(
-            'Sign in to continue to your marketplace',
-            style: TextStyle(
-              fontSize: 3.5.w,
-              color: Colors.grey[600],
-            ),
-          ),
         ],
       ),
     );
@@ -486,6 +479,10 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             _buildForgotPasswordLink(),
             SizedBox(height: 3.h),
             _buildLoginButton(),
+            SizedBox(height: 2.h),
+            _buildSocialLoginSection(),
+            SizedBox(height: 2.h),
+            _buildSignUpLink(),
           ],
         ),
       ),
@@ -782,28 +779,10 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
-          'Don\'t have an account? ',
-          style: TextStyle(
-            fontSize: 3.5.w,
-            color: Colors.grey[600],
-          ),
-        ),
+        Text("Don't have an account? ", style: TextStyle(fontSize: 12.sp)),
         GestureDetector(
-          onTap: _isLoading
-              ? null
-              : () {
-                  HapticFeedback.lightImpact();
-                  Navigator.pushNamed(context, AppRoutes.registrationScreen);
-                },
-          child: Text(
-            'Sign Up',
-            style: TextStyle(
-              fontSize: 3.5.w,
-              color: AppTheme.lightTheme.colorScheme.primary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          onTap: () => Navigator.pushNamed(context, AppRoutes.registrationScreen),
+          child: Text('Sign Up', style: TextStyle(fontSize: 12.sp, color: Color(0xFF2563EB), fontWeight: FontWeight.bold)),
         ),
       ],
     );

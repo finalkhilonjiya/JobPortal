@@ -138,7 +138,7 @@ class _AppInfoBanner extends StatelessWidget {
     return Container(
       width: double.infinity,
       margin: EdgeInsets.all(4.w),
-      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h), // was 4.h
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppTheme.primaryLight, AppTheme.secondaryLight, AppTheme.successLight],
@@ -187,7 +187,7 @@ class _AppInfoBanner extends StatelessWidget {
                 ),
                 SizedBox(height: 0.5.h),
                 Text(
-                  'Your trusted Assamese marketplace for buying, selling, and more.',
+                  'Our Culture, Our Pride',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.85),
                     fontSize: 10.sp,
@@ -270,47 +270,51 @@ class _SearchBarSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-      child: GestureDetector(
-        key: const Key('search_bar'),
-        onTap: () {
-          // TODO: Open full search screen
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          height: 6.h,
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceLight,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.outlineLight, width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.primaryLight.withOpacity(0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 3.w),
-                child: Icon(Icons.search, color: AppTheme.textSecondaryLight, size: 22),
-              ),
-              Expanded(
-                child: Text(
-                  "Search 'Mobiles'",
-                  style: TextStyle(color: AppTheme.textSecondaryLight, fontSize: 12.sp, fontFamily: 'Poppins'),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Search items...',
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Color(0xFF2563EB)),
                 ),
+                prefixIcon: Icon(Icons.search, color: Color(0xFF2563EB)),
               ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 3.w),
-                child: Icon(Icons.location_on, color: Color(0xFF2563EB), size: 20),
-              ),
-              Text('Guwahati, Assam', style: TextStyle(color: Color(0xFF2563EB), fontSize: 11.sp, fontFamily: 'Poppins')),
-              SizedBox(width: 2.w),
-            ],
+            ),
           ),
-        ),
+          SizedBox(width: 2.w),
+          Expanded(
+            flex: 2,
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Location',
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Color(0xFF2563EB)),
+                ),
+                prefixIcon: Icon(Icons.location_on, color: Color(0xFF2563EB)),
+              ),
+            ),
+          ),
+          SizedBox(width: 2.w),
+          IconButton(
+            icon: Icon(Icons.filter_list, color: Colors.white),
+            onPressed: () {
+              // Open filter modal
+            },
+            color: Color(0xFF2563EB),
+            iconSize: 28,
+            padding: EdgeInsets.zero,
+            constraints: BoxConstraints(),
+          ),
+        ],
       ),
     );
   }
