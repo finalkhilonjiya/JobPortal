@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import '../../widgets/bottom_nav_bar_widget.dart';
-import '../../widgets/marketplace/app_info_banner.dart';
-import '../../widgets/marketplace/three_option_section.dart';
-import '../../widgets/marketplace/search_bar_section.dart';
-import '../../widgets/marketplace/premium_section.dart';
-import '../../widgets/marketplace/categories_section.dart';
-import '../../widgets/marketplace/product_card.dart';
-import '../../widgets/marketplace/search_bottom_sheet.dart';
-import '../../widgets/marketplace/listing_details_sheet.dart';
-import '../../widgets/marketplace/shimmer_widgets.dart';
-import '../../utils/marketplace_helpers.dart';
+import './widgets/bottom_nav_bar_widget.dart';
+import './widgets/app_info_banner.dart';
+import './widgets/three_option_section.dart';
+import './widgets/search_bar_section.dart';
+import './widgets/premium_section.dart';
+import './widgets/categories_section.dart';
+import './widgets/product_card.dart';
+import './widgets/search_bottom_sheet.dart';
+import './widgets/listing_details_sheet.dart';
+import './widgets/shimmer_widgets.dart';
+import './widgets/marketplace_helpers.dart;
 import 'dart:async';
 
 class HomeMarketplaceFeed extends StatefulWidget {
