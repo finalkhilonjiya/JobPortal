@@ -373,38 +373,66 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: GestureDetector(
-          onTap: () => FocusScope.of(context).unfocus(),
-          child: SingleChildScrollView(
-            physics: const ClampingScrollPhysics(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height -
-                    MediaQuery.of(context).padding.top -
-                    MediaQuery.of(context).padding.bottom,
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF10B981).withOpacity(0.08), Color(0xFF6366F1).withOpacity(0.04)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
+            ),
+          ),
+          Center(
+            child: SingleChildScrollView(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 6.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(height: 6.h),
-                    _buildLogo(),
-                    SizedBox(height: 4.h),
-                    _buildLoginForm(),
-                    SizedBox(height: 4.h),
-                    _buildSocialLoginSection(),
-                    SizedBox(height: 4.h),
-                    _buildSignUpLink(),
-                    SizedBox(height: 4.h),
-                  ],
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+                child: Card(
+                  elevation: 8,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Sign In',
+                          style: TextStyle(
+                            fontSize: 22.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF10B981),
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        _buildForm(),
+                        SizedBox(height: 2.h),
+                        _buildLoginButton(),
+                        if (_usernameError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              _usernameError!,
+                              style: TextStyle(color: Colors.red, fontSize: 12.sp),
+                            ),
+                          ),
+                        if (_passwordError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              _passwordError!,
+                              style: TextStyle(color: Colors.red, fontSize: 12.sp),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -455,7 +483,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     );
   }
 
-  Widget _buildLoginForm() {
+  Widget _buildForm() {
     return SlideTransition(
       position: _formSlideAnimation,
       child: Form(
@@ -646,49 +674,27 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   }
 
   Widget _buildLoginButton() {
-    return Container(
-      height: 7.h,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: _isFormValid && !_isLoading
-            ? LinearGradient(
-                colors: [
-                  AppTheme.lightTheme.colorScheme.primary,
-                  AppTheme.lightTheme.colorScheme.secondary,
-                ],
-              )
-            : null,
-      ),
+    return SizedBox(
+      width: double.infinity,
       child: ElevatedButton(
         onPressed: _isFormValid && !_isLoading ? _handleLogin : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: _isFormValid && !_isLoading
-              ? Colors.transparent
-              : Colors.grey[300],
+          backgroundColor: Color(0xFF10B981),
           foregroundColor: Colors.white,
-          elevation: _isFormValid ? 3.0 : 0,
-          shadowColor: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          padding: EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 2,
         ),
         child: _isLoading
             ? SizedBox(
-                width: 5.w,
-                height: 5.w,
-                child: const CircularProgressIndicator(
-                  strokeWidth: 2,
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  strokeWidth: 2.5,
                 ),
               )
-            : Text(
-                'Sign In',
-                style: TextStyle(
-                  fontSize: 4.w,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+            : Text('Login', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
       ),
     );
   }

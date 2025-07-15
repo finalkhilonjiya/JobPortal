@@ -197,38 +197,111 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Widget _buildSplashContent() {
-    return Column(
+    return Stack(
       children: [
-        // Main content area
-        Expanded(
-          flex: 6,
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildAnimatedAppName(),
-                SizedBox(height: 2.h),
-                _buildTagline(),
-              ],
-            ),
-          ),
+        AnimatedBuilder(
+          animation: _gradientAnimation,
+          builder: (context, child) {
+            return Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    _getGradientColor(_gradientAnimation.value),
+                    _getGradientColor((_gradientAnimation.value + 0.3) % 1.0),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+            );
+          },
         ),
-        
-        // Loading section
-        Expanded(
-          flex: 2,
+        Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildLoadingIndicator(),
+              SizedBox(height: 10.h),
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 16,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF10B981), Color(0xFF6366F1)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    'K',
+                    style: TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+              ),
               SizedBox(height: 3.h),
-              _buildProgressText(),
+              Text(
+                'Welcome to khilonjiya.com',
+                style: TextStyle(
+                  fontSize: 22.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontFamily: 'Poppins',
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 1.5.h),
+              Text(
+                'Your trusted Assamese marketplace',
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  color: Colors.white.withOpacity(0.92),
+                  fontFamily: 'Poppins',
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 6.h),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: LinearProgressIndicator(
+                  value: _isInitializing ? _initializationProgress : null,
+                  backgroundColor: Colors.white.withOpacity(0.2),
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
+                  minHeight: 6,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              SizedBox(height: 2.h),
+              if (_isInitializing)
+                Text(
+                  'Loading... Please wait',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12.sp,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
             ],
           ),
         ),
-        
-        // Bottom spacing
-        SizedBox(height: 4.h),
       ],
     );
   }
