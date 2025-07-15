@@ -19,46 +19,59 @@ class _OnboardingTutorialState extends State<OnboardingTutorial>
   bool _isAnimating = false;
 
   final List<Map<String, dynamic>> _onboardingData = [
-    {
-      "id": 1,
-      "title": "Apply for Jobs & Get Notified",
-      "description": "Apply for jobs, list jobs, and get notifications when new jobs appear. Stay updated and never miss an opportunity!",
-      "illustration": "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
-      "features": [
-        {"icon": "work", "text": "Apply for jobs easily"},
-        {"icon": "notifications", "text": "Get  job alerts when listed"},
-        {"icon": "add", "text": "List your jobs"}
-      ],
-      "gesture": "tap_notification",
-      "gestureText": "Tap to get job notifications"
-    },
-    {
-      "id": 2,
-      "title": "Buy & Sell with Ease",
-      "description": "Discover amazing deals and sell your items quickly in our trusted marketplace community.",
-      "illustration": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
-      "features": [
-        {"icon": "shopping_cart", "text": "Browse thousands of listings"},
-        {"icon": "sell", "text": "List items in minutes"},
-        {"icon": "verified", "text": "Verified seller badges"}
-      ],
-      "gesture": "swipe_horizontal",
-      "gestureText": "Swipe to browse listings"
-    },
-    {
-      "id": 3,
-      "title": "Safe & Secure Deals",
-      "description": "Trade with confidence using our safety features, verified profiles, and secure messaging system.",
-      "illustration": "https://images.unsplash.com/photo-1563013544-824ae1b704d3?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
-      "features": [
-        {"icon": "security", "text": "Genuine Sellers"},
-        {"icon": "chat", "text": "In-app messaging"},
-        {"icon": "report", "text": "Get available deals nearby"}
-      ],
-      "gesture": "pull_refresh",
-      "gestureText": "Pull down to refresh"
-    }
-  ];
+  {
+    "id": 1,
+    "title": "Apply for Jobs & Get Notified",
+    "description": "Apply for jobs, list jobs, and get notifications when new jobs appear. Stay updated and never miss an opportunity!",
+    "illustration": "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
+    "features": [
+      {"icon": "work", "text": "Apply for jobs easily"},
+      {"icon": "notifications", "text": "Get job alerts when listed"},
+      {"icon": "add", "text": "List your jobs"}
+    ],
+    "gesture": "tap_notification",
+    "gestureText": "Tap to get job notifications"
+  },
+  {
+    "id": 2,
+    "title": "Buy & Sell with Ease",
+    "description": "Discover amazing deals and sell your items quickly in our trusted marketplace community.",
+    "illustration": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
+    "features": [
+      {"icon": "shopping_cart", "text": "Browse thousands of listings"},
+      {"icon": "sell", "text": "List items in minutes"},
+      {"icon": "verified", "text": "Verified seller badges"}
+    ],
+    "gesture": "swipe_horizontal",
+    "gestureText": "Swipe to browse listings"
+  },
+  {
+    "id": 3,
+    "title": "Find Your Next Stay",
+    "description": "Browse rooms for rent, PGs, and property for sale with trusted listings and verified owners.",
+    "illustration": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3", // Similar aesthetic
+    "features": [
+      {"icon": "home", "text": "Find rooms & PGs"},
+      {"icon": "real_estate_agent", "text": "Explore property listings"},
+      {"icon": "verified_user", "text": "Verified owners"}
+    ],
+    "gesture": "zoom_in",
+    "gestureText": "Tap to view room details"
+  },
+  {
+    "id": 4,
+    "title": "Safe & Secure Deals",
+    "description": "Trade with confidence using our safety features, verified profiles, and secure messaging system.",
+    "illustration": "https://images.unsplash.com/photo-1563013544-824ae1b704d3?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
+    "features": [
+      {"icon": "security", "text": "Genuine Sellers"},
+      {"icon": "chat", "text": "In-app messaging"},
+      {"icon": "report", "text": "Get available deals nearby"}
+    ],
+    "gesture": "pull_refresh",
+    "gestureText": "Pull down to refresh"
+  }
+];
 
   @override
   void initState() {
