@@ -230,8 +230,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                       value: _selectedCategoryId,
                       decoration: const InputDecoration(labelText: 'Category *'),
                       items: _categories
-                          .map((cat) => DropdownMenuItem(
-                                value: cat['id'],
+                          .map((cat) => DropdownMenuItem<String>(
+                                value: cat['id'] as String,
                                 child: Text(cat['name']),
                               ))
                           .toList(),
