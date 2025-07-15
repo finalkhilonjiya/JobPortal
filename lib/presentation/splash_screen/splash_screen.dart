@@ -269,15 +269,7 @@ class _SplashScreenState extends State<SplashScreen>
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 1.5.h),
-              Text(
-                'Your trusted Assamese marketplace',
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  color: Colors.white.withOpacity(0.92),
-                  fontFamily: 'Poppins',
-                ),
-                textAlign: TextAlign.center,
-              ),
+              _buildTagline(),
               SizedBox(height: 6.h),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0),
@@ -347,7 +339,6 @@ class _SplashScreenState extends State<SplashScreen>
   Widget _buildTagline() {
     return Column(
       children: [
-        // Assamese text
         Text(
           'আমাৰ সংস্কৃতি, আমাৰ গৌৰৱ',
           style: TextStyle(
@@ -358,7 +349,6 @@ class _SplashScreenState extends State<SplashScreen>
           ),
         ),
         SizedBox(height: 0.8.h),
-        // English translation
         Text(
           'Our Culture, Our Pride',
           style: TextStyle(
@@ -468,7 +458,7 @@ class _SplashScreenState extends State<SplashScreen>
             ElevatedButton.icon(
               onPressed: _retryInitialization,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3B82F6),
+                backgroundColor: Color(0xFF2563EB),
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(
                   horizontal: 8.w,
