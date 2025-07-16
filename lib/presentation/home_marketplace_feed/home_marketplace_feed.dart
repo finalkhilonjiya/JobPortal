@@ -10,7 +10,7 @@ import './widgets/product_card.dart';
 import './widgets/search_bottom_sheet.dart';
 import './widgets/listing_details_sheet.dart';
 import './widgets/shimmer_widgets.dart';
-import './widgets/marketplace_helpers.dart;
+import './widgets/marketplace_helpers.dart';
 import 'dart:async';
 
 class HomeMarketplaceFeed extends StatefulWidget {

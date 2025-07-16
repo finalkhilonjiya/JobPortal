@@ -451,8 +451,8 @@ class AuthService {
         throw AppAuthException('Facebook sign-in was cancelled or failed.');
       }
 
-      // Fixed: Use token instead of tokenString
-      final accessToken = facebookResult.accessToken?.token;
+      // Fixed: Use tokenString instead of token
+      final accessToken = facebookResult.accessToken?.tokenString;
       if (accessToken == null) {
         throw AppAuthException('Failed to get Facebook access token.');
       }
