@@ -125,7 +125,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       builder: (context) => search_sheet.SearchBottomSheet(
         trendingSearches: _trendingSearches,
         onSearch: (query, location) {
-          Navigator.pop(context);
           // Handle search
         },
       ),

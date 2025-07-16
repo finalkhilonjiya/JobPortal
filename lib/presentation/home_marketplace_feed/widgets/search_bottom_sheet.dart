@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 
 class SearchBottomSheet extends StatefulWidget {
+  final List<String> trendingSearches;
+  final Function(String, String) onSearch;
+  const SearchBottomSheet({
+    Key? key,
+    required this.trendingSearches,
+    required this.onSearch,
+  }) : super(key: key);
   @override
   _SearchBottomSheetState createState() => _SearchBottomSheetState();
 }
@@ -53,14 +60,32 @@ class _SearchBottomSheetState extends State<SearchBottomSheet> {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
+                SizedBox(height: 16),
+                if (widget.trendingSearches.isNotEmpty)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: widget.trendingSearches.map((search) => ActionChip(
+                        label: Text(search),
+                        onPressed: () {
+                          _itemController.text = search;
+                          widget.onSearch(search, _locationController.text);
+                          Navigator.pop(context);
+                        },
+                      )).toList(),
+                    ),
+                  ),
                 SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.pop(context);
+                      widget.onSearch(_itemController.text, _locationController.text);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Searching for ${_itemController.text} in ${_locationController.text}')),
+                        SnackBar(content: Text('Searching for  [1m${_itemController.text} [0m in ${_locationController.text}')),
                       );
                     },
                     style: ElevatedButton.styleFrom(
