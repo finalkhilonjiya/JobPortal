@@ -47,7 +47,7 @@ pubspec.lock
 # NOTE: Temporarily allowing .env for CodeMagic
 # REMOVE from Git later after CI/CD setup
 # ========================================
-# .env
+.env
 .env.local
 .env.production
 .env.staging
