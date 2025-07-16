@@ -5,6 +5,7 @@ import 'package:sizer/sizer.dart';
 import '../../core/app_export.dart';
 import '../../routes/app_routes.dart';
 import '../../theme/app_theme.dart';
+import 'widgets/password_strength_indicator_widget.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({Key? key}) : super(key: key);
