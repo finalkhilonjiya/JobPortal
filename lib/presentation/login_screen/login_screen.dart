@@ -24,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   String? _usernameError;
   String? _passwordError;
   bool _isEmailInput = false; // Track if input is email or phone
+  bool _acceptedTerms = false;
 
   // Animation controllers
   late AnimationController _logoAnimationController;
@@ -369,6 +370,45 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     }
   }
 
+  void _showTermsModal(String title) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Poppins',
+              ),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Welcome to Khilonjiya.com\n\n• Your data is stored securely and never shared.\n• You agree to usage of cookies for analytics and personalization.\n• Full terms are available on request or our website.',
+              style: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
+            ),
+            SizedBox(height: 24),
+            Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Close'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -397,15 +437,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                       mainAxisSize: MainAxisSize.min,
                       children: [
                           _buildLogo(),
-                          Text(
-                          'Sign In',
-                          style: TextStyle(
-                            fontSize: 22.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF10B981),
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
                         SizedBox(height: 2.h),
                         _buildForm(),
                         SizedBox(height: 2.h),
@@ -443,20 +474,41 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       opacity: _logoFadeAnimation,
       child: Column(
         children: [
-          SizedBox(
-            height: 80,
-            child: SvgPicture.asset(
-              'assets/images/logo_k.svg',
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: Color(0xFF10B981), // Project's primary color
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 16,
+                  offset: Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                'K',
+                style: TextStyle(
+                  fontSize: 56,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontFamily: 'Poppins',
+                ),
+              ),
             ),
           ),
-          SizedBox(height: 1.h),
+          SizedBox(height: 1.5.h),
           Text(
             'khilonjiya.com',
             style: TextStyle(
               fontSize: 6.w,
               fontWeight: FontWeight.w700,
-              color: Colors.black,
+              color: Color(0xFF10B981), // Project's primary color
               letterSpacing: 1.2,
+              fontFamily: 'Poppins',
             ),
           ),
           SizedBox(height: 3.h),
@@ -482,6 +534,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             _buildLoginButton(),
             _buildSocialLoginSection(),
             SizedBox(height: 2.h),
+            _buildTermsCheckbox(),
             _buildSignUpLink(),
           ],
         ),
@@ -662,7 +715,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _isFormValid && !_isLoading ? _handleLogin : null,
+        onPressed: _isFormValid && !_isLoading && _acceptedTerms ? _handleLogin : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xFF2563EB), // Blue
           foregroundColor: Colors.white,
@@ -717,58 +770,133 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         Row(
           children: [
             Expanded(
-              child: OutlinedButton.icon(
+              child: OutlinedButton(
                 onPressed: _isLoading ? null : _handleGoogleLogin,
-                icon: Icon(
-                  Icons.g_mobiledata,
-                  size: 24,
-              
-                ),
-                label: Text(
-                  'Google',
-                  style: TextStyle(
-                    fontSize: 3.5.w,
-                  ),
-                ),
                 style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 3.w),
+                  backgroundColor: Colors.white,
                   side: BorderSide(
                     color: Colors.grey[300]!,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
+                  padding: EdgeInsets.symmetric(vertical: 3.w),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.g_mobiledata,
+                      size: 36, // Enlarged G icon
+                      color: Colors.redAccent, // Google red
+                    ),
+                    SizedBox(width: 2.w),
+                    Text(
+                      'Google',
+                      style: TextStyle(
+                        fontSize: 3.5.w,
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
             SizedBox(width: 3.w),
             Expanded(
-              child: OutlinedButton.icon(
+              child: OutlinedButton(
                 onPressed: _isLoading ? null : _handleFacebookLogin,
-                icon: Icon(
-                  Icons.facebook,
-                  size: 24,
-                ),
-                label: Text(
-                  'Facebook',
-                  style: TextStyle(
-                    fontSize: 3.5.w,
-                  ),
-                ),
                 style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 3.w),
+                  backgroundColor: Colors.white,
                   side: BorderSide(
                     color: Colors.grey[300]!,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
+                  padding: EdgeInsets.symmetric(vertical: 3.w),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.facebook,
+                      size: 32, // Enlarged f icon
+                      color: Color(0xFF1877F2), // Facebook blue
+                    ),
+                    SizedBox(width: 2.w),
+                    Text(
+                      'Facebook',
+                      style: TextStyle(
+                        fontSize: 3.5.w,
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildTermsCheckbox() {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Checkbox(
+            value: _acceptedTerms,
+            onChanged: (val) {
+              setState(() {
+                _acceptedTerms = val ?? false;
+              });
+            },
+          ),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: TextStyle(color: Colors.black, fontFamily: 'Poppins', fontSize: 12.sp),
+                children: [
+                  TextSpan(text: 'I accept the '),
+                  WidgetSpan(
+                    child: GestureDetector(
+                      onTap: () => _showTermsModal('Terms of Service'),
+                      child: Text(
+                        'Terms of Service',
+                        style: TextStyle(
+                          color: Color(0xFF2563EB),
+                          decoration: TextDecoration.underline,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  TextSpan(text: ' and '),
+                  WidgetSpan(
+                    child: GestureDetector(
+                      onTap: () => _showTermsModal('Privacy Policy'),
+                      child: Text(
+                        'Privacy Policy',
+                        style: TextStyle(
+                          color: Color(0xFF2563EB),
+                          decoration: TextDecoration.underline,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
