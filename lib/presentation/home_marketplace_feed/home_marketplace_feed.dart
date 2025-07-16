@@ -150,12 +150,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         onFavoriteToggle: () => _toggleFavorite(listing['id']),
         onCall: () => helpers.MarketplaceHelpers.makePhoneCall(context, listing['phone']),
         onWhatsApp: () => helpers.MarketplaceHelpers.openWhatsApp(context, listing['phone']),
-        onReport: () {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Ad reported successfully')),
-          );
-        },
       ),
     );
   }
