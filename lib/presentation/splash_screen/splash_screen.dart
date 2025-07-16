@@ -346,8 +346,7 @@ class _SplashScreenState extends State<SplashScreen>
             fontWeight: FontWeight.w500,
             color: Color(0xFF2563EB),
             letterSpacing: 0.5,
-            fontFamily: 'NotoSansBengali', // Assamese-supporting font
-            fontFamilyFallback: const ['BalooDa2', 'sans-serif'], // fallback to Baloo Da 2 or system
+            // Use system default font for Assamese
           ),
         ),
         SizedBox(height: 0.8.h),
