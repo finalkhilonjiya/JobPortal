@@ -148,7 +148,6 @@ class PasswordStrengthIndicatorWidget extends StatelessWidget {
                               ? AppTheme.lightTheme.colorScheme.onSurface
                               : AppTheme
                                   .lightTheme.colorScheme.onSurfaceVariant,
-                          decoration: isMet ? TextDecoration.lineThrough : null,
                         ),
                       ),
                     ),
