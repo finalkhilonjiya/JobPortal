@@ -340,12 +340,14 @@ class _SplashScreenState extends State<SplashScreen>
     return Column(
       children: [
         Text(
-          '  faf befaf afaf',
+          'আমাৰ সংস্কৃতি, আমাৰ গৌৰৱ',
           style: TextStyle(
             fontSize: 4.2.w,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF2563EB), // Changed to a more vibrant blue
+            color: Color(0xFF2563EB),
             letterSpacing: 0.5,
+            fontFamily: 'NotoSansBengali', // Assamese-supporting font
+            fontFamilyFallback: const ['BalooDa2', 'sans-serif'], // fallback to Baloo Da 2 or system
           ),
         ),
         SizedBox(height: 0.8.h),
@@ -354,9 +356,10 @@ class _SplashScreenState extends State<SplashScreen>
           style: TextStyle(
             fontSize: 3.8.w,
             fontWeight: FontWeight.w400,
-            color: Color(0xFF111827), // Changed to a strong dark color
+            color: Color(0xFF111827),
             letterSpacing: 0.8,
             fontStyle: FontStyle.italic,
+            fontFamily: 'Poppins',
           ),
         ),
       ],

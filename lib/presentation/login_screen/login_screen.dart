@@ -397,15 +397,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                       mainAxisSize: MainAxisSize.min,
                       children: [
                           _buildLogo(),
-                          Text(
-                          'Sign In',
-                          style: TextStyle(
-                            fontSize: 22.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF10B981),
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
                         SizedBox(height: 2.h),
                         _buildForm(),
                         SizedBox(height: 2.h),
@@ -443,20 +434,41 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       opacity: _logoFadeAnimation,
       child: Column(
         children: [
-          SizedBox(
-            height: 80,
-            child: SvgPicture.asset(
-              'assets/images/logo_k.svg',
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: Color(0xFF10B981), // Project's primary color
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 16,
+                  offset: Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                'K',
+                style: TextStyle(
+                  fontSize: 56,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontFamily: 'Poppins',
+                ),
+              ),
             ),
           ),
-          SizedBox(height: 1.h),
+          SizedBox(height: 1.5.h),
           Text(
             'khilonjiya.com',
             style: TextStyle(
               fontSize: 6.w,
               fontWeight: FontWeight.w700,
-              color: Colors.black,
+              color: Color(0xFF10B981), // Project's primary color
               letterSpacing: 1.2,
+              fontFamily: 'Poppins',
             ),
           ),
           SizedBox(height: 3.h),
