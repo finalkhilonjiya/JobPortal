@@ -1,53 +1,64 @@
-# Miscellaneous
+# ========================================
+# 💾 General OS/Editor Generated Files
+# ========================================
 *.class
 *.log
 *.pyc
 *.swp
 .DS_Store
 .atom/
-.build/
-.buildlog/
 .history
 .svn/
-.swiftpm/
-migrate_working_dir/
-pubspec.lock
-
-# Environment variables (IMPORTANT: Keep secrets out of version control)
-.env
-.env.local
-.env.production
-.env.staging
-
-# IntelliJ related
+.idea/
 *.iml
 *.ipr
 *.iws
-.idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# ========================================
+# 🛠️ Build/System Directories
+# ========================================
+.build/
+.buildlog/
+.swiftpm/
+migrate_working_dir/
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# ========================================
+# 🐦 Dart & Flutter
+# ========================================
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
+pubspec.lock
+
+**/doc/api/
+**/ios/Flutter/.last_build_id
+
+# Flutter build outputs
 /build/
 /web/
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# ========================================
+# 🔐 Sensitive Files (MANUAL CONTROL)
+# NOTE: Temporarily allowing .env for CodeMagic
+# REMOVE from Git later after CI/CD setup
+# ========================================
+# .env
+.env.local
+.env.production
+.env.staging
+
+# ========================================
+# 🧩 Symbolication / Obfuscation
+# ========================================
+app.*.symbols
+app.*.map.json
+
+# ========================================
+# 🧪 VS Code (optional, enable if needed)
+# ========================================
+#.vscode/
