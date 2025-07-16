@@ -409,7 +409,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                         SizedBox(height: 2.h),
                         _buildForm(),
                         SizedBox(height: 2.h),
-                        _buildLoginButton(),
+              
                         if (_usernameError != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
@@ -479,6 +479,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             SizedBox(height: 1.h),
             _buildForgotPasswordLink(),
             SizedBox(height: 3.h),
+            _buildLoginButton(),
             _buildSocialLoginSection(),
             SizedBox(height: 2.h),
             _buildSignUpLink(),
