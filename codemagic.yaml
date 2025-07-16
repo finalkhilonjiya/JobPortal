@@ -7,7 +7,6 @@ workflows:
       xcode: latest
       groups:
         - google_play
-      # No vars section needed - credentials come from environment variables
     scripts:
       - name: Set up Flutter
         script: |
@@ -19,73 +18,16 @@ workflows:
       - name: Generate Native Splash
         script: |
           flutter pub run flutter_native_splash:create
+      - name: Load environment from .env
+        script: |
+          export $(grep -v '^#' .env | xargs)
       - name: Clean and Build Debug APK
         script: |
           flutter clean
-          flutter pub get 
+          flutter pub get
           echo "🔍 Environment variables check:"
           echo "SUPABASE_URL length: ${#SUPABASE_URL}"
           echo "SUPABASE_ANON_KEY length: ${#SUPABASE_ANON_KEY}"
           flutter build apk --debug --split-per-abi --tree-shake-icons --verbose --dart-define=SUPABASE_URL="$SUPABASE_URL" --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
     artifacts:
       - build/app/outputs/flutter-apk/app-debug.apk
-
-  build_apk_release:
-    name: Build Release APK
-    max_build_duration: 120
-    environment:
-      flutter: stable
-      xcode: latest
-      groups:
-        - google_play
-    scripts:
-      - name: Set up Flutter
-        script: |
-          flutter --version
-          flutter doctor -v
-      - name: Get dependencies
-        script: |
-          flutter pub get
-      - name: Generate Native Splash
-        script: |
-          flutter pub run flutter_native_splash:create
-      - name: Clean and Build Release APK
-        script: |
-          flutter clean
-          flutter pub get
-          echo "🔍 Environment variables check:"
-          echo "SUPABASE_URL length: ${#SUPABASE_URL}"
-          echo "SUPABASE_ANON_KEY length: ${#SUPABASE_ANON_KEY}"
-          flutter build apk --release --split-per-abi --tree-shake-icons --verbose --dart-define=SUPABASE_URL="$SUPABASE_URL" --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
-    artifacts:
-      - build/app/outputs/flutter-apk/app-release.apk
-
-  build_app_bundle:
-    name: Build App Bundle
-    max_build_duration: 120
-    environment:
-      flutter: stable
-      xcode: latest
-      groups:
-        - google_play
-    scripts:
-      - name: Set up Flutter
-        script: |
-          flutter --version
-          flutter doctor -v
-      - name: Get dependencies
-        script: |
-          flutter pub get
-      - name: Generate Native Splash
-        script: |
-          flutter pub run flutter_native_splash:create
-      - name: Clean and Build App Bundle
-        script: |
-          flutter clean
-          flutter pub get
-          echo "🔍 Environment variables check:"
-          echo "SUPABASE_URL length: ${#SUPABASE_URL}"
-          echo "SUPABASE_ANON_KEY length: ${#SUPABASE_ANON_KEY}"
-          flutter build appbundle --release --verbose --dart-define=SUPABASE_URL="$SUPABASE_URL" --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
-    artifacts:
-      - build/app/outputs/bundle/release/app-release.aab
