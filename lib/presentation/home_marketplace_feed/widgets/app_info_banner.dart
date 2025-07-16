@@ -1,4 +1,3 @@
-// ===== File 1: widgets/app_info_banner.dart =====
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
@@ -88,10 +87,6 @@ class AppInfoBanner extends StatelessWidget {
     );
   }
 }
-
-// ===== File 2: widgets/product_card.dart =====
-import 'package:flutter/material.dart';
-import 'package:sizer/sizer.dart';
 
 class ProductCard extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -252,10 +247,6 @@ class ProductCard extends StatelessWidget {
     );
   }
 }
-
-// ===== File 3: widgets/premium_section.dart =====
-import 'package:flutter/material.dart';
-import 'package:sizer/sizer.dart';
 
 class PremiumSection extends StatelessWidget {
   final List<Map<String, dynamic>> listings;

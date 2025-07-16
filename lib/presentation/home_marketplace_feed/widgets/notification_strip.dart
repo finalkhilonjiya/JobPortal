@@ -1,4 +1,3 @@
-// ===== File 2: widgets/notification_strip.dart (continued) =====
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
@@ -41,10 +40,6 @@ class NotificationStrip extends StatelessWidget {
     );
   }
 }
-
-// ===== File 3: widgets/trending_searches_widget.dart =====
-import 'package:flutter/material.dart';
-import 'package:sizer/sizer.dart';
 
 class TrendingSearchesWidget extends StatelessWidget {
   final List<String> searches;
@@ -106,10 +101,6 @@ class TrendingSearchesWidget extends StatelessWidget {
     );
   }
 }
-
-// ===== File 4: widgets/recently_viewed_section.dart =====
-import 'package:flutter/material.dart';
-import 'package:sizer/sizer.dart';
 
 class RecentlyViewedSection extends StatelessWidget {
   final List<Map<String, dynamic>> listings;
@@ -197,10 +188,6 @@ class RecentlyViewedSection extends StatelessWidget {
   }
 }
 
-// ===== File 5: widgets/categories_section.dart (Updated) =====
-import 'package:flutter/material.dart';
-import 'package:sizer/sizer.dart';
-
 class CategoriesSection extends StatelessWidget {
   final List<Map<String, Object>> categories;
   final String selected;
@@ -275,10 +262,6 @@ class CategoriesSection extends StatelessWidget {
     );
   }
 }
-
-// ===== File 6: widgets/listing_details_sheet.dart (Updated) =====
-import 'package:flutter/material.dart';
-import 'package:sizer/sizer.dart';
 
 class ListingDetailsSheet extends StatelessWidget {
   final Map<String, dynamic> listing;

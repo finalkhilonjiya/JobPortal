@@ -2,19 +2,19 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import './widgets/bottom_nav_bar_widget.dart';
-import './widgets/app_info_banner.dart';
+import './widgets/app_info_banner.dart' as app_info;
 import './widgets/three_option_section.dart';
 import './widgets/search_bar_widget.dart';
-import './widgets/premium_section.dart';
-import './widgets/categories_section.dart';
-import './widgets/product_card.dart';
-import './widgets/search_bottom_sheet.dart';
-import './widgets/listing_details_sheet.dart';
+import './widgets/premium_section.dart' as premium;
+import './widgets/categories_section.dart' as categories;
+import './widgets/product_card.dart' as product;
+import './widgets/search_bottom_sheet.dart' as search_sheet;
+import './widgets/listing_details_sheet.dart' as details_sheet;
 import './widgets/shimmer_widgets.dart';
-import './widgets/marketplace_helpers.dart';
+import './widgets/marketplace_helpers.dart' as helpers;
 import './widgets/recently_viewed_section.dart';
 import './widgets/trending_searches_widget.dart';
-import './widgets/notification_strip.dart';
+import './widgets/notification_strip.dart' as notification;
 import 'dart:async';
 
 class HomeMarketplaceFeed extends StatefulWidget {
@@ -62,7 +62,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       setState(() => _isLoadingFeed = true);
       await Future.delayed(Duration(seconds: 1));
       setState(() {
-        _listings.addAll(MarketplaceHelpers.getMockListings());
+        _listings.addAll(helpers.MarketplaceHelpers.getMockListings());
         _isLoadingFeed = false;
       });
     }
@@ -77,10 +77,10 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     await Future.delayed(Duration(milliseconds: 800));
     
     setState(() {
-      _categories = MarketplaceHelpers.getMockCategories();
-      _listings = MarketplaceHelpers.getMockListings();
-      _recentlyViewed = MarketplaceHelpers.getRecentlyViewed();
-      _trendingSearches = MarketplaceHelpers.getTrendingSearches();
+      _categories = helpers.MarketplaceHelpers.getMockCategories();
+      _listings = helpers.MarketplaceHelpers.getMockListings();
+      _recentlyViewed = helpers.MarketplaceHelpers.getRecentlyViewed();
+      _trendingSearches = helpers.MarketplaceHelpers.getTrendingSearches();
       _isLoadingPremium = false;
       _isLoadingFeed = false;
     });
@@ -122,7 +122,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => SearchBottomSheet(
+      builder: (context) => search_sheet.SearchBottomSheet(
         trendingSearches: _trendingSearches,
         onSearch: (query, location) {
           Navigator.pop(context);
@@ -144,12 +144,12 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => ListingDetailsSheet(
+      builder: (context) => details_sheet.ListingDetailsSheet(
         listing: listing,
         isFavorite: _favoriteIds.contains(listing['id']),
         onFavoriteToggle: () => _toggleFavorite(listing['id']),
-        onCall: () => MarketplaceHelpers.makePhoneCall(context, listing['phone']),
-        onWhatsApp: () => MarketplaceHelpers.openWhatsApp(context, listing['phone']),
+        onCall: () => helpers.MarketplaceHelpers.makePhoneCall(context, listing['phone']),
+        onWhatsApp: () => helpers.MarketplaceHelpers.openWhatsApp(context, listing['phone']),
         onReport: () {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -179,14 +179,14 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
               // Notification Strip
               if (_hasNotifications)
                 SliverToBoxAdapter(
-                  child: NotificationStrip(
+                  child: notification.NotificationStrip(
                     message: "🎉 Get 20% off on premium listings today!",
                     onClose: () => setState(() => _hasNotifications = false),
                   ),
                 ),
               
               // App Info Banner
-              SliverToBoxAdapter(child: AppInfoBanner()),
+              SliverToBoxAdapter(child: app_info.AppInfoBanner()),
               
               // Three Option Section
               SliverToBoxAdapter(child: ThreeOptionSection()),
@@ -221,7 +221,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                       ),
                       _isLoadingPremium
                           ? ShimmerPremiumSection()
-                          : PremiumSection(
+                          : premium.PremiumSection(
                               listings: _featuredListings,
                               onTap: _showListingDetails,
                               favoriteIds: _favoriteIds,
@@ -252,7 +252,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                         style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    CategoriesSection(
+                    categories.CategoriesSection(
                       categories: _categories,
                       selected: _selectedCategory,
                       onSelect: _onCategorySelected,
@@ -300,16 +300,16 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                                   )
                                 : SizedBox.shrink();
                           }
-                          return ProductCard(
+                          return product.ProductCard(
                             data: _filteredListings[index],
                             isFavorite: _favoriteIds.contains(_filteredListings[index]['id']),
                             onFavoriteToggle: () => _toggleFavorite(_filteredListings[index]['id']),
                             onTap: () => _showListingDetails(_filteredListings[index]),
-                            onCall: () => MarketplaceHelpers.makePhoneCall(
+                            onCall: () => helpers.MarketplaceHelpers.makePhoneCall(
                               context, 
                               _filteredListings[index]['phone']
                             ),
-                            onWhatsApp: () => MarketplaceHelpers.openWhatsApp(
+                            onWhatsApp: () => helpers.MarketplaceHelpers.openWhatsApp(
                               context, 
                               _filteredListings[index]['phone']
                             ),
