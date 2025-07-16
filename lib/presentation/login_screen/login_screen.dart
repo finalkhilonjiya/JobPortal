@@ -396,7 +396,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                          _build_Logo(),
+                          _buildLogo(),
                           Text(
                           'Sign In',
                           style: TextStyle(

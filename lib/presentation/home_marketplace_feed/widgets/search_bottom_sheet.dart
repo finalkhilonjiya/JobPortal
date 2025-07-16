@@ -1,4 +1,3 @@
-/ ===== File 2: widgets/marketplace/search_bottom_sheet.dart =====
 import 'package:flutter/material.dart';
 
 class SearchBottomSheet extends StatefulWidget {

@@ -1,4 +1,3 @@
-// File: widgets/marketplace/app_info_banner.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
