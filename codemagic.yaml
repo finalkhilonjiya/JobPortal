@@ -36,8 +36,6 @@ workflows:
           echo "SUPABASE_ANON_KEY length: ${#SUPABASE_ANON_KEY}"
 
           flutter build apk --debug \
-            --split-per-abi \
-            --tree-shake-icons \
             --verbose \
             --dart-define=SUPABASE_URL="$SUPABASE_URL" \
             --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
