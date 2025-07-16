@@ -373,37 +373,46 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   void _showTermsModal(String title) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Poppins',
-              ),
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.8,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Welcome to Khilonjiya.com\n\n• Your data is stored securely and never shared.\n• You agree to usage of cookies for analytics and personalization.\n• Full terms are available on request or our website.',
+                  style: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
+                ),
+                SizedBox(height: 24),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Close'),
+                  ),
+                ),
+              ],
             ),
-            SizedBox(height: 16),
-            Text(
-              'Welcome to Khilonjiya.com\n\n• Your data is stored securely and never shared.\n• You agree to usage of cookies for analytics and personalization.\n• Full terms are available on request or our website.',
-              style: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
-            ),
-            SizedBox(height: 24),
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Close'),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -475,10 +484,10 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       child: Column(
         children: [
           Container(
-            width: 100,
-            height: 100,
+            width: 72, // was 100
+            height: 72, // was 100
             decoration: BoxDecoration(
-              color: Color(0xFF10B981), // Project's primary color
+              color: Color(0xFF2563EB), // Use primaryLight
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
@@ -492,7 +501,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
               child: Text(
                 'K',
                 style: TextStyle(
-                  fontSize: 56,
+                  fontSize: 40, // was 56
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                   fontFamily: 'Poppins',
@@ -506,7 +515,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             style: TextStyle(
               fontSize: 6.w,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF10B981), // Project's primary color
+              color: Color(0xFF2563EB), // Use primaryLight
               letterSpacing: 1.2,
               fontFamily: 'Poppins',
             ),
@@ -534,7 +543,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             _buildLoginButton(),
             _buildSocialLoginSection(),
             SizedBox(height: 2.h),
-            _buildTermsCheckbox(),
             _buildSignUpLink(),
           ],
         ),
@@ -715,7 +723,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _isFormValid && !_isLoading && _acceptedTerms ? _handleLogin : null,
+        onPressed: _isFormValid && !_isLoading ? _handleLogin : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xFF2563EB), // Blue
           foregroundColor: Colors.white,
@@ -785,10 +793,14 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.g_mobiledata,
-                      size: 36, // Enlarged G icon
-                      color: Colors.redAccent, // Google red
+                    SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: SvgPicture.asset(
+                        'assets/icons/google_g.svg',
+                        width: 28,
+                        height: 28,
+                      ),
                     ),
                     SizedBox(width: 2.w),
                     Text(
@@ -841,62 +853,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           ],
         ),
       ],
-    );
-  }
-
-  Widget _buildTermsCheckbox() {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Checkbox(
-            value: _acceptedTerms,
-            onChanged: (val) {
-              setState(() {
-                _acceptedTerms = val ?? false;
-              });
-            },
-          ),
-          Expanded(
-            child: RichText(
-              text: TextSpan(
-                style: TextStyle(color: Colors.black, fontFamily: 'Poppins', fontSize: 12.sp),
-                children: [
-                  TextSpan(text: 'I accept the '),
-                  WidgetSpan(
-                    child: GestureDetector(
-                      onTap: () => _showTermsModal('Terms of Service'),
-                      child: Text(
-                        'Terms of Service',
-                        style: TextStyle(
-                          color: Color(0xFF2563EB),
-                          decoration: TextDecoration.underline,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                  TextSpan(text: ' and '),
-                  WidgetSpan(
-                    child: GestureDetector(
-                      onTap: () => _showTermsModal('Privacy Policy'),
-                      child: Text(
-                        'Privacy Policy',
-                        style: TextStyle(
-                          color: Color(0xFF2563EB),
-                          decoration: TextDecoration.underline,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 

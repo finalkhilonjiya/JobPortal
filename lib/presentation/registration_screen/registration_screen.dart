@@ -337,28 +337,107 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     );
   }
 
+  // Replace _buildTermsAndConditions with a new version that uses RichText and modal
   Widget _buildTermsAndConditions() {
-    // Reuse the terms checkbox for design
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Checkbox(
           value: _acceptTerms,
-          onChanged: (value) => setState(() => _acceptTerms = value ?? false),
-          activeColor: AppTheme.lightTheme.colorScheme.primary,
+          onChanged: (val) {
+            setState(() {
+              _acceptTerms = val ?? false;
+            });
+          },
+          activeColor: Color(0xFF2563EB),
         ),
         Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _acceptTerms = !_acceptTerms),
-            child: Text(
-              'I agree to the Terms of Service and Privacy Policy',
-              style: TextStyle(
-                fontSize: 3.5.w,
-                color: Colors.grey[700],
-              ),
+          child: RichText(
+            text: TextSpan(
+              style: TextStyle(color: Colors.black, fontFamily: 'Poppins', fontSize: 12.sp),
+              children: [
+                TextSpan(text: 'I accept the '),
+                WidgetSpan(
+                  child: GestureDetector(
+                    onTap: () => _showTermsModal('Terms of Service'),
+                    child: Text(
+                      'Terms of Service',
+                      style: TextStyle(
+                        color: Color(0xFF2563EB),
+                        decoration: TextDecoration.underline,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                TextSpan(text: ' and '),
+                WidgetSpan(
+                  child: GestureDetector(
+                    onTap: () => _showTermsModal('Privacy Policy'),
+                    child: Text(
+                      'Privacy Policy',
+                      style: TextStyle(
+                        color: Color(0xFF2563EB),
+                        decoration: TextDecoration.underline,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ],
+    );
+  }
+
+  // Add _showTermsModal method (copy from login_screen.dart, adjust as needed)
+  void _showTermsModal(String title) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.8,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Welcome to Khilonjiya.com\n\n• Your data is stored securely and never shared.\n• You agree to usage of cookies for analytics and personalization.\n• Full terms are available on request or our website.',
+                  style: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
+                ),
+                SizedBox(height: 24),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Close'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
