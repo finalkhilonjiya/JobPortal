@@ -802,7 +802,15 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                         height: 28,
                       ),
                     ),
-                    // Remove the Google text
+                    SizedBox(width: 2.w),
+                    Text(
+                      'Google',
+                      style: TextStyle(
+                        fontSize: 3.5.w,
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ),
               ),
