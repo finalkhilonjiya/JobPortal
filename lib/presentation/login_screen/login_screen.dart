@@ -543,7 +543,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             _buildLoginButton(),
             _buildSocialLoginSection(),
             SizedBox(height: 2.h),
-            _buildTermsCheckbox(),
             _buildSignUpLink(),
           ],
         ),
@@ -724,7 +723,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _isFormValid && !_isLoading && _acceptedTerms ? _handleLogin : null,
+        onPressed: _isFormValid && !_isLoading ? _handleLogin : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xFF2563EB), // Blue
           foregroundColor: Colors.white,
@@ -846,62 +845,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           ],
         ),
       ],
-    );
-  }
-
-  Widget _buildTermsCheckbox() {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Checkbox(
-            value: _acceptedTerms,
-            onChanged: (val) {
-              setState(() {
-                _acceptedTerms = val ?? false;
-              });
-            },
-          ),
-          Expanded(
-            child: RichText(
-              text: TextSpan(
-                style: TextStyle(color: Colors.black, fontFamily: 'Poppins', fontSize: 12.sp),
-                children: [
-                  TextSpan(text: 'I accept the '),
-                  WidgetSpan(
-                    child: GestureDetector(
-                      onTap: () => _showTermsModal('Terms of Service'),
-                      child: Text(
-                        'Terms of Service',
-                        style: TextStyle(
-                          color: Color(0xFF2563EB),
-                          decoration: TextDecoration.underline,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                  TextSpan(text: ' and '),
-                  WidgetSpan(
-                    child: GestureDetector(
-                      onTap: () => _showTermsModal('Privacy Policy'),
-                      child: Text(
-                        'Privacy Policy',
-                        style: TextStyle(
-                          color: Color(0xFF2563EB),
-                          decoration: TextDecoration.underline,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
