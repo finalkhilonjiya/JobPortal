@@ -19,7 +19,7 @@ workflows:
 
       - name: Clean and Build Debug APK with .env loaded
         script: |
-          flutter clean
+         
           flutter pub get
           
           # ✅ Load .env variables
