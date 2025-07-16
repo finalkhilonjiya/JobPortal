@@ -12,22 +12,39 @@ workflows:
         script: |
           flutter --version
           flutter doctor -v
+
       - name: Get dependencies
         script: |
           flutter pub get
+
       - name: Generate Native Splash
         script: |
           flutter pub run flutter_native_splash:create
-      - name: Load environment from .env
-        script: |
-          export $(grep -v '^#' .env | xargs)
-      - name: Clean and Build Debug APK
+
+      - name: Clean and Build Debug APK with .env loaded
         script: |
           flutter clean
           flutter pub get
+          
+          # ✅ Load .env variables
+          export $(grep -v '^#' .env | xargs)
+
+          # ❌ Fail if missing required env vars
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "❌ ERROR: Missing required environment variables."
+            exit 1
+          fi
+
           echo "🔍 Environment variables check:"
           echo "SUPABASE_URL length: ${#SUPABASE_URL}"
           echo "SUPABASE_ANON_KEY length: ${#SUPABASE_ANON_KEY}"
-          flutter build apk --debug --split-per-abi --tree-shake-icons --verbose --dart-define=SUPABASE_URL="$SUPABASE_URL" --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
+
+          flutter build apk --debug \
+            --split-per-abi \
+            --tree-shake-icons \
+            --verbose \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
+
     artifacts:
       - build/app/outputs/flutter-apk/app-debug.apk
