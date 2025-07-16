@@ -24,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   String? _usernameError;
   String? _passwordError;
   bool _isEmailInput = false; // Track if input is email or phone
+  bool _acceptedTerms = false;
 
   // Animation controllers
   late AnimationController _logoAnimationController;
@@ -369,6 +370,45 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     }
   }
 
+  void _showTermsModal(String title) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Poppins',
+              ),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Welcome to Khilonjiya.com\n\n• Your data is stored securely and never shared.\n• You agree to usage of cookies for analytics and personalization.\n• Full terms are available on request or our website.',
+              style: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
+            ),
+            SizedBox(height: 24),
+            Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Close'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -494,6 +534,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             _buildLoginButton(),
             _buildSocialLoginSection(),
             SizedBox(height: 2.h),
+            _buildTermsCheckbox(),
             _buildSignUpLink(),
           ],
         ),
@@ -674,7 +715,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _isFormValid && !_isLoading ? _handleLogin : null,
+        onPressed: _isFormValid && !_isLoading && _acceptedTerms ? _handleLogin : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xFF2563EB), // Blue
           foregroundColor: Colors.white,
@@ -800,6 +841,62 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildTermsCheckbox() {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Checkbox(
+            value: _acceptedTerms,
+            onChanged: (val) {
+              setState(() {
+                _acceptedTerms = val ?? false;
+              });
+            },
+          ),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: TextStyle(color: Colors.black, fontFamily: 'Poppins', fontSize: 12.sp),
+                children: [
+                  TextSpan(text: 'I accept the '),
+                  WidgetSpan(
+                    child: GestureDetector(
+                      onTap: () => _showTermsModal('Terms of Service'),
+                      child: Text(
+                        'Terms of Service',
+                        style: TextStyle(
+                          color: Color(0xFF2563EB),
+                          decoration: TextDecoration.underline,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  TextSpan(text: ' and '),
+                  WidgetSpan(
+                    child: GestureDetector(
+                      onTap: () => _showTermsModal('Privacy Policy'),
+                      child: Text(
+                        'Privacy Policy',
+                        style: TextStyle(
+                          color: Color(0xFF2563EB),
+                          decoration: TextDecoration.underline,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
