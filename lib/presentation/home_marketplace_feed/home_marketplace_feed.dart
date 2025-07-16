@@ -1,9 +1,10 @@
+// File: screens/marketplace/home_marketplace_feed.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import './widgets/bottom_nav_bar_widget.dart';
 import './widgets/app_info_banner.dart';
 import './widgets/three_option_section.dart';
-import './widgets/search_bar_section.dart';
+import './widgets/search_bar_widget.dart';
 import './widgets/premium_section.dart';
 import './widgets/categories_section.dart';
 import './widgets/product_card.dart';
@@ -11,6 +12,9 @@ import './widgets/search_bottom_sheet.dart';
 import './widgets/listing_details_sheet.dart';
 import './widgets/shimmer_widgets.dart';
 import './widgets/marketplace_helpers.dart';
+import './widgets/recently_viewed_section.dart';
+import './widgets/trending_searches_widget.dart';
+import './widgets/notification_strip.dart';
 import 'dart:async';
 
 class HomeMarketplaceFeed extends StatefulWidget {
@@ -26,13 +30,42 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   bool _isLoadingFeed = true;
   List<Map<String, Object>> _categories = [];
   List<Map<String, dynamic>> _listings = [];
+  List<Map<String, dynamic>> _recentlyViewed = [];
+  List<String> _trendingSearches = [];
   String _selectedCategory = 'All';
   Set<String> _favoriteIds = {};
+  bool _hasNotifications = true;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _fetchData();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      _loadMoreListings();
+    }
+  }
+
+  Future<void> _loadMoreListings() async {
+    // Simulate lazy loading
+    if (!_isLoadingFeed) {
+      setState(() => _isLoadingFeed = true);
+      await Future.delayed(Duration(seconds: 1));
+      setState(() {
+        _listings.addAll(MarketplaceHelpers.getMockListings());
+        _isLoadingFeed = false;
+      });
+    }
   }
 
   Future<void> _fetchData() async {
@@ -41,11 +74,13 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       _isLoadingFeed = true;
     });
     
-    await Future.delayed(Duration(seconds: 1));
+    await Future.delayed(Duration(milliseconds: 800));
     
     setState(() {
       _categories = MarketplaceHelpers.getMockCategories();
       _listings = MarketplaceHelpers.getMockListings();
+      _recentlyViewed = MarketplaceHelpers.getRecentlyViewed();
+      _trendingSearches = MarketplaceHelpers.getTrendingSearches();
       _isLoadingPremium = false;
       _isLoadingFeed = false;
     });
@@ -62,12 +97,12 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       if (_favoriteIds.contains(id)) {
         _favoriteIds.remove(id);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Removed from favorites')),
+          SnackBar(content: Text('Removed from favorites'), duration: Duration(seconds: 1)),
         );
       } else {
         _favoriteIds.add(id);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Added to favorites')),
+          SnackBar(content: Text('Added to favorites'), duration: Duration(seconds: 1)),
         );
       }
     });
@@ -78,16 +113,33 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     return _listings.where((l) => l['category'] == _selectedCategory).toList();
   }
 
+  List<Map<String, dynamic>> get _featuredListings {
+    return _listings.where((l) => l['is_featured'] == true).toList();
+  }
+
   void _openSearchPage() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => SearchBottomSheet(),
+      builder: (context) => SearchBottomSheet(
+        trendingSearches: _trendingSearches,
+        onSearch: (query, location) {
+          Navigator.pop(context);
+          // Handle search
+        },
+      ),
     );
   }
 
   void _showListingDetails(Map<String, dynamic> listing) {
+    // Add to recently viewed
+    setState(() {
+      _recentlyViewed.removeWhere((item) => item['id'] == listing['id']);
+      _recentlyViewed.insert(0, listing);
+      if (_recentlyViewed.length > 5) _recentlyViewed.removeLast();
+    });
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -98,8 +150,18 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         onFavoriteToggle: () => _toggleFavorite(listing['id']),
         onCall: () => MarketplaceHelpers.makePhoneCall(context, listing['phone']),
         onWhatsApp: () => MarketplaceHelpers.openWhatsApp(context, listing['phone']),
+        onReport: () {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Ad reported successfully')),
+          );
+        },
       ),
     );
+  }
+
+  Future<void> _refreshData() async {
+    await _fetchData();
   }
 
   @override
@@ -107,78 +169,184 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: AppInfoBanner()),
-            SliverToBoxAdapter(child: ThreeOptionSection()),
-            SliverToBoxAdapter(child: SearchBarSection(onTap: _openSearchPage)),
-            if (_listings.where((l) => l['is_featured'] == true).isNotEmpty)
-              SliverToBoxAdapter(
-                child: _isLoadingPremium
-                    ? ShimmerPremiumSection()
-                    : PremiumSection(
-                        listings: _listings.where((l) => l['is_featured'] == true).toList(),
-                        onTap: _showListingDetails,
-                        favoriteIds: _favoriteIds,
-                        onFavoriteToggle: _toggleFavorite,
-                      ),
-              ),
-            SliverToBoxAdapter(child: CategoriesSection(
-              categories: _categories,
-              selected: _selectedCategory,
-              onSelect: _onCategorySelected,
-            )),
-            _isLoadingFeed
-                ? SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (_, __) => ShimmerProductCard(),
-                      childCount: 5,
-                    ),
-                  )
-                : SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (_, index) => ProductCard(
-                        data: _filteredListings[index],
-                        isFavorite: _favoriteIds.contains(_filteredListings[index]['id']),
-                        onFavoriteToggle: () => _toggleFavorite(_filteredListings[index]['id']),
-                        onTap: () => _showListingDetails(_filteredListings[index]),
-                        onCall: () => MarketplaceHelpers.makePhoneCall(context, _filteredListings[index]['phone']),
-                        onWhatsApp: () => MarketplaceHelpers.openWhatsApp(context, _filteredListings[index]['phone']),
-                      ),
-                      childCount: _filteredListings.length,
-                    ),
+        child: RefreshIndicator(
+          onRefresh: _refreshData,
+          color: Color(0xFF2563EB),
+          child: CustomScrollView(
+            controller: _scrollController,
+            physics: AlwaysScrollableScrollPhysics(),
+            slivers: [
+              // Notification Strip
+              if (_hasNotifications)
+                SliverToBoxAdapter(
+                  child: NotificationStrip(
+                    message: "🎉 Get 20% off on premium listings today!",
+                    onClose: () => setState(() => _hasNotifications = false),
                   ),
-            SliverPadding(padding: EdgeInsets.only(bottom: 10.h)),
-          ],
+                ),
+              
+              // App Info Banner
+              SliverToBoxAdapter(child: AppInfoBanner()),
+              
+              // Three Option Section
+              SliverToBoxAdapter(child: ThreeOptionSection()),
+              
+              // Search Bar
+              SliverToBoxAdapter(
+                child: SearchBarWidget(onTap: _openSearchPage),
+              ),
+              
+              // Trending Searches
+              SliverToBoxAdapter(
+                child: TrendingSearchesWidget(
+                  searches: _trendingSearches,
+                  onSearchTap: (search) {
+                    // Handle trending search tap
+                  },
+                ),
+              ),
+              
+              // Premium Section
+              if (_featuredListings.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                        child: Text(
+                          'Premium Listings',
+                          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      _isLoadingPremium
+                          ? ShimmerPremiumSection()
+                          : PremiumSection(
+                              listings: _featuredListings,
+                              onTap: _showListingDetails,
+                              favoriteIds: _favoriteIds,
+                              onFavoriteToggle: _toggleFavorite,
+                            ),
+                    ],
+                  ),
+                ),
+              
+              // Recently Viewed
+              if (_recentlyViewed.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: RecentlyViewedSection(
+                    listings: _recentlyViewed,
+                    onTap: _showListingDetails,
+                  ),
+                ),
+              
+              // Categories
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                      child: Text(
+                        'Categories',
+                        style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    CategoriesSection(
+                      categories: _categories,
+                      selected: _selectedCategory,
+                      onSelect: _onCategorySelected,
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Listings Title
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _selectedCategory == 'All' ? 'All Listings' : '$_selectedCategory',
+                        style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        '${_filteredListings.length} items',
+                        style: TextStyle(fontSize: 11.sp, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              
+              // Product Feed
+              _isLoadingFeed && _filteredListings.isEmpty
+                  ? SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (_, __) => ShimmerProductCard(),
+                        childCount: 5,
+                      ),
+                    )
+                  : SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (_, index) {
+                          if (index == _filteredListings.length) {
+                            return _isLoadingFeed
+                                ? Padding(
+                                    padding: EdgeInsets.all(2.h),
+                                    child: Center(child: CircularProgressIndicator()),
+                                  )
+                                : SizedBox.shrink();
+                          }
+                          return ProductCard(
+                            data: _filteredListings[index],
+                            isFavorite: _favoriteIds.contains(_filteredListings[index]['id']),
+                            onFavoriteToggle: () => _toggleFavorite(_filteredListings[index]['id']),
+                            onTap: () => _showListingDetails(_filteredListings[index]),
+                            onCall: () => MarketplaceHelpers.makePhoneCall(
+                              context, 
+                              _filteredListings[index]['phone']
+                            ),
+                            onWhatsApp: () => MarketplaceHelpers.openWhatsApp(
+                              context, 
+                              _filteredListings[index]['phone']
+                            ),
+                          );
+                        },
+                        childCount: _filteredListings.length + (_isLoadingFeed ? 1 : 0),
+                      ),
+                    ),
+              
+              SliverPadding(padding: EdgeInsets.only(bottom: 10.h)),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: BottomNavBarWidget(
         currentIndex: _currentIndex,
+        hasMessageNotification: true,
         onTabSelected: (index) {
           setState(() => _currentIndex = index);
-          switch (index) {
-            case 1:
-              _openSearchPage();
-              break;
-            case 3:
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Packages feature coming soon')),
-              );
-              break;
-            case 4:
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Profile feature coming soon')),
-              );
-              break;
-          }
+          if (index == 1) _openSearchPage();
         },
         onFabPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Create listing feature coming soon')),
+            SnackBar(content: Text('Post Ad feature coming soon')),
           );
         },
-        hasMessageNotification: false,
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Post Ad feature coming soon')),
+          );
+        },
+        backgroundColor: Color(0xFF2563EB),
+        child: Icon(Icons.add, color: Colors.white),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }
