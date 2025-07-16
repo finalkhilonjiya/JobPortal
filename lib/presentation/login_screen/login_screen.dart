@@ -729,52 +729,71 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         Row(
           children: [
             Expanded(
-              child: OutlinedButton.icon(
+              child: OutlinedButton(
                 onPressed: _isLoading ? null : _handleGoogleLogin,
-                icon: Icon(
-                  Icons.g_mobiledata,
-                  size: 24,
-              
-                ),
-                label: Text(
-                  'Google',
-                  style: TextStyle(
-                    fontSize: 3.5.w,
-                  ),
-                ),
                 style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 3.w),
+                  backgroundColor: Colors.white,
                   side: BorderSide(
                     color: Colors.grey[300]!,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
+                  padding: EdgeInsets.symmetric(vertical: 3.w),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.g_mobiledata,
+                      size: 36, // Enlarged G icon
+                      color: Colors.redAccent, // Google red
+                    ),
+                    SizedBox(width: 2.w),
+                    Text(
+                      'Google',
+                      style: TextStyle(
+                        fontSize: 3.5.w,
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
             SizedBox(width: 3.w),
             Expanded(
-              child: OutlinedButton.icon(
+              child: OutlinedButton(
                 onPressed: _isLoading ? null : _handleFacebookLogin,
-                icon: Icon(
-                  Icons.facebook,
-                  size: 24,
-                ),
-                label: Text(
-                  'Facebook',
-                  style: TextStyle(
-                    fontSize: 3.5.w,
-                  ),
-                ),
                 style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 3.w),
+                  backgroundColor: Colors.white,
                   side: BorderSide(
                     color: Colors.grey[300]!,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
+                  padding: EdgeInsets.symmetric(vertical: 3.w),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.facebook,
+                      size: 32, // Enlarged f icon
+                      color: Color(0xFF1877F2), // Facebook blue
+                    ),
+                    SizedBox(width: 2.w),
+                    Text(
+                      'Facebook',
+                      style: TextStyle(
+                        fontSize: 3.5.w,
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
