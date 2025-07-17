@@ -101,8 +101,8 @@ class _ListingFormTab1State extends State<ListingFormTab1> {
               fillColor: Colors.white,
             ),
             items: CategoryData.mainCategories.map((category) {
-              return DropdownMenuItem(
-                value: category['name'],
+              return DropdownMenuItem<String>(
+                value: category['name'] as String,
                 child: Row(
                   children: [
                     Icon(category['icon'], size: 20, color: Color(0xFF2563EB)),
@@ -137,7 +137,7 @@ class _ListingFormTab1State extends State<ListingFormTab1> {
                 fillColor: Colors.white,
               ),
               items: _subcategories.map((subcategory) {
-                return DropdownMenuItem(
+                return DropdownMenuItem<String>(
                   value: subcategory,
                   child: Text(subcategory),
                 );

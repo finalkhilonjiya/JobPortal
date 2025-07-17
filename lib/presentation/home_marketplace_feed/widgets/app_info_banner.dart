@@ -1,4 +1,3 @@
-// ===== File 1: widgets/app_info_banner.dart (1.7x bigger) =====
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
