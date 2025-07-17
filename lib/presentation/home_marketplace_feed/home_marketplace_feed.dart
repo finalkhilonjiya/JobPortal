@@ -12,7 +12,7 @@ import './widgets/search_bottom_sheet.dart';
 import './widgets/listing_details_fullscreen.dart';
 import './widgets/shimmer_widgets.dart';
 import './widgets/marketplace_helpers.dart';
-import './widgets/notification_strip.dart';
+import './widgets/notification_strip.dart' as notification_strip;
 import './widgets/create_listing_page.dart';
 import './widgets/profile_page.dart';
 import 'dart:async';
@@ -128,7 +128,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => SearchBottomSheet(
-        currentLocation: _currentLocation,
         onSearch: (query, location) {
           Navigator.pop(context);
           // Handle search
@@ -198,7 +197,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
               // Notification Strip
               if (_hasNotifications)
                 SliverToBoxAdapter(
-                  child: NotificationStrip(
+                  child: notification_strip.NotificationStrip(
                     message: "🎉 Get 20% off on premium listings today!",
                     onClose: () => setState(() => _hasNotifications = false),
                   ),

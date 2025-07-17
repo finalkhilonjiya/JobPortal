@@ -22,13 +22,34 @@ class ListingFormTab1 extends StatefulWidget {
 class _ListingFormTab1State extends State<ListingFormTab1> {
   final ImagePicker _picker = ImagePicker();
   List<String> _subcategories = [];
+  late TextEditingController _titleController;
 
   @override
   void initState() {
     super.initState();
+    _titleController = TextEditingController(text: widget.formData['title']);
+    _titleController.addListener(() {
+      if (_titleController.text != widget.formData['title']) {
+        widget.onDataChanged({'title': _titleController.text});
+      }
+    });
     if (widget.formData['category'].isNotEmpty) {
       _updateSubcategories(widget.formData['category']);
     }
+  }
+
+  @override
+  void didUpdateWidget(covariant ListingFormTab1 oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.formData['title'] != _titleController.text) {
+      _titleController.text = widget.formData['title'];
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    super.dispose();
   }
 
   void _updateSubcategories(String category) {
@@ -81,8 +102,7 @@ class _ListingFormTab1State extends State<ListingFormTab1> {
               filled: true,
               fillColor: Colors.white,
             ),
-            onChanged: (value) => widget.onDataChanged({'title': value}),
-            controller: TextEditingController(text: widget.formData['title']),
+            controller: _titleController,
           ),
           SizedBox(height: 2.h),
 

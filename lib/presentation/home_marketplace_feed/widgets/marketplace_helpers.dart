@@ -140,6 +140,18 @@ class MarketplaceHelpers {
     ];
   }
   
+  static List<Map<String, Object>> getMainCategoriesOnly() {
+    return [
+      {'name': 'Electronics', 'icon': Icons.devices_other_rounded, 'color': Color(0xFF2563EB)},
+      {'name': 'Vehicles', 'icon': Icons.directions_car_filled_rounded, 'color': Color(0xFF2563EB)},
+      {'name': 'Furniture', 'icon': Icons.chair_alt_rounded, 'color': Color(0xFF2563EB)},
+      {'name': 'Properties for Sale', 'icon': Icons.house_rounded, 'color': Color(0xFF2563EB)},
+      {'name': 'Room for Rent', 'icon': Icons.meeting_room_rounded, 'color': Color(0xFF2563EB)},
+      {'name': 'PG Accommodation', 'icon': Icons.hotel_rounded, 'color': Color(0xFF2563EB)},
+      {'name': 'Homestays', 'icon': Icons.home_work_rounded, 'color': Color(0xFF2563EB)},
+    ];
+  }
+
   static Future<void> makePhoneCall(BuildContext context, String phoneNumber) async {
     final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
     try {

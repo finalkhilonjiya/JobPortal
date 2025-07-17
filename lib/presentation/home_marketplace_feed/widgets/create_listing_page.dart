@@ -74,7 +74,7 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
       case 1:
         // Tab 2: Product Details
         return _formData['price'].isNotEmpty &&
-               _formData['description'].length >= 50;
+               _formData['description'].length >= 10;
       case 2:
         // Tab 3: Contact & Additional Info
         return _formData['sellerName'].isNotEmpty &&
