@@ -331,6 +331,27 @@ class _UserProfileState extends State<UserProfile>
 
                     SizedBox(height: 3.h),
 
+                    // Packages Section
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: ListTile(
+                        leading: Icon(Icons.workspace_premium, color: Color(0xFF2563EB)),
+                        title: Text('Packages', style: TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text('See premium listing plans'),
+                        trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                            ),
+                            builder: (context) => _PackagesSheet(),
+                          );
+                        },
+                      ),
+                    ),
+
                     // Account Settings Section
                     AccountSettingsSectionWidget(
                       userData: userData,
@@ -354,6 +375,72 @@ class _UserProfileState extends State<UserProfile>
           color: Colors.white,
           size: 24,
         ),
+      ),
+    );
+  }
+}
+
+class _PackagesSheet extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Premium Listing Plans', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          SizedBox(height: 16),
+          _buildPlan('Silver', '7 days', '₹99', 'Basic highlight for 1 week'),
+          SizedBox(height: 12),
+          _buildPlan('Gold', '30 days', '₹299', 'Top placement for 1 month'),
+          SizedBox(height: 12),
+          _buildPlan('Platinum', '90 days', '₹699', 'Maximum visibility for 3 months'),
+          SizedBox(height: 24),
+          Center(
+            child: ElevatedButton(
+              onPressed: () {
+                // Placeholder for payment gateway integration
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Payment gateway coming soon!')),
+                );
+              },
+              child: Text('Buy Now'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF2563EB),
+                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlan(String name, String duration, String price, String desc) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF2563EB), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(price, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2563EB))),
+            ],
+          ),
+          SizedBox(height: 4),
+          Text(duration, style: TextStyle(color: Colors.grey[700])),
+          SizedBox(height: 4),
+          Text(desc, style: TextStyle(color: Colors.grey[600])),
+        ],
       ),
     );
   }

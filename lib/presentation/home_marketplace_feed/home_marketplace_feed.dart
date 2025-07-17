@@ -14,6 +14,7 @@ import './widgets/shimmer_widgets.dart';
 import './widgets/marketplace_helpers.dart';
 import './widgets/notification_strip.dart';
 import './widgets/create_listing_page.dart';
+import './widgets/category_data.dart';
 import 'dart:async';
 
 class HomeMarketplaceFeed extends StatefulWidget {
@@ -73,7 +74,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     await Future.delayed(Duration(milliseconds: 800));
     
     setState(() {
-      _categories = MarketplaceHelpers.getMockCategories();
+      _categories = List<Map<String, Object>>.from(CategoryData.mainCategories);
       _listings = MarketplaceHelpers.getMockListings();
       _isLoadingPremium = false;
       _isLoadingFeed = false;

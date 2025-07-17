@@ -69,9 +69,9 @@ class ProductCard extends StatelessWidget {
                                   data['title'],
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 13.sp,
+                                    fontSize: 11.sp, // reduced
                                   ),
-                                  maxLines: 2,
+                                  maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -83,12 +83,23 @@ class ProductCard extends StatelessWidget {
                             ],
                           ),
                           SizedBox(height: 0.5.h),
+                          if (data['subcategory'] != null && data['subcategory'].toString().isNotEmpty)
+                            Text(
+                              data['subcategory'],
+                              style: TextStyle(
+                                color: Colors.grey[700],
+                                fontSize: 9.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           Text(
                             '₹${data['price']}',
                             style: TextStyle(
                               color: Color(0xFF2563EB),
                               fontWeight: FontWeight.bold,
-                              fontSize: 16.sp,
+                              fontSize: 13.sp, // reduced
                             ),
                           ),
                         ],

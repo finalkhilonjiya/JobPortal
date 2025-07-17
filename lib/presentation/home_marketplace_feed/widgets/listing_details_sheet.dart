@@ -22,7 +22,7 @@ class ListingDetailsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.9,
+      height: MediaQuery.of(context).size.height,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -84,8 +84,16 @@ class ListingDetailsSheet extends StatelessWidget {
                         SizedBox(height: 8),
                         Text(
                           listing['title'],
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
+                        if (listing['subcategory'] != null && listing['subcategory'].toString().isNotEmpty)
+                          Padding(
+                            padding: EdgeInsets.only(top: 4),
+                            child: Text(
+                              listing['subcategory'],
+                              style: TextStyle(fontSize: 15, color: Colors.grey[700]),
+                            ),
+                          ),
                         SizedBox(height: 8),
                         Row(
                           children: [
@@ -164,6 +172,18 @@ class ListingDetailsSheet extends StatelessWidget {
                               ),
                             ),
                           ),
+                        // Show all extra fields if present
+                        ...listing.entries.where((e) => !['id','title','price','location','category','subcategory','image','is_featured','is_verified','time_ago','phone','description'].contains(e.key)).map((e) =>
+                          Padding(
+                            padding: EdgeInsets.only(top: 6),
+                            child: Row(
+                              children: [
+                                Text('${e.key}: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                                Expanded(child: Text('${e.value}')),
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),

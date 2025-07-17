@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class AppInfoBanner extends StatelessWidget {
   @override
@@ -33,7 +34,11 @@ class AppInfoBanner extends StatelessWidget {
               color: Colors.white,
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.verified, color: Color(0xFF2563EB), size: 10.w),
+            child: SvgPicture.asset(
+              'assets/images/img_app_logo.svg',
+              width: 10.w,
+              height: 10.w,
+            ),
           ),
           SizedBox(height: 3.h),
           Text(
@@ -84,21 +89,7 @@ class AppInfoBanner extends StatelessWidget {
             ),
           ),
           SizedBox(height: 2.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.shopping_bag, color: Colors.white, size: 5.w),
-              SizedBox(width: 2.w),
-              Text(
-                'Buy & Sell Locally',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
+          // Remove the Row with 'Buy & Sell Locally'
         ],
       ),
     );

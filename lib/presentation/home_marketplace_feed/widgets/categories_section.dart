@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
 class CategoriesSection extends StatelessWidget {
-  final List<Map<String, Object>> categories;
+  final List<Map<String, dynamic>> categories;
   final String selected;
   final void Function(String) onSelect;
   

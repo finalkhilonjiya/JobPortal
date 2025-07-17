@@ -490,7 +490,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           style: TextStyle(
                             fontSize: 22.sp,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF10B981),
+                            color: AppTheme.lightTheme.colorScheme.primary,
                             fontFamily: 'Poppins',
                           ),
                         ),
