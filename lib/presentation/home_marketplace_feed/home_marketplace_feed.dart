@@ -1,4 +1,4 @@
-// File: screens/marketplace/home_marketplace_feed.dart
+
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import './widgets/bottom_nav_bar_widget.dart' as bottom_nav_bar;
