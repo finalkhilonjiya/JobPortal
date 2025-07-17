@@ -1,7 +1,6 @@
-// ===== File 2: widgets/product_card.dart (1.5x bigger, icons only) =====
+// ===== File 3: widgets/product_card.dart (Updated with subcategory) =====
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ProductCard extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -24,7 +23,7 @@ class ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
-      height: 22.h, // 1.5x bigger (was 15.h)
+      height: 22.h,
       child: Card(
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -58,7 +57,7 @@ class ProductCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Title and Verified Badge
+                      // Title, Subcategory and Verified Badge
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -69,44 +68,71 @@ class ProductCard extends StatelessWidget {
                                   data['title'],
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 13.sp,
+                                    fontSize: 11.sp, // Reduced font size
                                   ),
-                                  maxLines: 2,
+                                  maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               if (data['is_verified'] == true)
                                 Padding(
                                   padding: EdgeInsets.only(left: 1.w),
-                                  child: Icon(Icons.verified, color: Color(0xFF2563EB), size: 5.w),
+                                  child: Icon(Icons.verified, color: Color(0xFF2563EB), size: 4.w),
                                 ),
                             ],
                           ),
+                          if (data['subcategory'] != null) ...[
+                            SizedBox(height: 0.3.h),
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                data['subcategory'],
+                                style: TextStyle(
+                                  color: Colors.grey[700],
+                                  fontSize: 8.sp,
+                                ),
+                              ),
+                            ),
+                          ],
                           SizedBox(height: 0.5.h),
                           Text(
                             '₹${data['price']}',
                             style: TextStyle(
                               color: Color(0xFF2563EB),
                               fontWeight: FontWeight.bold,
-                              fontSize: 16.sp,
+                              fontSize: 14.sp, // Reduced font size
                             ),
                           ),
                         ],
                       ),
-                      // Location and Time
+                      // Additional Tags and Location
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          if (data['condition'] != null)
+                            Text(
+                              data['condition'],
+                              style: TextStyle(
+                                color: Colors.green[700],
+                                fontSize: 8.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          SizedBox(height: 0.3.h),
                           Row(
                             children: [
-                              Icon(Icons.location_on_outlined, size: 4.w, color: Colors.grey[600]),
+                              Icon(Icons.location_on_outlined, size: 3.5.w, color: Colors.grey[600]),
                               SizedBox(width: 1.w),
                               Expanded(
                                 child: Text(
                                   data['location'],
                                   style: TextStyle(
                                     color: Colors.grey[600],
-                                    fontSize: 10.sp,
+                                    fontSize: 9.sp,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -114,12 +140,11 @@ class ProductCard extends StatelessWidget {
                               ),
                             ],
                           ),
-                          SizedBox(height: 0.5.h),
                           Text(
                             data['time_ago'],
                             style: TextStyle(
                               color: Colors.grey[500],
-                              fontSize: 9.sp,
+                              fontSize: 8.sp,
                             ),
                           ),
                         ],
@@ -167,7 +192,7 @@ class ProductCard extends StatelessWidget {
                             color: Colors.green.withOpacity(0.3),
                           ),
                           IconButton(
-                            icon: Icon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 5.w),
+                            icon: Icon(Icons.whatsapp, color: Colors.green, size: 5.w),
                             onPressed: onWhatsApp,
                             padding: EdgeInsets.all(2.w),
                             constraints: BoxConstraints(
