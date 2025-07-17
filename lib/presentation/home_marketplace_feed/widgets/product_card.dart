@@ -1,6 +1,7 @@
 // ===== File 1: widgets/marketplace/product_card.dart =====
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ProductCard extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -123,7 +124,7 @@ class ProductCard extends StatelessWidget {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.message, color: Colors.green, size: 16),
+                                  Icon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 16),
                                   SizedBox(width: 4),
                                   Text('WhatsApp', style: TextStyle(color: Colors.green, fontSize: 12)),
                                 ],
