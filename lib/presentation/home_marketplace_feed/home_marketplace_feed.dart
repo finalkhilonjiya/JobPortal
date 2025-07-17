@@ -1,15 +1,15 @@
 // File: screens/marketplace/home_marketplace_feed.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import './widgets/bottom_nav_bar_widget.dart';
+import './widgets/bottom_nav_bar_widget.dart' as bottom_nav_bar;
 import './widgets/app_info_banner.dart';
 import './widgets/three_option_section.dart';
 import './widgets/search_bar_widget.dart';
 import './widgets/premium_section.dart';
-import './widgets/categories_section.dart';
-import './widgets/product_card.dart';
-import './widgets/search_bottom_sheet.dart';
-import './widgets/listing_details_sheet.dart';
+import './widgets/categories_section.dart' as categories;
+import './widgets/product_card.dart' as product_card;
+import './widgets/search_bottom_sheet.dart' as search_bottom_sheet;
+import './widgets/listing_details_sheet.dart' as listing_details_sheet;
 import './widgets/shimmer_widgets.dart';
 import './widgets/marketplace_helpers.dart';
 import './widgets/notification_strip.dart';
@@ -116,11 +116,12 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => SearchBottomSheet(
+      builder: (context) => search_bottom_sheet.SearchBottomSheet(
         onSearch: (query, location) {
           Navigator.pop(context);
           // Handle search
         },
+        trendingSearches: [], // Added trendingSearches parameter
       ),
     );
   }
@@ -140,7 +141,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => ListingDetailsSheet(
+      builder: (context) => listing_details_sheet.ListingDetailsSheet(
         listing: listing,
         isFavorite: _favoriteIds.contains(listing['id']),
         onFavoriteToggle: () => _toggleFavorite(listing['id']),
@@ -229,7 +230,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                         style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    CategoriesSection(
+                    categories.CategoriesSection(
                       categories: _categories,
                       selected: _selectedCategory,
                       onSelect: _onCategorySelected,
@@ -277,7 +278,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                                   )
                                 : SizedBox.shrink();
                           }
-                          return ProductCard(
+                          return product_card.ProductCard(
                             data: _filteredListings[index],
                             isFavorite: _favoriteIds.contains(_filteredListings[index]['id']),
                             onFavoriteToggle: () => _toggleFavorite(_filteredListings[index]['id']),
@@ -301,7 +302,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavBarWidget(
+      bottomNavigationBar: bottom_nav_bar.BottomNavBarWidget(
         currentIndex: _currentIndex,
         hasMessageNotification: true,
         onTabSelected: (index) {

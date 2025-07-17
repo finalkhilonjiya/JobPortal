@@ -273,7 +273,7 @@ class ProductCard extends StatelessWidget {
                             color: Colors.green.withOpacity(0.3),
                           ),
                           IconButton(
-                            icon: Icon(Icons.whatsapp, color: Colors.green, size: 5.w),
+                            icon: Icon(Icons.message, color: Colors.green, size: 5.w),
                             onPressed: onWhatsApp,
                             padding: EdgeInsets.all(2.w),
                             constraints: BoxConstraints(
