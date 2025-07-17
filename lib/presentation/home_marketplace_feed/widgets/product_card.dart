@@ -1,6 +1,7 @@
 // ===== File 2: widgets/product_card.dart (1.5x bigger, icons only) =====
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ProductCard extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -166,7 +167,7 @@ class ProductCard extends StatelessWidget {
                             color: Colors.green.withOpacity(0.3),
                           ),
                           IconButton(
-                            icon: Icon(Icons.whatsapp, color: Colors.green, size: 5.w),
+                            icon: Icon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 5.w),
                             onPressed: onWhatsApp,
                             padding: EdgeInsets.all(2.w),
                             constraints: BoxConstraints(
