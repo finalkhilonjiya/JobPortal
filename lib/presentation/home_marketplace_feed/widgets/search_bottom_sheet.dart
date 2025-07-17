@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 
 class SearchBottomSheet extends StatefulWidget {
-  final List<String> trendingSearches;
   final Function(String, String) onSearch;
   const SearchBottomSheet({
     Key? key,
-    required this.trendingSearches,
     required this.onSearch,
   }) : super(key: key);
   @override
@@ -61,23 +59,6 @@ class _SearchBottomSheetState extends State<SearchBottomSheet> {
                   ),
                 ),
                 SizedBox(height: 16),
-                if (widget.trendingSearches.isNotEmpty)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: widget.trendingSearches.map((search) => ActionChip(
-                        label: Text(search),
-                        onPressed: () {
-                          _itemController.text = search;
-                          widget.onSearch(search, _locationController.text);
-                          Navigator.pop(context);
-                        },
-                      )).toList(),
-                    ),
-                  ),
-                SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(

@@ -121,7 +121,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
           Navigator.pop(context);
           // Handle search
         },
-        trendingSearches: [], // Added trendingSearches parameter
       ),
     );
   }
