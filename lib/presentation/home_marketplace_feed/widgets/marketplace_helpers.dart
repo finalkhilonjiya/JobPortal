@@ -140,6 +140,10 @@ class MarketplaceHelpers {
     ];
   }
   
+  static List<Map<String, Object>> getMainCategoriesOnly() {
+    return getMockCategories();
+  }
+
   static Future<void> makePhoneCall(BuildContext context, String phoneNumber) async {
     final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
     try {
