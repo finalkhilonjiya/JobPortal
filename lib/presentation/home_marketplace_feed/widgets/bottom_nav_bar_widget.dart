@@ -1,4 +1,4 @@
-// ===== File 1: widgets/bottom_nav_bar_widget.dart (Updated) =====
+// ===== File 3: widgets/bottom_nav_bar_widget.dart (Fixed pixel overflow) =====
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
@@ -37,14 +37,16 @@ class BottomNavBarWidget extends StatelessWidget {
           color: Colors.white,
           shape: CircularNotchedRectangle(),
           notchMargin: 8,
+          elevation: 0,
           child: Container(
-            height: 8.h,
+            height: 7.h,
+            padding: EdgeInsets.symmetric(horizontal: 2.w),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildNavItem(Icons.home, 'Home', 0),
                 _buildNavItem(Icons.search, 'Search', 1),
-                SizedBox(width: 12.w), // Space for FAB
+                SizedBox(width: 15.w), // Space for FAB
                 _buildNavItem(Icons.inventory_2, 'Packages', 3),
                 Stack(
                   children: [
@@ -54,8 +56,8 @@ class BottomNavBarWidget extends StatelessWidget {
                         top: 0,
                         right: 0,
                         child: Container(
-                          width: 2.w,
-                          height: 2.w,
+                          width: 2.5.w,
+                          height: 2.5.w,
                           decoration: BoxDecoration(
                             color: Colors.red,
                             shape: BoxShape.circle,
@@ -79,7 +81,7 @@ class BottomNavBarWidget extends StatelessWidget {
     return InkWell(
       onTap: () => onTabSelected(index),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
+        width: 15.w,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -87,15 +89,18 @@ class BottomNavBarWidget extends StatelessWidget {
             Icon(
               icon,
               color: color,
-              size: 6.w,
+              size: 5.5.w,
             ),
-            SizedBox(height: 0.5.h),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 9.sp,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            SizedBox(height: 0.3.h),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 8.sp,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                ),
               ),
             ),
           ],
