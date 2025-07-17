@@ -1,19 +1,20 @@
-
+// File: screens/marketplace/home_marketplace_feed.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import './widgets/bottom_nav_bar_widget.dart' as bottom_nav_bar;
+import './widgets/bottom_nav_bar_widget.dart';
 import './widgets/app_info_banner.dart';
 import './widgets/three_option_section.dart';
 import './widgets/search_bar_widget.dart';
 import './widgets/premium_section.dart';
-import './widgets/categories_section.dart' as categories;
-import './widgets/product_card.dart' as product_card;
-import './widgets/search_bottom_sheet.dart' as search_bottom_sheet;
-import './widgets/listing_details_sheet.dart' as listing_details_sheet;
+import './widgets/categories_section.dart';
+import './widgets/product_card.dart';
+import './widgets/search_bottom_sheet.dart';
+import './widgets/listing_details_fullscreen.dart';
 import './widgets/shimmer_widgets.dart';
 import './widgets/marketplace_helpers.dart';
 import './widgets/notification_strip.dart';
 import './widgets/create_listing_page.dart';
+import './widgets/profile_page.dart';
 import 'dart:async';
 
 class HomeMarketplaceFeed extends StatefulWidget {
@@ -32,6 +33,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   String _selectedCategory = 'All';
   Set<String> _favoriteIds = {};
   bool _hasNotifications = true;
+  String _currentLocation = 'Guwahati, Assam';
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -39,12 +41,21 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     super.initState();
     _fetchData();
     _scrollController.addListener(_onScroll);
+    _detectLocation();
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _detectLocation() async {
+    // Simulate location detection
+    await Future.delayed(Duration(seconds: 1));
+    setState(() {
+      _currentLocation = 'Guwahati, Assam';
+    });
   }
 
   void _onScroll() {
@@ -73,7 +84,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     await Future.delayed(Duration(milliseconds: 800));
     
     setState(() {
-      _categories = MarketplaceHelpers.getMockCategories();
+      _categories = MarketplaceHelpers.getMainCategoriesOnly();
       _listings = MarketplaceHelpers.getMockListings();
       _isLoadingPremium = false;
       _isLoadingFeed = false;
@@ -116,7 +127,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => search_bottom_sheet.SearchBottomSheet(
+      builder: (context) => SearchBottomSheet(
+        currentLocation: _currentLocation,
         onSearch: (query, location) {
           Navigator.pop(context);
           // Handle search
@@ -136,22 +148,25 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   }
 
   void _showListingDetails(Map<String, dynamic> listing) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => listing_details_sheet.ListingDetailsSheet(
-        listing: listing,
-        isFavorite: _favoriteIds.contains(listing['id']),
-        onFavoriteToggle: () => _toggleFavorite(listing['id']),
-        onCall: () => MarketplaceHelpers.makePhoneCall(context, listing['phone']),
-        onWhatsApp: () => MarketplaceHelpers.openWhatsApp(context, listing['phone']),
-        onReport: () {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Ad reported successfully')),
-          );
-        },
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ListingDetailsFullscreen(
+          listing: listing,
+          isFavorite: _favoriteIds.contains(listing['id']),
+          onFavoriteToggle: () => _toggleFavorite(listing['id']),
+          onCall: () => MarketplaceHelpers.makePhoneCall(context, listing['phone']),
+          onWhatsApp: () => MarketplaceHelpers.openWhatsApp(context, listing['phone']),
+        ),
+      ),
+    );
+  }
+
+  void _navigateToProfile() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProfilePage(),
       ),
     );
   }
@@ -172,9 +187,12 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
             controller: _scrollController,
             physics: AlwaysScrollableScrollPhysics(),
             slivers: [
-              // Search Bar at the top
+              // Search Bar with Location
               SliverToBoxAdapter(
-                child: SearchBarWidget(onTap: _openSearchPage),
+                child: SearchBarWidget(
+                  onTap: _openSearchPage,
+                  currentLocation: _currentLocation,
+                ),
               ),
               
               // Notification Strip
@@ -186,7 +204,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                   ),
                 ),
               
-              // App Info Banner - 1.7x bigger
+              // App Info Banner
               SliverToBoxAdapter(child: AppInfoBanner()),
               
               // Three Option Section
@@ -217,7 +235,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                   ),
                 ),
               
-              // Categories
+              // Categories - Main only
               SliverToBoxAdapter(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,7 +247,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                         style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    categories.CategoriesSection(
+                    CategoriesSection(
                       categories: _categories,
                       selected: _selectedCategory,
                       onSelect: _onCategorySelected,
@@ -277,7 +295,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                                   )
                                 : SizedBox.shrink();
                           }
-                          return product_card.ProductCard(
+                          return ProductCard(
                             data: _filteredListings[index],
                             isFavorite: _favoriteIds.contains(_filteredListings[index]['id']),
                             onFavoriteToggle: () => _toggleFavorite(_filteredListings[index]['id']),
@@ -301,12 +319,23 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
           ),
         ),
       ),
-      bottomNavigationBar: bottom_nav_bar.BottomNavBarWidget(
+      bottomNavigationBar: BottomNavBarWidget(
         currentIndex: _currentIndex,
         hasMessageNotification: true,
         onTabSelected: (index) {
           setState(() => _currentIndex = index);
-          if (index == 1) _openSearchPage();
+          switch (index) {
+            case 1:
+              _openSearchPage();
+              break;
+            case 3:
+              // Packages - handled in profile
+              _navigateToProfile();
+              break;
+            case 4:
+              _navigateToProfile();
+              break;
+          }
         },
         onFabPressed: _openCreateListing,
       ),
