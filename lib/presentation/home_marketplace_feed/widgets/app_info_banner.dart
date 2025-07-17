@@ -7,7 +7,7 @@ class AppInfoBanner extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.5.h),
       padding: EdgeInsets.all(5.w),
-      height: 35.h,
+      height: 30.h, // reduced height since tagline is removed
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFF2563EB), Color(0xFF0EA5E9)],
@@ -71,39 +71,6 @@ class AppInfoBanner extends StatelessWidget {
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.2,
               ),
-            ),
-          ),
-          SizedBox(height: 2.h),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.h),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    'আমাৰ সংস্কৃতি, আমাৰ গৌৰৱ',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                SizedBox(height: 0.5.h),
-                Text(
-                  'Our Culture, Our Pride',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 11.sp,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
             ),
           ),
         ],
