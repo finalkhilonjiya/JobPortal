@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class AppInfoBanner extends StatelessWidget {
   @override
@@ -8,7 +7,7 @@ class AppInfoBanner extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.5.h),
       padding: EdgeInsets.all(5.w),
-      height: 35.h, // 1.7x bigger (was 22.h, now ~37.h)
+      height: 35.h,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFF2563EB), Color(0xFF0EA5E9)],
@@ -27,13 +26,31 @@ class AppInfoBanner extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          // App Logo (same as login)
           Container(
-            padding: EdgeInsets.all(4.w),
+            width: 20.w,
+            height: 20.w,
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: Offset(0, 5),
+                ),
+              ],
             ),
-            child: Icon(Icons.verified, color: Color(0xFF2563EB), size: 10.w),
+            child: Center(
+              child: Text(
+                'K',
+                style: TextStyle(
+                  color: Color(0xFF2563EB),
+                  fontSize: 32.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
           SizedBox(height: 3.h),
           Text(
@@ -44,13 +61,16 @@ class AppInfoBanner extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          Text(
-            'khilonjiya.com',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24.sp,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'khilonjiya.com',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24.sp,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
             ),
           ),
           SizedBox(height: 2.h),
@@ -62,14 +82,17 @@ class AppInfoBanner extends StatelessWidget {
             ),
             child: Column(
               children: [
-                Text(
-                  'আমাৰ সংস্কৃতি, আমাৰ গৌৰৱ',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'আমাৰ সংস্কৃতি, আমাৰ গৌৰৱ',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
                 ),
                 SizedBox(height: 0.5.h),
                 Text(
@@ -83,25 +106,8 @@ class AppInfoBanner extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(height: 2.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.shopping_bag, color: Colors.white, size: 5.w),
-              SizedBox(width: 2.w),
-              Text(
-                'Buy & Sell Locally',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
   }
 }
-
