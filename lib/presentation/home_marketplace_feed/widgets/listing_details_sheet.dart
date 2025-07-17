@@ -8,6 +8,7 @@ class ListingDetailsSheet extends StatelessWidget {
   final VoidCallback onFavoriteToggle;
   final VoidCallback onCall;
   final VoidCallback onWhatsApp;
+  final VoidCallback? onReport;
   
   const ListingDetailsSheet({
     required this.listing,
@@ -15,6 +16,7 @@ class ListingDetailsSheet extends StatelessWidget {
     required this.onFavoriteToggle,
     required this.onCall,
     required this.onWhatsApp,
+    this.onReport,
   });
   
   @override
@@ -146,6 +148,22 @@ class ListingDetailsSheet extends StatelessWidget {
                             ),
                           ],
                         ),
+                        SizedBox(height: 12),
+                        if (onReport != null)
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: onReport,
+                              icon: Icon(Icons.flag, color: Colors.red),
+                              label: Text('Report', style: TextStyle(color: Colors.red)),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: Colors.red),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
