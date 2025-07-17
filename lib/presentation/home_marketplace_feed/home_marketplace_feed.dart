@@ -2,19 +2,18 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import './widgets/bottom_nav_bar_widget.dart';
-import './widgets/app_info_banner.dart' as app_info;
+import './widgets/app_info_banner.dart';
 import './widgets/three_option_section.dart';
 import './widgets/search_bar_widget.dart';
-import './widgets/premium_section.dart' as premium;
-import './widgets/categories_section.dart' as categories;
-import './widgets/product_card.dart' as product;
-import './widgets/search_bottom_sheet.dart' as search_sheet;
-import './widgets/listing_details_sheet.dart' as details_sheet;
+import './widgets/premium_section.dart';
+import './widgets/categories_section.dart';
+import './widgets/product_card.dart';
+import './widgets/search_bottom_sheet.dart';
+import './widgets/listing_details_sheet.dart';
 import './widgets/shimmer_widgets.dart';
-import './widgets/marketplace_helpers.dart' as helpers;
-import './widgets/recently_viewed_section.dart';
-import './widgets/trending_searches_widget.dart';
-import './widgets/notification_strip.dart' as notification;
+import './widgets/marketplace_helpers.dart';
+import './widgets/notification_strip.dart';
+import './widgets/create_listing_page.dart';
 import 'dart:async';
 
 class HomeMarketplaceFeed extends StatefulWidget {
@@ -30,8 +29,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   bool _isLoadingFeed = true;
   List<Map<String, Object>> _categories = [];
   List<Map<String, dynamic>> _listings = [];
-  List<Map<String, dynamic>> _recentlyViewed = [];
-  List<String> _trendingSearches = [];
   String _selectedCategory = 'All';
   Set<String> _favoriteIds = {};
   bool _hasNotifications = true;
@@ -57,12 +54,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   }
 
   Future<void> _loadMoreListings() async {
-    // Simulate lazy loading
     if (!_isLoadingFeed) {
       setState(() => _isLoadingFeed = true);
       await Future.delayed(Duration(seconds: 1));
       setState(() {
-        _listings.addAll(helpers.MarketplaceHelpers.getMockListings());
+        _listings.addAll(MarketplaceHelpers.getMockListings());
         _isLoadingFeed = false;
       });
     }
@@ -77,10 +73,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     await Future.delayed(Duration(milliseconds: 800));
     
     setState(() {
-      _categories = helpers.MarketplaceHelpers.getMockCategories();
-      _listings = helpers.MarketplaceHelpers.getMockListings();
-      _recentlyViewed = helpers.MarketplaceHelpers.getRecentlyViewed();
-      _trendingSearches = helpers.MarketplaceHelpers.getTrendingSearches();
+      _categories = MarketplaceHelpers.getMockCategories();
+      _listings = MarketplaceHelpers.getMockListings();
       _isLoadingPremium = false;
       _isLoadingFeed = false;
     });
@@ -122,33 +116,42 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => search_sheet.SearchBottomSheet(
-        trendingSearches: _trendingSearches,
+      builder: (context) => SearchBottomSheet(
         onSearch: (query, location) {
+          Navigator.pop(context);
           // Handle search
         },
       ),
     );
   }
 
-  void _showListingDetails(Map<String, dynamic> listing) {
-    // Add to recently viewed
-    setState(() {
-      _recentlyViewed.removeWhere((item) => item['id'] == listing['id']);
-      _recentlyViewed.insert(0, listing);
-      if (_recentlyViewed.length > 5) _recentlyViewed.removeLast();
-    });
+  void _openCreateListing() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateListingPage(),
+        fullscreenDialog: true,
+      ),
+    );
+  }
 
+  void _showListingDetails(Map<String, dynamic> listing) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => details_sheet.ListingDetailsSheet(
+      builder: (context) => ListingDetailsSheet(
         listing: listing,
         isFavorite: _favoriteIds.contains(listing['id']),
         onFavoriteToggle: () => _toggleFavorite(listing['id']),
-        onCall: () => helpers.MarketplaceHelpers.makePhoneCall(context, listing['phone']),
-        onWhatsApp: () => helpers.MarketplaceHelpers.openWhatsApp(context, listing['phone']),
+        onCall: () => MarketplaceHelpers.makePhoneCall(context, listing['phone']),
+        onWhatsApp: () => MarketplaceHelpers.openWhatsApp(context, listing['phone']),
+        onReport: () {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Ad reported successfully')),
+          );
+        },
       ),
     );
   }
@@ -169,35 +172,25 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
             controller: _scrollController,
             physics: AlwaysScrollableScrollPhysics(),
             slivers: [
+              // Search Bar at the top
+              SliverToBoxAdapter(
+                child: SearchBarWidget(onTap: _openSearchPage),
+              ),
+              
               // Notification Strip
               if (_hasNotifications)
                 SliverToBoxAdapter(
-                  child: notification.NotificationStrip(
+                  child: NotificationStrip(
                     message: "🎉 Get 20% off on premium listings today!",
                     onClose: () => setState(() => _hasNotifications = false),
                   ),
                 ),
               
-              // App Info Banner
-              SliverToBoxAdapter(child: app_info.AppInfoBanner()),
+              // App Info Banner - 1.7x bigger
+              SliverToBoxAdapter(child: AppInfoBanner()),
               
               // Three Option Section
               SliverToBoxAdapter(child: ThreeOptionSection()),
-              
-              // Search Bar
-              SliverToBoxAdapter(
-                child: SearchBarWidget(onTap: _openSearchPage),
-              ),
-              
-              // Trending Searches
-              SliverToBoxAdapter(
-                child: TrendingSearchesWidget(
-                  searches: _trendingSearches,
-                  onSearchTap: (search) {
-                    // Handle trending search tap
-                  },
-                ),
-              ),
               
               // Premium Section
               if (_featuredListings.isNotEmpty)
@@ -214,22 +207,13 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                       ),
                       _isLoadingPremium
                           ? ShimmerPremiumSection()
-                          : premium.PremiumSection(
+                          : PremiumSection(
                               listings: _featuredListings,
                               onTap: _showListingDetails,
                               favoriteIds: _favoriteIds,
                               onFavoriteToggle: _toggleFavorite,
                             ),
                     ],
-                  ),
-                ),
-              
-              // Recently Viewed
-              if (_recentlyViewed.isNotEmpty)
-                SliverToBoxAdapter(
-                  child: RecentlyViewedSection(
-                    listings: _recentlyViewed,
-                    onTap: _showListingDetails,
                   ),
                 ),
               
@@ -245,7 +229,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                         style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    categories.CategoriesSection(
+                    CategoriesSection(
                       categories: _categories,
                       selected: _selectedCategory,
                       onSelect: _onCategorySelected,
@@ -293,16 +277,16 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                                   )
                                 : SizedBox.shrink();
                           }
-                          return product.ProductCard(
+                          return ProductCard(
                             data: _filteredListings[index],
                             isFavorite: _favoriteIds.contains(_filteredListings[index]['id']),
                             onFavoriteToggle: () => _toggleFavorite(_filteredListings[index]['id']),
                             onTap: () => _showListingDetails(_filteredListings[index]),
-                            onCall: () => helpers.MarketplaceHelpers.makePhoneCall(
+                            onCall: () => MarketplaceHelpers.makePhoneCall(
                               context, 
                               _filteredListings[index]['phone']
                             ),
-                            onWhatsApp: () => helpers.MarketplaceHelpers.openWhatsApp(
+                            onWhatsApp: () => MarketplaceHelpers.openWhatsApp(
                               context, 
                               _filteredListings[index]['phone']
                             ),
@@ -324,18 +308,10 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
           setState(() => _currentIndex = index);
           if (index == 1) _openSearchPage();
         },
-        onFabPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Post Ad feature coming soon')),
-          );
-        },
+        onFabPressed: _openCreateListing,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Post Ad feature coming soon')),
-          );
-        },
+        onPressed: _openCreateListing,
         backgroundColor: Color(0xFF2563EB),
         child: Icon(Icons.add, color: Colors.white),
       ),
