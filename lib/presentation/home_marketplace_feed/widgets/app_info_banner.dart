@@ -7,7 +7,7 @@ class AppInfoBanner extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.5.h),
       padding: EdgeInsets.all(5.w),
-      height: 30.h, // reduced height since tagline is removed
+      height: 35.h, // Keeping original height
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFF2563EB), Color(0xFF0EA5E9)],
