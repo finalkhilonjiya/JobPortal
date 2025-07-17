@@ -450,22 +450,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                         _buildForm(),
                         SizedBox(height: 2.h),
               
-                        if (_usernameError != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              _usernameError!,
-                              style: TextStyle(color: Colors.red, fontSize: 12.sp),
-                            ),
-                          ),
-                        if (_passwordError != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              _passwordError!,
-                              style: TextStyle(color: Colors.red, fontSize: 12.sp),
-                            ),
-                          ),
+                        
                       ],
                     ),
                   ),
