@@ -1,9 +1,10 @@
-// ===== File 1: widgets/listing_form_tab1.dart =====
+// File: widgets/listing_form_tab1.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import './category_data.dart';
+import '../../../services/listing_service.dart'; // Add this import
 
 class ListingFormTab1 extends StatefulWidget {
   final Map<String, dynamic> formData;
@@ -21,7 +22,13 @@ class ListingFormTab1 extends StatefulWidget {
 
 class _ListingFormTab1State extends State<ListingFormTab1> {
   final ImagePicker _picker = ImagePicker();
-  List<String> _subcategories = [];
+  final ListingService _listingService = ListingService(); // Add this
+  
+  List<Map<String, dynamic>> _categories = []; // Changed type
+  List<Map<String, dynamic>> _subcategories = []; // Changed type
+  bool _isLoadingCategories = true;
+  bool _isLoadingSubcategories = false;
+  
   late TextEditingController _titleController;
 
   @override
@@ -33,8 +40,61 @@ class _ListingFormTab1State extends State<ListingFormTab1> {
         widget.onDataChanged({'title': _titleController.text});
       }
     });
-    if (widget.formData['category'].isNotEmpty) {
-      _updateSubcategories(widget.formData['category']);
+    _loadCategories(); // Load categories from Supabase
+  }
+
+  // Load categories from Supabase
+  Future<void> _loadCategories() async {
+    try {
+      final categories = await _listingService.getCategories();
+      // Filter only parent categories
+      final parentCategories = categories.where((cat) => cat['parent_category_id'] == null).toList();
+      
+      setState(() {
+        _categories = parentCategories;
+        _isLoadingCategories = false;
+      });
+      
+      // If a category was already selected, load its subcategories
+      if (widget.formData['category'].isNotEmpty) {
+        _loadSubcategories(widget.formData['category']);
+      }
+    } catch (e) {
+      print('Error loading categories: $e');
+      setState(() {
+        _isLoadingCategories = false;
+      });
+      
+      // Fallback to mock data if needed
+      _categories = [
+        {'id': 'mock-1', 'name': 'Electronics'},
+        {'id': 'mock-2', 'name': 'Vehicles'},
+        {'id': 'mock-3', 'name': 'Properties'},
+        {'id': 'mock-4', 'name': 'Home & Garden'},
+      ];
+    }
+  }
+
+  // Load subcategories from Supabase
+  Future<void> _loadSubcategories(String categoryId) async {
+    setState(() {
+      _isLoadingSubcategories = true;
+      _subcategories = [];
+      widget.formData['subcategory'] = '';
+      widget.onDataChanged({'subcategory': ''});
+    });
+
+    try {
+      final subcategories = await _listingService.getSubcategories(categoryId);
+      setState(() {
+        _subcategories = subcategories;
+        _isLoadingSubcategories = false;
+      });
+    } catch (e) {
+      print('Error loading subcategories: $e');
+      setState(() {
+        _isLoadingSubcategories = false;
+      });
     }
   }
 
@@ -50,14 +110,6 @@ class _ListingFormTab1State extends State<ListingFormTab1> {
   void dispose() {
     _titleController.dispose();
     super.dispose();
-  }
-
-  void _updateSubcategories(String category) {
-    setState(() {
-      _subcategories = CategoryData.getSubcategories(category);
-      widget.formData['subcategory'] = '';
-      widget.onDataChanged({'subcategory': ''});
-    });
   }
 
   Future<void> _pickImage() async {
@@ -112,33 +164,47 @@ class _ListingFormTab1State extends State<ListingFormTab1> {
             style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 1.h),
-          DropdownButtonFormField<String>(
-            value: widget.formData['category'].isEmpty ? null : widget.formData['category'],
-            decoration: InputDecoration(
-              hintText: 'Select a category',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              filled: true,
-              fillColor: Colors.white,
+          
+          if (_isLoadingCategories)
+            Container(
+              padding: EdgeInsets.all(2.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else
+            DropdownButtonFormField<String>(
+              value: widget.formData['category'].isEmpty ? null : widget.formData['category'],
+              decoration: InputDecoration(
+                hintText: 'Select a category',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+              items: _categories.map((category) {
+                return DropdownMenuItem<String>(
+                  value: category['id'], // Using ID as value
+                  child: Row(
+                    children: [
+                      Icon(Icons.category, size: 20, color: Color(0xFF2563EB)),
+                      SizedBox(width: 2.w),
+                      Text(category['name']), // Showing name to user
+                    ],
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  widget.onDataChanged({'category': value}); // Saving ID
+                  _loadSubcategories(value); // Load subcategories
+                }
+              },
             ),
-            items: CategoryData.mainCategories.map((category) {
-              return DropdownMenuItem<String>(
-                value: category['name'] as String,
-                child: Row(
-                  children: [
-                    Icon(category['icon'], size: 20, color: Color(0xFF2563EB)),
-                    SizedBox(width: 2.w),
-                    Text(category['name']),
-                  ],
-                ),
-              );
-            }).toList(),
-            onChanged: (value) {
-              if (value != null) {
-                widget.onDataChanged({'category': value});
-                _updateSubcategories(value);
-              }
-            },
-          ),
           SizedBox(height: 2.h),
 
           // Subcategory
@@ -148,26 +214,52 @@ class _ListingFormTab1State extends State<ListingFormTab1> {
               style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 1.h),
-            DropdownButtonFormField<String>(
-              value: widget.formData['subcategory'].isEmpty ? null : widget.formData['subcategory'],
-              decoration: InputDecoration(
-                hintText: 'Select a subcategory',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                filled: true,
-                fillColor: Colors.white,
+            
+            if (_isLoadingSubcategories)
+              Container(
+                padding: EdgeInsets.all(2.h),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_subcategories.isEmpty)
+              Container(
+                padding: EdgeInsets.all(2.h),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'No subcategories available',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              )
+            else
+              DropdownButtonFormField<String>(
+                value: widget.formData['subcategory'].isEmpty ? null : widget.formData['subcategory'],
+                decoration: InputDecoration(
+                  hintText: 'Select a subcategory',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                items: _subcategories.map((subcategory) {
+                  return DropdownMenuItem<String>(
+                    value: subcategory['id'], // Using ID as value
+                    child: Text(subcategory['name']), // Showing name to user
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    widget.onDataChanged({'subcategory': value}); // Saving ID
+                  }
+                },
               ),
-              items: _subcategories.map((subcategory) {
-                return DropdownMenuItem<String>(
-                  value: subcategory,
-                  child: Text(subcategory),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  widget.onDataChanged({'subcategory': value});
-                }
-              },
-            ),
             SizedBox(height: 2.h),
           ],
 
