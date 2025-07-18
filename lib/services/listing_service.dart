@@ -68,7 +68,7 @@ class ListingService {
       }
 
       // Apply sorting and pagination in a single chain
-      PostgrestFilterBuilder<List<Map<String, dynamic>>> finalQuery;
+      var finalQuery = query;
       if (sortBy == 'Price (Low to High)') {
         finalQuery = query.order('price', ascending: true);
       } else if (sortBy == 'Price (High to Low)') {
