@@ -15,7 +15,6 @@ import './widgets/advanced_filter_sheet.dart';
 import './widgets/create_listing_page.dart';
 import './widgets/profile_page.dart';
 import './widgets/bottom_nav_bar_widget.dart';
-import './search_page.dart'; // Add this import
 import '../../services/listing_service.dart'; // Add this import
 import 'dart:async';
 
@@ -33,6 +32,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   bool _isLoadingPremium = true;
   bool _isLoadingFeed = true;
   bool _isLoadingMore = false; // Add this
+  bool _hasMoreData = true; // Add this missing variable
   List<Map<String, Object>> _categories = [];
   List<Map<String, dynamic>> _listings = [];
   List<Map<String, dynamic>> _premiumListings = [];
@@ -458,11 +458,9 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
               SliverToBoxAdapter(
                 child: SearchBarFullWidth(
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => SearchPage(),
-                      ),
+                    // TODO: Implement search page navigation
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Search functionality coming soon!')),
                     );
                   },
                 ),
