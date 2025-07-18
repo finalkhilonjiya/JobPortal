@@ -6,6 +6,7 @@ import './listing_form_tab1.dart';
 import './listing_form_tab2.dart';
 import './listing_form_tab3.dart';
 import './category_data.dart';
+import '../../../services/listing_service.dart'; // Add this import
 
 class CreateListingPage extends StatefulWidget {
   const CreateListingPage({Key? key}) : super(key: key);
@@ -17,6 +18,8 @@ class CreateListingPage extends StatefulWidget {
 class _CreateListingPageState extends State<CreateListingPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _currentTab = 0;
+  final ListingService _listingService = ListingService(); // Add this
+  bool _isSubmitting = false; // Add this
   
   // Form Data
   final Map<String, dynamic> _formData = {
@@ -109,8 +112,32 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
     }
   }
 
-  void _submitListing() {
-    // Mock submission
+  // Map condition strings to database enum values
+  String _mapConditionToEnum(String condition) {
+    switch (condition.toLowerCase()) {
+      case 'new':
+        return 'new';
+      case 'like new':
+        return 'like_new';
+      case 'good':
+        return 'good';
+      case 'fair':
+        return 'fair';
+      case 'poor':
+        return 'poor';
+      default:
+        return 'good';
+    }
+  }
+
+  void _submitListing() async {
+    if (_isSubmitting) return; // Prevent double submission
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    // Show loading dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -119,8 +146,53 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
       ),
     );
 
-    Future.delayed(Duration(seconds: 2), () {
-      Navigator.pop(context); // Close loading
+    try {
+      // Upload images first
+      List<String> imageUrls = [];
+      if (_formData['images'].isNotEmpty) {
+        imageUrls = await _listingService.uploadImages(_formData['images']);
+      }
+
+      // Prepare additional data based on category
+      Map<String, dynamic> additionalData = {};
+      
+      // Add category-specific fields if they have values
+      if (_formData['brand'].isNotEmpty) additionalData['brand'] = _formData['brand'];
+      if (_formData['model'].isNotEmpty) additionalData['model'] = _formData['model'];
+      if (_formData['yearOfPurchase'].isNotEmpty) additionalData['year_of_purchase'] = _formData['yearOfPurchase'];
+      if (_formData['warrantyStatus'].isNotEmpty) additionalData['warranty_status'] = _formData['warrantyStatus'];
+      if (_formData['availability'].isNotEmpty) additionalData['availability'] = _formData['availability'];
+      
+      // Vehicle specific
+      if (_formData['kilometresDriven'].isNotEmpty) additionalData['kilometres_driven'] = _formData['kilometresDriven'];
+      if (_formData['fuelType'].isNotEmpty) additionalData['fuel_type'] = _formData['fuelType'];
+      if (_formData['transmissionType'].isNotEmpty) additionalData['transmission_type'] = _formData['transmissionType'];
+      
+      // Real estate specific
+      if (_formData['bedrooms'].isNotEmpty) additionalData['bedrooms'] = _formData['bedrooms'];
+      if (_formData['bathrooms'].isNotEmpty) additionalData['bathrooms'] = _formData['bathrooms'];
+      if (_formData['furnishingStatus'].isNotEmpty) additionalData['furnishing_status'] = _formData['furnishingStatus'];
+
+      // Create listing
+      final result = await _listingService.createListing(
+        title: _formData['title'],
+        categoryId: _formData['subcategory'], // Use subcategory ID as the category
+        description: _formData['description'],
+        price: double.parse(_formData['price']),
+        priceType: _formData['priceType'],
+        condition: _mapConditionToEnum(_formData['condition']),
+        location: _formData['location'],
+        sellerName: _formData['sellerName'],
+        sellerPhone: _formData['sellerPhone'],
+        userType: _formData['userType'],
+        imageUrls: imageUrls,
+        additionalData: additionalData,
+      );
+
+      // Close loading dialog
+      Navigator.pop(context);
+
+      // Show success dialog
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -131,7 +203,7 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
               Text('Success!'),
             ],
           ),
-          content: Text('Your listing has been submitted successfully.'),
+          content: Text('Your listing has been created successfully.'),
           actions: [
             TextButton(
               onPressed: () {
@@ -143,7 +215,35 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
           ],
         ),
       );
-    });
+    } catch (e) {
+      // Close loading dialog
+      Navigator.pop(context);
+
+      // Show error dialog
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.error, color: Colors.red, size: 30),
+              SizedBox(width: 10),
+              Text('Error'),
+            ],
+          ),
+          content: Text('Failed to create listing: ${e.toString()}'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      setState(() {
+        _isSubmitting = false;
+      });
+    }
   }
 
   @override
@@ -225,7 +325,7 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
             if (_currentTab > 0)
               Expanded(
                 child: OutlinedButton(
-                  onPressed: _previousTab,
+                  onPressed: _isSubmitting ? null : _previousTab,
                   style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 2.h),
                     side: BorderSide(color: Color(0xFF2563EB)),
@@ -242,7 +342,7 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
             if (_currentTab > 0) SizedBox(width: 3.w),
             Expanded(
               child: ElevatedButton(
-                onPressed: _nextTab,
+                onPressed: _isSubmitting ? null : _nextTab,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF2563EB),
                   padding: EdgeInsets.symmetric(vertical: 2.h),
@@ -250,10 +350,19 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: Text(
-                  _currentTab == 2 ? 'Submit' : 'Next',
-                  style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.bold),
-                ),
+                child: _isSubmitting
+                    ? SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        _currentTab == 2 ? 'Submit' : 'Next',
+                        style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.bold),
+                      ),
               ),
             ),
           ],
