@@ -1,5 +1,6 @@
 // File: services/listing_service.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:postgrest/postgrest.dart';
 import 'dart:io';
 import '../models/listing_model.dart';
 
@@ -66,20 +67,19 @@ class ListingService {
         query = query.eq('category_id', categoryId);
       }
 
-      // Apply sorting
+      // Apply sorting and pagination in a single chain
+      PostgrestFilterBuilder<List<Map<String, dynamic>>> finalQuery;
       if (sortBy == 'Price (Low to High)') {
-        query = query.order('price', ascending: true);
+        finalQuery = query.order('price', ascending: true);
       } else if (sortBy == 'Price (High to Low)') {
-        query = query.order('price', ascending: false);
+        finalQuery = query.order('price', ascending: false);
       } else {
         // Default to newest first
-        query = query.order('created_at', ascending: false);
+        finalQuery = query.order('created_at', ascending: false);
       }
 
       // Apply pagination
-      query = query.range(offset, offset + limit - 1);
-
-      final response = await query;
+      final response = await finalQuery.range(offset, offset + limit - 1);
       
       // Transform the data to match your existing format
       return List<Map<String, dynamic>>.from(response.map((item) {

@@ -33,6 +33,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   bool _isLoadingPremium = true;
   bool _isLoadingFeed = true;
   bool _isLoadingMore = false; // Add this
+  bool _hasMoreData = true; // Add this missing variable
   List<Map<String, Object>> _categories = [];
   List<Map<String, dynamic>> _listings = [];
   List<Map<String, dynamic>> _premiumListings = [];
