@@ -1,6 +1,5 @@
 // File: widgets/location_autocomplete_field.dart
 import 'package:flutter/material.dart';
-import 'package:google_places_flutter/google_places_flutter.dart';
 import 'package:flutter_google_places_hoc081098/flutter_google_places_hoc081098.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sizer/sizer.dart';
@@ -139,21 +138,21 @@ class _LocationAutocompleteFieldState extends State<LocationAutocompleteField> {
               debounceTime: 800,
               countries: ["in"], // Restrict to India
               isLatLngRequired: true,
-              getPlaceDetailWithLatLng: (Prediction prediction) {
+              getPlaceDetailWithLatLng: (prediction) {
                 // Called when user selects a place
                 widget.onLocationSelected(
-                  prediction.description ?? '',
-                  double.tryParse(prediction.lat ?? ''),
-                  double.tryParse(prediction.lng ?? ''),
+                  prediction['description'] ?? '',
+                  double.tryParse(prediction['lat'] ?? ''),
+                  double.tryParse(prediction['lng'] ?? ''),
                 );
               },
-              itemClick: (Prediction prediction) {
-                _controller.text = prediction.description ?? '';
+              itemClick: (prediction) {
+                _controller.text = prediction['description'] ?? '';
                 _controller.selection = TextSelection.fromPosition(
-                  TextPosition(offset: prediction.description?.length ?? 0),
+                  TextPosition(offset: (prediction['description'] ?? '').length),
                 );
               },
-              itemBuilder: (context, index, Prediction prediction) {
+              itemBuilder: (context, index, prediction) {
                 return Container(
                   padding: EdgeInsets.all(10),
                   child: Row(
@@ -165,12 +164,12 @@ class _LocationAutocompleteFieldState extends State<LocationAutocompleteField> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              prediction.structuredFormatting?.mainText ?? '',
+                              prediction['structured_formatting']?['main_text'] ?? '',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
-                            if (prediction.structuredFormatting?.secondaryText != null)
+                            if (prediction['structured_formatting']?['secondary_text'] != null)
                               Text(
-                                prediction.structuredFormatting!.secondaryText!,
+                                prediction['structured_formatting']['secondary_text'],
                                 style: TextStyle(
                                   fontSize: 11.sp,
                                   color: Colors.grey[600],
@@ -186,7 +185,6 @@ class _LocationAutocompleteFieldState extends State<LocationAutocompleteField> {
               seperatedBuilder: Divider(height: 1),
               isCrossBtnShown: false,
               containerHorizontalPadding: 0,
-              placeType: PlaceType.geocode, // All location types
             ),
           ],
         ),
