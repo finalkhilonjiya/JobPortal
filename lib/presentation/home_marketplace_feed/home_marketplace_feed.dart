@@ -239,9 +239,9 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
               ],
             ),
           ),
-        ];
-      );
-    }
+        ],
+      ),
+    );
     
     final actualIndex = index - ((index ~/ 13));
     if (actualIndex >= _filteredListings.length) return SizedBox.shrink();
