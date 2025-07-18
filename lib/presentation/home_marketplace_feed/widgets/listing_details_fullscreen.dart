@@ -289,7 +289,7 @@ class _ListingDetailsFullscreenState extends State<ListingDetailsFullscreen> {
             Expanded(
               child: ElevatedButton.icon(
                 onPressed: widget.onWhatsApp,
-                icon: Icon(Icons.whatsapp),
+                icon: Icon(Icons.chat),
                 label: Text('WhatsApp'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
