@@ -59,7 +59,7 @@ class ListingService {
       }
 
       // Prepare listing data
-      final listingData = {
+      final Map<String, dynamic> listingData = {
         'seller_id': user.id,
         'category_id': categoryId,
         'title': title,
