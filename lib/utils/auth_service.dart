@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'dart:convert';
 import 'dart:async';
@@ -43,7 +44,8 @@ class AuthService {
   void _initializeSocialLogins() {
     _googleSignIn = GoogleSignIn(
       scopes: ['email', 'profile'],
-      serverClientId: const String.fromEnvironment('GOOGLE_WEB_CLIENT_ID'),
+      clientId: dotenv.env['GOOGLE_CLIENT_ID'],
+
     );
     _facebookAuth = FacebookAuth.instance;
   }
