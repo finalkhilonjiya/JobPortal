@@ -80,19 +80,42 @@ class ListingService {
       // Add any additional data (like brand, model, etc.)
       if (additionalData != null) {
         // Convert field names to snake_case for database
-        final dbAdditionalData = {
-          if (additionalData['brand'] != null) 'brand': additionalData['brand'],
-          if (additionalData['model'] != null) 'model': additionalData['model'],
-          if (additionalData['yearOfPurchase'] != null) 'year_of_purchase': int.tryParse(additionalData['yearOfPurchase'].toString()),
-          if (additionalData['warrantyStatus'] != null) 'warranty_status': additionalData['warrantyStatus'].toLowerCase(),
-          if (additionalData['availability'] != null) 'availability': additionalData['availability'],
-          if (additionalData['kilometresDriven'] != null) 'kilometres_driven': int.tryParse(additionalData['kilometresDriven'].toString()),
-          if (additionalData['fuelType'] != null) 'fuel_type': additionalData['fuelType'].toLowerCase(),
-          if (additionalData['transmissionType'] != null) 'transmission_type': additionalData['transmissionType'].toLowerCase(),
-          if (additionalData['bedrooms'] != null) 'bedrooms': int.tryParse(additionalData['bedrooms'].toString()),
-          if (additionalData['bathrooms'] != null) 'bathrooms': int.tryParse(additionalData['bathrooms'].toString()),
-          if (additionalData['furnishingStatus'] != null) 'furnishing_status': additionalData['furnishingStatus'].toLowerCase(),
-        };
+        final Map<String, dynamic> dbAdditionalData = {};
+        
+        if (additionalData['brand'] != null) {
+          dbAdditionalData['brand'] = additionalData['brand'];
+        }
+        if (additionalData['model'] != null) {
+          dbAdditionalData['model'] = additionalData['model'];
+        }
+        if (additionalData['yearOfPurchase'] != null) {
+          dbAdditionalData['year_of_purchase'] = int.tryParse(additionalData['yearOfPurchase'].toString());
+        }
+        if (additionalData['warrantyStatus'] != null) {
+          dbAdditionalData['warranty_status'] = additionalData['warrantyStatus'].toLowerCase();
+        }
+        if (additionalData['availability'] != null) {
+          dbAdditionalData['availability'] = additionalData['availability'];
+        }
+        if (additionalData['kilometresDriven'] != null) {
+          dbAdditionalData['kilometres_driven'] = int.tryParse(additionalData['kilometresDriven'].toString());
+        }
+        if (additionalData['fuelType'] != null) {
+          dbAdditionalData['fuel_type'] = additionalData['fuelType'].toLowerCase();
+        }
+        if (additionalData['transmissionType'] != null) {
+          dbAdditionalData['transmission_type'] = additionalData['transmissionType'].toLowerCase();
+        }
+        if (additionalData['bedrooms'] != null) {
+          dbAdditionalData['bedrooms'] = int.tryParse(additionalData['bedrooms'].toString());
+        }
+        if (additionalData['bathrooms'] != null) {
+          dbAdditionalData['bathrooms'] = int.tryParse(additionalData['bathrooms'].toString());
+        }
+        if (additionalData['furnishingStatus'] != null) {
+          dbAdditionalData['furnishing_status'] = additionalData['furnishingStatus'].toLowerCase();
+        }
+        
         listingData.addAll(dbAdditionalData);
       }
 
@@ -144,3 +167,64 @@ class ListingService {
   }
 }
 
+// File: models/listing_model.dart
+class ListingModel {
+  final String? id;
+  final String sellerId;
+  final String categoryId;
+  final String title;
+  final String description;
+  final double price;
+  final String condition;
+  final String status;
+  final String location;
+  final List<String> images;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  ListingModel({
+    this.id,
+    required this.sellerId,
+    required this.categoryId,
+    required this.title,
+    required this.description,
+    required this.price,
+    required this.condition,
+    required this.status,
+    required this.location,
+    required this.images,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'seller_id': sellerId,
+      'category_id': categoryId,
+      'title': title,
+      'description': description,
+      'price': price,
+      'condition': condition,
+      'status': status,
+      'location': location,
+      'images': images,
+    };
+  }
+
+  factory ListingModel.fromJson(Map<String, dynamic> json) {
+    return ListingModel(
+      id: json['id'],
+      sellerId: json['seller_id'],
+      categoryId: json['category_id'],
+      title: json['title'],
+      description: json['description'],
+      price: json['price'].toDouble(),
+      condition: json['condition'],
+      status: json['status'],
+      location: json['location'],
+      images: List<String>.from(json['images'] ?? []),
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
+    );
+  }
+}
