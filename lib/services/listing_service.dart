@@ -68,7 +68,7 @@ class ListingService {
       }
 
       // Apply sorting and pagination in a single chain
-      var finalQuery = query;
+      dynamic finalQuery = query;
       if (sortBy == 'Price (Low to High)') {
         finalQuery = query.order('price', ascending: true);
       } else if (sortBy == 'Price (High to Low)') {
