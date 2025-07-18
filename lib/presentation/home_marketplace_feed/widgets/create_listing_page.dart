@@ -131,11 +131,19 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
   }
 
   void _submitListing() async {
-    if (_isSubmitting) return; // Prevent double submission
+  if (_isSubmitting) return;
 
-    setState(() {
-      _isSubmitting = true;
-    });
+  // ADD THIS DEBUG CODE
+  print('=== FORM DATA DEBUG ===');
+  _formData.forEach((key, value) {
+    print('$key: $value (${value.runtimeType})');
+  });
+  print('======================');
+
+  setState(() {
+    _isSubmitting = true;
+  });
+
 
     // Show loading dialog
     showDialog(
