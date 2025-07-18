@@ -139,7 +139,7 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
                 RadioListTile<String>(
                   title: Text('Business/Dealer'),
                   subtitle: Text('I am a professional seller'),
-                  value: 'Business/Dealer',
+                  value: 'business',
                   groupValue: widget.formData['userType'],
                   onChanged: (value) {
                     if (value != null) {
