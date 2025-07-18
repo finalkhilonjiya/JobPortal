@@ -33,7 +33,6 @@ dependencies:
   
   # Location Services
   geolocator: ^11.1.0
-  google_places_flutter: ^2.0.6
   google_api_headers: ^4.0.3
   
   # Image Handling
