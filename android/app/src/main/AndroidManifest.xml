@@ -24,6 +24,11 @@
         android:theme="@style/LaunchTheme"
         android:usesCleartextTraffic="true">
 
+        <!-- ===== Google-Sign-In: enable credentials API ===== -->
+        <meta-data
+            android:name="com.google.android.gms.auth.api.credentials.CREDENTIALS_API_ENABLED"
+            android:value="true"/>
+
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
