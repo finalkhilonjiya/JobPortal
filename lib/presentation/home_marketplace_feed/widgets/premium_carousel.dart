@@ -176,7 +176,7 @@ class _PremiumCarouselState extends State<PremiumCarousel> {
                                               shape: BoxShape.circle,
                                               border: Border.all(color: Colors.green),
                                             ),
-                                            child: Icon(Icons.whatsapp, color: Colors.green, size: 4.w),
+                                            child: Icon(Icons.chat, color: Colors.green, size: 4.w),
                                           ),
                                         ],
                                       ),

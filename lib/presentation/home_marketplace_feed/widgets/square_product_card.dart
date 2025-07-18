@@ -161,7 +161,7 @@ class SquareProductCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(color: Colors.green),
                               ),
-                              child: Icon(Icons.whatsapp, color: Colors.green, size: 5.w),
+                              child: Icon(Icons.chat, color: Colors.green, size: 5.w),
                             ),
                           ),
                         ),

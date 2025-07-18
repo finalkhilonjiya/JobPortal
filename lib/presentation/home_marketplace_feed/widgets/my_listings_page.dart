@@ -73,7 +73,7 @@ class _MyListingsPageState extends State<MyListingsPage> with SingleTickerProvid
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network(
-                    listing['image'],
+                    listing['image'] as String,
                     width: 20.w,
                     height: 20.w,
                     fit: BoxFit.cover,
@@ -85,7 +85,7 @@ class _MyListingsPageState extends State<MyListingsPage> with SingleTickerProvid
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        listing['title'],
+                        listing['title'] as String,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 12.sp,
