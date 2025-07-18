@@ -31,10 +31,10 @@ dependencies:
   shared_preferences: ^2.2.2
   
   # Location Services
-  geolocator: ^11.0.0
+  geolocator: ^10.1.0
   
   # Image Handling
-  image_picker: ^1.0.7
+  image_picker: ^1.0.8
   cached_network_image: ^3.3.1
   
   # UI Components
@@ -54,15 +54,15 @@ dependencies:
   path: ^1.8.3
   
   # Notifications
-  flutter_local_notifications: ^19.3.0
+  flutter_local_notifications: ^18.0.0
   
   # Permissions
-  permission_handler: ^11.3.0
+  permission_handler: ^11.2.0
   carousel_slider: ^5.1.1
   font_awesome_flutter: ^10.7.0
   flutter_staggered_grid_view: ^0.7.0
   shimmer: ^3.0.0
-  flutter_google_places_hoc081098: ^2.0.0
+  flutter_google_places_hoc081098: ^1.0.0
  
 
 dev_dependencies:
