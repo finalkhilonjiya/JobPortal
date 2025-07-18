@@ -15,6 +15,8 @@ import './widgets/advanced_filter_sheet.dart';
 import './widgets/create_listing_page.dart';
 import './widgets/profile_page.dart';
 import './widgets/bottom_nav_bar_widget.dart';
+import './search_page.dart'; // Add this import
+import '../../services/listing_service.dart'; // Add this import
 import 'dart:async';
 
 class HomeMarketplaceFeed extends StatefulWidget {
@@ -25,16 +27,25 @@ class HomeMarketplaceFeed extends StatefulWidget {
 }
 
 class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
+  final ListingService _listingService = ListingService(); // Add this
+  
   int _currentIndex = 0;
   bool _isLoadingPremium = true;
   bool _isLoadingFeed = true;
+  bool _isLoadingMore = false; // Add this
   List<Map<String, Object>> _categories = [];
   List<Map<String, dynamic>> _listings = [];
   List<Map<String, dynamic>> _premiumListings = [];
   String _selectedCategory = 'All';
+  String _selectedCategoryId = 'All'; // Add this
   Set<String> _favoriteIds = {};
   String _currentLocation = 'Guwahati, Assam';
   final ScrollController _scrollController = ScrollController();
+  
+  // Pagination
+  int _currentOffset = 0;
+  final int _pageSize = 20;
+
   
   // Filter states
   String _priceRange = 'All';
@@ -71,13 +82,51 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   }
 
   Future<void> _loadMoreListings() async {
-    if (!_isLoadingFeed) {
-      setState(() => _isLoadingFeed = true);
-      await Future.delayed(Duration(seconds: 1));
-      setState(() {
-        _listings.addAll(MarketplaceHelpers.getMockListings());
-        _isLoadingFeed = false;
-      });
+    if (!_isLoadingMore && !_isLoadingFeed) {
+      setState(() => _isLoadingMore = true);
+      
+      try {
+        final newListings = await _listingService.fetchListings(
+          categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
+          sortBy: _sortBy,
+          offset: _currentOffset + _pageSize,
+          limit: _pageSize,
+        );
+        
+        setState(() {
+          if (newListings.isEmpty) {
+            // If no more data, repeat from beginning (infinite scroll)
+            _currentOffset = 0;
+            _fetchListingsOnly();
+          } else {
+            _listings.addAll(newListings);
+            _currentOffset += _pageSize;
+          }
+          _isLoadingMore = false;
+        });
+      } catch (e) {
+        print('Error loading more listings: $e');
+        setState(() => _isLoadingMore = false);
+      }
+    }
+  }
+
+  Future<void> _fetchListingsOnly() async {
+    try {
+      final listings = await _listingService.fetchListings(
+        categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
+        sortBy: _sortBy,
+        offset: 0,
+        limit: _pageSize,
+      );
+      
+      if (listings.isNotEmpty) {
+        setState(() {
+          _listings.addAll(listings);
+        });
+      }
+    } catch (e) {
+      print('Error fetching listings: $e');
     }
   }
 
@@ -85,57 +134,176 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     setState(() {
       _isLoadingPremium = true;
       _isLoadingFeed = true;
+      _currentOffset = 0;
+      _listings = []; // Clear existing listings
     });
     
-    await Future.delayed(Duration(milliseconds: 800));
-    
-    setState(() {
-      _categories = MarketplaceHelpers.getMainCategoriesOnly();
-      _listings = MarketplaceHelpers.getMockListings();
-      _premiumListings = _listings.where((l) => l['is_featured'] == true).toList();
-      _isLoadingPremium = false;
-      _isLoadingFeed = false;
-    });
+    try {
+      // Fetch categories from Supabase
+      List<Map<String, dynamic>> categoriesData = [];
+      try {
+        categoriesData = await _listingService.getCategories();
+      } catch (e) {
+        print('Error fetching categories: $e');
+      }
+      
+      final mainCategories = categoriesData.isNotEmpty 
+          ? categoriesData
+              .where((cat) => cat['parent_category_id'] == null)
+              .map((cat) => {
+                    'name': cat['name'] as Object,
+                    'id': cat['id'] as Object,
+                    'icon': _getCategoryIcon(cat['name']),
+                  })
+              .toList()
+          : MarketplaceHelpers.getMainCategoriesOnly(); // Fallback to mock
+      
+      // Fetch favorites if user is logged in
+      Set<String> favorites = {};
+      try {
+        favorites = await _listingService.getUserFavorites();
+      } catch (e) {
+        print('Error fetching favorites: $e');
+      }
+      
+      // Fetch listings from Supabase
+      List<Map<String, dynamic>> listings = [];
+      try {
+        listings = await _listingService.fetchListings(
+          sortBy: _sortBy,
+          offset: 0,
+          limit: _pageSize,
+        );
+      } catch (e) {
+        print('Error fetching listings: $e');
+      }
+      
+      // Use mock data for premium listings for now
+      final premiumListings = MarketplaceHelpers.getMockListings()
+          .where((l) => l['is_featured'] == true)
+          .toList();
+      
+      setState(() {
+        _categories = mainCategories;
+        _favoriteIds = favorites;
+        _listings = listings.isNotEmpty ? listings : MarketplaceHelpers.getMockListings();
+        _premiumListings = premiumListings;
+        _isLoadingPremium = false;
+        _isLoadingFeed = false;
+      });
+    } catch (e) {
+      print('Error in _fetchData: $e');
+      // Fallback to all mock data on error
+      setState(() {
+        _categories = MarketplaceHelpers.getMainCategoriesOnly();
+        _listings = MarketplaceHelpers.getMockListings();
+        _premiumListings = _listings.where((l) => l['is_featured'] == true).toList();
+        _isLoadingPremium = false;
+        _isLoadingFeed = false;
+      });
+    }
+  }
+
+  IconData _getCategoryIcon(String categoryName) {
+    // Map category names to icons
+    switch (categoryName) {
+      case 'Electronics':
+        return Icons.devices_other_rounded;
+      case 'Vehicles':
+        return Icons.directions_car_filled_rounded;
+      case 'Furniture':
+        return Icons.chair_rounded;
+      case 'Properties for Sale':
+        return Icons.home_rounded;
+      case 'Room for Rent':
+        return Icons.meeting_room_rounded;
+      case 'PG Accommodation':
+        return Icons.apartment_rounded;
+      case 'Homestays':
+        return Icons.cottage_rounded;
+      default:
+        return Icons.category_rounded;
+    }
   }
 
   void _onCategorySelected(String name) {
+    // Find the category ID
+    final category = _categories.firstWhere(
+      (cat) => cat['name'] == name,
+      orElse: () => {'name': 'All', 'id': 'All', 'icon': Icons.category},
+    );
+    
     setState(() {
       _selectedCategory = name;
+      _selectedCategoryId = category['id'] as String;
       _selectedSubcategory = 'All';
+      _currentOffset = 0;
+      _hasMoreData = true;
     });
+    
+    // Refetch listings with new category
+    _fetchFilteredListings();
   }
 
-  void _toggleFavorite(String id) {
+  Future<void> _fetchFilteredListings() async {
     setState(() {
-      if (_favoriteIds.contains(id)) {
-        _favoriteIds.remove(id);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Removed from favorites'), duration: Duration(seconds: 1)),
-        );
-      } else {
-        _favoriteIds.add(id);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Added to favorites'), duration: Duration(seconds: 1)),
-        );
-      }
+      _isLoadingFeed = true;
+      _listings = []; // Clear existing listings
+      _currentOffset = 0;
     });
+    
+    try {
+      final listings = await _listingService.fetchListings(
+        categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
+        sortBy: _sortBy,
+        offset: 0,
+        limit: _pageSize,
+      );
+      
+      setState(() {
+        _listings = listings.isNotEmpty ? listings : [];
+        _currentOffset = 0;
+        _isLoadingFeed = false;
+      });
+    } catch (e) {
+      print('Error fetching filtered listings: $e');
+      setState(() {
+        _listings = [];
+        _isLoadingFeed = false;
+      });
+    }
+  }
+
+  void _toggleFavorite(String id) async {
+    try {
+      final isFavorited = await _listingService.toggleFavorite(id);
+      
+      setState(() {
+        if (isFavorited) {
+          _favoriteIds.add(id);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Added to favorites'), duration: Duration(seconds: 1)),
+          );
+        } else {
+          _favoriteIds.remove(id);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Removed from favorites'), duration: Duration(seconds: 1)),
+          );
+        }
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please login to add favorites'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   List<Map<String, dynamic>> get _filteredListings {
-    var filtered = _listings;
-    
-    if (_selectedCategory != 'All') {
-      filtered = filtered.where((l) => l['category'] == _selectedCategory).toList();
-    }
-    
-    // Apply sorting
-    if (_sortBy == 'Price (Low to High)') {
-      filtered.sort((a, b) => a['price'].compareTo(b['price']));
-    } else if (_sortBy == 'Price (High to Low)') {
-      filtered.sort((a, b) => b['price'].compareTo(a['price']));
-    }
-    
-    return filtered;
+    // Listings are already filtered from the API
+    return _listings;
   }
 
   void _openAdvancedFilter() {
@@ -157,6 +325,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
             _maxDistance = filters['maxDistance'];
           });
           Navigator.pop(context);
+          _fetchFilteredListings(); // Refetch with new filters
         },
       ),
     );
@@ -184,7 +353,10 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         builder: (context) => CreateListingPage(),
         fullscreenDialog: true,
       ),
-    );
+    ).then((_) {
+      // Refresh listings after creating a new one
+      _fetchData();
+    });
   }
 
   void _navigateToProfile() {
@@ -286,7 +458,12 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
               SliverToBoxAdapter(
                 child: SearchBarFullWidth(
                   onTap: () {
-                    // Open search functionality
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SearchPage(),
+                      ),
+                    );
                   },
                 ),
               ),
@@ -347,6 +524,19 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                                    (_filteredListings.length ~/ 12),
                       ),
                     ),
+              
+              // Loading more indicator
+              if (_isLoadingMore)
+                SliverToBoxAdapter(
+                  child: Container(
+                    padding: EdgeInsets.all(2.h),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+                  ),
+                ),
               
               SliverPadding(padding: EdgeInsets.only(bottom: 10.h)),
             ],
