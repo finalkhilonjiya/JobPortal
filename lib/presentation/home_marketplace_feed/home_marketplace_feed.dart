@@ -15,7 +15,7 @@ import './widgets/advanced_filter_sheet.dart';
 import './widgets/create_listing_page.dart';
 import './widgets/profile_page.dart';
 import './widgets/bottom_nav_bar_widget.dart';
-import '../search_and_filters/search_and_filters.dart';
+import './search_page.dart'; // Add this import
 import '../../services/listing_service.dart'; // Add this import
 import 'dart:async';
 
@@ -462,7 +462,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => SearchAndFilters(),
+                        builder: (context) => SearchPage(),
                       ),
                     );
                   },
