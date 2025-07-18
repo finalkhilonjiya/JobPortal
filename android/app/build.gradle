@@ -24,7 +24,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.khilonjiya.marketplace"
-    compileSdk 35
+    compileSdk 34
     ndkVersion "25.1.8937393"
 
     compileOptions {
@@ -101,7 +101,7 @@ android {
         checkReleaseBuilds false
     }
     dexOptions  {
-        javaMaxHeapSize "4g"
+        javaMaxHeapSize "3g"
         preDexLibraries = false
     }
 }

@@ -11,7 +11,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>marketplace_pro</string>
+	<string>khilonjiya.com</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -48,5 +48,13 @@
         <key>NSAllowsArbitraryLoads</key>
         <true />
     </dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs access to location to show nearby listings and help you find items in your area.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app needs access to location to show nearby listings and help you find items in your area.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs access to camera to take photos of items you want to sell.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to photo library to select images for your listings.</string>
 </dict>
 </plist>
