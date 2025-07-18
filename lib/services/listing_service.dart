@@ -35,7 +35,200 @@ class ListingService {
     
     return imageUrls;
   }
+  
 
+   // Add these methods to your existing listing_service.dart file
+
+// In your ListingService class, add:
+
+  // Fetch all active listings with infinite scroll support
+  Future<List<Map<String, dynamic>>> fetchListings({
+    String? categoryId,
+    String? sortBy,
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      var query = _supabase
+          .from('listings')
+          .select('''
+            *,
+            category:categories!inner(
+              id,
+              name,
+              parent_category_id
+            )
+          ''')
+          .eq('status', 'active');
+
+      // Apply category filter if provided
+      if (categoryId != null && categoryId != 'All') {
+        query = query.eq('category_id', categoryId);
+      }
+
+      // Apply sorting
+      if (sortBy == 'Price (Low to High)') {
+        query = query.order('price', ascending: true);
+      } else if (sortBy == 'Price (High to Low)') {
+        query = query.order('price', ascending: false);
+      } else {
+        // Default to newest first
+        query = query.order('created_at', ascending: false);
+      }
+
+      // Apply pagination
+      query = query.range(offset, offset + limit - 1);
+
+      final response = await query;
+      
+      // Transform the data to match your existing format
+      return List<Map<String, dynamic>>.from(response.map((item) {
+        // Get first image from the images array
+        List<dynamic> images = item['images'] ?? [];
+        String mainImage = images.isNotEmpty ? images[0] : 'https://via.placeholder.com/300';
+        
+        return {
+          'id': item['id'],
+          'title': item['title'] ?? 'Untitled',
+          'price': item['price'] ?? 0,
+          'image': mainImage,
+          'images': images,
+          'location': item['location'] ?? 'Location not specified',
+          'category': item['category']['name'] ?? 'Uncategorized',
+          'subcategory': item['category']['name'] ?? 'Uncategorized', // Using category name as subcategory
+          'description': item['description'] ?? '',
+          'condition': item['condition'] ?? 'used',
+          'phone': item['seller_phone'] ?? '',
+          'seller_name': item['seller_name'] ?? 'Seller',
+          'views': item['views_count'] ?? 0,
+          'created_at': item['created_at'],
+          'is_featured': item['is_featured'] ?? false,
+          // Additional fields
+          'brand': item['brand'],
+          'model': item['model'],
+          'year': item['year_of_purchase'],
+          'fuel_type': item['fuel_type'],
+          'transmission': item['transmission_type'],
+          'km_driven': item['kilometres_driven'],
+          'bedrooms': item['bedrooms'],
+          'bathrooms': item['bathrooms'],
+          'furnishing': item['furnishing_status'],
+        };
+      }));
+    } catch (e) {
+      print('Error fetching listings: $e');
+      return []; // Return empty array on error
+    }
+  }
+
+  // Fetch premium/featured listings
+  Future<List<Map<String, dynamic>>> fetchPremiumListings() async {
+    try {
+      final response = await _supabase
+          .from('listings')
+          .select('''
+            *,
+            category:categories!inner(
+              id,
+              name
+            ),
+            seller:user_profiles!inner(
+              id,
+              full_name,
+              phone_number
+            )
+          ''')
+          .eq('status', 'active')
+          .eq('is_featured', true)
+          .order('created_at', ascending: false)
+          .limit(10);
+      
+      // Transform the data
+      return List<Map<String, dynamic>>.from(response.map((item) {
+        List<dynamic> images = item['images'] ?? [];
+        String mainImage = images.isNotEmpty ? images[0] : '';
+        
+        return {
+          'id': item['id'],
+          'title': item['title'],
+          'price': item['price'],
+          'image': mainImage,
+          'images': images,
+          'location': item['location'] ?? '',
+          'category': item['category']['name'],
+          'subcategory': item['category']['name'],
+          'description': item['description'],
+          'condition': item['condition'],
+          'phone': item['seller_phone'] ?? item['seller']['phone_number'] ?? '',
+          'seller_name': item['seller_name'] ?? item['seller']['full_name'] ?? 'Unknown',
+          'is_featured': true,
+        };
+      }));
+    } catch (e) {
+      print('Error fetching premium listings: $e');
+      return []; // Return empty list on error
+    }
+  }
+
+  // Get user's favorites
+  Future<Set<String>> getUserFavorites() async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return {};
+
+      final response = await _supabase
+          .from('favorites')
+          .select('listing_id')
+          .eq('user_id', user.id);
+
+      return Set<String>.from(
+        response.map((item) => item['listing_id'] as String)
+      );
+    } catch (e) {
+      print('Error fetching favorites: $e');
+      return {};
+    }
+  }
+
+  // Toggle favorite
+  Future<bool> toggleFavorite(String listingId) async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Check if already favorited
+      final existing = await _supabase
+          .from('favorites')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('listing_id', listingId)
+          .maybeSingle();
+
+      if (existing != null) {
+        // Remove favorite
+        await _supabase
+            .from('favorites')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('listing_id', listingId);
+        return false; // Not favorited anymore
+      } else {
+        // Add favorite
+        await _supabase
+            .from('favorites')
+            .insert({
+              'user_id': user.id,
+              'listing_id': listingId,
+            });
+        return true; // Now favorited
+      }
+    } catch (e) {
+      print('Error toggling favorite: $e');
+      throw Exception('Failed to toggle favorite');
+    }
+  }
   // Create a new listing
   Future<Map<String, dynamic>> createListing({
     required String title,
