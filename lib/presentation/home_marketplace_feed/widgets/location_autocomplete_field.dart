@@ -4,6 +4,7 @@ import 'package:flutter_google_places_hoc081098/flutter_google_places_hoc081098.
 import 'package:flutter_google_places_hoc081098/google_maps_webservice_places.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sizer/sizer.dart';
+import 'package:google_api_headers/google_api_headers.dart';
 
 class LocationAutocompleteField extends StatefulWidget {
   final Function(String location, double? lat, double? lng) onLocationSelected;
@@ -106,88 +107,60 @@ class _LocationAutocompleteFieldState extends State<LocationAutocompleteField> {
           ),
         ),
         SizedBox(height: 1.h),
-        Stack(
-          children: [
-            GooglePlaceAutoCompleteTextField(
-              textEditingController: _controller,
-              googleAPIKey: widget.googleApiKey,
-              inputDecoration: InputDecoration(
-                hintText: 'Enter location',
-                prefixIcon: Icon(Icons.location_on, color: Color(0xFF2563EB)),
-                suffixIcon: _isDetectingLocation
-                    ? Container(
-                        width: 48,
-                        height: 48,
-                        padding: EdgeInsets.all(12),
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Color(0xFF2563EB),
-                        ),
-                      )
-                    : IconButton(
-                        icon: Icon(Icons.my_location, color: Color(0xFF2563EB)),
-                        onPressed: _detectCurrentLocation,
-                        tooltip: 'Use current location',
-                      ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              ),
-              debounceTime: 800,
-              countries: ["in"], // Restrict to India
-              isLatLngRequired: true,
-              getPlaceDetailWithLatLng: (Prediction prediction) {
-                // Called when user selects a place
-                widget.onLocationSelected(
-                  prediction.description ?? '',
-                  double.tryParse(prediction.lat ?? ''),
-                  double.tryParse(prediction.lng ?? ''),
-                );
-              },
-              itemClick: (Prediction prediction) {
-                _controller.text = prediction.description ?? '';
-                _controller.selection = TextSelection.fromPosition(
-                  TextPosition(offset: prediction.description?.length ?? 0),
-                );
-              },
-              itemBuilder: (context, index, Prediction prediction) {
-                return Container(
-                  padding: EdgeInsets.all(10),
-                  child: Row(
-                    children: [
-                      Icon(Icons.location_on_outlined, color: Colors.grey),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              prediction.structuredFormatting?.mainText ?? '',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            if (prediction.structuredFormatting?.secondaryText != null)
-                              Text(
-                                prediction.structuredFormatting!.secondaryText!,
-                                style: TextStyle(
-                                  fontSize: 11.sp,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
+        TextFormField(
+          controller: _controller,
+          readOnly: true,
+          decoration: InputDecoration(
+            hintText: 'Enter location',
+            prefixIcon: Icon(Icons.location_on, color: Color(0xFF2563EB)),
+            suffixIcon: _isDetectingLocation
+                ? Container(
+                    width: 48,
+                    height: 48,
+                    padding: EdgeInsets.all(12),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xFF2563EB),
+                    ),
+                  )
+                : IconButton(
+                    icon: Icon(Icons.my_location, color: Color(0xFF2563EB)),
+                    onPressed: _detectCurrentLocation,
+                    tooltip: 'Use current location',
                   ),
-                );
-              },
-              seperatedBuilder: Divider(height: 1),
-              isCrossBtnShown: false,
-              containerHorizontalPadding: 0,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-          ],
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+          onTap: () async {
+            Prediction? p = await PlacesAutocomplete.show(
+              context: context,
+              apiKey: widget.googleApiKey,
+              mode: Mode.overlay,
+              language: 'en',
+              components: [Component(Component.country, 'in')],
+              hint: 'Search location',
+            );
+            if (p != null) {
+              final places = GoogleMapsPlaces(
+                apiKey: widget.googleApiKey,
+                apiHeaders: await const GoogleApiHeaders().getHeaders(),
+              );
+              final detail = await places.getDetailsByPlaceId(p.placeId!);
+              final loc = detail.result.geometry?.location;
+              setState(() {
+                _controller.text = detail.result.formattedAddress ?? p.description ?? '';
+              });
+              widget.onLocationSelected(
+                detail.result.formattedAddress ?? p.description ?? '',
+                loc?.lat,
+                loc?.lng,
+              );
+            }
+          },
         ),
       ],
     );
