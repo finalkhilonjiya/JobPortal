@@ -57,7 +57,9 @@ class ListingService {
       if (user == null) {
         throw Exception('User not authenticated');
       }
-
+       
+      print('User ID: ${user.id}');
+      print('Category ID: $categoryId');
       // Prepare listing data
       final Map<String, dynamic> listingData = {
         'seller_id': user.id,
@@ -118,7 +120,11 @@ class ListingService {
         
         listingData.addAll(dbAdditionalData);
       }
+      
 
+    print('=== LISTING DATA TO INSERT ===');
+    print(listingData);
+    print('=============================');
       // Insert into database
       final response = await _supabase
           .from('listings')
