@@ -1,20 +1,20 @@
 // File: screens/marketplace/home_marketplace_feed.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import './widgets/bottom_nav_bar_widget.dart';
-import './widgets/app_info_banner.dart';
+import './widgets/top_bar_widget.dart';
+import './widgets/search_bar_full_width.dart';
+import './widgets/app_info_banner_new.dart';
 import './widgets/three_option_section.dart';
-import './widgets/search_bar_widget.dart';
-import './widgets/premium_section.dart';
-import './widgets/categories_section.dart';
-import './widgets/product_card.dart';
-import './widgets/search_bottom_sheet.dart';
+import './widgets/premium_carousel.dart';
+import './widgets/categories_with_filter.dart';
+import './widgets/square_product_card.dart';
 import './widgets/listing_details_fullscreen.dart';
 import './widgets/shimmer_widgets.dart';
 import './widgets/marketplace_helpers.dart';
-import './widgets/notification_strip.dart' as notification_strip;
+import './widgets/advanced_filter_sheet.dart';
 import './widgets/create_listing_page.dart';
 import './widgets/profile_page.dart';
+import './widgets/bottom_nav_bar_widget.dart';
 import 'dart:async';
 
 class HomeMarketplaceFeed extends StatefulWidget {
@@ -30,11 +30,17 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   bool _isLoadingFeed = true;
   List<Map<String, Object>> _categories = [];
   List<Map<String, dynamic>> _listings = [];
+  List<Map<String, dynamic>> _premiumListings = [];
   String _selectedCategory = 'All';
   Set<String> _favoriteIds = {};
-  bool _hasNotifications = true;
   String _currentLocation = 'Guwahati, Assam';
   final ScrollController _scrollController = ScrollController();
+  
+  // Filter states
+  String _priceRange = 'All';
+  String _selectedSubcategory = 'All';
+  String _sortBy = 'Newest';
+  double _maxDistance = 50.0;
 
   @override
   void initState() {
@@ -51,7 +57,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   }
 
   void _detectLocation() async {
-    // Simulate location detection
     await Future.delayed(Duration(seconds: 1));
     setState(() {
       _currentLocation = 'Guwahati, Assam';
@@ -59,7 +64,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >= 
+        _scrollController.position.maxScrollExtent - 200) {
       _loadMoreListings();
     }
   }
@@ -86,6 +92,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     setState(() {
       _categories = MarketplaceHelpers.getMainCategoriesOnly();
       _listings = MarketplaceHelpers.getMockListings();
+      _premiumListings = _listings.where((l) => l['is_featured'] == true).toList();
       _isLoadingPremium = false;
       _isLoadingFeed = false;
     });
@@ -94,6 +101,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   void _onCategorySelected(String name) {
     setState(() {
       _selectedCategory = name;
+      _selectedSubcategory = 'All';
     });
   }
 
@@ -114,34 +122,42 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   }
 
   List<Map<String, dynamic>> get _filteredListings {
-    if (_selectedCategory == 'All') return _listings;
-    return _listings.where((l) => l['category'] == _selectedCategory).toList();
+    var filtered = _listings;
+    
+    if (_selectedCategory != 'All') {
+      filtered = filtered.where((l) => l['category'] == _selectedCategory).toList();
+    }
+    
+    // Apply sorting
+    if (_sortBy == 'Price (Low to High)') {
+      filtered.sort((a, b) => a['price'].compareTo(b['price']));
+    } else if (_sortBy == 'Price (High to Low)') {
+      filtered.sort((a, b) => b['price'].compareTo(a['price']));
+    }
+    
+    return filtered;
   }
 
-  List<Map<String, dynamic>> get _featuredListings {
-    return _listings.where((l) => l['is_featured'] == true).toList();
-  }
-
-  void _openSearchPage() {
+  void _openAdvancedFilter() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => SearchBottomSheet(
-        onSearch: (query, location) {
+      builder: (context) => AdvancedFilterSheet(
+        selectedCategory: _selectedCategory,
+        priceRange: _priceRange,
+        selectedSubcategory: _selectedSubcategory,
+        sortBy: _sortBy,
+        maxDistance: _maxDistance,
+        onApplyFilter: (filters) {
+          setState(() {
+            _priceRange = filters['priceRange'];
+            _selectedSubcategory = filters['subcategory'];
+            _sortBy = filters['sortBy'];
+            _maxDistance = filters['maxDistance'];
+          });
           Navigator.pop(context);
-          // Handle search
         },
-      ),
-    );
-  }
-
-  void _openCreateListing() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CreateListingPage(),
-        fullscreenDialog: true,
       ),
     );
   }
@@ -161,17 +177,89 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     );
   }
 
-  void _navigateToProfile() {
+  void _openCreateListing() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ProfilePage(),
+        builder: (context) => CreateListingPage(),
+        fullscreenDialog: true,
       ),
     );
   }
 
-  Future<void> _refreshData() async {
-    await _fetchData();
+  void _navigateToProfile() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ProfilePage()),
+    );
+  }
+
+  Widget _buildListingWithPremium(int index) {
+    // Insert premium carousel after every 12 items
+    if ((index + 1) % 13 == 0 && _premiumListings.isNotEmpty) {
+      final premiumIndex = ((index + 1) ~/ 13) - 1;
+      return Column(
+        children: [
+          SquareProductCard(
+            data: _filteredListings[index - (premiumIndex + 1)],
+            isFavorite: _favoriteIds.contains(_filteredListings[index - (premiumIndex + 1)]['id']),
+            onFavoriteToggle: () => _toggleFavorite(_filteredListings[index - (premiumIndex + 1)]['id']),
+            onTap: () => _showListingDetails(_filteredListings[index - (premiumIndex + 1)]),
+            onCall: () => MarketplaceHelpers.makePhoneCall(
+              context, 
+              _filteredListings[index - (premiumIndex + 1)]['phone']
+            ),
+            onWhatsApp: () => MarketplaceHelpers.openWhatsApp(
+              context, 
+              _filteredListings[index - (premiumIndex + 1)]['phone']
+            ),
+          ),
+          Container(
+            margin: EdgeInsets.symmetric(vertical: 2.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                  child: Text(
+                    'Sponsored',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                ),
+                PremiumCarousel(
+                  listings: _premiumListings,
+                  onTap: _showListingDetails,
+                  favoriteIds: _favoriteIds,
+                  onFavoriteToggle: _toggleFavorite,
+                ),
+              ],
+            ),
+          ),
+        ];
+      );
+    }
+    
+    final actualIndex = index - ((index ~/ 13));
+    if (actualIndex >= _filteredListings.length) return SizedBox.shrink();
+    
+    return SquareProductCard(
+      data: _filteredListings[actualIndex],
+      isFavorite: _favoriteIds.contains(_filteredListings[actualIndex]['id']),
+      onFavoriteToggle: () => _toggleFavorite(_filteredListings[actualIndex]['id']),
+      onTap: () => _showListingDetails(_filteredListings[actualIndex]),
+      onCall: () => MarketplaceHelpers.makePhoneCall(
+        context, 
+        _filteredListings[actualIndex]['phone']
+      ),
+      onWhatsApp: () => MarketplaceHelpers.openWhatsApp(
+        context, 
+        _filteredListings[actualIndex]['phone']
+      ),
+    );
   }
 
   @override
@@ -180,37 +268,37 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       backgroundColor: Colors.grey[50],
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: _refreshData,
+          onRefresh: _fetchData,
           color: Color(0xFF2563EB),
           child: CustomScrollView(
             controller: _scrollController,
             physics: AlwaysScrollableScrollPhysics(),
             slivers: [
-              // Search Bar with Location
+              // Top Bar with Logo and Location
               SliverToBoxAdapter(
-                child: SearchBarWidget(
-                  onTap: _openSearchPage,
+                child: TopBarWidget(
                   currentLocation: _currentLocation,
+                  onLocationTap: _detectLocation,
                 ),
               ),
               
-              // Notification Strip
-              if (_hasNotifications)
-                SliverToBoxAdapter(
-                  child: notification_strip.NotificationStrip(
-                    message: "🎉 Get 20% off on premium listings today!",
-                    onClose: () => setState(() => _hasNotifications = false),
-                  ),
+              // Full Width Search Bar
+              SliverToBoxAdapter(
+                child: SearchBarFullWidth(
+                  onTap: () {
+                    // Open search functionality
+                  },
                 ),
+              ),
               
-              // App Info Banner
-              SliverToBoxAdapter(child: AppInfoBanner()),
+              // New App Info Banner
+              SliverToBoxAdapter(child: AppInfoBannerNew()),
               
               // Three Option Section
               SliverToBoxAdapter(child: ThreeOptionSection()),
               
-              // Premium Section
-              if (_featuredListings.isNotEmpty)
+              // Premium Section at top
+              if (_premiumListings.isNotEmpty)
                 SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,8 +312,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                       ),
                       _isLoadingPremium
                           ? ShimmerPremiumSection()
-                          : PremiumSection(
-                              listings: _featuredListings,
+                          : PremiumCarousel(
+                              listings: _premiumListings,
                               onTap: _showListingDetails,
                               favoriteIds: _favoriteIds,
                               onFavoriteToggle: _toggleFavorite,
@@ -234,82 +322,29 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                   ),
                 ),
               
-              // Categories - Main only
+              // Categories with Filter
               SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                      child: Text(
-                        'Categories',
-                        style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    CategoriesSection(
-                      categories: _categories,
-                      selected: _selectedCategory,
-                      onSelect: _onCategorySelected,
-                    ),
-                  ],
+                child: CategoriesWithFilter(
+                  categories: _categories,
+                  selected: _selectedCategory,
+                  onSelect: _onCategorySelected,
+                  onFilterTap: _openAdvancedFilter,
                 ),
               ),
               
-              // Listings Title
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _selectedCategory == 'All' ? 'All Listings' : '$_selectedCategory',
-                        style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        '${_filteredListings.length} items',
-                        style: TextStyle(fontSize: 11.sp, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              
-              // Product Feed
+              // Product Feed with Premium insertions
               _isLoadingFeed && _filteredListings.isEmpty
                   ? SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (_, __) => ShimmerProductCard(),
-                        childCount: 5,
+                        childCount: 6,
                       ),
                     )
                   : SliverList(
                       delegate: SliverChildBuilderDelegate(
-                        (_, index) {
-                          if (index == _filteredListings.length) {
-                            return _isLoadingFeed
-                                ? Padding(
-                                    padding: EdgeInsets.all(2.h),
-                                    child: Center(child: CircularProgressIndicator()),
-                                  )
-                                : SizedBox.shrink();
-                          }
-                          return ProductCard(
-                            data: _filteredListings[index],
-                            isFavorite: _favoriteIds.contains(_filteredListings[index]['id']),
-                            onFavoriteToggle: () => _toggleFavorite(_filteredListings[index]['id']),
-                            onTap: () => _showListingDetails(_filteredListings[index]),
-                            onCall: () => MarketplaceHelpers.makePhoneCall(
-                              context, 
-                              _filteredListings[index]['phone']
-                            ),
-                            onWhatsApp: () => MarketplaceHelpers.openWhatsApp(
-                              context, 
-                              _filteredListings[index]['phone']
-                            ),
-                          );
-                        },
-                        childCount: _filteredListings.length + (_isLoadingFeed ? 1 : 0),
+                        (_, index) => _buildListingWithPremium(index),
+                        childCount: _filteredListings.length + 
+                                   (_filteredListings.length ~/ 12),
                       ),
                     ),
               
@@ -323,18 +358,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         hasMessageNotification: true,
         onTabSelected: (index) {
           setState(() => _currentIndex = index);
-          switch (index) {
-            case 1:
-              _openSearchPage();
-              break;
-            case 3:
-              // Packages - handled in profile
-              _navigateToProfile();
-              break;
-            case 4:
-              _navigateToProfile();
-              break;
-          }
+          if (index == 4) _navigateToProfile();
         },
         onFabPressed: _openCreateListing,
       ),
