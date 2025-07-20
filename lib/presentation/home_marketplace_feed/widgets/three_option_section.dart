@@ -1,120 +1,136 @@
-// ===== File 2: widgets/three_option_section.dart (Updated) =====
+// File: widgets/three_option_section.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+// Import the future homepage files
+// import '../../jobs/jobs_home_page.dart';
+// import '../../traditional_market/traditional_market_home_page.dart';
 
 class ThreeOptionSection extends StatelessWidget {
-  const ThreeOptionSection({Key? key}) : super(key: key);
+  final VoidCallback? onJobsTap;
+  final VoidCallback? onTraditionalTap;
 
-  void _navigateToJobApplication(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening Job Application form...'),
-        backgroundColor: Color(0xFF2563EB),
-      ),
-    );
-  }
-
-  void _navigateToListJobs(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening Job Listing form...'),
-        backgroundColor: Color(0xFF2563EB),
-      ),
-    );
-  }
-
-  void _navigateToTraditionalMarketplace(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening Assamese Traditional Marketplace...'),
-        backgroundColor: Color(0xFF2563EB),
-      ),
-    );
-  }
+  const ThreeOptionSection({
+    Key? key,
+    this.onJobsTap,
+    this.onTraditionalTap,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 3.w),
-      child: Column(
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => _navigateToJobApplication(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF2563EB),
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 1.5.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      'Apply for Job', 
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 11.sp,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 2.w),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => _navigateToListJobs(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF2563EB),
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 1.5.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      'List Jobs', 
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 11.sp,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          _buildOption(
+            context,
+            'Apply Job',
+            Icons.work_outline,
+            Colors.green,
+            () {
+              // Navigate to Jobs Homepage
+              if (onJobsTap != null) {
+                onJobsTap!();
+              } else {
+                // Uncomment when JobsHomePage is created
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //     builder: (context) => JobsHomePage(),
+                //   ),
+                // );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Jobs section coming soon!')),
+                );
+              }
+            },
           ),
-          SizedBox(height: 1.h),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => _navigateToTraditionalMarketplace(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF2563EB),
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 1.8.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 3,
-              ),
-              child: Text(
-                'Assamese Traditional Marketplace', 
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+          _buildOption(
+            context,
+            'List Job',
+            Icons.post_add,
+            Colors.orange,
+            () {
+              // Navigate to Jobs Homepage (same page, different tab/mode)
+              if (onJobsTap != null) {
+                onJobsTap!();
+              } else {
+                // Uncomment when JobsHomePage is created
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //     builder: (context) => JobsHomePage(initialTab: 'post'),
+                //   ),
+                // );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Jobs section coming soon!')),
+                );
+              }
+            },
+          ),
+          _buildOption(
+            context,
+            'Assamese Traditional',
+            Icons.storefront,
+            Colors.purple,
+            () {
+              // Navigate to Traditional Market Homepage
+              if (onTraditionalTap != null) {
+                onTraditionalTap!();
+              } else {
+                // Uncomment when TraditionalMarketHomePage is created
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //     builder: (context) => TraditionalMarketHomePage(),
+                //   ),
+                // );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Traditional market coming soon!')),
+                );
+              }
+            },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildOption(
+    BuildContext context,
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 28.w,
+        padding: EdgeInsets.symmetric(vertical: 2.h),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 7.w),
+            SizedBox(height: 1.h),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 9.sp,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+            ),
+          ],
+        ),
       ),
     );
   }
