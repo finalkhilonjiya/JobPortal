@@ -39,6 +39,7 @@ class BottomNavBarWidget extends StatelessWidget {
             children: [
               _buildNavItem(Icons.home, 'Home', 0),
               _buildNavItem(Icons.search, 'Search', 1),
+              _buildNavItem(Icons.star_outline, 'Package', 2), // Added Package option
               SizedBox(width: 10.w), // Space for FAB
               _buildNavItem(Icons.chat_bubble_outline, 'Chat', 3, hasNotification: hasMessageNotification),
               _buildNavItem(Icons.person_outline, 'Profile', 4),
