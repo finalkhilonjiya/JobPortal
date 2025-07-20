@@ -1,9 +1,5 @@
-// File: widgets/three_option_section.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-// Import the future homepage files
-// import '../../jobs/jobs_home_page.dart';
-// import '../../traditional_market/traditional_market_home_page.dart';
 
 class ThreeOptionSection extends StatelessWidget {
   final VoidCallback? onJobsTap;
@@ -25,71 +21,23 @@ class ThreeOptionSection extends StatelessWidget {
           _buildOption(
             context,
             'Apply Job',
-            Icons.work_outline,
+            'assets/images/ApplyJobs.png',
             Colors.green,
-            () {
-              // Navigate to Jobs Homepage
-              if (onJobsTap != null) {
-                onJobsTap!();
-              } else {
-                // Uncomment when JobsHomePage is created
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) => JobsHomePage(),
-                //   ),
-                // );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Jobs section coming soon!')),
-                );
-              }
-            },
+            onJobsTap,
           ),
           _buildOption(
             context,
             'List Job',
-            Icons.post_add,
+            'assets/images/ListJobs.png',
             Colors.orange,
-            () {
-              // Navigate to Jobs Homepage (same page, different tab/mode)
-              if (onJobsTap != null) {
-                onJobsTap!();
-              } else {
-                // Uncomment when JobsHomePage is created
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) => JobsHomePage(initialTab: 'post'),
-                //   ),
-                // );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Jobs section coming soon!')),
-                );
-              }
-            },
+            onJobsTap,
           ),
           _buildOption(
             context,
             'Assamese Traditional',
-            Icons.storefront,
+            'assets/images/ATM.png',
             Colors.purple,
-            () {
-              // Navigate to Traditional Market Homepage
-              if (onTraditionalTap != null) {
-                onTraditionalTap!();
-              } else {
-                // Uncomment when TraditionalMarketHomePage is created
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) => TraditionalMarketHomePage(),
-                //   ),
-                // );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Traditional market coming soon!')),
-                );
-              }
-            },
+            onTraditionalTap,
           ),
         ],
       ),
@@ -99,12 +47,20 @@ class ThreeOptionSection extends StatelessWidget {
   Widget _buildOption(
     BuildContext context,
     String label,
-    IconData icon,
+    String imagePath,
     Color color,
-    VoidCallback onTap,
+    VoidCallback? onTap,
   ) {
     return InkWell(
-      onTap: onTap,
+      onTap: () {
+        if (onTap != null) {
+          onTap();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('$label section coming soon!')),
+          );
+        }
+      },
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: 28.w,
@@ -117,7 +73,14 @@ class ThreeOptionSection extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 7.w),
+            ClipOval(
+              child: Image.asset(
+                imagePath,
+                width: 10.w,
+                height: 10.w,
+                fit: BoxFit.cover, // Ensures no blank space
+              ),
+            ),
             SizedBox(height: 1.h),
             Text(
               label,
