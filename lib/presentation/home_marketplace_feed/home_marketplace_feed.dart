@@ -21,6 +21,7 @@ import '../traditional_market/traditional_market_home_page.dart'; // Add this im
 import 'dart:async';
 // Add the following import for CategoriesSection
 import 'widgets/categories_section.dart';
+import 'widgets/category_data.dart';
 
 class HomeMarketplaceFeed extends StatefulWidget {
   const HomeMarketplaceFeed({Key? key}) : super(key: key);
