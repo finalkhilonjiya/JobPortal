@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class SquareProductCard extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -176,7 +177,7 @@ class SquareProductCard extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(color: Colors.green),
                                   ),
-                                  child: Icon(Icons.whatsapp, color: Colors.green, size: 5.w),
+                                  child: FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 5.w),
                                 ),
                               ),
                             ],
