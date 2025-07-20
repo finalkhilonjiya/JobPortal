@@ -1,8 +1,8 @@
 // File: screens/marketplace/search_page.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import 'package:google_places_flutter/google_places_flutter.dart';
-import 'package:google_places_flutter/model/prediction.dart';
+import 'package:flutter_google_places_hoc081098/flutter_google_places_hoc081098.dart';
+import 'package:google_maps_webservice/places.dart';
 import 'package:geolocator/geolocator.dart';
 import './widgets/square_product_card.dart';
 import './widgets/shimmer_widgets.dart';
@@ -224,59 +224,65 @@ class _SearchPageState extends State<SearchPage> {
                   ),
                 ),
                 SizedBox(height: 1.h),
-                GooglePlaceAutoCompleteTextField(
-                  textEditingController: _locationController,
-                  googleAPIKey: _googleApiKey,
-                  inputDecoration: InputDecoration(
-                    hintText: 'Enter location',
-                    prefixIcon: Icon(Icons.location_on, color: Color(0xFF2563EB)),
-                    suffixIcon: _isDetectingLocation
-                        ? Container(
-                            width: 48,
-                            height: 48,
-                            padding: EdgeInsets.all(12),
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Color(0xFF2563EB),
-                            ),
-                          )
-                        : IconButton(
-                            icon: Icon(Icons.my_location, color: Color(0xFF2563EB)),
-                            onPressed: _detectCurrentLocation,
-                            tooltip: 'Use current location',
-                          ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  ),
-                  debounceTime: 800,
-                  countries: ["in"],
-                  isLatLngRequired: true,
-                  getPlaceDetailWithLatLng: (Prediction prediction) {
-                    setState(() {
-                      _selectedLocation = prediction.description ?? '';
-                      _selectedLat = double.tryParse(prediction.lat ?? '');
-                      _selectedLng = double.tryParse(prediction.lng ?? '');
-                    });
-                  },
-                  itemClick: (Prediction prediction) {
-                    _locationController.text = prediction.description ?? '';
-                    _locationController.selection = TextSelection.fromPosition(
-                      TextPosition(offset: prediction.description?.length ?? 0),
+                GestureDetector(
+                  onTap: () async {
+                    // Show the PlacesAutocomplete search dialog
+                    Prediction? p = await PlacesAutocomplete.show(
+                      context: context,
+                      apiKey: _googleApiKey,
+                      mode: Mode.overlay, // or Mode.fullscreen
+                      language: "en",
+                      components: [Component(Component.country, "in")],
                     );
-                    setState(() {
-                      _selectedLocation = prediction.description ?? '';
-                    });
+                    if (p != null) {
+                      setState(() {
+                        _selectedLocation = p.description ?? '';
+                        _locationController.text = p.description ?? '';
+                        // Optionally, get lat/lng using GoogleMapsPlaces
+                      });
+                      // To get lat/lng, you need to use GoogleMapsPlaces
+                      final places = GoogleMapsPlaces(apiKey: _googleApiKey);
+                      final detail = await places.getDetailsByPlaceId(p.placeId!);
+                      final location = detail.result.geometry?.location;
+                      if (location != null) {
+                        setState(() {
+                          _selectedLat = location.lat;
+                          _selectedLng = location.lng;
+                        });
+                      }
+                    }
                   },
-                  // Hide powered by Google
-                  containerHorizontalPadding: 0,
-                  placeType: PlaceType.geocode,
-                  // No separate dropdown, results appear inline
-                  isCrossBtnShown: false,
-                  showGoogleLogo: false, // This hides the powered by Google text
+                  child: AbsorbPointer(
+                    child: TextField(
+                      controller: _locationController,
+                      decoration: InputDecoration(
+                        hintText: 'Enter location',
+                        prefixIcon: Icon(Icons.location_on, color: Color(0xFF2563EB)),
+                        suffixIcon: _isDetectingLocation
+                            ? Container(
+                                width: 48,
+                                height: 48,
+                                padding: EdgeInsets.all(12),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFF2563EB),
+                                ),
+                              )
+                            : IconButton(
+                                icon: Icon(Icons.my_location, color: Color(0xFF2563EB)),
+                                onPressed: _detectCurrentLocation,
+                                tooltip: 'Use current location',
+                              ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      ),
+                      readOnly: true,
+                    ),
+                  ),
                 ),
                 SizedBox(height: 2.h),
 
