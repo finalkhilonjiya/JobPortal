@@ -48,7 +48,7 @@ dependencies:
   url_launcher: ^6.2.4
   
   # HTTP & Networking
-  http: ^1.1.2
+  http: ^0.13.0
   
   # Local Storage
   sqflite: ^2.3.2
@@ -89,7 +89,7 @@ dependencies:
   # Package Info
   package_info_plus: ^8.3.0
   geocoding: ^2.1.0
-  google_maps_webservice: ^0.0.20-nullsafety.5
+  google_maps_webservice: ^0.0.20-nullsafety.13
 
 dev_dependencies:
   flutter_test:
