@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_google_places_hoc081098/flutter_google_places_hoc081098.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sizer/sizer.dart';
-import 'package:google_api_headers/google_api_headers.dart';
 
 class LocationAutocompleteField extends StatefulWidget {
   final Function(String location, double? lat, double? lng) onLocationSelected;
@@ -135,7 +134,8 @@ class _LocationAutocompleteFieldState extends State<LocationAutocompleteField> {
             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
           onTap: () async {
-            Prediction? p = await PlacesAutocomplete.show(
+            // Use dynamic type instead of Prediction to avoid type errors
+            dynamic p = await PlacesAutocomplete.show(
               context: context,
               apiKey: widget.googleApiKey,
               mode: Mode.overlay,
@@ -143,20 +143,26 @@ class _LocationAutocompleteFieldState extends State<LocationAutocompleteField> {
               components: [Component(Component.country, 'in')],
               hint: 'Search location',
             );
+            
             if (p != null) {
-              final places = GoogleMapsPlaces(
-                apiKey: widget.googleApiKey,
-                apiHeaders: await const GoogleApiHeaders().getHeaders(),
-              );
-              final detail = await places.getDetailsByPlaceId(p.placeId!);
-              final loc = detail.result.geometry?.location;
+              // For now, we'll use the basic description from the prediction
+              // Since we removed google_maps_webservice dependency, we can't get detailed location info
               setState(() {
-                _controller.text = detail.result.formattedAddress ?? p.description ?? '';
+                _controller.text = p.description ?? '';
               });
+              
               widget.onLocationSelected(
-                detail.result.formattedAddress ?? p.description ?? '',
-                loc?.lat,
-                loc?.lng,
+                p.description ?? '',
+                null, // lat will be null since we can't get details without google_maps_webservice
+                null, // lng will be null since we can't get details without google_maps_webservice
+              );
+              
+              // Show a message that coordinates are not available
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Location selected. Use "Current Location" for coordinates.'),
+                  backgroundColor: Colors.blue,
+                ),
               );
             }
           },
