@@ -20,6 +20,8 @@ import '../../services/listing_service.dart'; // Add this import
 import '../jobs/jobs_home_page.dart'; // Add this import
 import '../traditional_market/traditional_market_home_page.dart'; // Add this import
 import 'dart:async';
+// Add the following import for CategoriesSection
+import 'widgets/categories_section.dart';
 
 class HomeMarketplaceFeed extends StatefulWidget {
   const HomeMarketplaceFeed({Key? key}) : super(key: key);
@@ -48,6 +50,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   int _currentOffset = 0;
   final int _pageSize = 20;
 
+  // Add this field for pagination state
+  bool _hasMoreData = true;
   
   // Filter states
   String _priceRange = 'All';
