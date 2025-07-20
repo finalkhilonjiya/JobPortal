@@ -10,7 +10,7 @@ import '../presentation/listing_detail/listing_detail.dart';
 import '../presentation/user_profile/user_profile.dart';
 import '../presentation/chat_messaging/chat_messaging.dart';
 import '../presentation/favorites_and_saved_items/favorites_and_saved_items.dart';
-import '../presentation/create_listing/create_listing.dart';
+// REMOVED: import '../presentation/create_listing/create_listing.dart';
 import '../presentation/configuration_setup/configuration_setup.dart';
 
 // Additional screens we'll create
@@ -159,7 +159,8 @@ class AppRoutes {
     // jobApplicationScreen: (context) => const JobApplicationScreen(),
     
     // 📝 Listing Management Routes
-    createListing: (context) => const CreateListingScreen(),
+    // COMMENTED OUT: Create listing is now handled within HomeMarketplaceFeed
+    // createListing: (context) => const CreateListingScreen(),
     // myListingsScreen: (context) => const MyListingsScreen(),
     // editListingScreen: (context) => const EditListingScreen(),
     
