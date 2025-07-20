@@ -7,8 +7,7 @@ import 'package:path/path.dart' as path;
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_google_places_hoc081098/flutter_google_places_hoc081098.dart';
-import 'package:google_maps_webservice/places.dart';
-import 'package:google_api_headers/google_api_headers.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class CreateListingScreen extends StatefulWidget {
   const CreateListingScreen({Key? key}) : super(key: key);
@@ -85,20 +84,15 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       apiKey: apiKey,
       mode: Mode.overlay,
       language: 'en',
-      components: [Component(Component.country, 'in')],
       hint: 'Search location',
     );
     if (p != null) {
-      final places = GoogleMapsPlaces(
-        apiKey: apiKey,
-        apiHeaders: await const GoogleApiHeaders().getHeaders(),
-      );
-      final detail = await places.getDetailsByPlaceId(p.placeId!);
-      final loc = detail.result.geometry?.location;
       setState(() {
-        _locationController.text = detail.result.formattedAddress ?? p.description ?? '';
-        _latitude = loc?.lat;
-        _longitude = loc?.lng;
+        _locationController.text = p.description ?? '';
+        // If p has lat/lng, set them; otherwise, you may need to geocode
+        // For now, clear _latitude/_longitude and require user to select on map
+        _latitude = null;
+        _longitude = null;
       });
     }
   }
@@ -269,11 +263,27 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                     TextFormField(
                       key: const Key('location_field'),
                       controller: _locationController,
-                      readOnly: true,
                       decoration: const InputDecoration(labelText: 'Location *'),
+                      readOnly: true,
                       onTap: _handleLocationAutocomplete,
                       validator: (v) => v == null || v.trim().isEmpty ? 'Location is required' : null,
                     ),
+                    if (_latitude != null && _longitude != null)
+                      SizedBox(
+                        height: 200,
+                        child: GoogleMap(
+                          initialCameraPosition: CameraPosition(
+                            target: LatLng(_latitude!, _longitude!),
+                            zoom: 14,
+                          ),
+                          markers: {
+                            Marker(
+                              markerId: MarkerId('selected-location'),
+                              position: LatLng(_latitude!, _longitude!),
+                            ),
+                          },
+                        ),
+                      ),
                     SizedBox(height: 2.h),
                     SizedBox(
                       width: double.infinity,
