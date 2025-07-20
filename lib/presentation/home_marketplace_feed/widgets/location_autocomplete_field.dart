@@ -4,6 +4,7 @@ import 'package:flutter_google_places_hoc081098/flutter_google_places_hoc081098.
 import 'package:geolocator/geolocator.dart';
 import 'package:sizer/sizer.dart';
 import 'package:google_api_headers/google_api_headers.dart';
+import 'package:google_maps_webservice/places.dart';
 
 class LocationAutocompleteField extends StatefulWidget {
   final Function(String location, double? lat, double? lng) onLocationSelected;
