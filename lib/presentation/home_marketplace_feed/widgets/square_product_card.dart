@@ -29,12 +29,12 @@ class SquareProductCard extends StatelessWidget {
           elevation: 2,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Container(
-            height: 48.h,
+            height: 42.h, // Reduced from 48.h
             child: Column(
               children: [
                 // Image Section - Top Half
                 Container(
-                  height: 24.h,
+                  height: 20.h, // Reduced proportionally from 24.h
                   width: double.infinity,
                   child: Stack(
                     children: [
