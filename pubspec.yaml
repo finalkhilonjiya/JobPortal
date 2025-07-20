@@ -34,7 +34,7 @@ dependencies:
   # Location Services
   geolocator: ^11.1.0
   google_api_headers: ^4.0.3
-  google_maps_webservice: ^0.0.20
+  google_maps_webservice: ^0.1.0
   
   # Image Handling
   image_picker: ^1.0.7
