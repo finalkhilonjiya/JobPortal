@@ -637,28 +637,17 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   onFabPressed: _openCreateListing,
 ),
       floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingActionButton(
-            onPressed: _openCreateListing,
-            backgroundColor: Color(0xFF2563EB),
-            child: Icon(Icons.add, color: Colors.white),
-            heroTag: 'sell_fab',
-          ),
-          Padding(
-            padding: EdgeInsets.only(bottom: 1.h, top: 0.3.h),
-            child: Text(
-              'Sell',
-              style: TextStyle(
-                fontSize: 9.sp,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2563EB),
-              ),
-            ),
-          ),
-        ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-    );
-   }
+  mainAxisSize: MainAxisSize.min,
+  children: [
+    FloatingActionButton(
+      onPressed: _openCreateListing,
+      backgroundColor: Color(0xFF2563EB),
+      child: Icon(Icons.add, color: Colors.white),
+      heroTag: 'sell_fab',
+    ),
+  ],
+),
+floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+);
+}
 }
