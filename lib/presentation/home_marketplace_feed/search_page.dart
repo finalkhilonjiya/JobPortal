@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:flutter_google_places_hoc081098/flutter_google_places_hoc081098.dart';
-import 'package:google_maps_webservice/places.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import './widgets/square_product_card.dart';
 import './widgets/shimmer_widgets.dart';
@@ -84,6 +84,25 @@ class _SearchPageState extends State<SearchPage> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  Future<void> _handleLocationAutocomplete() async {
+    Prediction? p = await PlacesAutocomplete.show(
+      context: context,
+      apiKey: _googleApiKey,
+      mode: Mode.overlay,
+      language: 'en',
+      hint: 'Search location',
+    );
+    if (p != null) {
+      setState(() {
+        _locationController.text = p.description ?? '';
+        _selectedLocation = p.description ?? '';
+        // If p has lat/lng, set them; otherwise, you may need to geocode
+        _selectedLat = null;
+        _selectedLng = null;
+      });
     }
   }
 
@@ -232,7 +251,7 @@ class _SearchPageState extends State<SearchPage> {
                       apiKey: _googleApiKey,
                       mode: Mode.overlay, // or Mode.fullscreen
                       language: "en",
-                      components: [Component(Component.country, "in")],
+                      hint: 'Search location',
                     );
                     if (p != null) {
                       setState(() {
@@ -241,15 +260,15 @@ class _SearchPageState extends State<SearchPage> {
                         // Optionally, get lat/lng using GoogleMapsPlaces
                       });
                       // To get lat/lng, you need to use GoogleMapsPlaces
-                      final places = GoogleMapsPlaces(apiKey: _googleApiKey);
-                      final detail = await places.getDetailsByPlaceId(p.placeId!);
-                      final location = detail.result.geometry?.location;
-                      if (location != null) {
-                        setState(() {
-                          _selectedLat = location.lat;
-                          _selectedLng = location.lng;
-                        });
-                      }
+                      // final places = GoogleMapsPlaces(apiKey: _googleApiKey);
+                      // final detail = await places.getDetailsByPlaceId(p.placeId!);
+                      // final location = detail.result.geometry?.location;
+                      // if (location != null) {
+                      //   setState(() {
+                      //     _selectedLat = location.lat;
+                      //     _selectedLng = location.lng;
+                      //   });
+                      // }
                     }
                   },
                   child: AbsorbPointer(
@@ -284,6 +303,22 @@ class _SearchPageState extends State<SearchPage> {
                     ),
                   ),
                 ),
+                if (_selectedLat != null && _selectedLng != null)
+                  SizedBox(
+                    height: 200,
+                    child: GoogleMap(
+                      initialCameraPosition: CameraPosition(
+                        target: LatLng(_selectedLat!, _selectedLng!),
+                        zoom: 14,
+                      ),
+                      markers: {
+                        Marker(
+                          markerId: MarkerId('selected-location'),
+                          position: LatLng(_selectedLat!, _selectedLng!),
+                        ),
+                      },
+                    ),
+                  ),
                 SizedBox(height: 2.h),
 
                 // Search Button
