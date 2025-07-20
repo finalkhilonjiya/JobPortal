@@ -5,14 +5,14 @@ class CategoriesSection extends StatelessWidget {
   final List<Map<String, Object>> categories;
   final String selected;
   final void Function(String) onSelect;
-  
+
   const CategoriesSection({
     Key? key,
-    required this.categories, 
-    required this.selected, 
-    required this.onSelect
+    required this.categories,
+    required this.selected,
+    required this.onSelect,
   }) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -41,39 +41,41 @@ class CategoriesSection extends StatelessWidget {
                       color: isSelected ? Color(0xFF2563EB) : Colors.white,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isSelected ? Color(0xFF2563EB) : Colors.grey[300]!,
+                        color: isSelected
+                            ? Color(0xFF2563EB)
+                            : Colors.grey[300]!,
                         width: 2,
                       ),
-                      boxShadow: isSelected ? [
-                        BoxShadow(
-                          color: Color(0xFF2563EB).withOpacity(0.3),
-                          blurRadius: 10,
-                          offset: Offset(0, 3),
-                        ),
-                      ] : [],
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: Color(0xFF2563EB).withOpacity(0.3),
+                                blurRadius: 10,
+                                offset: Offset(0, 3),
+                              ),
+                            ]
+                          : [],
                     ),
                     child: cat.containsKey('image') && cat['image'] != null
-                        ? ColorFiltered(
-                            colorFilter: ColorFilter.mode(
-                              isSelected ? Colors.white : Color(0xFF2563EB),
-                              BlendMode.srcIn,
-                            ),
-                            child: Image.network(
-                              cat['image'] as String,
-                              width: 32,
-                              height: 32,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Icon(
-                                  cat['icon'] as IconData,
-                                  color: isSelected ? Colors.white : Color(0xFF2563EB),
-                                  size: 26,
-                                );
-                              },
-                            ),
+                        ? Image.network(
+                            cat['image'] as String,
+                            width: 32,
+                            height: 32,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                cat['icon'] as IconData,
+                                color: isSelected
+                                    ? Colors.white
+                                    : Color(0xFF2563EB),
+                                size: 26,
+                              );
+                            },
                           )
                         : Icon(
                             cat['icon'] as IconData,
-                            color: isSelected ? Colors.white : Color(0xFF2563EB),
+                            color: isSelected
+                                ? Colors.white
+                                : Color(0xFF2563EB),
                             size: 26,
                           ),
                   ),
@@ -82,8 +84,10 @@ class CategoriesSection extends StatelessWidget {
                     cat['name'] as String,
                     style: TextStyle(
                       fontSize: 11,
-                      color: isSelected ? Color(0xFF2563EB) : Colors.grey[700],
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color:
+                          isSelected ? Color(0xFF2563EB) : Colors.grey[700],
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                 ],
