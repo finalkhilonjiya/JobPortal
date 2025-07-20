@@ -64,6 +64,7 @@ dependencies:
   flutter_staggered_grid_view: ^0.7.0
   shimmer: ^3.0.0
   flutter_google_places_hoc081098: ^2.0.0
+  google_maps_flutter: ^2.2.5
   
   # Additional UI Components
   flutter_staggered_animations: ^1.1.1
@@ -89,7 +90,7 @@ dependencies:
   # Package Info
   package_info_plus: ^8.3.0
   geocoding: ^2.1.0
-  google_maps_flutter: ^2.12.3
+  
   
 dev_dependencies:
   flutter_test:
