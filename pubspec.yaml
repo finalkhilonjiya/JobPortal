@@ -89,8 +89,10 @@ dependencies:
   # Package Info
   package_info_plus: ^8.3.0
   geocoding: ^2.1.0
-  google_maps_webservice_ex: ^0.0.4
-
+  google_maps_webservice_ex:
+  git:
+    url: https://github.com/teocomi/google_maps_webservice_ex.git
+    ref: main
 dev_dependencies:
   flutter_test:
     sdk: flutter
