@@ -1,24 +1,25 @@
-// ===== File 3: widgets/bottom_nav_bar_widget.dart (Fixed pixel overflow) =====
+// File: widgets/bottom_nav_bar_widget.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
 class BottomNavBarWidget extends StatelessWidget {
   final int currentIndex;
+  final bool hasMessageNotification;
   final Function(int) onTabSelected;
   final VoidCallback onFabPressed;
-  final bool hasMessageNotification;
 
   const BottomNavBarWidget({
     Key? key,
     required this.currentIndex,
+    required this.hasMessageNotification,
     required this.onTabSelected,
     required this.onFabPressed,
-    this.hasMessageNotification = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: 8.h,
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
@@ -28,79 +29,64 @@ class BottomNavBarWidget extends StatelessWidget {
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-        child: BottomAppBar(
-          color: Colors.white,
-          shape: CircularNotchedRectangle(),
-          notchMargin: 8,
-          elevation: 0,
-          child: Container(
-            height: 7.h,
-            padding: EdgeInsets.symmetric(horizontal: 2.w),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildNavItem(Icons.home, 'Home', 0),
-                _buildNavItem(Icons.search, 'Search', 1),
-                SizedBox(width: 15.w), // Space for FAB
-                _buildNavItem(Icons.inventory_2, 'Packages', 3),
-                Stack(
-                  children: [
-                    _buildNavItem(Icons.person, 'Profile', 4),
-                    if (hasMessageNotification)
-                      Positioned(
-                        top: 0,
-                        right: 0,
-                        child: Container(
-                          width: 2.5.w,
-                          height: 2.5.w,
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
+      child: BottomAppBar(
+        shape: CircularNotchedRectangle(),
+        notchMargin: 8,
+        child: Container(
+          height: 8.h,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(Icons.home, 'Home', 0),
+              _buildNavItem(Icons.search, 'Search', 1),
+              SizedBox(width: 10.w), // Space for FAB
+              _buildNavItem(Icons.chat_bubble_outline, 'Chat', 3, hasNotification: hasMessageNotification),
+              _buildNavItem(Icons.person_outline, 'Profile', 4),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, int index) {
+  Widget _buildNavItem(IconData icon, String label, int index, {bool hasNotification = false}) {
     final isSelected = currentIndex == index;
-    final color = isSelected ? Color(0xFF2563EB) : Colors.grey[600];
-    
     return InkWell(
       onTap: () => onTabSelected(index),
       child: Container(
         width: 15.w,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              color: color,
-              size: 5.5.w,
-            ),
-            SizedBox(height: 0.3.h),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 8.sp,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  icon,
+                  color: isSelected ? Color(0xFF2563EB) : Colors.grey,
+                  size: 6.w,
                 ),
+                if (hasNotification)
+                  Positioned(
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      width: 2.w,
+                      height: 2.w,
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            SizedBox(height: 0.5.h),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 9.sp,
+                color: isSelected ? Color(0xFF2563EB) : Colors.grey,
               ),
             ),
           ],
