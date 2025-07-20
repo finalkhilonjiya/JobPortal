@@ -8,7 +8,6 @@ import './widgets/shimmer_widgets.dart';
 import '../../services/listing_service.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-
 class SearchPage extends StatefulWidget {
   const SearchPage({Key? key}) : super(key: key);
 
@@ -89,7 +88,8 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Future<void> _handleLocationAutocomplete() async {
-    Prediction? p = await PlacesAutocomplete.show(
+    // Use dynamic type instead of Prediction to avoid type errors
+    dynamic p = await PlacesAutocomplete.show(
       context: context,
       apiKey: _googleApiKey,
       mode: Mode.overlay,
@@ -247,7 +247,7 @@ class _SearchPageState extends State<SearchPage> {
                 GestureDetector(
                   onTap: () async {
                     // Show the PlacesAutocomplete search dialog
-                    Prediction? p = await PlacesAutocomplete.show(
+                    dynamic p = await PlacesAutocomplete.show(
                       context: context,
                       apiKey: _googleApiKey,
                       mode: Mode.overlay, // or Mode.fullscreen
@@ -305,7 +305,8 @@ class _SearchPageState extends State<SearchPage> {
                   ),
                 ),
                 if (_selectedLat != null && _selectedLng != null)
-                  SizedBox(
+                  Container(
+                    margin: EdgeInsets.only(top: 2.h),
                     height: 200,
                     child: GoogleMap(
                       initialCameraPosition: CameraPosition(
@@ -346,6 +347,7 @@ class _SearchPageState extends State<SearchPage> {
                         : Text(
                             'Search',
                             style: TextStyle(
+                              color: Colors.white,
                               fontSize: 13.sp,
                               fontWeight: FontWeight.bold,
                             ),
