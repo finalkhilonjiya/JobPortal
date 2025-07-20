@@ -1,7 +1,10 @@
+// File: widgets/top_bar_widget.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
-class TopBarWidget extends StatelessWidget {
+class TopBarWidget extends StatefulWidget {
   final String currentLocation;
   final VoidCallback onLocationTap;
 
@@ -12,6 +15,76 @@ class TopBarWidget extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<TopBarWidget> createState() => _TopBarWidgetState();
+}
+
+class _TopBarWidgetState extends State<TopBarWidget> {
+  String _currentLocation = 'Detecting...';
+  bool _isDetectingLocation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _detectLocation();
+  }
+
+  Future<void> _detectLocation() async {
+    if (_isDetectingLocation) return;
+    
+    setState(() {
+      _isDetectingLocation = true;
+      _currentLocation = 'Detecting...';
+    });
+
+    try {
+      // Check permission
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            _currentLocation = 'Location denied';
+            _isDetectingLocation = false;
+          });
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _currentLocation = 'Location disabled';
+          _isDetectingLocation = false;
+        });
+        return;
+      }
+
+      // Get current position
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      // Get place name from coordinates
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        setState(() {
+          _currentLocation = '${place.locality ?? place.subAdministrativeArea ?? 'Unknown'}, ${place.administrativeArea ?? ''}';
+          _isDetectingLocation = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _currentLocation = 'Location unavailable';
+        _isDetectingLocation = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
@@ -19,65 +92,73 @@ class TopBarWidget extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Logo
+          // Logo and Title
           Row(
             children: [
               Container(
-                width: 10.w,
-                height: 10.w,
+                height: 8.w,
+                width: 8.w,
                 decoration: BoxDecoration(
                   color: Color(0xFF2563EB),
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Center(
                   child: Text(
                     'K',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 18.sp,
                       fontWeight: FontWeight.bold,
+                      fontSize: 14.sp,
                     ),
                   ),
                 ),
               ),
               SizedBox(width: 2.w),
               Text(
-                'khilonjiya',
+                'khilonjiya.com',
                 style: TextStyle(
-                  color: Color(0xFF2563EB),
-                  fontSize: 16.sp,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.bold,
+                  color: Color(0xFF2563EB),
                 ),
               ),
             ],
           ),
           // Location
           InkWell(
-            onTap: onLocationTap,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
-              decoration: BoxDecoration(
-                color: Color(0xFF2563EB).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.location_on, color: Color(0xFF2563EB), size: 4.5.w),
-                  SizedBox(width: 1.w),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: 30.w),
-                    child: Text(
-                      currentLocation,
-                      style: TextStyle(
-                        color: Color(0xFF2563EB),
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+            onTap: _detectLocation,
+            child: Row(
+              children: [
+                Icon(
+                  Icons.location_on,
+                  color: Color(0xFF2563EB),
+                  size: 5.w,
+                ),
+                SizedBox(width: 1.w),
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 35.w),
+                  child: Text(
+                    _currentLocation,
+                    style: TextStyle(fontSize: 11.sp),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ],
-              ),
+                ),
+                if (_isDetectingLocation)
+                  SizedBox(
+                    width: 4.w,
+                    height: 4.w,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xFF2563EB),
+                    ),
+                  )
+                else
+                  Icon(
+                    Icons.arrow_drop_down,
+                    color: Colors.grey,
+                    size: 5.w,
+                  ),
+              ],
             ),
           ),
         ],
