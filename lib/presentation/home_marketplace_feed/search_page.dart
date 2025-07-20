@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import './widgets/square_product_card.dart';
 import './widgets/shimmer_widgets.dart';
 import '../../services/listing_service.dart';
+import 'package:google_maps_webservice/places.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({Key? key}) : super(key: key);
