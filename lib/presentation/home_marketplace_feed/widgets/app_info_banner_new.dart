@@ -49,57 +49,8 @@ class AppInfoBannerNew extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 4.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildIconButton(
-                'https://cdn-icons-png.flaticon.com/512/1077/1077063.png', // Replace with job seeker image
-                'Apply for\nJobs',
-              ),
-              _buildIconButton(
-                'https://cdn-icons-png.flaticon.com/512/3135/3135768.png', // Replace with job poster image
-                'List Your\nJobs',
-              ),
-              _buildIconButton(
-                'https://upload.wikimedia.org/wikipedia/commons/4/46/Japi_Assamese_traditional_headgear.jpg', // Assamese Japi
-                'Assamese\nTraditional\nMarket',
-              ),
-            ],
-          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildIconButton(String imgUrl, String label) {
-    return Column(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          clipBehavior: Clip.hardEdge,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white,
-          ),
-          child: Image.network(
-            imgUrl,
-            fit: BoxFit.cover,
-          ),
-        ),
-        SizedBox(height: 1.h),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 10.sp,
-            height: 1.2,
-            fontWeight: FontWeight.w500,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
     );
   }
 }
