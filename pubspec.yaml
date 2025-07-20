@@ -106,7 +106,9 @@ flutter:
     - .env
     
     # App assets
-    - assets/images/
+    - assets/images/ApplyJobs.png
+    - assets/images/ListJobs.png
+    - assets/images/ATM.png
     - assets/icons/
     - assets/fonts/
     - assets/animations/
