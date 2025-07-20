@@ -44,7 +44,7 @@ class SquareProductCard extends StatelessWidget {
                           data['image'],
                           width: double.infinity,
                           height: double.infinity,
-                          fit: BoxFit.contain, // Changed from cover to contain
+                          fit: BoxFit.cover, // Changed back to cover
                           errorBuilder: (_, __, ___) => Container(
                             color: Colors.grey[300],
                             child: Icon(Icons.image, color: Colors.grey[600], size: 10.w),
@@ -90,9 +90,9 @@ class SquareProductCard extends StatelessWidget {
                         SizedBox(height: 0.5.h),
                         
                         // Category and Subcategory
-                        if (data['category'] != null)
+                        if (data['category_name'] != null || data['category'] != null)
                           Text(
-                            data['category'],
+                            data['category_name'] ?? data['category'] ?? '',
                             style: TextStyle(
                               color: Colors.grey[800],
                               fontSize: 10.sp,
@@ -101,9 +101,9 @@ class SquareProductCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                        if (data['subcategory'] != null)
+                        if (data['subcategory_name'] != null || data['subcategory'] != null)
                           Text(
-                            data['subcategory'],
+                            data['subcategory_name'] ?? data['subcategory'] ?? '',
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 9.sp,
