@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:flutter_google_places_hoc081098/flutter_google_places_hoc081098.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import './widgets/square_product_card.dart';
 import './widgets/shimmer_widgets.dart';
