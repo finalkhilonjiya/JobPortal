@@ -645,13 +645,15 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
             child: Icon(Icons.add, color: Colors.white),
             heroTag: 'sell_fab',
           ),
-          SizedBox(height: 0.5.h),
-          Text(
-            'Sell',
-            style: TextStyle(
-              fontSize: 10.sp,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF2563EB),
+          Padding(
+            padding: EdgeInsets.only(bottom: 1.h, top: 0.3.h),
+            child: Text(
+              'Sell',
+              style: TextStyle(
+                fontSize: 9.sp,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2563EB),
+              ),
             ),
           ),
         ],
