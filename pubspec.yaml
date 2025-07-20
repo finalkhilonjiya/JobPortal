@@ -89,7 +89,7 @@ dependencies:
   # Package Info
   package_info_plus: ^8.3.0
   geocoding: ^2.1.0
-  google_maps_webservice: ^0.0.20-nullsafety.13
+  google_maps_webservice: ^0.0.20-nullsafety.5
 
 dev_dependencies:
   flutter_test:
