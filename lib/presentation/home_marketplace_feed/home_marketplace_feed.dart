@@ -159,8 +159,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   'id': cat['name'] as Object,  // Using name as ID for now
   'icon': cat['icon'] as Object,
   'image': cat['image'] as Object,  // Include the image!
-}).toList();
-          : MarketplaceHelpers.getMainCategoriesOnly(); // Fallback to mock
+}).toList():
+           MarketplaceHelpers.getMainCategoriesOnly(); // Fallback to mock
       
       // Fetch favorites if user is logged in
       Set<String> favorites = {};
