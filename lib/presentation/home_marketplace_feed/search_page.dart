@@ -1,7 +1,9 @@
 // File: screens/marketplace/search_page.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import './widgets/location_autocomplete_field.dart';
+import 'package:google_places_flutter/google_places_flutter.dart';
+import 'package:google_places_flutter/model/prediction.dart';
+import 'package:geolocator/geolocator.dart';
 import './widgets/square_product_card.dart';
 import './widgets/shimmer_widgets.dart';
 import '../../services/listing_service.dart';
@@ -15,11 +17,13 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _keywordsController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
   final ListingService _listingService = ListingService();
   
   String _selectedLocation = '';
   double? _selectedLat;
   double? _selectedLng;
+  bool _isDetectingLocation = false;
   
   List<Map<String, dynamic>> _searchResults = [];
   bool _isSearching = false;
@@ -32,11 +36,58 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void dispose() {
     _keywordsController.dispose();
+    _locationController.dispose();
     super.dispose();
   }
 
+  Future<void> _detectCurrentLocation() async {
+    setState(() => _isDetectingLocation = true);
+
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          throw 'Location permissions denied';
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        throw 'Location permissions permanently denied';
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      String locationText = 'Current Location (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)})';
+      
+      setState(() {
+        _locationController.text = locationText;
+        _selectedLocation = locationText;
+        _selectedLat = position.latitude;
+        _selectedLng = position.longitude;
+        _isDetectingLocation = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Location detected successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      setState(() => _isDetectingLocation = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to detect location: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   void _performSearch() async {
-    // Validate inputs
     if (_keywordsController.text.isEmpty && _selectedLocation.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -54,19 +105,10 @@ class _SearchPageState extends State<SearchPage> {
 
     try {
       // TODO: Implement actual search when ready
-      // final results = await _listingService.searchListings(
-      //   keywords: _keywordsController.text,
-      //   location: _selectedLocation,
-      //   latitude: _selectedLat,
-      //   longitude: _selectedLng,
-      // );
-
-      // Placeholder for search results
       await Future.delayed(Duration(seconds: 2));
       
       setState(() {
         _searchResults = [
-          // Mock data for now
           {
             'id': '1',
             'title': 'Search Result 1',
@@ -90,11 +132,6 @@ class _SearchPageState extends State<SearchPage> {
         ];
         _isSearching = false;
       });
-
-      print('Search Parameters:');
-      print('Keywords: ${_keywordsController.text}');
-      print('Location: $_selectedLocation');
-      print('Lat: $_selectedLat, Lng: $_selectedLng');
     } catch (e) {
       setState(() => _isSearching = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -109,6 +146,7 @@ class _SearchPageState extends State<SearchPage> {
   void _clearSearch() {
     setState(() {
       _keywordsController.clear();
+      _locationController.clear();
       _selectedLocation = '';
       _selectedLat = null;
       _selectedLng = null;
@@ -177,17 +215,68 @@ class _SearchPageState extends State<SearchPage> {
                 ),
                 SizedBox(height: 2.h),
 
-                // Location Field with Autocomplete
-                LocationAutocompleteField(
-                  googleApiKey: _googleApiKey,
-                  onLocationSelected: (location, lat, lng) {
+                // Location Field with Autocomplete (no dropdown)
+                Text(
+                  'Location',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 1.h),
+                GooglePlaceAutoCompleteTextField(
+                  textEditingController: _locationController,
+                  googleAPIKey: _googleApiKey,
+                  inputDecoration: InputDecoration(
+                    hintText: 'Enter location',
+                    prefixIcon: Icon(Icons.location_on, color: Color(0xFF2563EB)),
+                    suffixIcon: _isDetectingLocation
+                        ? Container(
+                            width: 48,
+                            height: 48,
+                            padding: EdgeInsets.all(12),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Color(0xFF2563EB),
+                            ),
+                          )
+                        : IconButton(
+                            icon: Icon(Icons.my_location, color: Color(0xFF2563EB)),
+                            onPressed: _detectCurrentLocation,
+                            tooltip: 'Use current location',
+                          ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                  debounceTime: 800,
+                  countries: ["in"],
+                  isLatLngRequired: true,
+                  getPlaceDetailWithLatLng: (Prediction prediction) {
                     setState(() {
-                      _selectedLocation = location;
-                      _selectedLat = lat;
-                      _selectedLng = lng;
+                      _selectedLocation = prediction.description ?? '';
+                      _selectedLat = double.tryParse(prediction.lat ?? '');
+                      _selectedLng = double.tryParse(prediction.lng ?? '');
                     });
                   },
-                  initialValue: _selectedLocation,
+                  itemClick: (Prediction prediction) {
+                    _locationController.text = prediction.description ?? '';
+                    _locationController.selection = TextSelection.fromPosition(
+                      TextPosition(offset: prediction.description?.length ?? 0),
+                    );
+                    setState(() {
+                      _selectedLocation = prediction.description ?? '';
+                    });
+                  },
+                  // Hide powered by Google
+                  containerHorizontalPadding: 0,
+                  placeType: PlaceType.geocode,
+                  // No separate dropdown, results appear inline
+                  isCrossBtnShown: false,
+                  showGoogleLogo: false, // This hides the powered by Google text
                 ),
                 SizedBox(height: 2.h),
 
