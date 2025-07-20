@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import './widgets/square_product_card.dart';
 import './widgets/shimmer_widgets.dart';
 import '../../services/listing_service.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 
 class SearchPage extends StatefulWidget {
