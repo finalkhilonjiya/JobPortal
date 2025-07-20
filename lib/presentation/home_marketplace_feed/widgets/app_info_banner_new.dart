@@ -1,4 +1,3 @@
-// File: widgets/app_info_banner_new.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
@@ -7,14 +6,14 @@ class AppInfoBannerNew extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-      padding: EdgeInsets.all(6.w), // Increased padding
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h), // increased vertical padding
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFF2563EB), Color(0xFF1E40AF)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20), // Larger radius
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Color(0xFF2563EB).withOpacity(0.3),
@@ -24,23 +23,26 @@ class AppInfoBannerNew extends StatelessWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             'Welcome to khilonjiya.com',
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 24.sp, // Increased from 18.sp
+              fontSize: 24.sp,
               fontWeight: FontWeight.bold,
               letterSpacing: 0.5,
             ),
           ),
-          SizedBox(height: 2.h), // Increased spacing
+          SizedBox(height: 2.h),
           Text(
-            'Your trusted place to find jobs, buying and selling',
+            '"A trusted space for jobs, local trade, and Assam’s rich traditional market."',
+            textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
-              fontSize: 16.sp, // Increased from 12.sp
+              color: Colors.white.withOpacity(0.85),
+              fontStyle: FontStyle.italic,
+              fontSize: 13.sp, // smaller to prevent overflow
               height: 1.4,
               letterSpacing: 0.3,
             ),
