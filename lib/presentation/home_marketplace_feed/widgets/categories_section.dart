@@ -53,17 +53,23 @@ class CategoriesSection extends StatelessWidget {
                       ] : [],
                     ),
                     child: cat.containsKey('image') && cat['image'] != null
-                        ? Image.network(
-                            cat['image'] as String,
-                            color: isSelected ? Colors.white : Color(0xFF2563EB),
-                            colorBlendMode: BlendMode.srcIn,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Icon(
-                                cat['icon'] as IconData,
-                                color: isSelected ? Colors.white : Color(0xFF2563EB),
-                                size: 26,
-                              );
-                            },
+                        ? ColorFiltered(
+                            colorFilter: ColorFilter.mode(
+                              isSelected ? Colors.white : Color(0xFF2563EB),
+                              BlendMode.srcIn,
+                            ),
+                            child: Image.network(
+                              cat['image'] as String,
+                              width: 32,
+                              height: 32,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Icon(
+                                  cat['icon'] as IconData,
+                                  color: isSelected ? Colors.white : Color(0xFF2563EB),
+                                  size: 26,
+                                );
+                              },
+                            ),
                           )
                         : Icon(
                             cat['icon'] as IconData,
