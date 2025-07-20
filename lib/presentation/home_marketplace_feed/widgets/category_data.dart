@@ -3,8 +3,15 @@ import 'package:flutter/material.dart';
 class CategoryData {
   static final List<Map<String, dynamic>> mainCategories = [
     {
+      'name': 'All',
+      'icon': Icons.apps_rounded,
+      'image': 'https://cdn-icons-png.flaticon.com/512/2292/2292038.png',
+      'subcategories': [],
+    },
+    {
       'name': 'Electronics',
       'icon': Icons.devices_other_rounded,
+      'image': 'https://cdn-icons-png.flaticon.com/512/3659/3659899.png',
       'subcategories': [
         'Mobile Phones',
         'Laptops & Computers',
@@ -21,6 +28,7 @@ class CategoryData {
     {
       'name': 'Vehicles',
       'icon': Icons.directions_car_filled_rounded,
+      'image': 'https://cdn-icons-png.flaticon.com/512/3774/3774278.png',
       'subcategories': [
         'Cars',
         'Bikes & Scooters',
@@ -34,6 +42,7 @@ class CategoryData {
     {
       'name': 'Furniture',
       'icon': Icons.chair_rounded,
+      'image': 'https://cdn-icons-png.flaticon.com/512/2271/2271062.png',
       'subcategories': [
         'Sofas & Seating',
         'Beds & Mattresses',
@@ -49,6 +58,7 @@ class CategoryData {
     {
       'name': 'Properties for Sale',
       'icon': Icons.home_rounded,
+      'image': 'https://cdn-icons-png.flaticon.com/512/619/619153.png',
       'subcategories': [
         'Flats / Apartments for Sale',
         'Houses / Villas for Sale',
@@ -60,6 +70,7 @@ class CategoryData {
     {
       'name': 'Room for Rent',
       'icon': Icons.meeting_room_rounded,
+      'image': 'https://cdn-icons-png.flaticon.com/512/3082/3082383.png',
       'subcategories': [
         'Single Room',
         'Shared Room',
@@ -74,6 +85,7 @@ class CategoryData {
     {
       'name': 'PG Accommodation',
       'icon': Icons.apartment_rounded,
+      'image': 'https://cdn-icons-png.flaticon.com/512/2590/2590818.png',
       'subcategories': [
         'PG for Male',
         'PG for Female',
@@ -88,6 +100,7 @@ class CategoryData {
     {
       'name': 'Homestays',
       'icon': Icons.cottage_rounded,
+      'image': 'https://cdn-icons-png.flaticon.com/512/3280/3280268.png',
       'subcategories': [
         'Entire Home',
         'Private Room',
