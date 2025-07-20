@@ -17,6 +17,8 @@ import './widgets/profile_page.dart';
 import './widgets/bottom_nav_bar_widget.dart';
 import './search_page.dart'; // Add this import
 import '../../services/listing_service.dart'; // Add this import
+import '../jobs/jobs_home_page.dart'; // Add this import
+import '../traditional_market/traditional_market_home_page.dart'; // Add this import
 import 'dart:async';
 
 class HomeMarketplaceFeed extends StatefulWidget {
@@ -33,7 +35,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   bool _isLoadingPremium = true;
   bool _isLoadingFeed = true;
   bool _isLoadingMore = false; // Add this
-  bool _hasMoreData = true; // Add this missing variable
   List<Map<String, Object>> _categories = [];
   List<Map<String, dynamic>> _listings = [];
   List<Map<String, dynamic>> _premiumListings = [];
@@ -446,6 +447,211 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
           child: CustomScrollView(
             controller: _scrollController,
             physics: AlwaysScrollableScrollPhysics(),
+            slivers: [
+              // Top Bar with Logo and Location
+              SliverToBoxAdapter(
+                child: TopBarWidget(
+                  currentLocation: _currentLocation,
+                  onLocationTap: _detectLocation,
+                ),
+              ),
+              
+              // Full Width Search Bar
+              SliverToBoxAdapter(
+                child: SearchBarFullWidth(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SearchPage(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              
+              // New App Info Banner
+              SliverToBoxAdapter(child: AppInfoBannerNew()),
+              
+              // Three Option Section
+              SliverToBoxAdapter(
+                child: ThreeOptionSection(
+                  onJobsTap: () {
+                    // Navigate to Jobs Homepage
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => JobsHomePage(), // You'll create this
+                      ),
+                    );
+                  },
+                  onTraditionalTap: () {
+                    // Navigate to Traditional Market Homepage
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TraditionalMarketHomePage(), // You'll create this
+                      ),
+                    );
+                  },
+                ),
+              ),
+              
+              // Premium Section at top
+              if (_premiumListings.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                        child: Text(
+                          'Premium Listings',
+                          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      _isLoadingPremium
+                          ? ShimmerPremiumSection()
+                          : PremiumCarousel(
+                              listings: _premiumListings,
+                              onTap: _showListingDetails,
+                              favoriteIds: _favoriteIds,
+                              onFavoriteToggle: _toggleFavorite,
+                            ),
+                    ],
+                  ),
+                ),
+              
+              // Categories
+              SliverToBoxAdapter(
+                child: CategoriesSection(
+                  categories: _categories,
+                  selected: _selectedCategory,
+                  onSelect: _onCategorySelected,
+                ),
+              ),
+              
+              // Filter Bar - Below Categories, Above Feed
+              SliverToBoxAdapter(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'All Listings',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      InkWell(
+                        onTap: _openAdvancedFilter,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Color(0xFF2563EB)),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.filter_list,
+                                color: Color(0xFF2563EB),
+                                size: 4.5.w,
+                              ),
+                              SizedBox(width: 1.w),
+                              Text(
+                                'Filter',
+                                style: TextStyle(
+                                  color: Color(0xFF2563EB),
+                                  fontSize: 11.sp,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              
+              // Product Feed with Premium insertions
+              _isLoadingFeed && _filteredListings.isEmpty
+                  ? SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (_, __) => ShimmerProductCard(),
+                        childCount: 6,
+                      ),
+                    )
+                  : SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (_, index) => _buildListingWithPremium(index),
+                        childCount: _filteredListings.length + 
+                                   (_filteredListings.length ~/ 12),
+                      ),
+                    ),
+              
+              // Loading more indicator
+              if (_isLoadingMore)
+                SliverToBoxAdapter(
+                  child: Container(
+                    padding: EdgeInsets.all(2.h),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+                  ),
+                ),
+              
+              SliverPadding(padding: EdgeInsets.only(bottom: 10.h)),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: BottomNavBarWidget(
+        currentIndex: _currentIndex,
+        hasMessageNotification: true,
+        onTabSelected: (index) {
+          setState(() => _currentIndex = index);
+          if (index == 1) {
+            // Search tab
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SearchPage()),
+            );
+          } else if (index == 4) {
+            // Profile tab
+            _navigateToProfile();
+          }
+        },
+        onFabPressed: _openCreateListing,
+      ),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            onPressed: _openCreateListing,
+            backgroundColor: Color(0xFF2563EB),
+            child: Icon(Icons.add, color: Colors.white),
+            heroTag: 'sell_fab',
+          ),
+          SizedBox(height: 0.5.h),
+          Text(
+            'Sell',
+            style: TextStyle(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2563EB),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    );
+  }ics(),
             slivers: [
               // Top Bar with Logo and Location
               SliverToBoxAdapter(
