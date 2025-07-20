@@ -19,6 +19,7 @@ import '../../services/listing_service.dart'; // Add this import
 import '../jobs/jobs_home_page.dart'; // Add this import
 import '../traditional_market/traditional_market_home_page.dart'; // Add this import
 import 'dart:async';
+import './premium_package_page.dart';
 // Add the following import for CategoriesSection
 import 'widgets/categories_section.dart';
 import 'widgets/category_data.dart';
@@ -613,23 +614,29 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         ),
       ),
       bottomNavigationBar: BottomNavBarWidget(
-        currentIndex: _currentIndex,
-        hasMessageNotification: true,
-        onTabSelected: (index) {
-          setState(() => _currentIndex = index);
-          if (index == 1) {
-            // Search tab
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SearchPage()),
-            );
-          } else if (index == 4) {
-            // Profile tab
-            _navigateToProfile();
-          }
-        },
-        onFabPressed: _openCreateListing,
-      ),
+  currentIndex: _currentIndex,
+  hasMessageNotification: true,
+  onTabSelected: (index) {
+    setState(() => _currentIndex = index);
+    if (index == 1) {
+      // Search tab
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => SearchPage()),
+      );
+    } else if (index == 2) {
+      // Package tab - ADD THIS
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => PremiumPackagePage()),
+      );
+    } else if (index == 4) {
+      // Profile tab
+      _navigateToProfile();
+    }
+  },
+  onFabPressed: _openCreateListing,
+),
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
