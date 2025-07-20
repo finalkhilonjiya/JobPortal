@@ -1,3 +1,4 @@
+// File: widgets/app_info_banner_new.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
@@ -5,19 +6,19 @@ class AppInfoBannerNew extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.all(4.w),
-      padding: EdgeInsets.all(4.w),
+      margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+      padding: EdgeInsets.all(6.w), // Increased padding
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF2563EB), Color(0xFF0EA5E9)],
+          colors: [Color(0xFF2563EB), Color(0xFF1E40AF)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20), // Larger radius
         boxShadow: [
           BoxShadow(
-            color: Color(0xFF2563EB).withOpacity(0.2),
-            blurRadius: 15,
+            color: Color(0xFF2563EB).withOpacity(0.3),
+            blurRadius: 16,
             offset: Offset(0, 8),
           ),
         ],
@@ -29,17 +30,19 @@ class AppInfoBannerNew extends StatelessWidget {
             'Welcome to khilonjiya.com',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
+              fontSize: 24.sp, // Increased from 18.sp
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
             ),
           ),
-          SizedBox(height: 1.5.h),
+          SizedBox(height: 2.h), // Increased spacing
           Text(
-            'A place where you can find and list jobs, rooms, properties, electronics, and Assamese traditional items. All sellers on this platform are verified for your safety and trust.',
+            'Your trusted place to find jobs, buying and selling',
             style: TextStyle(
               color: Colors.white.withOpacity(0.9),
-              fontSize: 11.sp,
+              fontSize: 16.sp, // Increased from 12.sp
               height: 1.4,
+              letterSpacing: 0.3,
             ),
           ),
         ],
