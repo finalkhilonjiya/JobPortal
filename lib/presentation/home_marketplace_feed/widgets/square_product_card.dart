@@ -29,12 +29,12 @@ class SquareProductCard extends StatelessWidget {
           elevation: 2,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Container(
-            height: 42.h, // Reduced from 48.h
+            height: 42.h,
             child: Column(
               children: [
-                // Image Section - Top Half
+                // Image Section - 65%
                 Container(
-                  height: 20.h, // Reduced proportionally from 24.h
+                  height: 27.3.h, // 65% of 42.h
                   width: double.infinity,
                   child: Stack(
                     children: [
@@ -44,7 +44,7 @@ class SquareProductCard extends StatelessWidget {
                           data['image'],
                           width: double.infinity,
                           height: double.infinity,
-                          fit: BoxFit.cover, // Changed back to cover
+                          fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
                             color: Colors.grey[300],
                             child: Icon(Icons.image, color: Colors.grey[600], size: 10.w),
@@ -70,128 +70,114 @@ class SquareProductCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Details Section - Bottom Half
-                Expanded(
-                  child: Container(
-                    padding: EdgeInsets.all(3.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Title
+                // Details Section - 35%
+                Container(
+                  height: 14.7.h, // 35% of 42.h
+                  padding: EdgeInsets.all(3.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        data['title'],
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.sp,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 0.5.h),
+                      if (data['category_name'] != null || data['category'] != null)
                         Text(
-                          data['title'],
+                          data['category_name'] ?? data['category'] ?? '',
                           style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12.sp,
+                            color: Colors.grey[800],
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w500,
                           ),
-                          maxLines: 2,
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        SizedBox(height: 0.5.h),
-                        
-                        // Category and Subcategory
-                        if (data['category_name'] != null || data['category'] != null)
-                          Text(
-                            data['category_name'] ?? data['category'] ?? '',
-                            style: TextStyle(
-                              color: Colors.grey[800],
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                      if (data['subcategory_name'] != null || data['subcategory'] != null)
+                        Text(
+                          data['subcategory_name'] ?? data['subcategory'] ?? '',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 9.sp,
                           ),
-                        if (data['subcategory_name'] != null || data['subcategory'] != null)
-                          Text(
-                            data['subcategory_name'] ?? data['subcategory'] ?? '',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 9.sp,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        
-                        SizedBox(height: 0.5.h),
-                        
-                        // Bottom section with price, location and icons
-                        Expanded(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              // Left side - Price and Location
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.end,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      Spacer(),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Text(
+                                  '₹${data['price']}',
+                                  style: TextStyle(
+                                    color: Color(0xFF2563EB),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14.sp,
+                                  ),
+                                ),
+                                SizedBox(height: 0.3.h),
+                                Row(
                                   children: [
-                                    // Price
-                                    Text(
-                                      '₹${data['price']}',
-                                      style: TextStyle(
-                                        color: Color(0xFF2563EB),
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14.sp,
-                                      ),
-                                    ),
-                                    SizedBox(height: 0.3.h),
-                                    // Location
-                                    Row(
-                                      children: [
-                                        Icon(Icons.location_on_outlined, size: 3.5.w, color: Colors.grey[600]),
-                                        SizedBox(width: 1.w),
-                                        Expanded(
-                                          child: Text(
-                                            data['location'],
-                                            style: TextStyle(
-                                              color: Colors.grey[600],
-                                              fontSize: 9.sp,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
+                                    Icon(Icons.location_on_outlined, size: 3.5.w, color: Colors.grey[600]),
+                                    SizedBox(width: 1.w),
+                                    Expanded(
+                                      child: Text(
+                                        data['location'],
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 9.sp,
                                         ),
-                                      ],
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   ],
                                 ),
+                              ],
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              InkWell(
+                                onTap: onCall,
+                                child: Container(
+                                  padding: EdgeInsets.all(2.5.w),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green[50],
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.green),
+                                  ),
+                                  child: Icon(Icons.call, color: Colors.green, size: 6.w),
+                                ),
                               ),
-                              
-                              // Right side - Call and WhatsApp Icons
-                              Row(
-                                children: [
-                                  InkWell(
-                                    onTap: onCall,
-                                    child: Container(
-                                      padding: EdgeInsets.all(2.5.w),
-                                      decoration: BoxDecoration(
-                                        color: Colors.green[50],
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: Colors.green),
-                                      ),
-                                      child: Icon(Icons.call, color: Colors.green, size: 6.w),
-                                    ),
+                              SizedBox(width: 2.w),
+                              InkWell(
+                                onTap: onWhatsApp,
+                                child: Container(
+                                  padding: EdgeInsets.all(2.5.w),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green[50],
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.green),
                                   ),
-                                  SizedBox(width: 2.w),
-                                  InkWell(
-                                    onTap: onWhatsApp,
-                                    child: Container(
-                                      padding: EdgeInsets.all(2.5.w),
-                                      decoration: BoxDecoration(
-                                        color: Colors.green[50],
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: Colors.green),
-                                      ),
-                                      child: FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 6.w),
-                                    ),
-                                  ),
-                                ],
+                                  child: FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 6.w),
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ],
