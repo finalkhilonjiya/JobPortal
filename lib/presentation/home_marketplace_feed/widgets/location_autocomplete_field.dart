@@ -1,7 +1,7 @@
 // File: widgets/location_autocomplete_field.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_google_places_hoc081098/flutter_google_places_hoc081098.dart';
-import 'package:flutter_google_places_hoc081098/google_maps_webservice_places.dart';
+import 'package:google_maps_webservice_ex/places.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sizer/sizer.dart';
 import 'package:google_api_headers/google_api_headers.dart';
