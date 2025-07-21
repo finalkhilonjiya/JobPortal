@@ -29,12 +29,12 @@ class SquareProductCard extends StatelessWidget {
           elevation: 2,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Container(
-            height: 42.h,
+            height: 42.h, // Total height
             child: Column(
               children: [
                 // Image Section - 60%
                 Container(
-                  height: 25.2.h, // 60% of 42.h
+                  height: 25.2.h,
                   width: double.infinity,
                   child: Stack(
                     children: [
@@ -47,71 +47,87 @@ class SquareProductCard extends StatelessWidget {
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
                             color: Colors.grey[300],
-                            child: Icon(Icons.image, color: Colors.grey[600], size: 10.w),
+                            child: Center(
+                              child: Icon(Icons.image, color: Colors.grey[600], size: 10.w),
+                            ),
                           ),
                         ),
                       ),
                       Positioned(
                         top: 8,
                         right: 8,
-                        child: IconButton(
-                          icon: Icon(
-                            isFavorite ? Icons.favorite : Icons.favorite_border,
-                            color: isFavorite ? Colors.red : Colors.white,
-                            size: 6.w,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.5),
+                            shape: BoxShape.circle,
                           ),
-                          onPressed: onFavoriteToggle,
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.black.withOpacity(0.5),
-                            padding: EdgeInsets.all(1.w),
+                          child: IconButton(
+                            icon: Icon(
+                              isFavorite ? Icons.favorite : Icons.favorite_border,
+                              color: isFavorite ? Colors.red : Colors.white,
+                              size: 6.w,
+                            ),
+                            onPressed: onFavoriteToggle,
+                            padding: EdgeInsets.all(0),
+                            constraints: BoxConstraints(),
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
+
                 // Details Section - 40%
                 Container(
-                  height: 16.8.h, // 40% of 42.h
-                  padding: EdgeInsets.all(3.w),
+                  height: 16.8.h,
+                  padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Title
                       Text(
                         data['title'],
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 12.sp,
+                          fontSize: 11.sp,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: 0.5.h),
+                      SizedBox(height: 0.3.h),
+
+                      // Category
                       if (data['category_name'] != null || data['category'] != null)
                         Text(
                           data['category_name'] ?? data['category'] ?? '',
                           style: TextStyle(
                             color: Colors.grey[800],
-                            fontSize: 10.sp,
+                            fontSize: 9.sp,
                             fontWeight: FontWeight.w500,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
+
+                      // Subcategory
                       if (data['subcategory_name'] != null || data['subcategory'] != null)
                         Text(
                           data['subcategory_name'] ?? data['subcategory'] ?? '',
                           style: TextStyle(
                             color: Colors.grey[600],
-                            fontSize: 9.sp,
+                            fontSize: 8.sp,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
+
                       Spacer(),
+
+                      // Price, Location, Buttons
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
+                          // Price + Location
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -122,7 +138,7 @@ class SquareProductCard extends StatelessWidget {
                                   style: TextStyle(
                                     color: Color(0xFF2563EB),
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 14.sp,
+                                    fontSize: 13.sp,
                                   ),
                                 ),
                                 SizedBox(height: 0.3.h),
@@ -135,7 +151,7 @@ class SquareProductCard extends StatelessWidget {
                                         data['location'],
                                         style: TextStyle(
                                           color: Colors.grey[600],
-                                          fontSize: 9.sp,
+                                          fontSize: 8.sp,
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -146,31 +162,33 @@ class SquareProductCard extends StatelessWidget {
                               ],
                             ),
                           ),
+
+                          // Call & WhatsApp buttons
                           Row(
                             children: [
                               InkWell(
                                 onTap: onCall,
                                 child: Container(
-                                  padding: EdgeInsets.all(2.5.w),
+                                  padding: EdgeInsets.all(2.w),
                                   decoration: BoxDecoration(
                                     color: Colors.green[50],
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(color: Colors.green),
                                   ),
-                                  child: Icon(Icons.call, color: Colors.green, size: 6.w),
+                                  child: Icon(Icons.call, color: Colors.green, size: 5.w),
                                 ),
                               ),
                               SizedBox(width: 2.w),
                               InkWell(
                                 onTap: onWhatsApp,
                                 child: Container(
-                                  padding: EdgeInsets.all(2.5.w),
+                                  padding: EdgeInsets.all(2.w),
                                   decoration: BoxDecoration(
                                     color: Colors.green[50],
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(color: Colors.green),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 6.w),
+                                  child: FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 5.w),
                                 ),
                               ),
                             ],
