@@ -2,6 +2,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:postgrest/postgrest.dart';
 import 'dart:io';
+import 'dart:math' as math;
 import '../models/listing_model.dart';
 
 class ListingService {
@@ -37,11 +38,6 @@ class ListingService {
     return imageUrls;
   }
   
-
-   // Add these methods to your existing listing_service.dart file
-
-// In your ListingService class, add:
-
   // Fetch all active listings with infinite scroll support
   Future<List<Map<String, dynamic>>> fetchListings({
     String? categoryId,
@@ -119,6 +115,151 @@ class ListingService {
       print('Error fetching listings: $e');
       return []; // Return empty array on error
     }
+  }
+
+  // Search listings by keywords and/or location
+  Future<List<Map<String, dynamic>>> searchListings({
+    String? keywords,
+    String? location,
+    double? latitude,
+    double? longitude,
+    String? sortBy,
+    double searchRadius = 50.0, // Default 50km radius
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      // If we have coordinates (either from current location or selected location)
+      if (latitude != null && longitude != null) {
+        // Use distance-based search
+        final response = await _supabase.rpc(
+          'search_listings_by_distance',
+          params: {
+            'user_lat': latitude,
+            'user_lng': longitude,
+            'search_radius': searchRadius,
+            'search_keywords': keywords ?? '',
+            'search_location': location?.contains('Current Location') == true ? null : location,
+            'limit_count': limit,
+            'offset_count': offset,
+          },
+        );
+
+        // Transform the response
+        return List<Map<String, dynamic>>.from(response.map((item) {
+          List<dynamic> images = item['images'] ?? [];
+          String mainImage = images.isNotEmpty ? images[0] : 'https://via.placeholder.com/300';
+          
+          return {
+            'id': item['id'],
+            'title': item['title'] ?? 'Untitled',
+            'price': item['price'] ?? 0,
+            'image': mainImage,
+            'images': images,
+            'location': item['location'] ?? 'Location not specified',
+            'category': item['category_name'] ?? 'Uncategorized',
+            'subcategory': item['category_name'] ?? 'Uncategorized',
+            'description': item['description'] ?? '',
+            'condition': item['condition'] ?? 'used',
+            'phone': item['seller_phone'] ?? '',
+            'seller_name': item['seller_name'] ?? 'Seller',
+            'views': item['views_count'] ?? 0,
+            'created_at': item['created_at'],
+            'is_featured': item['is_featured'] ?? false,
+            'distance': item['distance'], // Distance in kilometers
+            'latitude': item['latitude'],
+            'longitude': item['longitude'],
+          };
+        }));
+      } else {
+        // Fall back to regular search without distance
+        var query = _supabase
+            .from('listings')
+            .select('''
+              *,
+              category:categories!inner(
+                id,
+                name
+              )
+            ''')
+            .eq('status', 'active');
+
+        // Apply keyword search
+        if (keywords != null && keywords.isNotEmpty) {
+          query = query.or(
+            'title.ilike.%$keywords%,'
+            'description.ilike.%$keywords%,'
+            'brand.ilike.%$keywords%,'
+            'model.ilike.%$keywords%'
+          );
+        }
+
+        // Apply location filter
+        if (location != null && location.isNotEmpty && !location.contains('Current Location')) {
+          query = query.ilike('location', '%$location%');
+        }
+
+        // Apply sorting
+        if (sortBy == 'Price (Low to High)') {
+          query = query.order('price', ascending: true);
+        } else if (sortBy == 'Price (High to Low)') {
+          query = query.order('price', ascending: false);
+        } else {
+          query = query.order('created_at', ascending: false);
+        }
+
+        // Apply pagination
+        final response = await query.range(offset, offset + limit - 1);
+        
+        // Transform the data
+        return List<Map<String, dynamic>>.from(response.map((item) {
+          List<dynamic> images = item['images'] ?? [];
+          String mainImage = images.isNotEmpty ? images[0] : 'https://via.placeholder.com/300';
+          
+          return {
+            'id': item['id'],
+            'title': item['title'] ?? 'Untitled',
+            'price': item['price'] ?? 0,
+            'image': mainImage,
+            'images': images,
+            'location': item['location'] ?? 'Location not specified',
+            'category': item['category']['name'] ?? 'Uncategorized',
+            'subcategory': item['category']['name'] ?? 'Uncategorized',
+            'description': item['description'] ?? '',
+            'condition': item['condition'] ?? 'used',
+            'phone': item['seller_phone'] ?? '',
+            'seller_name': item['seller_name'] ?? 'Seller',
+            'views': item['views_count'] ?? 0,
+            'created_at': item['created_at'],
+            'is_featured': item['is_featured'] ?? false,
+            'latitude': item['latitude'],
+            'longitude': item['longitude'],
+          };
+        }));
+      }
+    } catch (e) {
+      print('Error searching listings: $e');
+      return [];
+    }
+  }
+
+  // Helper method to calculate distance between two points
+  double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    const double earthRadius = 6371; // km
+    double dLat = _toRadians(lat2 - lat1);
+    double dLon = _toRadians(lon2 - lon1);
+    
+    double a = 
+      math.sin(dLat / 2) * math.sin(dLat / 2) +
+      math.cos(_toRadians(lat1)) * math.cos(_toRadians(lat2)) *
+      math.sin(dLon / 2) * math.sin(dLon / 2);
+    
+    double c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    return earthRadius * c;
+  }
+
+  double _toRadians(double degree) {
+    return degree * math.pi / 180;
   }
 
   // Fetch premium/featured listings
@@ -229,6 +370,7 @@ class ListingService {
       throw Exception('Failed to toggle favorite');
     }
   }
+
   // Create a new listing
   Future<Map<String, dynamic>> createListing({
     required String title,
@@ -237,6 +379,8 @@ class ListingService {
     required double price,
     required String condition,
     required String location,
+    double? latitude,
+    double? longitude,
     required List<String> imageUrls,
     required String priceType,
     required String sellerName,
@@ -253,6 +397,7 @@ class ListingService {
        
       print('User ID: ${user.id}');
       print('Category ID: $categoryId');
+      
       // Prepare listing data
       final Map<String, dynamic> listingData = {
         'seller_id': user.id,
@@ -264,6 +409,8 @@ class ListingService {
         'condition': condition,
         'status': 'active',
         'location': location,
+        'latitude': latitude,
+        'longitude': longitude,
         'images': imageUrls,
         'seller_name': sellerName,
         'seller_phone': sellerPhone,
@@ -314,10 +461,10 @@ class ListingService {
         listingData.addAll(dbAdditionalData);
       }
       
-
-    print('=== LISTING DATA TO INSERT ===');
-    print(listingData);
-    print('=============================');
+      print('=== LISTING DATA TO INSERT ===');
+      print(listingData);
+      print('=============================');
+      
       // Insert into database
       final response = await _supabase
           .from('listings')
@@ -365,4 +512,3 @@ class ListingService {
     }
   }
 }
-
