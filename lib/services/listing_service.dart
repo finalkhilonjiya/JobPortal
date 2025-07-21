@@ -118,6 +118,9 @@ class ListingService {
   }
 
   // Search listings by keywords and/or location
+  // Replace the searchListings method in your listing_service.dart with this:
+
+  // Search listings by keywords and/or location
   Future<List<Map<String, dynamic>>> searchListings({
     String? keywords,
     String? location,
@@ -199,17 +202,22 @@ class ListingService {
           query = query.ilike('location', '%$location%');
         }
 
-        // Apply sorting
+        // Build the final query with sorting and pagination
+        final List<Map<String, dynamic>> response;
+        
         if (sortBy == 'Price (Low to High)') {
-          query = query.order('price', ascending: true);
+          response = await query
+              .order('price', ascending: true)
+              .range(offset, offset + limit - 1);
         } else if (sortBy == 'Price (High to Low)') {
-          query = query.order('price', ascending: false);
+          response = await query
+              .order('price', ascending: false)
+              .range(offset, offset + limit - 1);
         } else {
-          query = query.order('created_at', ascending: false);
+          response = await query
+              .order('created_at', ascending: false)
+              .range(offset, offset + limit - 1);
         }
-
-        // Apply pagination
-        final response = await query.range(offset, offset + limit - 1);
         
         // Transform the data
         return List<Map<String, dynamic>>.from(response.map((item) {
