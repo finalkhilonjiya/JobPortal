@@ -1,4 +1,3 @@
-// File: widgets/bottom_nav_bar_widget.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
@@ -19,7 +18,7 @@ class BottomNavBarWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 8.h,
+      height: 9.5.h, // Increased slightly to prevent overflow
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
@@ -32,14 +31,14 @@ class BottomNavBarWidget extends StatelessWidget {
       child: BottomAppBar(
         shape: CircularNotchedRectangle(),
         notchMargin: 8,
-        child: Container(
-          height: 8.h,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 2.w),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildNavItem(Icons.home, 'Home', 0),
               _buildNavItem(Icons.search, 'Search', 1),
-              SizedBox(width: 10.w), // Space for FAB
+              SizedBox(width: 12.w), // Space for FAB
               _buildNavItem(Icons.star_outline, 'Package', 3),
               _buildNavItem(Icons.person_outline, 'Profile', 4),
             ],
@@ -53,8 +52,8 @@ class BottomNavBarWidget extends StatelessWidget {
     final isSelected = currentIndex == index;
     return InkWell(
       onTap: () => onTabSelected(index),
-      child: Container(
-        width: 15.w,
+      child: SizedBox(
+        width: 16.w,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -64,15 +63,15 @@ class BottomNavBarWidget extends StatelessWidget {
                 Icon(
                   icon,
                   color: isSelected ? Color(0xFF2563EB) : Colors.grey,
-                  size: 6.w,
+                  size: 5.5.w, // Slightly reduced to fit better
                 ),
-                if (hasNotification)
+                if (index == 2 && hasMessageNotification)
                   Positioned(
-                    right: -4,
-                    top: -4,
+                    right: -2,
+                    top: -2,
                     child: Container(
-                      width: 2.w,
-                      height: 2.w,
+                      width: 1.8.w,
+                      height: 1.8.w,
                       decoration: BoxDecoration(
                         color: Colors.red,
                         shape: BoxShape.circle,
@@ -81,13 +80,14 @@ class BottomNavBarWidget extends StatelessWidget {
                   ),
               ],
             ),
-            SizedBox(height: 0.5.h),
+            SizedBox(height: 0.3.h),
             Text(
               label,
               style: TextStyle(
-                fontSize: 9.sp,
+                fontSize: 8.5.sp, // Slightly reduced font size
                 color: isSelected ? Color(0xFF2563EB) : Colors.grey,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
