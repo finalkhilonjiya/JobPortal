@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:geolocator/geolocator.dart';
-import '../../widgets/location_autocomplete.dart';
+import '../../../widgets/location_autocomplete.dart';
 import '../../../services/location_service.dart';
 
 class ListingFormTab3 extends StatefulWidget {
