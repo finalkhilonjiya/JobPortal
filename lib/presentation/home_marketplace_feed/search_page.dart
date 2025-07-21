@@ -1,11 +1,12 @@
 // File: screens/marketplace/search_page.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import 'package:flutter_google_places_hoc081098/flutter_google_places_hoc081098.dart';
 import 'package:geolocator/geolocator.dart';
 import './widgets/square_product_card.dart';
 import './widgets/shimmer_widgets.dart';
 import '../../services/listing_service.dart';
+import '../../services/location_service.dart';
+import '../../widgets/location_autocomplete.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class SearchPage extends StatefulWidget {
@@ -29,9 +30,6 @@ class _SearchPageState extends State<SearchPage> {
   bool _isSearching = false;
   bool _hasSearched = false;
   Set<String> _favoriteIds = {};
-
-  // TODO: Replace with your actual Google API key
-  final String _googleApiKey = 'YOUR_GOOGLE_API_KEY_HERE';
 
   @override
   void dispose() {
@@ -87,24 +85,12 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
-  Future<void> _handleLocationAutocomplete() async {
-    // Use dynamic type instead of Prediction to avoid type errors
-    dynamic p = await PlacesAutocomplete.show(
-      context: context,
-      apiKey: _googleApiKey,
-      mode: Mode.overlay,
-      language: 'en',
-      hint: 'Search location',
-    );
-    if (p != null) {
-      setState(() {
-        _locationController.text = p.description ?? '';
-        _selectedLocation = p.description ?? '';
-        // If p has lat/lng, set them; otherwise, you may need to geocode
-        _selectedLat = null;
-        _selectedLng = null;
-      });
-    }
+  void _onLocationSelected(LocationResult location) {
+    setState(() {
+      _selectedLocation = location.displayName;
+      _selectedLat = location.latitude;
+      _selectedLng = location.longitude;
+    });
   }
 
   void _performSearch() async {
@@ -124,32 +110,16 @@ class _SearchPageState extends State<SearchPage> {
     });
 
     try {
-      // TODO: Implement actual search when ready
-      await Future.delayed(Duration(seconds: 2));
+      // Call your listing service with location data
+      final results = await _listingService.searchListings(
+        keywords: _keywordsController.text,
+        location: _selectedLocation,
+        latitude: _selectedLat,
+        longitude: _selectedLng,
+      );
       
       setState(() {
-        _searchResults = [
-          {
-            'id': '1',
-            'title': 'Search Result 1',
-            'price': 15000,
-            'image': 'https://via.placeholder.com/300',
-            'location': _selectedLocation.isNotEmpty ? _selectedLocation : 'Mumbai',
-            'category': 'Electronics',
-            'subcategory': 'Mobile Phones',
-            'phone': '9876543210',
-          },
-          {
-            'id': '2',
-            'title': 'Search Result 2',
-            'price': 25000,
-            'image': 'https://via.placeholder.com/300',
-            'location': _selectedLocation.isNotEmpty ? _selectedLocation : 'Delhi',
-            'category': 'Electronics',
-            'subcategory': 'Laptops',
-            'phone': '9876543211',
-          },
-        ];
+        _searchResults = results;
         _isSearching = false;
       });
     } catch (e) {
@@ -235,7 +205,7 @@ class _SearchPageState extends State<SearchPage> {
                 ),
                 SizedBox(height: 2.h),
 
-                // Location Field with Autocomplete (no dropdown)
+                // Location Field with Supabase Autocomplete
                 Text(
                   'Location',
                   style: TextStyle(
@@ -244,81 +214,65 @@ class _SearchPageState extends State<SearchPage> {
                   ),
                 ),
                 SizedBox(height: 1.h),
-                GestureDetector(
-                  onTap: () async {
-                    // Show the PlacesAutocomplete search dialog
-                    dynamic p = await PlacesAutocomplete.show(
-                      context: context,
-                      apiKey: _googleApiKey,
-                      mode: Mode.overlay, // or Mode.fullscreen
-                      language: "en",
-                      hint: 'Search location',
-                    );
-                    if (p != null) {
-                      setState(() {
-                        _selectedLocation = p.description ?? '';
-                        _locationController.text = p.description ?? '';
-                        // Optionally, get lat/lng using GoogleMapsPlaces
-                      });
-                      // To get lat/lng, you need to use GoogleMapsPlaces
-                      // final places = GoogleMapsPlaces(apiKey: _googleApiKey);
-                      // final detail = await places.getDetailsByPlaceId(p.placeId!);
-                      // final location = detail.result.geometry?.location;
-                      // if (location != null) {
-                      //   setState(() {
-                      //     _selectedLat = location.lat;
-                      //     _selectedLng = location.lng;
-                      //   });
-                      // }
-                    }
-                  },
-                  child: AbsorbPointer(
-                    child: TextField(
-                      controller: _locationController,
-                      decoration: InputDecoration(
-                        hintText: 'Enter location',
-                        prefixIcon: Icon(Icons.location_on, color: Color(0xFF2563EB)),
-                        suffixIcon: _isDetectingLocation
-                            ? Container(
-                                width: 48,
-                                height: 48,
-                                padding: EdgeInsets.all(12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: LocationAutocomplete(
+                        controller: _locationController,
+                        onLocationSelected: _onLocationSelected,
+                        hintText: 'Enter city name (e.g., Guwahati)',
+                      ),
+                    ),
+                    SizedBox(width: 2.w),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: IconButton(
+                        icon: _isDetectingLocation
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   color: Color(0xFF2563EB),
                                 ),
                               )
-                            : IconButton(
-                                icon: Icon(Icons.my_location, color: Color(0xFF2563EB)),
-                                onPressed: _detectCurrentLocation,
-                                tooltip: 'Use current location',
-                              ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            : Icon(Icons.my_location, color: Color(0xFF2563EB)),
+                        onPressed: _isDetectingLocation ? null : _detectCurrentLocation,
+                        tooltip: 'Use current location',
                       ),
-                      readOnly: true,
                     ),
-                  ),
+                  ],
                 ),
+                
+                // Show map if location is selected
                 if (_selectedLat != null && _selectedLng != null)
                   Container(
                     margin: EdgeInsets.only(top: 2.h),
                     height: 200,
-                    child: GoogleMap(
-                      initialCameraPosition: CameraPosition(
-                        target: LatLng(_selectedLat!, _selectedLng!),
-                        zoom: 14,
-                      ),
-                      markers: {
-                        Marker(
-                          markerId: MarkerId('selected-location'),
-                          position: LatLng(_selectedLat!, _selectedLng!),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: GoogleMap(
+                        initialCameraPosition: CameraPosition(
+                          target: LatLng(_selectedLat!, _selectedLng!),
+                          zoom: 14,
                         ),
-                      },
+                        markers: {
+                          Marker(
+                            markerId: MarkerId('selected-location'),
+                            position: LatLng(_selectedLat!, _selectedLng!),
+                            infoWindow: InfoWindow(
+                              title: _selectedLocation,
+                            ),
+                          ),
+                        },
+                      ),
                     ),
                   ),
                 SizedBox(height: 2.h),
