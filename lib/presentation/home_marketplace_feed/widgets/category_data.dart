@@ -5,7 +5,7 @@ class CategoryData {
     {
       'name': 'All',
       'icon': Icons.apps_rounded,
-      'image': 'https://cdn-icons-png.flaticon.com/512/2292/2292038.png',
+      'image': 'https://cdn-icons-png.flaticon.com/512/8058/8058572.png',
       'subcategories': [],
     },
     {
@@ -42,7 +42,7 @@ class CategoryData {
     {
       'name': 'Furniture',
       'icon': Icons.chair_rounded,
-      'image': 'https://cdn-icons-png.flaticon.com/512/2271/2271062.png',
+      'image': 'https://cdn-icons-png.flaticon.com/512/5781/5781883.png',
       'subcategories': [
         'Sofas & Seating',
         'Beds & Mattresses',
@@ -58,7 +58,8 @@ class CategoryData {
     {
       'name': 'Properties for Sale',
       'icon': Icons.home_rounded,
-      'image': 'https://cdn-icons-png.flaticon.com/512/619/619153.png',
+      'image':
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQpfW240Q3lGejPKThC36IFQtecjL4Yi2Ml-dzErxh4MYC2O69dnH4BXZ_D&s=10',
       'subcategories': [
         'Flats / Apartments for Sale',
         'Houses / Villas for Sale',
@@ -70,7 +71,8 @@ class CategoryData {
     {
       'name': 'Room for Rent',
       'icon': Icons.meeting_room_rounded,
-      'image': 'https://cdn-icons-png.flaticon.com/512/3082/3082383.png',
+      'image':
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQioUo2QBlK9Llqz7YSQcbLS6Jm7_6IEjGy8VLRyRtA7A&s',
       'subcategories': [
         'Single Room',
         'Shared Room',
@@ -85,7 +87,8 @@ class CategoryData {
     {
       'name': 'PG Accommodation',
       'icon': Icons.apartment_rounded,
-      'image': 'https://cdn-icons-png.flaticon.com/512/2590/2590818.png',
+      'image':
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTevvagKhA9s9jkz9oLOu0HYE1SdXL5B09b4w&s',
       'subcategories': [
         'PG for Male',
         'PG for Female',
@@ -100,7 +103,8 @@ class CategoryData {
     {
       'name': 'Homestays',
       'icon': Icons.cottage_rounded,
-      'image': 'https://cdn-icons-png.flaticon.com/512/3280/3280268.png',
+      'image':
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMZCkXg9qb1XjGEiR2kDXZoPHY2xWXAnk_9w&s',
       'subcategories': [
         'Entire Home',
         'Private Room',
@@ -132,7 +136,12 @@ class CategoryData {
       'transmissionType': ['Vehicles'],
       'bedrooms': ['Properties for Sale', 'Room for Rent', 'Homestays'],
       'bathrooms': ['Properties for Sale', 'Room for Rent', 'Homestays'],
-      'furnishingStatus': ['Properties for Sale', 'Room for Rent', 'PG Accommodation', 'Homestays'],
+      'furnishingStatus': [
+        'Properties for Sale',
+        'Room for Rent',
+        'PG Accommodation',
+        'Homestays'
+      ],
     };
 
     return fieldCategories[field]?.contains(category) ?? false;
