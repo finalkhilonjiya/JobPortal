@@ -6,7 +6,7 @@ import './listing_form_tab1.dart';
 import './listing_form_tab2.dart';
 import './listing_form_tab3.dart';
 import './category_data.dart';
-import '../../../services/listing_service.dart'; // Add this import
+import '../../../services/listing_service.dart';
 
 class CreateListingPage extends StatefulWidget {
   const CreateListingPage({Key? key}) : super(key: key);
@@ -18,10 +18,10 @@ class CreateListingPage extends StatefulWidget {
 class _CreateListingPageState extends State<CreateListingPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _currentTab = 0;
-  final ListingService _listingService = ListingService(); // Add this
-  bool _isSubmitting = false; // Add this
+  final ListingService _listingService = ListingService();
+  bool _isSubmitting = false;
   
-  // Form Data
+  // Form Data - Added latitude and longitude
   final Map<String, dynamic> _formData = {
     'title': '',
     'category': '',
@@ -31,6 +31,8 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
     'description': '',
     'images': <File>[],
     'location': '',
+    'latitude': null,    // Add this
+    'longitude': null,   // Add this
     'sellerName': '',
     'sellerPhone': '',
     'userType': 'Individual',
@@ -131,19 +133,18 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
   }
 
   void _submitListing() async {
-  if (_isSubmitting) return;
+    if (_isSubmitting) return;
 
-  // ADD THIS DEBUG CODE
-  print('=== FORM DATA DEBUG ===');
-  _formData.forEach((key, value) {
-    print('$key: $value (${value.runtimeType})');
-  });
-  print('======================');
+    // ADD THIS DEBUG CODE
+    print('=== FORM DATA DEBUG ===');
+    _formData.forEach((key, value) {
+      print('$key: $value (${value.runtimeType})');
+    });
+    print('======================');
 
-  setState(() {
-    _isSubmitting = true;
-  });
-
+    setState(() {
+      _isSubmitting = true;
+    });
 
     // Show loading dialog
     showDialog(
@@ -167,29 +168,31 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
       // Add category-specific fields if they have values
       if (_formData['brand'].isNotEmpty) additionalData['brand'] = _formData['brand'];
       if (_formData['model'].isNotEmpty) additionalData['model'] = _formData['model'];
-      if (_formData['yearOfPurchase'].isNotEmpty) additionalData['year_of_purchase'] = _formData['yearOfPurchase'];
-      if (_formData['warrantyStatus'].isNotEmpty) additionalData['warranty_status'] = _formData['warrantyStatus'];
+      if (_formData['yearOfPurchase'].isNotEmpty) additionalData['yearOfPurchase'] = _formData['yearOfPurchase'];
+      if (_formData['warrantyStatus'].isNotEmpty) additionalData['warrantyStatus'] = _formData['warrantyStatus'];
       if (_formData['availability'].isNotEmpty) additionalData['availability'] = _formData['availability'];
       
       // Vehicle specific
-      if (_formData['kilometresDriven'].isNotEmpty) additionalData['kilometres_driven'] = _formData['kilometresDriven'];
-      if (_formData['fuelType'].isNotEmpty) additionalData['fuel_type'] = _formData['fuelType'];
-      if (_formData['transmissionType'].isNotEmpty) additionalData['transmission_type'] = _formData['transmissionType'];
+      if (_formData['kilometresDriven'].isNotEmpty) additionalData['kilometresDriven'] = _formData['kilometresDriven'];
+      if (_formData['fuelType'].isNotEmpty) additionalData['fuelType'] = _formData['fuelType'];
+      if (_formData['transmissionType'].isNotEmpty) additionalData['transmissionType'] = _formData['transmissionType'];
       
       // Real estate specific
       if (_formData['bedrooms'].isNotEmpty) additionalData['bedrooms'] = _formData['bedrooms'];
       if (_formData['bathrooms'].isNotEmpty) additionalData['bathrooms'] = _formData['bathrooms'];
-      if (_formData['furnishingStatus'].isNotEmpty) additionalData['furnishing_status'] = _formData['furnishingStatus'];
+      if (_formData['furnishingStatus'].isNotEmpty) additionalData['furnishingStatus'] = _formData['furnishingStatus'];
 
-      // Create listing
+      // Create listing with coordinates
       final result = await _listingService.createListing(
         title: _formData['title'],
-        categoryId: _formData['subcategory'], // Use subcategory ID as the category
+        categoryId: _formData['subcategory'],
         description: _formData['description'],
         price: double.parse(_formData['price']),
         priceType: _formData['priceType'],
         condition: _mapConditionToEnum(_formData['condition']),
         location: _formData['location'],
+        latitude: _formData['latitude'],    // Add this
+        longitude: _formData['longitude'],  // Add this
         sellerName: _formData['sellerName'],
         sellerPhone: _formData['sellerPhone'],
         userType: _formData['userType'],
