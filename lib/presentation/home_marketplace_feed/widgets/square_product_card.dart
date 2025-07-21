@@ -32,9 +32,9 @@ class SquareProductCard extends StatelessWidget {
             height: 42.h,
             child: Column(
               children: [
-                // Image Section - 65%
+                // Image Section - 60%
                 Container(
-                  height: 27.3.h, // 65% of 42.h
+                  height: 25.2.h, // 60% of 42.h
                   width: double.infinity,
                   child: Stack(
                     children: [
@@ -70,9 +70,9 @@ class SquareProductCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Details Section - 35%
+                // Details Section - 40%
                 Container(
-                  height: 14.7.h, // 35% of 42.h
+                  height: 16.8.h, // 40% of 42.h
                   padding: EdgeInsets.all(3.w),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
