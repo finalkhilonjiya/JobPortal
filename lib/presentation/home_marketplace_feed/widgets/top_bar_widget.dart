@@ -92,73 +92,89 @@ class _TopBarWidgetState extends State<TopBarWidget> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Logo and Title
-          Row(
-            children: [
-              Container(
-                height: 8.w,
-                width: 8.w,
-                decoration: BoxDecoration(
-                  color: Color(0xFF2563EB),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(
-                    'K',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14.sp,
+          // Logo and Title - Flexible to prevent overflow
+          Flexible(
+            flex: 1,
+            child: Row(
+              children: [
+                Container(
+                  height: 8.w,
+                  width: 8.w,
+                  decoration: BoxDecoration(
+                    color: Color(0xFF2563EB),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'K',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.sp,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              SizedBox(width: 2.w),
-              Text(
-                'khilonjiya.com',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2563EB),
-                ),
-              ),
-            ],
-          ),
-          // Location
-          InkWell(
-            onTap: _detectLocation,
-            child: Row(
-              children: [
-                Icon(
-                  Icons.location_on,
-                  color: Color(0xFF2563EB),
-                  size: 5.w,
-                ),
-                SizedBox(width: 1.w),
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: 35.w),
+                SizedBox(width: 2.w),
+                Flexible(
                   child: Text(
-                    _currentLocation,
-                    style: TextStyle(fontSize: 11.sp),
+                    'khilonjiya.com',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2563EB),
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (_isDetectingLocation)
-                  SizedBox(
-                    width: 4.w,
-                    height: 4.w,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Color(0xFF2563EB),
-                    ),
-                  )
-                else
+              ],
+            ),
+          ),
+          
+          // Add some spacing
+          SizedBox(width: 2.w),
+          
+          // Location - Flexible to prevent overflow
+          Flexible(
+            flex: 1,
+            child: InkWell(
+              onTap: _detectLocation,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   Icon(
-                    Icons.arrow_drop_down,
-                    color: Colors.grey,
+                    Icons.location_on,
+                    color: Color(0xFF2563EB),
                     size: 5.w,
                   ),
-              ],
+                  SizedBox(width: 1.w),
+                  Flexible(
+                    child: Text(
+                      _currentLocation,
+                      style: TextStyle(fontSize: 11.sp),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
+                  SizedBox(width: 1.w),
+                  if (_isDetectingLocation)
+                    SizedBox(
+                      width: 4.w,
+                      height: 4.w,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFF2563EB),
+                      ),
+                    )
+                  else
+                    Icon(
+                      Icons.arrow_drop_down,
+                      color: Colors.grey,
+                      size: 5.w,
+                    ),
+                ],
+              ),
             ),
           ),
         ],
