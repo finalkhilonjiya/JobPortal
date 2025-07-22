@@ -247,34 +247,7 @@ class _SearchPageState extends State<SearchPage> {
                   ],
                 ),
                 
-                // Show map if location is selected
-                if (_selectedLat != null && _selectedLng != null)
-                  Container(
-                    margin: EdgeInsets.only(top: 2.h),
-                    height: 200,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: GoogleMap(
-                        initialCameraPosition: CameraPosition(
-                          target: LatLng(_selectedLat!, _selectedLng!),
-                          zoom: 14,
-                        ),
-                        markers: {
-                          Marker(
-                            markerId: MarkerId('selected-location'),
-                            position: LatLng(_selectedLat!, _selectedLng!),
-                            infoWindow: InfoWindow(
-                              title: _selectedLocation,
-                            ),
-                          ),
-                        },
-                      ),
-                    ),
-                  ),
+                
                 SizedBox(height: 2.h),
 
                 // Search Button
