@@ -198,7 +198,7 @@ Future<List<Map<String, dynamic>>> fetchListings({
           final categories = await _supabase
               .from('categories')
               .select('id, name, parent_category_id')
-              .in_('id', categoryIds.toList());
+              .inFilter('id', categoryIds.toList());
               
           // Get parent category IDs
           Set<String> parentIds = {};
@@ -214,7 +214,7 @@ Future<List<Map<String, dynamic>>> fetchListings({
             final parents = await _supabase
                 .from('categories')
                 .select('id, name')
-                .in_('id', parentIds.toList());
+                .inFilter('id', parentIds.toList());
                 
             for (var parent in parents) {
               categoryInfo[parent['id']] = parent;
@@ -324,7 +324,7 @@ Future<List<Map<String, dynamic>>> fetchListings({
           final parentCategories = await _supabase
               .from('categories')
               .select('id, name')
-              .in_('id', parentCategoryIds.toList());
+              .inFilter('id', parentCategoryIds.toList());
               
           for (var parent in parentCategories) {
             parentCategoryNames[parent['id']] = parent['name'];
@@ -436,7 +436,7 @@ Future<List<Map<String, dynamic>>> fetchListings({
         final parentCategories = await _supabase
             .from('categories')
             .select('id, name')
-            .in_('id', parentCategoryIds.toList());
+            .inFilter('id', parentCategoryIds.toList());
             
         for (var parent in parentCategories) {
           parentCategoryNames[parent['id']] = parent['name'];
