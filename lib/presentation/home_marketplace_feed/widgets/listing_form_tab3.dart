@@ -23,6 +23,7 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
+  final LocationService _locationService = LocationService();
   bool _isDetectingLocation = false;
 
   @override
@@ -61,7 +62,27 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
         desiredAccuracy: LocationAccuracy.high,
       );
 
-      String locationText = 'Current Location (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)})';
+      // Find nearest location from database
+      final nearestLocation = await _locationService.findNearestLocation(
+        position.latitude,
+        position.longitude,
+      );
+
+      String locationText;
+      double finalLat = position.latitude;
+      double finalLng = position.longitude;
+
+      if (nearestLocation != null) {
+        locationText = nearestLocation.displayName;
+        // Use the location's coordinates if it's an exact match
+        if (!nearestLocation.displayName.startsWith('Near ')) {
+          finalLat = nearestLocation.latitude;
+          finalLng = nearestLocation.longitude;
+        }
+      } else {
+        // Fallback if no location found in database
+        locationText = 'Current Location (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)})';
+      }
       
       setState(() {
         _locationController.text = locationText;
@@ -71,13 +92,13 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
       // Update form data with location and coordinates
       widget.onDataChanged({
         'location': locationText,
-        'latitude': position.latitude,
-        'longitude': position.longitude,
+        'latitude': finalLat,
+        'longitude': finalLng,
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Location detected successfully'),
+          content: Text('Location: $locationText'),
           backgroundColor: Colors.green,
         ),
       );
@@ -190,22 +211,51 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
               ),
             ],
           ),
+          
+          // Location confirmation with actual place name
           if (widget.formData['latitude'] != null && widget.formData['longitude'] != null)
             Container(
               margin: EdgeInsets.only(top: 1.h),
-              padding: EdgeInsets.all(2.w),
+              padding: EdgeInsets.all(3.w),
               decoration: BoxDecoration(
                 color: Colors.green.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.green.withOpacity(0.3)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle, color: Colors.green, size: 4.w),
+                  Icon(Icons.location_on, color: Colors.green, size: 5.w),
                   SizedBox(width: 2.w),
                   Expanded(
-                    child: Text(
-                      'Location coordinates captured',
-                      style: TextStyle(fontSize: 10.sp, color: Colors.green[700]),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Location captured',
+                          style: TextStyle(
+                            fontSize: 11.sp, 
+                            color: Colors.green[700],
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SizedBox(height: 0.5.h),
+                        Text(
+                          widget.formData['location'] ?? '',
+                          style: TextStyle(
+                            fontSize: 10.sp, 
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        if (!widget.formData['location'].toString().startsWith('Near'))
+                          Text(
+                            'Exact location match',
+                            style: TextStyle(
+                              fontSize: 9.sp, 
+                              color: Colors.green[600],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ],
@@ -323,9 +373,12 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
                         style: TextStyle(fontSize: 10.sp, color: Color(0xFF2563EB)),
                       ),
                       if (widget.formData['latitude'] != null && widget.formData['longitude'] != null)
-                        Text(
-                          'Location coordinates help buyers find listings near them',
-                          style: TextStyle(fontSize: 9.sp, color: Color(0xFF2563EB)),
+                        Padding(
+                          padding: EdgeInsets.only(top: 0.5.h),
+                          child: Text(
+                            'Location coordinates help buyers find listings near them',
+                            style: TextStyle(fontSize: 9.sp, color: Color(0xFF2563EB)),
+                          ),
                         ),
                     ],
                   ),
