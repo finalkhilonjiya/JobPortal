@@ -92,7 +92,7 @@ Future<List<Map<String, dynamic>>> fetchListings({
         final parentCategories = await _supabase
             .from('categories')
             .select('id, name')
-            .in_('id', parentCategoryIds.toList());
+            .inFilter('id', parentCategoryIds.toList());
             
         for (var parent in parentCategories) {
           parentCategoryNames[parent['id']] = parent['name'];
