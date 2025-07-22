@@ -406,7 +406,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                   ),
                 ),
              PremiumCarousel(
-  listings: premiumListings,
+  listings: _premiumListings,
   onTap: _showListingDetails,
   favoriteIds: _favoriteIds,
   onFavoriteToggle: _toggleFavorite,
