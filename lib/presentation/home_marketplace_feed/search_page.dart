@@ -7,7 +7,6 @@ import './widgets/shimmer_widgets.dart';
 import '../../services/listing_service.dart';
 import '../../services/location_service.dart';
 import '../../widgets/location_autocomplete.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({Key? key}) : super(key: key);
@@ -20,6 +19,7 @@ class _SearchPageState extends State<SearchPage> {
   final TextEditingController _keywordsController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final ListingService _listingService = ListingService();
+  final LocationService _locationService = LocationService();
   
   String _selectedLocation = '';
   double? _selectedLat;
@@ -58,19 +58,39 @@ class _SearchPageState extends State<SearchPage> {
         desiredAccuracy: LocationAccuracy.high,
       );
 
-      String locationText = 'Current Location (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)})';
+      // Find nearest location from database
+      final nearestLocation = await _locationService.findNearestLocation(
+        position.latitude,
+        position.longitude,
+      );
+
+      String locationText;
+      double finalLat = position.latitude;
+      double finalLng = position.longitude;
+
+      if (nearestLocation != null) {
+        locationText = nearestLocation.displayName;
+        // Use the location's coordinates if it's an exact match
+        if (!nearestLocation.displayName.startsWith('Near ')) {
+          finalLat = nearestLocation.latitude;
+          finalLng = nearestLocation.longitude;
+        }
+      } else {
+        // Fallback if no location found in database
+        locationText = 'Current Location (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)})';
+      }
       
       setState(() {
         _locationController.text = locationText;
         _selectedLocation = locationText;
-        _selectedLat = position.latitude;
-        _selectedLng = position.longitude;
+        _selectedLat = finalLat;
+        _selectedLng = finalLng;
         _isDetectingLocation = false;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Location detected successfully'),
+          content: Text('Location: $locationText'),
           backgroundColor: Colors.green,
         ),
       );
@@ -112,16 +132,37 @@ class _SearchPageState extends State<SearchPage> {
     try {
       // Call your listing service with location data
       final results = await _listingService.searchListings(
-        keywords: _keywordsController.text,
+        keywords: _keywordsController.text.trim(),
         location: _selectedLocation,
         latitude: _selectedLat,
         longitude: _selectedLng,
+        sortBy: 'Newest First',
       );
+      
+      // Also fetch user favorites if authenticated
+      Set<String> favorites = {};
+      try {
+        favorites = await _listingService.getUserFavorites();
+      } catch (e) {
+        // Ignore favorites error if user not authenticated
+        print('Could not fetch favorites: $e');
+      }
       
       setState(() {
         _searchResults = results;
+        _favoriteIds = favorites;
         _isSearching = false;
       });
+
+      // Show message if no results found
+      if (results.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No listings found for your search'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
     } catch (e) {
       setState(() => _isSearching = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -247,6 +288,49 @@ class _SearchPageState extends State<SearchPage> {
                   ],
                 ),
                 
+                // Show location indicator if location is selected
+                if (_selectedLat != null && _selectedLng != null)
+                  Container(
+                    margin: EdgeInsets.only(top: 2.h),
+                    padding: EdgeInsets.all(3.w),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.green.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          color: Colors.green,
+                          size: 5.w,
+                        ),
+                        SizedBox(width: 2.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Location selected',
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.green[700],
+                                ),
+                              ),
+                              Text(
+                                _selectedLocation,
+                                style: TextStyle(
+                                  fontSize: 10.sp,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 
                 SizedBox(height: 2.h),
 
@@ -332,14 +416,24 @@ class _SearchPageState extends State<SearchPage> {
                               return SquareProductCard(
                                 data: listing,
                                 isFavorite: _favoriteIds.contains(listing['id']),
-                                onFavoriteToggle: () {
-                                  setState(() {
-                                    if (_favoriteIds.contains(listing['id'])) {
-                                      _favoriteIds.remove(listing['id']);
-                                    } else {
-                                      _favoriteIds.add(listing['id']);
-                                    }
-                                  });
+                                onFavoriteToggle: () async {
+                                  try {
+                                    final isFavorited = await _listingService.toggleFavorite(listing['id']);
+                                    setState(() {
+                                      if (isFavorited) {
+                                        _favoriteIds.add(listing['id']);
+                                      } else {
+                                        _favoriteIds.remove(listing['id']);
+                                      }
+                                    });
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Please login to add favorites'),
+                                        backgroundColor: Colors.orange,
+                                      ),
+                                    );
+                                  }
                                 },
                                 onTap: () {
                                   // Navigate to listing details
@@ -354,35 +448,17 @@ class _SearchPageState extends State<SearchPage> {
                             },
                           )
                         : Center(
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.search,
-          size: 20.w,
-          color: Colors.grey[400],
-        ),
-        SizedBox(height: 2.h),
-        // Remove or comment out these Text widgets:
-        // Text(
-        //   'Search for products',
-        //   style: TextStyle(
-        //     fontSize: 14.sp,
-        //     color: Colors.grey[600],
-        //     fontWeight: FontWeight.bold,
-        //   ),
-        // ),
-        // SizedBox(height: 1.h),
-        // Text(
-        //   'Enter keywords or select location',
-        //   style: TextStyle(
-        //     fontSize: 11.sp,
-        //     color: Colors.grey[500],
-        //   ),
-        // ),
-      ],
-    ),
-  ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.search,
+                                  size: 20.w,
+                                  color: Colors.grey[400],
+                                ),
+                              ],
+                            ),
+                          ),
           ),
         ],
       ),
