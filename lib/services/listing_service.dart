@@ -259,6 +259,7 @@ Future<List<Map<String, dynamic>>> fetchListings({
             'views': item['views_count'] ?? 0,
             'created_at': item['created_at'],
             'is_featured': item['is_featured'] ?? false,
+            'is_premium': item['is_premium'] ?? false,
             'distance': item['distance'], // Distance in kilometers
             'latitude': item['latitude'],
             'longitude': item['longitude'],
@@ -363,6 +364,7 @@ Future<List<Map<String, dynamic>>> fetchListings({
             'views': item['views_count'] ?? 0,
             'created_at': item['created_at'],
             'is_featured': item['is_featured'] ?? false,
+            'is_premium': item['is_premium'] ?? false,
             'latitude': item['latitude'],
             'longitude': item['longitude'],
           };
