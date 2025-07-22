@@ -381,34 +381,35 @@ class _SearchPageState extends State<SearchPage> {
                             },
                           )
                         : Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.search,
-                                  size: 20.w,
-                                  color: Colors.grey[400],
-                                ),
-                                SizedBox(height: 2.h),
-                                Text(
-                                  'Search for products',
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    color: Colors.grey[600],
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                SizedBox(height: 1.h),
-                                Text(
-                                  'Enter keywords or select location',
-                                  style: TextStyle(
-                                    fontSize: 11.sp,
-                                    color: Colors.grey[500],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.search,
+          size: 20.w,
+          color: Colors.grey[400],
+        ),
+        SizedBox(height: 2.h),
+        // Remove or comment out these Text widgets:
+        // Text(
+        //   'Search for products',
+        //   style: TextStyle(
+        //     fontSize: 14.sp,
+        //     color: Colors.grey[600],
+        //     fontWeight: FontWeight.bold,
+        //   ),
+        // ),
+        // SizedBox(height: 1.h),
+        // Text(
+        //   'Enter keywords or select location',
+        //   style: TextStyle(
+        //     fontSize: 11.sp,
+        //     color: Colors.grey[500],
+        //   ),
+        // ),
+      ],
+    ),
+  ),
           ),
         ],
       ),
