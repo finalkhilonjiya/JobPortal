@@ -412,12 +412,12 @@ Future<List<Map<String, dynamic>>> fetchListings({
             )
           ''')
           .eq('status', 'active')
-          .eq('is_premium', true) // Only fetch premium listings
+          .eq('is_premium', true);// Only fetch premium listings
           if (categoryId != null && categoryId != 'All') {
         query = query.eq('category_id', categoryId);
       }
 
-      final response = await query;
+      final response = await query
           .order('created_at', ascending: false)
           .limit(limit);
 
