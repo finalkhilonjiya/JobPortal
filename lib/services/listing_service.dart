@@ -77,11 +77,46 @@ class ListingService {
       // Apply pagination
       final response = await finalQuery.range(offset, offset + limit - 1);
       
+      // First, get all unique parent category IDs
+      Set<String> parentCategoryIds = {};
+      for (var item in response) {
+        if (item['category']['parent_category_id'] != null) {
+          parentCategoryIds.add(item['category']['parent_category_id']);
+        }
+      }
+      
+      // Fetch parent categories if needed
+      Map<String, String> parentCategoryNames = {};
+      if (parentCategoryIds.isNotEmpty) {
+        final parentCategories = await _supabase
+            .from('categories')
+            .select('id, name')
+            .in_('id', parentCategoryIds.toList());
+            
+        for (var parent in parentCategories) {
+          parentCategoryNames[parent['id']] = parent['name'];
+        }
+      }
+      
       // Transform the data to match your existing format
       return List<Map<String, dynamic>>.from(response.map((item) {
         // Get first image from the images array
         List<dynamic> images = item['images'] ?? [];
         String mainImage = images.isNotEmpty ? images[0] : 'https://via.placeholder.com/300';
+        
+        // Determine category and subcategory
+        String categoryName;
+        String subcategoryName;
+        
+        if (item['category']['parent_category_id'] != null) {
+          // This is a subcategory
+          categoryName = parentCategoryNames[item['category']['parent_category_id']] ?? 'Uncategorized';
+          subcategoryName = item['category']['name'] ?? 'Uncategorized';
+        } else {
+          // This is a parent category
+          categoryName = item['category']['name'] ?? 'Uncategorized';
+          subcategoryName = item['category']['name'] ?? 'Uncategorized';
+        }
         
         return {
           'id': item['id'],
@@ -90,8 +125,8 @@ class ListingService {
           'image': mainImage,
           'images': images,
           'location': item['location'] ?? 'Location not specified',
-          'category': item['category']['name'] ?? 'Uncategorized',
-          'subcategory': item['category']['name'] ?? 'Uncategorized', // Using category name as subcategory
+          'category': categoryName,
+          'subcategory': subcategoryName,
           'description': item['description'] ?? '',
           'condition': item['condition'] ?? 'used',
           'phone': item['seller_phone'] ?? '',
@@ -109,6 +144,8 @@ class ListingService {
           'bedrooms': item['bedrooms'],
           'bathrooms': item['bathrooms'],
           'furnishing': item['furnishing_status'],
+          'latitude': item['latitude'],
+          'longitude': item['longitude'],
         };
       }));
     } catch (e) {
@@ -116,9 +153,6 @@ class ListingService {
       return []; // Return empty array on error
     }
   }
-
-  // Search listings by keywords and/or location
-  // Replace the searchListings method in your listing_service.dart with this:
 
   // Search listings by keywords and/or location
   Future<List<Map<String, dynamic>>> searchListings({
@@ -148,10 +182,64 @@ class ListingService {
           },
         );
 
+        // Get parent categories for the results
+        Set<String> categoryIds = {};
+        for (var item in response) {
+          if (item['category_id'] != null) {
+            categoryIds.add(item['category_id']);
+          }
+        }
+        
+        // Fetch categories with their parents
+        Map<String, Map<String, dynamic>> categoryInfo = {};
+        if (categoryIds.isNotEmpty) {
+          final categories = await _supabase
+              .from('categories')
+              .select('id, name, parent_category_id')
+              .in_('id', categoryIds.toList());
+              
+          // Get parent category IDs
+          Set<String> parentIds = {};
+          for (var cat in categories) {
+            if (cat['parent_category_id'] != null) {
+              parentIds.add(cat['parent_category_id']);
+            }
+            categoryInfo[cat['id']] = cat;
+          }
+          
+          // Fetch parent categories
+          if (parentIds.isNotEmpty) {
+            final parents = await _supabase
+                .from('categories')
+                .select('id, name')
+                .in_('id', parentIds.toList());
+                
+            for (var parent in parents) {
+              categoryInfo[parent['id']] = parent;
+            }
+          }
+        }
+
         // Transform the response
         return List<Map<String, dynamic>>.from(response.map((item) {
           List<dynamic> images = item['images'] ?? [];
           String mainImage = images.isNotEmpty ? images[0] : 'https://via.placeholder.com/300';
+          
+          // Determine category names
+          String categoryName = 'Uncategorized';
+          String subcategoryName = 'Uncategorized';
+          
+          if (item['category_id'] != null && categoryInfo.containsKey(item['category_id'])) {
+            var catData = categoryInfo[item['category_id']]!;
+            if (catData['parent_category_id'] != null && 
+                categoryInfo.containsKey(catData['parent_category_id'])) {
+              categoryName = categoryInfo[catData['parent_category_id']]!['name'];
+              subcategoryName = catData['name'];
+            } else {
+              categoryName = catData['name'];
+              subcategoryName = catData['name'];
+            }
+          }
           
           return {
             'id': item['id'],
@@ -160,8 +248,8 @@ class ListingService {
             'image': mainImage,
             'images': images,
             'location': item['location'] ?? 'Location not specified',
-            'category': item['category_name'] ?? 'Uncategorized',
-            'subcategory': item['category_name'] ?? 'Uncategorized',
+            'category': categoryName,
+            'subcategory': subcategoryName,
             'description': item['description'] ?? '',
             'condition': item['condition'] ?? 'used',
             'phone': item['seller_phone'] ?? '',
@@ -182,7 +270,8 @@ class ListingService {
               *,
               category:categories!inner(
                 id,
-                name
+                name,
+                parent_category_id
               )
             ''')
             .eq('status', 'active');
@@ -219,10 +308,42 @@ class ListingService {
               .range(offset, offset + limit - 1);
         }
         
+        // Get parent categories
+        Set<String> parentCategoryIds = {};
+        for (var item in response) {
+          if (item['category']['parent_category_id'] != null) {
+            parentCategoryIds.add(item['category']['parent_category_id']);
+          }
+        }
+        
+        Map<String, String> parentCategoryNames = {};
+        if (parentCategoryIds.isNotEmpty) {
+          final parentCategories = await _supabase
+              .from('categories')
+              .select('id, name')
+              .in_('id', parentCategoryIds.toList());
+              
+          for (var parent in parentCategories) {
+            parentCategoryNames[parent['id']] = parent['name'];
+          }
+        }
+        
         // Transform the data
         return List<Map<String, dynamic>>.from(response.map((item) {
           List<dynamic> images = item['images'] ?? [];
           String mainImage = images.isNotEmpty ? images[0] : 'https://via.placeholder.com/300';
+          
+          // Determine category and subcategory
+          String categoryName;
+          String subcategoryName;
+          
+          if (item['category']['parent_category_id'] != null) {
+            categoryName = parentCategoryNames[item['category']['parent_category_id']] ?? 'Uncategorized';
+            subcategoryName = item['category']['name'] ?? 'Uncategorized';
+          } else {
+            categoryName = item['category']['name'] ?? 'Uncategorized';
+            subcategoryName = item['category']['name'] ?? 'Uncategorized';
+          }
           
           return {
             'id': item['id'],
@@ -231,8 +352,8 @@ class ListingService {
             'image': mainImage,
             'images': images,
             'location': item['location'] ?? 'Location not specified',
-            'category': item['category']['name'] ?? 'Uncategorized',
-            'subcategory': item['category']['name'] ?? 'Uncategorized',
+            'category': categoryName,
+            'subcategory': subcategoryName,
             'description': item['description'] ?? '',
             'condition': item['condition'] ?? 'used',
             'phone': item['seller_phone'] ?? '',
@@ -279,7 +400,8 @@ class ListingService {
             *,
             category:categories!inner(
               id,
-              name
+              name,
+              parent_category_id
             ),
             seller:user_profiles!inner(
               id,
@@ -292,10 +414,42 @@ class ListingService {
           .order('created_at', ascending: false)
           .limit(10);
       
+      // Get parent categories
+      Set<String> parentCategoryIds = {};
+      for (var item in response) {
+        if (item['category']['parent_category_id'] != null) {
+          parentCategoryIds.add(item['category']['parent_category_id']);
+        }
+      }
+      
+      Map<String, String> parentCategoryNames = {};
+      if (parentCategoryIds.isNotEmpty) {
+        final parentCategories = await _supabase
+            .from('categories')
+            .select('id, name')
+            .in_('id', parentCategoryIds.toList());
+            
+        for (var parent in parentCategories) {
+          parentCategoryNames[parent['id']] = parent['name'];
+        }
+      }
+      
       // Transform the data
       return List<Map<String, dynamic>>.from(response.map((item) {
         List<dynamic> images = item['images'] ?? [];
         String mainImage = images.isNotEmpty ? images[0] : '';
+        
+        // Determine category and subcategory
+        String categoryName;
+        String subcategoryName;
+        
+        if (item['category']['parent_category_id'] != null) {
+          categoryName = parentCategoryNames[item['category']['parent_category_id']] ?? 'Uncategorized';
+          subcategoryName = item['category']['name'] ?? 'Uncategorized';
+        } else {
+          categoryName = item['category']['name'] ?? 'Uncategorized';
+          subcategoryName = item['category']['name'] ?? 'Uncategorized';
+        }
         
         return {
           'id': item['id'],
@@ -304,8 +458,8 @@ class ListingService {
           'image': mainImage,
           'images': images,
           'location': item['location'] ?? '',
-          'category': item['category']['name'],
-          'subcategory': item['category']['name'],
+          'category': categoryName,
+          'subcategory': subcategoryName,
           'description': item['description'],
           'condition': item['condition'],
           'phone': item['seller_phone'] ?? item['seller']['phone_number'] ?? '',
