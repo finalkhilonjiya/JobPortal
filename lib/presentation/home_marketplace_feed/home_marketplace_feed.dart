@@ -405,14 +405,15 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                     ),
                   ),
                 ),
-                PremiumCarousel(
+             PremiumCarousel(
   listings: premiumListings,
-  onTap: (listing) => // your navigation,
-  favoriteIds: favoriteIds,
-  onFavoriteToggle: (id) => // your toggle,
-  onCall: (phone) => // add this
-  onWhatsApp: (phone) => // add this
+  onTap: _showListingDetails,
+  favoriteIds: _favoriteIds,
+  onFavoriteToggle: _toggleFavorite,
+  onCall: (phone) => MarketplaceHelpers.makePhoneCall(context, phone),
+  onWhatsApp: (phone) => MarketplaceHelpers.openWhatsApp(context, phone),
 ),
+
               ],
             ),
           ),
@@ -516,11 +517,15 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                       _isLoadingPremium
                           ? ShimmerPremiumSection()
                           : PremiumCarousel(
-                              listings: _premiumListings,
-                              onTap: _showListingDetails,
-                              favoriteIds: _favoriteIds,
-                              onFavoriteToggle: _toggleFavorite,
-                            ),
+    listings: _premiumListings,
+    onTap: _showListingDetails,
+    favoriteIds: _favoriteIds,
+    onFavoriteToggle: _toggleFavorite,
+    onCall: (phone) => MarketplaceHelpers.makePhoneCall(context, phone),
+    onWhatsApp: (phone) => MarketplaceHelpers.openWhatsApp(context, phone),
+  ),
+
+
                     ],
                   ),
                 ),
