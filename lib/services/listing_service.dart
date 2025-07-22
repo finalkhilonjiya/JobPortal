@@ -39,7 +39,7 @@ class ListingService {
   }
   
   // Fetch all active listings with infinite scroll support
-  Future<List<Map<String, dynamic>>> fetchListings({
+Future<List<Map<String, dynamic>>> fetchListings({
     String? categoryId,
     String? sortBy,
     int limit = 20,
@@ -56,7 +56,8 @@ class ListingService {
               parent_category_id
             )
           ''')
-          .eq('status', 'active');
+          .eq('status', 'active')
+          .eq('is_premium', false); // Only fetch non-premium listings
 
       // Apply category filter if provided
       if (categoryId != null && categoryId != 'All') {
@@ -134,6 +135,7 @@ class ListingService {
           'views': item['views_count'] ?? 0,
           'created_at': item['created_at'],
           'is_featured': item['is_featured'] ?? false,
+          'is_premium': item['is_premium'] ?? false,
           // Additional fields
           'brand': item['brand'],
           'model': item['model'],
@@ -392,9 +394,12 @@ class ListingService {
   }
 
   // Fetch premium/featured listings
-  Future<List<Map<String, dynamic>>> fetchPremiumListings() async {
+  Future<List<Map<String, dynamic>>> fetchPremiumListings({
+    String? categoryId,
+    int limit = 10,
+  }) async {
     try {
-      final response = await _supabase
+      var query = _supabase
           .from('listings')
           .select('''
             *,
@@ -402,17 +407,19 @@ class ListingService {
               id,
               name,
               parent_category_id
-            ),
-            seller:user_profiles!inner(
-              id,
-              full_name,
-              phone_number
             )
           ''')
           .eq('status', 'active')
-          .eq('is_featured', true)
+          .eq('is_premium', true) // Only fetch premium listings
           .order('created_at', ascending: false)
-          .limit(10);
+          .limit(limit);
+
+      // Apply category filter if provided
+      if (categoryId != null && categoryId != 'All') {
+        query = query.eq('category_id', categoryId);
+      }
+
+      final response = await query;
       
       // Get parent categories
       Set<String> parentCategoryIds = {};
@@ -462,9 +469,24 @@ class ListingService {
           'subcategory': subcategoryName,
           'description': item['description'],
           'condition': item['condition'],
-          'phone': item['seller_phone'] ?? item['seller']['phone_number'] ?? '',
-          'seller_name': item['seller_name'] ?? item['seller']['full_name'] ?? 'Unknown',
-          'is_featured': true,
+          'phone': item['seller_phone'] ?? '',
+          'seller_name': item['seller_name'] ?? 'Unknown',
+          'is_featured': item['is_featured'] ?? false,
+          'is_premium': true,
+          'views': item['views_count'] ?? 0,
+          'created_at': item['created_at'],
+          // Additional fields
+          'brand': item['brand'],
+          'model': item['model'],
+          'year': item['year_of_purchase'],
+          'fuel_type': item['fuel_type'],
+          'transmission': item['transmission_type'],
+          'km_driven': item['kilometres_driven'],
+          'bedrooms': item['bedrooms'],
+          'bathrooms': item['bathrooms'],
+          'furnishing': item['furnishing_status'],
+          'latitude': item['latitude'],
+          'longitude': item['longitude'],
         };
       }));
     } catch (e) {
