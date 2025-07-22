@@ -27,6 +27,51 @@ class LocationService {
       return [];
     }
   }
+  Future<LocationResult?> findNearestLocation(double latitude, double longitude) async {
+    try {
+      final response = await _supabase.rpc(
+        'find_nearest_location_simple', // Use the simple version
+        params: {
+          'user_lat': latitude,
+          'user_lng': longitude,
+        },
+      );
+
+      if (response == null || (response as List).isEmpty) {
+        return null;
+      }
+
+      final location = response[0];
+      
+      // If the nearest location is more than 5km away, 
+      // return a generic "Near [location]" response
+      final distanceKm = location['distance_km'] ?? 0;
+      
+      if (distanceKm > 5) {
+        return LocationResult(
+          id: location['id'],
+          city: location['city'],
+          state: location['state'],
+          latitude: latitude, // Use user's actual coordinates
+          longitude: longitude,
+          displayName: 'Near ${location['name']}, ${location['city']}',
+        );
+      } else {
+        // If within 5km, use the actual location
+        return LocationResult(
+          id: location['id'],
+          city: location['city'],
+          state: location['state'],
+          latitude: location['latitude'],
+          longitude: location['longitude'],
+          displayName: location['display_name'],
+        );
+      }
+    } catch (e) {
+      print('Error finding nearest location: $e');
+      return null;
+    }
+  }
 
   // Get all locations for a specific state
   Future<List<LocationResult>> getLocationsByState(String state) async {
