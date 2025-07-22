@@ -406,11 +406,13 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                   ),
                 ),
                 PremiumCarousel(
-                  listings: _premiumListings,
-                  onTap: _showListingDetails,
-                  favoriteIds: _favoriteIds,
-                  onFavoriteToggle: _toggleFavorite,
-                ),
+  listings: premiumListings,
+  onTap: (listing) => // your navigation,
+  favoriteIds: favoriteIds,
+  onFavoriteToggle: (id) => // your toggle,
+  onCall: (phone) => // add this
+  onWhatsApp: (phone) => // add this
+),
               ],
             ),
           ),
