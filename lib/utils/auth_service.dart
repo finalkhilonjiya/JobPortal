@@ -35,7 +35,7 @@ class AuthService {
     try {
       return SupabaseService().safeClient;
     } catch (e) {
-      debugPrint('❌ Failed to get Supabase client: $e');
+      debugPrint('âŒ Failed to get Supabase client: $e');
       return null;
     }
   }
@@ -51,33 +51,12 @@ class AuthService {
   }
 
   /// Initialize session monitoring and offline caching
-  
-  /// Initialize session monitoring and offline caching
   void _initializeSessionMonitoring() {
-    _authStateSubscription = authStateChanges.listen((authState) async {
+    _authStateSubscription = authStateChanges.listen((authState) {
       _cacheAuthState(authState);
-
       if (authState.event == AuthChangeEvent.signedIn) {
         _startSessionMonitoring();
-
-        final user = authState.session?.user;
-        if (user != null) {
-          final metadata = user.userMetadata ?? {};
-
-          // 🔄 Create or update user profile after login
-          await _handleSocialLoginProfile(user, 'google', {
-            'avatar_url': metadata['avatar_url'],
-            'full_name': metadata['full_name'] ?? user.email?.split('@')[0],
-          });
-        }
-
       } else if (authState.event == AuthChangeEvent.signedOut) {
-        _stopSessionMonitoring();
-        _clearOfflineCache();
-      }
-    });
-  }
- else if (authState.event == AuthChangeEvent.signedOut) {
         _stopSessionMonitoring();
         _clearOfflineCache();
       }
@@ -111,12 +90,12 @@ class AuthService {
       final now = DateTime.now().millisecondsSinceEpoch / 1000;
       
       if (expiresAt != null && expiresAt - now < 300) {
-        debugPrint('🔄 Refreshing session...');
+        debugPrint('ðŸ”„ Refreshing session...');
         await client.auth.refreshSession();
         await _cacheSessionExpiry(expiresAt);
       }
     } catch (e) {
-      debugPrint('❌ Session refresh failed: $e');
+      debugPrint('âŒ Session refresh failed: $e');
     }
   }
 
@@ -160,7 +139,7 @@ class AuthService {
         throw AppAuthException('Supabase not initialized. Please check your connection.');
       }
 
-      debugPrint('📤 Attempting signup with email: $email');
+      debugPrint('ðŸ“¤ Attempting signup with email: $email');
 
       final response = await client.auth.signUp(
         email: email,
@@ -172,7 +151,7 @@ class AuthService {
         },
       );
 
-      debugPrint('📤 Supabase signUp() response:');
+      debugPrint('ðŸ“¤ Supabase signUp() response:');
       debugPrint('user:  [38;5;10m [1m [4m [7m${response.user} [0m');
       debugPrint('session: ${response.session}');
 
@@ -188,10 +167,10 @@ class AuthService {
 
       throw AppAuthException('Sign-up failed. Please try again.');
     } on AuthException catch (e) {
-      debugPrint('❌ Sign-up failed (AuthException): ${e.message}');
+      debugPrint('âŒ Sign-up failed (AuthException): ${e.message}');
       throw AppAuthException(_getErrorMessage(e));
     } catch (error) {
-      debugPrint('❌ Unexpected error during sign-up: $error');
+      debugPrint('âŒ Unexpected error during sign-up: $error');
       if (error is AppAuthException) {
         rethrow;
       }
@@ -219,20 +198,20 @@ class AuthService {
         final phoneEmail = await _getEmailFromPhone(email);
         if (phoneEmail != null) {
           loginEmail = phoneEmail;
-          debugPrint('📥 Found email for phone: $loginEmail');
+          debugPrint('ðŸ“¥ Found email for phone: $loginEmail');
         } else {
           throw AppAuthException('No account found with this phone number.');
         }
       }
 
-      debugPrint('📥 Attempting login with email: $loginEmail');
+      debugPrint('ðŸ“¥ Attempting login with email: $loginEmail');
 
       final response = await client.auth.signInWithPassword(
         email: loginEmail,
         password: password,
       );
 
-      debugPrint('📥 Supabase signIn() response:');
+      debugPrint('ðŸ“¥ Supabase signIn() response:');
       debugPrint('user: ${response.user}');
       debugPrint('session: ${response.session}');
 
@@ -242,7 +221,7 @@ class AuthService {
 
       throw AppAuthException('Login failed. Please try again.');
     } on AuthException catch (e) {
-      debugPrint('❌ Sign-in failed (AuthException): ${e.message}');
+      debugPrint('âŒ Sign-in failed (AuthException): ${e.message}');
       
       // Provide better error messages
       if (e.message.contains('Invalid login credentials')) {
@@ -253,7 +232,7 @@ class AuthService {
       
       throw AppAuthException(_getErrorMessage(e));
     } catch (error) {
-      debugPrint('❌ Unexpected error during sign-in: $error');
+      debugPrint('âŒ Unexpected error during sign-in: $error');
       
       if (error is AppAuthException) {
         rethrow;
@@ -277,15 +256,15 @@ class AuthService {
 
       return response?['email'];
     } catch (e) {
-      debugPrint('❌ Failed to get email from phone: $e');
+      debugPrint('âŒ Failed to get email from phone: $e');
       return null;
     }
   }
 
   /// Extract user-friendly error messages
   String _getErrorMessage(dynamic error) {
-    debugPrint('🔍 Processing error: $error');
-    debugPrint('🔍 Error type: ${error.runtimeType}');
+    debugPrint('ðŸ” Processing error: $error');
+    debugPrint('ðŸ” Error type: ${error.runtimeType}');
     
     if (error is AuthException) {
       // Handle Supabase AuthException specifically
@@ -341,7 +320,7 @@ class AuthService {
     try {
       await UserProfileService().createUserProfile(user, additionalData);
     } catch (e) {
-      debugPrint('❌ Failed to create user profile: $e');
+      debugPrint('âŒ Failed to create user profile: $e');
     }
   }
 
@@ -357,7 +336,7 @@ class AuthService {
       };
       await prefs.setString(_authStateKey, jsonEncode(cacheData));
     } catch (e) {
-      debugPrint('❌ Failed to cache auth state: $e');
+      debugPrint('âŒ Failed to cache auth state: $e');
     }
   }
 
@@ -367,7 +346,7 @@ class AuthService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_sessionExpiryKey, expiresAt);
     } catch (e) {
-      debugPrint('❌ Failed to cache session expiry: $e');
+      debugPrint('âŒ Failed to cache session expiry: $e');
     }
   }
 
@@ -379,7 +358,7 @@ class AuthService {
       await prefs.remove(_userProfileKey);
       await prefs.remove(_sessionExpiryKey);
     } catch (e) {
-      debugPrint('❌ Failed to clear offline cache: $e');
+      debugPrint('âŒ Failed to clear offline cache: $e');
     }
   }
 
@@ -388,7 +367,7 @@ class AuthService {
     try {
       return SupabaseService().currentUser;
     } catch (error) {
-      debugPrint('❌ Get current user failed: $error');
+      debugPrint('âŒ Get current user failed: $error');
       return null;
     }
   }
@@ -398,7 +377,7 @@ class AuthService {
     try {
       return SupabaseService().isAuthenticated;
     } catch (error) {
-      debugPrint('❌ Check authentication failed: $error');
+      debugPrint('âŒ Check authentication failed: $error');
       return false;
     }
   }
@@ -408,31 +387,18 @@ class AuthService {
     try {
       return SupabaseService().authStateChanges;
     } catch (error) {
-      debugPrint('❌ Auth state changes failed: $error');
+      debugPrint('âŒ Auth state changes failed: $error');
       return Stream.empty();
     }
   }
 
   /// Sign in with Google
-  
-  /// Sign in with Google using Supabase OAuth + Deep Link Redirect
-  Future<void> signInWithGoogle() async {
+  Future<AuthResponse> signInWithGoogle() async {
     try {
       final client = _client;
       if (client == null) {
         throw AppAuthException('Supabase not available. Please check your connection.');
       }
-
-      await client.auth.signInWithOAuth(
-        Provider.google,
-        redirectTo: 'com.khilonjiya.marketplace://google-callback',
-      );
-    } catch (error) {
-      debugPrint('❌ Google OAuth sign-in failed: \$error');
-      throw AppAuthException('Google sign-in failed: \${_getErrorMessage(error)}');
-    }
-  }
-
 
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
@@ -451,7 +417,7 @@ class AuthService {
       );
 
       if (response.user != null) {
-        debugPrint('✅ Google sign-in successful: ${response.user!.email}');
+        debugPrint('âœ… Google sign-in successful: ${response.user!.email}');
         
         await _handleSocialLoginProfile(response.user!, 'google', {
           'avatar_url': googleUser.photoUrl,
@@ -461,7 +427,7 @@ class AuthService {
 
       return response;
     } catch (error) {
-      debugPrint('❌ Google sign-in failed: $error');
+      debugPrint('âŒ Google sign-in failed: $error');
       await _googleSignIn.signOut();
       
       if (error is AppAuthException) {
@@ -503,7 +469,7 @@ class AuthService {
       );
 
       if (response.user != null) {
-        debugPrint('✅ Facebook sign-in successful: ${response.user!.email}');
+        debugPrint('âœ… Facebook sign-in successful: ${response.user!.email}');
         
         await _handleSocialLoginProfile(response.user!, 'facebook', {
           'avatar_url': userData['picture']?['data']?['url'],
@@ -513,7 +479,7 @@ class AuthService {
 
       return response;
     } catch (error) {
-      debugPrint('❌ Facebook sign-in failed: $error');
+      debugPrint('âŒ Facebook sign-in failed: $error');
       await _facebookAuth.logOut();
       
       if (error is AppAuthException) {
@@ -540,7 +506,7 @@ class AuthService {
 
       await _createUserProfile(user, profileData);
     } catch (e) {
-      debugPrint('❌ Failed to handle social login profile: $e');
+      debugPrint('âŒ Failed to handle social login profile: $e');
     }
   }
 
@@ -563,9 +529,9 @@ class AuthService {
 
       await SupabaseService().signOut();
       await _clearOfflineCache();
-      debugPrint('✅ User signed out successfully');
+      debugPrint('âœ… User signed out successfully');
     } catch (error) {
-      debugPrint('❌ Sign-out failed: $error');
+      debugPrint('âŒ Sign-out failed: $error');
       throw AppAuthException('Sign-out failed: ${_getErrorMessage(error)}');
     }
   }
@@ -593,9 +559,9 @@ class AuthService {
       }
 
       await client.auth.resetPasswordForEmail(email);
-      debugPrint('✅ Password reset email sent to: $email');
+      debugPrint('âœ… Password reset email sent to: $email');
     } catch (error) {
-      debugPrint('❌ Password reset failed: $error');
+      debugPrint('âŒ Password reset failed: $error');
       
       if (error is AppAuthException) {
         rethrow;
@@ -630,7 +596,7 @@ class AuthService {
 
       return false;
     } catch (e) {
-      debugPrint('❌ Username availability check failed: $e');
+      debugPrint('âŒ Username availability check failed: $e');
       return false;
     }
   }
@@ -653,7 +619,7 @@ class AuthService {
 
       return user.email;
     } catch (e) {
-      debugPrint('❌ Get user display name failed: $e');
+      debugPrint('âŒ Get user display name failed: $e');
       return null;
     }
   }
@@ -679,13 +645,13 @@ class AuthService {
       );
 
       if (response.user != null) {
-        debugPrint('✅ Profile updated successfully');
+        debugPrint('âœ… Profile updated successfully');
         await _updateUserProfile(response.user!);
       }
 
       return response;
     } catch (error) {
-      debugPrint('❌ Profile update failed: $error');
+      debugPrint('âŒ Profile update failed: $error');
       
       if (error is AppAuthException) {
         rethrow;
@@ -702,7 +668,7 @@ class AuthService {
         avatarUrl: user.userMetadata?['avatar_url'],
       );
     } catch (e) {
-      debugPrint('❌ Failed to update user profile: $e');
+      debugPrint('âŒ Failed to update user profile: $e');
     }
   }
 
@@ -715,7 +681,7 @@ class AuthService {
       return healthStatus['connection_ok'] == true &&
           healthStatus['authenticated'] == true;
     } catch (e) {
-      debugPrint('❌ Authentication validation failed: $e');
+      debugPrint('âŒ Authentication validation failed: $e');
       return false;
     }
   }
@@ -726,7 +692,7 @@ class AuthService {
       final user = getCurrentUser();
       return user?.userMetadata;
     } catch (e) {
-      debugPrint('❌ Get user metadata failed: $e');
+      debugPrint('âŒ Get user metadata failed: $e');
       return null;
     }
   }
@@ -741,10 +707,10 @@ class AuthService {
 
       final session = await client.auth.refreshSession();
       if (session.session != null) {
-        debugPrint('✅ Session refreshed successfully');
+        debugPrint('âœ… Session refreshed successfully');
       }
     } catch (error) {
-      debugPrint('❌ Session refresh failed: $error');
+      debugPrint('âŒ Session refresh failed: $error');
       
       if (error is AppAuthException) {
         rethrow;
@@ -772,7 +738,7 @@ class AuthService {
         'needs_refresh': expiresAt != null ? expiresAt - now < 300 : false,
       };
     } catch (e) {
-      debugPrint('❌ Get session info failed: $e');
+      debugPrint('âŒ Get session info failed: $e');
       return null;
     }
   }
@@ -786,7 +752,7 @@ class AuthService {
         return jsonDecode(cacheData);
       }
     } catch (e) {
-      debugPrint('❌ Failed to get cached auth state: $e');
+      debugPrint('âŒ Failed to get cached auth state: $e');
     }
     return null;
   }
@@ -810,7 +776,7 @@ class UserProfileService {
     try {
       return SupabaseService().safeClient;
     } catch (e) {
-      debugPrint('❌ Failed to get Supabase client: $e');
+      debugPrint('âŒ Failed to get Supabase client: $e');
       return null;
     }
   }
@@ -840,9 +806,9 @@ class UserProfileService {
 
       await client.from(_userProfilesTable).upsert(profileData);
       await _cacheUserProfile(profileData);
-      debugPrint('✅ User profile created successfully');
+      debugPrint('âœ… User profile created successfully');
     } catch (error) {
-      debugPrint('❌ Create user profile failed: $error');
+      debugPrint('âŒ Create user profile failed: $error');
       throw ProfileException('Failed to create user profile: ${error.toString()}');
     }
   }
@@ -867,7 +833,7 @@ class UserProfileService {
       await _cacheUserProfile(response);
       return response;
     } catch (error) {
-      debugPrint('❌ Get user profile failed: $error');
+      debugPrint('âŒ Get user profile failed: $error');
       return await _getCachedUserProfile();
     }
   }
@@ -915,9 +881,9 @@ class UserProfileService {
         await _cacheUserProfile(cachedProfile);
       }
 
-      debugPrint('✅ User profile updated successfully');
+      debugPrint('âœ… User profile updated successfully');
     } catch (error) {
-      debugPrint('❌ Update user profile failed: $error');
+      debugPrint('âŒ Update user profile failed: $error');
       throw ProfileException('Failed to update user profile: ${error.toString()}');
     }
   }
@@ -947,10 +913,10 @@ class UserProfileService {
       // Update profile with new avatar URL
       await updateUserProfile(avatarUrl: publicUrl);
 
-      debugPrint('✅ Profile picture uploaded successfully');
+      debugPrint('âœ… Profile picture uploaded successfully');
       return publicUrl;
     } catch (error) {
-      debugPrint('❌ Profile picture upload failed: $error');
+      debugPrint('âŒ Profile picture upload failed: $error');
       throw ProfileException('Failed to upload profile picture: ${error.toString()}');
     }
   }
@@ -961,7 +927,7 @@ class UserProfileService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_profile_cache', jsonEncode(profile));
     } catch (e) {
-      debugPrint('❌ Failed to cache user profile: $e');
+      debugPrint('âŒ Failed to cache user profile: $e');
     }
   }
 
@@ -974,7 +940,7 @@ class UserProfileService {
         return jsonDecode(profileData);
       }
     } catch (e) {
-      debugPrint('❌ Failed to get cached user profile: $e');
+      debugPrint('âŒ Failed to get cached user profile: $e');
     }
     return null;
   }
@@ -998,9 +964,9 @@ class UserProfileService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('user_profile_cache');
 
-      debugPrint('✅ User profile deleted successfully');
+      debugPrint('âœ… User profile deleted successfully');
     } catch (error) {
-      debugPrint('❌ Delete user profile failed: $error');
+      debugPrint('âŒ Delete user profile failed: $error');
       throw ProfileException('Failed to delete user profile: ${error.toString()}');
     }
   }
@@ -1020,7 +986,7 @@ class UserProfileService {
 
       return response;
     } catch (error) {
-      debugPrint('❌ Get user by phone failed: $error');
+      debugPrint('âŒ Get user by phone failed: $error');
       return null;
     }
   }
@@ -1039,7 +1005,7 @@ class UserProfileService {
 
       return response;
     } catch (error) {
-      debugPrint('❌ Get user by email failed: $error');
+      debugPrint('âŒ Get user by email failed: $error');
       return null;
     }
   }
@@ -1049,7 +1015,7 @@ class UserProfileService {
     try {
       await updateUserProfile(preferences: preferences);
     } catch (error) {
-      debugPrint('❌ Update user preferences failed: $error');
+      debugPrint('âŒ Update user preferences failed: $error');
       throw ProfileException('Failed to update preferences: ${error.toString()}');
     }
   }
@@ -1060,7 +1026,7 @@ class UserProfileService {
       final profile = await getUserProfile();
       return profile?['preferences'] as Map<String, dynamic>?;
     } catch (error) {
-      debugPrint('❌ Get user preferences failed: $error');
+      debugPrint('âŒ Get user preferences failed: $error');
       return null;
     }
   }
@@ -1079,7 +1045,7 @@ class UserProfileService {
 
       return List<Map<String, dynamic>>.from(response);
     } catch (error) {
-      debugPrint('❌ Search users failed: $error');
+      debugPrint('âŒ Search users failed: $error');
       return [];
     }
   }
@@ -1098,7 +1064,7 @@ class UserProfileService {
 
       return List<Map<String, dynamic>>.from(response);
     } catch (error) {
-      debugPrint('❌ Get users by role failed: $error');
+      debugPrint('âŒ Get users by role failed: $error');
       return [];
     }
   }
@@ -1116,9 +1082,9 @@ class UserProfileService {
           .update({'role': newRole, 'updated_at': DateTime.now().toIso8601String()})
           .eq('id', userId);
 
-      debugPrint('✅ User role updated successfully');
+      debugPrint('âœ… User role updated successfully');
     } catch (error) {
-      debugPrint('❌ Update user role failed: $error');
+      debugPrint('âŒ Update user role failed: $error');
       throw ProfileException('Failed to update user role: ${error.toString()}');
     }
   }
@@ -1139,7 +1105,7 @@ class UserProfileService {
 
       return false;
     } catch (error) {
-      debugPrint('❌ Check user exists failed: $error');
+      debugPrint('âŒ Check user exists failed: $error');
       return false;
     }
   }
