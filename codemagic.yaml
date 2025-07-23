@@ -17,9 +17,16 @@ workflows:
         script: |
           flutter pub get
 
+      # ADD THIS SCRIPT HERE
+      - name: Get SHA-1 fingerprint
+        script: |
+          echo "=== GETTING SHA-1 FINGERPRINT ==="
+          echo "Debug keystore SHA-1:"
+          keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep SHA1
+          echo "================================"
+
       - name: Clean and Build Debug APK with .env loaded
         script: |
-         
           flutter pub get
           
           # ✅ Load .env variables
