@@ -33,12 +33,10 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
-        <!--  Disable Impeller on Android to avoid white screen on emulator  -->
         <meta-data
             android:name="io.flutter.embedding.android.EnableImpeller"
             android:value="false" />
-        
-        <!-- Enable Skia rendering backend -->
+
         <meta-data
             android:name="io.flutter.embedding.android.EnableSkia"
             android:value="true" />
@@ -52,10 +50,20 @@
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
 
+            <!-- ✅ Launcher intent filter -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
+            <!-- ✅ OAuth redirect intent filter (required for Supabase Google login) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="com.khilonjiya.marketplace" />
+            </intent-filter>
+
         </activity>
 
         <provider
