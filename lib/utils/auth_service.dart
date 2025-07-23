@@ -394,48 +394,81 @@ class AuthService {
 
   /// Sign in with Google
   Future<AuthResponse> signInWithGoogle() async {
-    try {
-      final client = _client;
-      if (client == null) {
-        throw AppAuthException('Supabase not available. Please check your connection.');
-      }
-
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        throw AppAuthException('Google sign-in was cancelled.');
-      }
-
-      final googleAuth = await googleUser.authentication;
-      if (googleAuth.accessToken == null || googleAuth.idToken == null) {
-        throw AppAuthException('Failed to get Google authentication tokens.');
-      }
-
-      final response = await client.auth.signInWithIdToken(
-        provider: OAuthProvider.google,
-        idToken: googleAuth.idToken!,
-        accessToken: googleAuth.accessToken!,
-      );
-
-      if (response.user != null) {
-        debugPrint('âœ… Google sign-in successful: ${response.user!.email}');
-        
-        await _handleSocialLoginProfile(response.user!, 'google', {
-          'avatar_url': googleUser.photoUrl,
-          'full_name': googleUser.displayName ?? response.user!.email?.split('@')[0],
-        });
-      }
-
-      return response;
-    } catch (error) {
-      debugPrint('âŒ Google sign-in failed: $error');
-      await _googleSignIn.signOut();
-      
-      if (error is AppAuthException) {
-        rethrow;
-      }
-      throw AppAuthException('Google sign-in failed: ${_getErrorMessage(error)}');
+  try {
+    debugPrint('🟢 [1] signInWithGoogle started');
+    
+    final client = _client;
+    if (client == null) {
+      throw AppAuthException('Supabase not available. Please check your connection.');
     }
+    
+    debugPrint('🟢 [2] Supabase client OK');
+    debugPrint('🟢 [3] GoogleSignIn instance: $_googleSignIn');
+    debugPrint('🟢 [4] Client ID configured: ${dotenv.env['GOOGLE_CLIENT_ID'] != null}');
+    debugPrint('🟢 [5] Attempting to show Google Sign-In UI...');
+    
+    final googleUser = await _googleSignIn.signIn();
+    
+    debugPrint('🟢 [6] Google Sign-In UI result: ${googleUser != null ? "User selected" : "Cancelled"}');
+    
+    if (googleUser == null) {
+      throw AppAuthException('Google sign-in was cancelled.');
+    }
+    
+    debugPrint('🟢 [7] User email: ${googleUser.email}');
+    debugPrint('🟢 [8] Getting auth tokens...');
+    
+    final googleAuth = await googleUser.authentication;
+    
+    debugPrint('🟢 [9] Access token obtained: ${googleAuth.accessToken != null}');
+    debugPrint('🟢 [10] ID token obtained: ${googleAuth.idToken != null}');
+    
+    if (googleAuth.accessToken == null) {
+      debugPrint('🔴 Access token is null!');
+    }
+    if (googleAuth.idToken == null) {
+      debugPrint('🔴 ID token is null!');
+    }
+    
+    if (googleAuth.accessToken == null || googleAuth.idToken == null) {
+      throw AppAuthException('Failed to get Google authentication tokens.');
+    }
+    
+    debugPrint('🟢 [11] Token lengths - Access: ${googleAuth.accessToken!.length}, ID: ${googleAuth.idToken!.length}');
+    debugPrint('🟢 [12] Calling Supabase signInWithIdToken...');
+    
+    final response = await client.auth.signInWithIdToken(
+      provider: OAuthProvider.google,
+      idToken: googleAuth.idToken!,
+      accessToken: googleAuth.accessToken!,
+    );
+    
+    debugPrint('🟢 [13] Supabase response received: ${response.user != null}');
+    
+    if (response.user != null) {
+      debugPrint('✅ Google sign-in successful: ${response.user!.email}');
+      
+      await _handleSocialLoginProfile(response.user!, 'google', {
+        'avatar_url': googleUser.photoUrl,
+        'full_name': googleUser.displayName ?? response.user!.email?.split('@')[0],
+      });
+    }
+
+    return response;
+  } catch (error) {
+    debugPrint('🔴 signInWithGoogle failed');
+    debugPrint('🔴 Error: $error');
+    debugPrint('🔴 Error type: ${error.runtimeType}');
+    debugPrint('🔴 Stack trace: ${StackTrace.current}');
+    
+    await _googleSignIn.signOut();
+    
+    if (error is AppAuthException) {
+      rethrow;
+    }
+    throw AppAuthException('Google sign-in failed: ${_getErrorMessage(error)}');
   }
+}
 
   /// Sign in with Facebook
   Future<AuthResponse> signInWithFacebook() async {
