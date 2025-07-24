@@ -76,8 +76,8 @@ class ThreeOptionSection extends StatelessWidget {
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        height: 16.h, // Fixed height for all cards
-        padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 1.5.h),
+        height: 14.h, // Reduced height to accommodate text
+        padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 1.h),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
@@ -86,15 +86,15 @@ class ThreeOptionSection extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Icon container with doubled size
+            // Icon container with adjusted size
             Container(
-              width: 20.w, // Doubled from 10.w
-              height: 20.w, // Doubled from 10.w
+              width: isExpanded ? 15.w : 18.w, // Smaller for expanded text
+              height: isExpanded ? 15.w : 18.w,
               child: ClipOval(
                 child: Image.asset(
                   imagePath,
-                  width: 20.w,
-                  height: 20.w,
+                  width: isExpanded ? 15.w : 18.w,
+                  height: isExpanded ? 15.w : 18.w,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
@@ -105,23 +105,23 @@ class ThreeOptionSection extends StatelessWidget {
                       child: Icon(
                         Icons.image,
                         color: color,
-                        size: 10.w,
+                        size: isExpanded ? 7.w : 9.w,
                       ),
                     );
                   },
                 ),
               ),
             ),
-            SizedBox(height: 1.h),
+            SizedBox(height: 0.8.h),
             // Text with proper constraints
             Flexible(
               child: Text(
                 label,
                 style: TextStyle(
-                  fontSize: isExpanded ? 8.sp : 9.sp, // Smaller font for longer text
+                  fontSize: isExpanded ? 7.5.sp : 8.5.sp, // Smaller font for longer text
                   fontWeight: FontWeight.w600,
                   color: color,
-                  height: 1.2, // Line height to prevent overflow
+                  height: 1.1, // Tighter line height
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
