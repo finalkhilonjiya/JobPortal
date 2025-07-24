@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import 'square_product_card.dart'; // Import the square product card
+import 'square_product_card.dart';
 
-class PremiumSection extends StatelessWidget {
+class PremiumSection extends StatefulWidget {
   final List<Map<String, dynamic>> listings;
   final Function(Map<String, dynamic>) onTap;
   final Set<String> favoriteIds;
@@ -18,12 +18,68 @@ class PremiumSection extends StatelessWidget {
     required this.onCall,
     required this.onWhatsApp,
   });
+
+  @override
+  State<PremiumSection> createState() => _PremiumSectionState();
+}
+
+class _PremiumSectionState extends State<PremiumSection> {
+  late ScrollController _scrollController;
+  
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    
+    // Auto-scroll for infinite loop effect
+    if (widget.listings.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _startAutoScroll();
+      });
+    }
+  }
+  
+  void _startAutoScroll() {
+    if (!mounted || widget.listings.isEmpty) return;
+    
+    Future.delayed(Duration(seconds: 3), () {
+      if (!mounted) return;
+      
+      _scrollController.animateTo(
+        _scrollController.offset + 52.w, // Width of one card + spacing
+        duration: Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      ).then((_) {
+        if (!mounted) return;
+        
+        // Check if we've reached the end
+        if (_scrollController.offset >= _scrollController.position.maxScrollExtent - 52.w) {
+          // Jump back to start for infinite loop
+          _scrollController.jumpTo(0);
+        }
+        _startAutoScroll();
+      });
+    });
+  }
+  
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
   
   @override
   Widget build(BuildContext context) {
-    if (listings.isEmpty) {
-      return SizedBox.shrink(); // Don't show section if no premium listings
+    if (widget.listings.isEmpty) {
+      return SizedBox.shrink();
     }
+    
+    // Triple the listings for infinite scroll effect
+    final infiniteListings = [
+      ...widget.listings,
+      ...widget.listings,
+      ...widget.listings,
+    ];
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,7 +115,7 @@ class PremiumSection extends StatelessWidget {
                 ),
               ),
               Spacer(),
-              if (listings.length > 2)
+              if (widget.listings.length > 2)
                 TextButton(
                   onPressed: () {
                     // Navigate to all premium listings
@@ -78,40 +134,40 @@ class PremiumSection extends StatelessWidget {
         
         // Horizontal Scrollable List of Square Cards
         Container(
-          height: 44.h, // Slightly increased to accommodate any padding
+          height: 44.h,
           child: ListView.builder(
+            controller: _scrollController,
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.only(left: 2.w, right: 2.w, bottom: 1.h),
-            itemCount: listings.length,
+            itemCount: infiniteListings.length,
             itemBuilder: (context, index) {
-              final listing = listings[index];
-              final isFavorite = favoriteIds.contains(listing['id']);
+              final listing = infiniteListings[index];
+              final isFavorite = widget.favoriteIds.contains(listing['id']);
               
               return Container(
-                width: 50.w, // Increased width for better spacing
-                padding: EdgeInsets.only(right: index < listings.length - 1 ? 2.w : 0),
+                width: 50.w,
+                padding: EdgeInsets.only(right: 2.w),
                 child: Stack(
-                  clipBehavior: Clip.none, // Allow badge to overflow if needed
+                  clipBehavior: Clip.none,
                   children: [
-                    // Remove the default margin from SquareProductCard
                     Theme(
                       data: Theme.of(context).copyWith(
                         cardTheme: CardTheme(margin: EdgeInsets.zero),
                       ),
                       child: Container(
-                        margin: EdgeInsets.zero, // Override any default margins
+                        margin: EdgeInsets.zero,
                         child: SquareProductCard(
                           data: listing,
                           isFavorite: isFavorite,
-                          onFavoriteToggle: () => onFavoriteToggle(listing['id']),
-                          onTap: () => onTap(listing),
-                          onCall: () => onCall(listing['phone'] ?? ''),
-                          onWhatsApp: () => onWhatsApp(listing['phone'] ?? ''),
+                          onFavoriteToggle: () => widget.onFavoriteToggle(listing['id']),
+                          onTap: () => widget.onTap(listing),
+                          onCall: () => widget.onCall(listing['phone'] ?? ''),
+                          onWhatsApp: () => widget.onWhatsApp(listing['phone'] ?? ''),
                         ),
                       ),
                     ),
                     
-                    // Premium Badge Overlay - Positioned more carefully
+                    // Premium Badge Overlay
                     Positioned(
                       top: 8,
                       left: 8,
