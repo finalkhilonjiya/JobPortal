@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'square_product_card.dart'; // Import the square product card
 
 class PremiumSection extends StatelessWidget {
   final List<Map<String, dynamic>> listings;
@@ -22,243 +21,140 @@ class PremiumSection extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 25.h,
-      margin: EdgeInsets.only(bottom: 2.h),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: 4.w),
-        itemCount: listings.length,
-        itemBuilder: (_, index) => Container(
-          width: 85.w,
-          margin: EdgeInsets.only(right: 3.w),
-          child: Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () => onTap(listings[index]),
-              child: Stack(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.all(3.w),
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            listings[index]['image'],
-                            width: 120,
-                            height: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              width: 120,
-                              height: double.infinity,
-                              color: Colors.grey[300],
-                              child: Icon(Icons.image, color: Colors.grey[600], size: 40),
-                            ),
-                          ),
+    if (listings.isEmpty) {
+      return SizedBox.shrink(); // Don't show section if no premium listings
+    }
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Premium Section Header
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF2563EB), Color(0xFF0EA5E9)],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.star, color: Colors.white, size: 11.sp),
+                    SizedBox(width: 1.w),
+                    Text(
+                      'PREMIUM ADS',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Spacer(),
+              if (listings.length > 2)
+                TextButton(
+                  onPressed: () {
+                    // Navigate to all premium listings
+                  },
+                  child: Text(
+                    'View All',
+                    style: TextStyle(
+                      color: Color(0xFF2563EB),
+                      fontSize: 9.sp,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        
+        // Horizontal Scrollable List of Square Cards
+        Container(
+          height: 44.h, // Slightly increased to accommodate any padding
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.only(left: 2.w, right: 2.w, bottom: 1.h),
+            itemCount: listings.length,
+            itemBuilder: (context, index) {
+              final listing = listings[index];
+              final isFavorite = favoriteIds.contains(listing['id']);
+              
+              return Container(
+                width: 50.w, // Increased width for better spacing
+                padding: EdgeInsets.only(right: index < listings.length - 1 ? 2.w : 0),
+                child: Stack(
+                  clipBehavior: Clip.none, // Allow badge to overflow if needed
+                  children: [
+                    // Remove the default margin from SquareProductCard
+                    Theme(
+                      data: Theme.of(context).copyWith(
+                        cardTheme: CardTheme(margin: EdgeInsets.zero),
+                      ),
+                      child: Container(
+                        margin: EdgeInsets.zero, // Override any default margins
+                        child: SquareProductCard(
+                          data: listing,
+                          isFavorite: isFavorite,
+                          onFavoriteToggle: () => onFavoriteToggle(listing['id']),
+                          onTap: () => onTap(listing),
+                          onCall: () => onCall(listing['phone'] ?? ''),
+                          onWhatsApp: () => onWhatsApp(listing['phone'] ?? ''),
                         ),
-                        SizedBox(width: 3.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Title
-                                  Text(
-                                    listings[index]['title'],
-                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  SizedBox(height: 4),
-                                  // Category > Subcategory
-                                  Text(
-                                    '${listings[index]['category']} > ${listings[index]['subcategory']}',
-                                    style: TextStyle(color: Colors.grey[600], fontSize: 11),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  SizedBox(height: 4),
-                                  // Condition
-                                  Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: _getConditionColor(listings[index]['condition']).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      _formatCondition(listings[index]['condition']),
-                                      style: TextStyle(
-                                        color: _getConditionColor(listings[index]['condition']),
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Price
-                                  Text(
-                                    '₹${listings[index]['price']}',
-                                    style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 18),
-                                  ),
-                                  // Location
-                                  Row(
-                                    children: [
-                                      Icon(Icons.location_on_outlined, size: 14, color: Colors.grey[600]),
-                                      SizedBox(width: 4),
-                                      Flexible(
-                                        child: Text(
-                                          listings[index]['location'],
-                                          style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  // Distance if available
-                                  if (listings[index]['distance'] != null)
-                                    Container(
-                                      margin: EdgeInsets.only(top: 4),
-                                      child: Row(
-                                        children: [
-                                          Icon(Icons.directions_walk, size: 12, color: Colors.blue),
-                                          SizedBox(width: 4),
-                                          Text(
-                                            '${listings[index]['distance'].toStringAsFixed(1)} km away',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.blue,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ],
+                      ),
+                    ),
+                    
+                    // Premium Badge Overlay - Positioned more carefully
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 1.5.w, vertical: 0.4.h),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF2563EB), Color(0xFF0EA5E9)],
                           ),
-                        ),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            // Favorite button
-                            IconButton(
-                              icon: Icon(
-                                favoriteIds.contains(listings[index]['id']) ? Icons.favorite : Icons.favorite_border,
-                                color: Color(0xFF2563EB),
-                              ),
-                              onPressed: () => onFavoriteToggle(listings[index]['id']),
-                            ),
-                            // Action buttons
-                            Column(
-                              children: [
-                                // Call button
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: IconButton(
-                                    icon: Icon(Icons.phone, color: Colors.green, size: 20),
-                                    onPressed: () => onCall(listings[index]['phone'] ?? ''),
-                                    constraints: BoxConstraints(minWidth: 36, minHeight: 36),
-                                    padding: EdgeInsets.all(6),
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                // WhatsApp button
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: Color(0xFF25D366).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: IconButton(
-                                    icon: FaIcon(FontAwesomeIcons.whatsapp, color: Color(0xFF25D366), size: 20),
-                                    onPressed: () => onWhatsApp(listings[index]['phone'] ?? ''),
-                                    constraints: BoxConstraints(minWidth: 36, minHeight: 36),
-                                    padding: EdgeInsets.all(6),
-                                  ),
-                                ),
-                              ],
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                  // Premium tag in top-left corner
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF2563EB), Color(0xFF0EA5E9)],
-                        ),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          bottomRight: Radius.circular(12),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.star, color: Colors.white, size: 14),
-                          SizedBox(width: 4),
-                          Text(
-                            'PREMIUM',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.star, color: Colors.white, size: 7.sp),
+                            SizedBox(width: 0.3.w),
+                            Text(
+                              'PREMIUM',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 6.5.sp,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.2,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
+                  ],
+                ),
+              );
+            },
           ),
         ),
-      ),
+      ],
     );
-  }
-
-  Color _getConditionColor(String? condition) {
-    switch (condition?.toLowerCase()) {
-      case 'new':
-        return Colors.green;
-      case 'like_new':
-        return Colors.teal;
-      case 'good':
-        return Colors.blue;
-      case 'fair':
-        return Colors.orange;
-      case 'poor':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  String _formatCondition(String? condition) {
-    if (condition == null) return 'Used';
-    return condition.replaceAll('_', ' ').split(' ').map((word) => 
-      word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : ''
-    ).join(' ');
   }
 }
