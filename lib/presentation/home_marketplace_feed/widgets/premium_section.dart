@@ -152,7 +152,7 @@ class _PremiumSectionState extends State<PremiumSection> {
                   children: [
                     Theme(
                       data: Theme.of(context).copyWith(
-                        cardTheme: CardTheme(margin: EdgeInsets.zero),
+                        cardTheme: const CardThemeData(margin: EdgeInsets.zero),
                       ),
                       child: Container(
                         margin: EdgeInsets.zero,
