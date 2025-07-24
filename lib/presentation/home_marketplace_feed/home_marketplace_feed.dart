@@ -5,7 +5,7 @@ import './widgets/top_bar_widget.dart';
 import './widgets/search_bar_full_width.dart';
 import './widgets/app_info_banner_new.dart';
 import './widgets/three_option_section.dart';
-import './widgets/premium_carousel.dart';
+import './widgets/premium_section.dart';
 import './widgets/square_product_card.dart';
 import './widgets/listing_details_fullscreen.dart';
 import './widgets/shimmer_widgets.dart';
