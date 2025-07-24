@@ -137,7 +137,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     }
   }
 
-  Future<void> _fetchData() async {
+   Future<void> _fetchData() async {
     setState(() {
       _isLoadingPremium = true;
       _isLoadingFeed = true;
@@ -155,11 +155,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       }
       
       final mainCategories = CategoryData.mainCategories.map((cat) => {
-  'name': cat['name'] as Object,
-  'id': cat['name'] as Object,  // Using name as ID for now
-  'icon': cat['icon'] as Object,
-  'image': cat['image'] as Object,  // Include the image!
-}).toList();
+        'name': cat['name'] as Object,
+        'id': cat['name'] as Object,  // Using name as ID for now
+        'icon': cat['icon'] as Object,
+        'image': cat['image'] as Object,  // Include the image!
+      }).toList();
       
       // Fetch favorites if user is logged in
       Set<String> favorites = {};
@@ -181,31 +181,52 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         print('Error fetching listings: $e');
       }
       
-      // Use mock data for premium listings for now
-      final premiumListings = MarketplaceHelpers.getMockListings()
-          .where((l) => l['is_featured'] == true)
-          .toList();
+      // Fetch REAL premium listings from Supabase
+      List<Map<String, dynamic>> premiumListings = [];
+      try {
+        premiumListings = await _listingService.fetchPremiumListings(
+          categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
+          limit: 10,
+        );
+        print('Fetched ${premiumListings.length} premium listings');
+      } catch (e) {
+        print('Error fetching premium listings: $e');
+      }
       
       setState(() {
         _categories = mainCategories;
         _favoriteIds = favorites;
-        _listings = listings.isNotEmpty ? listings : MarketplaceHelpers.getMockListings();
+        _listings = listings;
         _premiumListings = premiumListings;
         _isLoadingPremium = false;
         _isLoadingFeed = false;
       });
     } catch (e) {
       print('Error in _fetchData: $e');
-      // Fallback to all mock data on error
+      // Don't use mock data - show empty state
       setState(() {
-        _categories = MarketplaceHelpers.getMainCategoriesOnly();
-        _listings = MarketplaceHelpers.getMockListings();
-        _premiumListings = _listings.where((l) => l['is_featured'] == true).toList();
+        _categories = CategoryData.mainCategories.map((cat) => {
+          'name': cat['name'] as Object,
+          'id': cat['name'] as Object,
+          'icon': cat['icon'] as Object,
+          'image': cat['image'] as Object,
+        }).toList();
+        _listings = []; // Empty instead of mock
+        _premiumListings = []; // Empty instead of mock
         _isLoadingPremium = false;
         _isLoadingFeed = false;
       });
+      
+      // Show error to user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading data. Please check your connection.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
+
 
   IconData _getCategoryIcon(String categoryName) {
     // Map category names to icons
@@ -263,8 +284,20 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         limit: _pageSize,
       );
       
+      // Also fetch filtered premium listings
+      List<Map<String, dynamic>> premiumListings = [];
+      try {
+        premiumListings = await _listingService.fetchPremiumListings(
+          categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
+          limit: 10,
+        );
+      } catch (e) {
+        print('Error fetching filtered premium listings: $e');
+      }
+      
       setState(() {
-        _listings = listings.isNotEmpty ? listings : [];
+        _listings = listings;
+        _premiumListings = premiumListings;
         _currentOffset = 0;
         _isLoadingFeed = false;
       });
@@ -272,6 +305,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       print('Error fetching filtered listings: $e');
       setState(() {
         _listings = [];
+        _premiumListings = [];
         _isLoadingFeed = false;
       });
     }
