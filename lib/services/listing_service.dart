@@ -39,7 +39,7 @@ class ListingService {
   }
   
   // Fetch all active listings with infinite scroll support
-Future<List<Map<String, dynamic>>> fetchListings({
+  Future<List<Map<String, dynamic>>> fetchListings({
     String? categoryId,
     String? sortBy,
     int limit = 20,
@@ -56,8 +56,8 @@ Future<List<Map<String, dynamic>>> fetchListings({
               parent_category_id
             )
           ''')
-          .eq('status', 'active')
-          .eq('is_premium', false); // Only fetch non-premium listings
+          .eq('status', 'active');
+          // REMOVED: .eq('is_premium', false) - Now fetches ALL listings
 
       // Apply category filter if provided
       if (categoryId != null && categoryId != 'All') {
@@ -156,7 +156,8 @@ Future<List<Map<String, dynamic>>> fetchListings({
     }
   }
 
-  // Search listings by keywords and/or location
+
+// Search listings by keywords and/or location
   Future<List<Map<String, dynamic>>> searchListings({
     String? keywords,
     String? location,
