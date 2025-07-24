@@ -57,7 +57,7 @@ class ListingService {
             )
           ''')
           .eq('status', 'active');
-          // REMOVED: .eq('is_premium', false) - Now fetches ALL listings
+          // REMOVED .eq('is_premium', false) - Now fetches ALL listings including premium
 
       // Apply category filter if provided
       if (categoryId != null && categoryId != 'All') {
@@ -156,8 +156,7 @@ class ListingService {
     }
   }
 
-
-// Search listings by keywords and/or location
+  // Search listings by keywords and/or location
   Future<List<Map<String, dynamic>>> searchListings({
     String? keywords,
     String? location,
