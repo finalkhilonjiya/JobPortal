@@ -439,7 +439,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                     ),
                   ),
                 ),
-             PremiumCarousel(
+             PremiumSection(
   listings: _premiumListings,
   onTap: _showListingDetails,
   favoriteIds: _favoriteIds,
@@ -550,7 +550,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                       ),
                       _isLoadingPremium
                           ? ShimmerPremiumSection()
-                          : PremiumCarousel(
+                          : PremiumSection(
     listings: _premiumListings,
     onTap: _showListingDetails,
     favoriteIds: _favoriteIds,
