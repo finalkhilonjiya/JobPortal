@@ -154,12 +154,20 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         print('Error fetching categories: $e');
       }
       
-      final mainCategories = CategoryData.mainCategories.map((cat) => {
-        'name': cat['name'] as Object,
-        'id': cat['name'] as Object,  // Using name as ID for now
-        'icon': cat['icon'] as Object,
-        'image': cat['image'] as Object,  // Include the image!
-      }).toList();
+      final mainCategories = [
+  {
+    'name': 'All' as Object,
+    'id': 'All' as Object,
+    'icon': Icons.apps as Object,
+    'image': null as Object,
+  },
+  ...categoriesData.where((cat) => cat['parent_category_id'] == null).map((cat) => {
+    'name': cat['name'] as Object,
+    'id': cat['id'] as Object,  // This will be the actual UUID from database
+    'icon': _getCategoryIcon(cat['name']) as Object,
+    'image': cat['icon_url'] as Object,  // From database
+  }).toList(),
+];
       
       // Fetch favorites if user is logged in
       Set<String> favorites = {};
