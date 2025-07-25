@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import '../../services/listing_service.dart';
+import '../../../services/listing_service.dart';
 import 'square_product_card.dart';
 import 'listing_details_fullscreen.dart';
 import 'marketplace_helpers.dart';
