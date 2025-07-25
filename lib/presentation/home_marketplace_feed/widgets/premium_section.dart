@@ -45,15 +45,18 @@ class _PremiumSectionState extends State<PremiumSection> {
     Future.delayed(Duration(seconds: 3), () {
       if (!mounted) return;
       
+      // Calculate width: full screen width minus horizontal padding
+      double cardWidth = 100.w - 8.w; // Full width minus padding
+      
       _scrollController.animateTo(
-        _scrollController.offset + 52.w, // Width of one card + spacing
+        _scrollController.offset + cardWidth + 4.w, // Card width + spacing
         duration: Duration(milliseconds: 500),
         curve: Curves.easeInOut,
       ).then((_) {
         if (!mounted) return;
         
-        // Check if we've reached the end
-        if (_scrollController.offset >= _scrollController.position.maxScrollExtent - 52.w) {
+        // Check if we've reached near the end
+        if (_scrollController.offset >= _scrollController.position.maxScrollExtent - cardWidth) {
           // Jump back to start for infinite loop
           _scrollController.jumpTo(0);
         }
@@ -103,7 +106,7 @@ class _PremiumSectionState extends State<PremiumSection> {
                     Icon(Icons.star, color: Colors.white, size: 11.sp),
                     SizedBox(width: 1.w),
                     Text(
-                      'PREMIUM ADS',
+                      'PREMIUM LISTINGS',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 9.sp,
@@ -132,30 +135,27 @@ class _PremiumSectionState extends State<PremiumSection> {
           ),
         ),
         
-        // Horizontal Scrollable List of Square Cards
+        // Horizontal Scrollable List - ONE card at a time
         Container(
-          height: 44.h,
+          height: 44.h, // Same height as normal cards
           child: ListView.builder(
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.only(left: 2.w, right: 2.w, bottom: 1.h),
+            padding: EdgeInsets.symmetric(horizontal: 4.w),
             itemCount: infiniteListings.length,
             itemBuilder: (context, index) {
               final listing = infiniteListings[index];
               final isFavorite = widget.favoriteIds.contains(listing['id']);
               
               return Container(
-                width: 50.w,
-                padding: EdgeInsets.only(right: 2.w),
+                width: 92.w, // Almost full width for ONE card display
+                margin: EdgeInsets.only(right: 4.w), // Spacing between cards
                 child: Stack(
-                  clipBehavior: Clip.none,
                   children: [
-                    Theme(
-                      data: Theme.of(context).copyWith(
-                        cardTheme: const CardThemeData(margin: EdgeInsets.zero),
-                      ),
+                    // Center the card horizontally
+                    Center(
                       child: Container(
-                        margin: EdgeInsets.zero,
+                        width: 92.w, // Full container width
                         child: SquareProductCard(
                           data: listing,
                           isFavorite: isFavorite,
@@ -167,17 +167,17 @@ class _PremiumSectionState extends State<PremiumSection> {
                       ),
                     ),
                     
-                    // Premium Badge Overlay
+                    // Premium Badge Overlay - adjusted position
                     Positioned(
-                      top: 8,
-                      left: 8,
+                      top: 1.h,
+                      left: 4.w, // Adjusted for centered card
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 1.5.w, vertical: 0.4.h),
+                        padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [Color(0xFF2563EB), Color(0xFF0EA5E9)],
                           ),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.3),
@@ -189,15 +189,15 @@ class _PremiumSectionState extends State<PremiumSection> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.star, color: Colors.white, size: 7.sp),
-                            SizedBox(width: 0.3.w),
+                            Icon(Icons.star, color: Colors.white, size: 9.sp),
+                            SizedBox(width: 0.5.w),
                             Text(
                               'PREMIUM',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 6.5.sp,
+                                fontSize: 8.sp,
                                 fontWeight: FontWeight.bold,
-                                letterSpacing: 0.2,
+                                letterSpacing: 0.3,
                               ),
                             ),
                           ],
