@@ -92,51 +92,45 @@ class _TopBarWidgetState extends State<TopBarWidget> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Logo and Title - Flexible to prevent overflow
-          Flexible(
-            flex: 1,
-            child: Row(
-              children: [
-                Container(
-                  height: 8.w,
-                  width: 8.w,
-                  decoration: BoxDecoration(
-                    color: Color(0xFF2563EB),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'K',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14.sp,
-                      ),
-                    ),
-                  ),
+          // Logo and Title - NOT flexible, takes its required space
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                height: 8.w,
+                width: 8.w,
+                decoration: BoxDecoration(
+                  color: Color(0xFF2563EB),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                SizedBox(width: 2.w),
-                Flexible(
+                child: Center(
                   child: Text(
-                    'khilonjiya.com',
+                    'K',
                     style: TextStyle(
-                      fontSize: 14.sp,
+                      color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF2563EB),
+                      fontSize: 14.sp,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              ],
-            ),
+              ),
+              SizedBox(width: 2.w),
+              Text(
+                'khilonjiya.com',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2563EB),
+                ),
+              ),
+            ],
           ),
           
           // Add some spacing
           SizedBox(width: 2.w),
           
-          // Location - Flexible to prevent overflow
-          Flexible(
-            flex: 1,
+          // Location - Flexible to take remaining space
+          Expanded(
             child: InkWell(
               onTap: _detectLocation,
               child: Row(
