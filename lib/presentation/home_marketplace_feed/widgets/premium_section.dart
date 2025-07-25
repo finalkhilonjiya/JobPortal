@@ -148,11 +148,11 @@ class _PremiumSectionState extends State<PremiumSection> {
         
         // Horizontal Scrollable List - ONE card at a time
         Container(
-          height: 46.h, // Increased height to prevent overflow
+          height: 45.h, // Adjusted to properly contain the card
           child: ListView.builder(
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.only(left: 4.w, right: 4.w, bottom: 2.h),
+            padding: EdgeInsets.only(left: 4.w, right: 4.w),
             itemCount: infiniteListings.length,
             itemBuilder: (context, index) {
               final listing = infiniteListings[index];
