@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'square_product_card.dart';
+import 'all_premium_listings_page.dart'; // Add this import
 
 class PremiumSection extends StatefulWidget {
   final List<Map<String, dynamic>> listings;
@@ -121,7 +122,17 @@ class _PremiumSectionState extends State<PremiumSection> {
               if (widget.listings.length > 2)
                 TextButton(
                   onPressed: () {
-                    // Navigate to all premium listings
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AllPremiumListingsPage(
+                          onFavoriteToggle: widget.onFavoriteToggle,
+                          favoriteIds: widget.favoriteIds,
+                          onCall: widget.onCall,
+                          onWhatsApp: widget.onWhatsApp,
+                        ),
+                      ),
+                    );
                   },
                   child: Text(
                     'View All',
@@ -137,11 +148,11 @@ class _PremiumSectionState extends State<PremiumSection> {
         
         // Horizontal Scrollable List - ONE card at a time
         Container(
-          height: 44.h, // Same height as normal cards
+          height: 46.h, // Increased height to prevent overflow
           child: ListView.builder(
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: 4.w),
+            padding: EdgeInsets.only(left: 4.w, right: 4.w, bottom: 2.h),
             itemCount: infiniteListings.length,
             itemBuilder: (context, index) {
               final listing = infiniteListings[index];
