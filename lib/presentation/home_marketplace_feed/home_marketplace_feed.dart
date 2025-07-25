@@ -80,7 +80,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
 
   void _detectLocation() async {
     try {
-      // Check permission
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -101,12 +100,10 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         return;
       }
 
-      // Get current position
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
 
-      // Get place name from coordinates
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
@@ -121,7 +118,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
           _locationDetected = true;
         });
         
-        // Fetch data after location is detected
         _fetchData();
       }
     } catch (e) {
@@ -147,7 +143,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         final newListings = await _listingService.searchListings(
           latitude: _userLatitude,
           longitude: _userLongitude,
-          categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
+          keywords: _selectedCategoryId == 'All' ? null : _selectedCategory,
           sortBy: 'distance',
           searchRadius: _maxDistance,
           offset: _currentOffset + _pageSize,
@@ -178,7 +174,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       final listings = await _listingService.searchListings(
         latitude: _userLatitude,
         longitude: _userLongitude,
-        categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
+        keywords: _selectedCategoryId == 'All' ? null : _selectedCategory,
         sortBy: 'distance',
         searchRadius: _maxDistance,
         offset: 0,
@@ -206,7 +202,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     });
     
     try {
-      // Fetch categories from Supabase
       List<Map<String, dynamic>> categoriesData = [];
       try {
         categoriesData = await _listingService.getCategories();
@@ -229,7 +224,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         }).toList(),
       ];
       
-      // Fetch favorites if user is logged in
       Set<String> favorites = {};
       try {
         favorites = await _listingService.getUserFavorites();
@@ -237,13 +231,13 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         print('Error fetching favorites: $e');
       }
       
-      // Fetch listings based on location
       List<Map<String, dynamic>> listings = [];
       if (_locationDetected && _userLatitude != null && _userLongitude != null) {
         try {
           listings = await _listingService.searchListings(
             latitude: _userLatitude,
             longitude: _userLongitude,
+            keywords: null,
             sortBy: 'distance',
             searchRadius: _maxDistance,
             offset: 0,
@@ -254,7 +248,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         }
       }
       
-      // Fetch premium listings based on location
       List<Map<String, dynamic>> premiumListings = [];
       if (_locationDetected && _userLatitude != null && _userLongitude != null) {
         try {
@@ -263,7 +256,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
             limit: 50,
           );
           
-          // Sort by distance if location coordinates are available
           if (premiumListings.isNotEmpty) {
             for (var listing in premiumListings) {
               if (listing['latitude'] != null && listing['longitude'] != null) {
@@ -276,11 +268,9 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                 listing['distance'] = distance;
               }
             }
-            // Sort by distance
             premiumListings.sort((a, b) => 
               (a['distance'] ?? double.infinity).compareTo(b['distance'] ?? double.infinity)
             );
-            // Take only nearby ones
             premiumListings = premiumListings.take(10).toList();
           }
         } catch (e) {
@@ -321,7 +311,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   }
 
   double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-    const double earthRadius = 6371; // km
+    const double earthRadius = 6371;
     double dLat = _toRadians(lat2 - lat1);
     double dLon = _toRadians(lon2 - lon1);
     
@@ -337,8 +327,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   double _toRadians(double degree) {
     return degree * math.pi / 180;
   }
-
-  IconData _getCategoryIcon(String categoryName) {
+  
+ IconData _getCategoryIcon(String categoryName) {
     switch (categoryName) {
       case 'Electronics':
         return Icons.devices_other_rounded;
@@ -389,7 +379,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       final listings = await _listingService.searchListings(
         latitude: _userLatitude,
         longitude: _userLongitude,
-        categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
+        keywords: _selectedCategoryId == 'All' ? null : _selectedCategory,
         sortBy: 'distance',
         searchRadius: _maxDistance,
         offset: 0,
@@ -403,7 +393,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
           limit: 50,
         );
         
-        // Sort premium by distance
         if (premiumListings.isNotEmpty && _userLatitude != null && _userLongitude != null) {
           for (var listing in premiumListings) {
             if (listing['latitude'] != null && listing['longitude'] != null) {
@@ -649,7 +638,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                 controller: _scrollController,
                 physics: AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  // Top Bar with Logo and Location
                   SliverToBoxAdapter(
                     child: TopBarWidget(
                       currentLocation: _currentLocation,
@@ -657,7 +645,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                     ),
                   ),
                   
-                  // Full Width Search Bar
                   SliverToBoxAdapter(
                     child: SearchBarFullWidth(
                       onTap: () {
@@ -671,10 +658,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                     ),
                   ),
                   
-                  // New App Info Banner
                   SliverToBoxAdapter(child: AppInfoBannerNew()),
                   
-                  // Three Option Section
                   SliverToBoxAdapter(
                     child: ThreeOptionSection(
                       onJobsTap: () {
@@ -696,7 +681,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                     ),
                   ),
                   
-                  // Premium Section at top
                   if (_premiumListings.isNotEmpty)
                     SliverToBoxAdapter(
                       child: Column(
@@ -723,7 +707,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                       ),
                     ),
                   
-                  // Categories
                   SliverToBoxAdapter(
                     child: CategoriesSection(
                       categories: _categories,
@@ -732,7 +715,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                     ),
                   ),
                   
-                  // Filter Bar
                   SliverToBoxAdapter(
                     child: Container(
                       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
@@ -740,7 +722,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Nearby Listings',
+                            _selectedCategory == 'All' ? 'All Listings' : _selectedCategory,
                             style: TextStyle(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.bold,
@@ -778,7 +760,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                     ),
                   ),
                   
-                  // Product Feed with Premium insertions
                   _isLoadingFeed && _filteredListings.isEmpty
                       ? SliverList(
                           delegate: SliverChildBuilderDelegate(
@@ -794,7 +775,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                           ),
                         ),
                   
-                  // Loading more indicator
                   if (_isLoadingMore)
                     SliverToBoxAdapter(
                       child: Container(
