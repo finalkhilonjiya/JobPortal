@@ -14,15 +14,17 @@ import './widgets/advanced_filter_sheet.dart';
 import './widgets/create_listing_page.dart';
 import './widgets/profile_page.dart';
 import './widgets/bottom_nav_bar_widget.dart';
-import './search_page.dart'; // Add this import
-import '../../services/listing_service.dart'; // Add this import
-import '../jobs/jobs_home_page.dart'; // Add this import
-import '../traditional_market/traditional_market_home_page.dart'; // Add this import
+import './search_page.dart';
+import '../../services/listing_service.dart';
+import '../jobs/jobs_home_page.dart';
+import '../traditional_market/traditional_market_home_page.dart';
 import 'dart:async';
 import './premium_package_page.dart';
-// Add the following import for CategoriesSection
 import 'widgets/categories_section.dart';
 import 'widgets/category_data.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'dart:math' as math;
 
 class HomeMarketplaceFeed extends StatefulWidget {
   const HomeMarketplaceFeed({Key? key}) : super(key: key);
@@ -32,26 +34,29 @@ class HomeMarketplaceFeed extends StatefulWidget {
 }
 
 class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
-  final ListingService _listingService = ListingService(); // Add this
+  final ListingService _listingService = ListingService();
   
   int _currentIndex = 0;
   bool _isLoadingPremium = true;
   bool _isLoadingFeed = true;
-  bool _isLoadingMore = false; // Add this
+  bool _isLoadingMore = false;
   List<Map<String, Object>> _categories = [];
   List<Map<String, dynamic>> _listings = [];
   List<Map<String, dynamic>> _premiumListings = [];
   String _selectedCategory = 'All';
-  String _selectedCategoryId = 'All'; // Add this
+  String _selectedCategoryId = 'All';
   Set<String> _favoriteIds = {};
-  String _currentLocation = 'Guwahati, Assam';
+  String _currentLocation = 'Detecting...';
   final ScrollController _scrollController = ScrollController();
+  
+  // Location variables
+  double? _userLatitude;
+  double? _userLongitude;
+  bool _locationDetected = false;
   
   // Pagination
   int _currentOffset = 0;
   final int _pageSize = 20;
-
-  // Add this field for pagination state
   bool _hasMoreData = true;
   
   // Filter states
@@ -63,7 +68,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   @override
   void initState() {
     super.initState();
-    _fetchData();
     _scrollController.addListener(_onScroll);
     _detectLocation();
   }
@@ -75,10 +79,57 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   }
 
   void _detectLocation() async {
-    await Future.delayed(Duration(seconds: 1));
-    setState(() {
-      _currentLocation = 'Guwahati, Assam';
-    });
+    try {
+      // Check permission
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            _currentLocation = 'Location denied';
+            _locationDetected = false;
+          });
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _currentLocation = 'Location disabled';
+          _locationDetected = false;
+        });
+        return;
+      }
+
+      // Get current position
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      // Get place name from coordinates
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        setState(() {
+          _currentLocation = '${place.locality ?? place.subAdministrativeArea ?? 'Unknown'}, ${place.administrativeArea ?? ''}';
+          _userLatitude = position.latitude;
+          _userLongitude = position.longitude;
+          _locationDetected = true;
+        });
+        
+        // Fetch data after location is detected
+        _fetchData();
+      }
+    } catch (e) {
+      setState(() {
+        _currentLocation = 'Location unavailable';
+        _locationDetected = false;
+      });
+    }
   }
 
   void _onScroll() {
@@ -89,20 +140,22 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   }
 
   Future<void> _loadMoreListings() async {
-    if (!_isLoadingMore && !_isLoadingFeed) {
+    if (!_isLoadingMore && !_isLoadingFeed && _locationDetected) {
       setState(() => _isLoadingMore = true);
       
       try {
-        final newListings = await _listingService.fetchListings(
+        final newListings = await _listingService.searchListings(
+          latitude: _userLatitude,
+          longitude: _userLongitude,
           categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
-          sortBy: _sortBy,
+          sortBy: 'distance',
+          searchRadius: _maxDistance,
           offset: _currentOffset + _pageSize,
           limit: _pageSize,
         );
         
         setState(() {
           if (newListings.isEmpty) {
-            // If no more data, repeat from beginning (infinite scroll)
             _currentOffset = 0;
             _fetchListingsOnly();
           } else {
@@ -119,10 +172,15 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   }
 
   Future<void> _fetchListingsOnly() async {
+    if (!_locationDetected) return;
+    
     try {
-      final listings = await _listingService.fetchListings(
+      final listings = await _listingService.searchListings(
+        latitude: _userLatitude,
+        longitude: _userLongitude,
         categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
-        sortBy: _sortBy,
+        sortBy: 'distance',
+        searchRadius: _maxDistance,
         offset: 0,
         limit: _pageSize,
       );
@@ -137,12 +195,14 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     }
   }
 
-   Future<void> _fetchData() async {
+  Future<void> _fetchData() async {
+    if (!_locationDetected) return;
+    
     setState(() {
       _isLoadingPremium = true;
       _isLoadingFeed = true;
       _currentOffset = 0;
-      _listings = []; // Clear existing listings
+      _listings = [];
     });
     
     try {
@@ -155,19 +215,19 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       }
       
       final mainCategories = [
-  {
-    'name': 'All' as Object,
-    'id': 'All' as Object,
-    'icon': Icons.apps as Object,
-    'image': null as Object,
-  },
-  ...categoriesData.where((cat) => cat['parent_category_id'] == null).map((cat) => {
-    'name': cat['name'] as Object,
-    'id': cat['id'] as Object,  // This will be the actual UUID from database
-    'icon': _getCategoryIcon(cat['name']) as Object,
-    'image': cat['icon_url'] as Object,  // From database
-  }).toList(),
-];
+        {
+          'name': 'All' as Object,
+          'id': 'All' as Object,
+          'icon': Icons.apps as Object,
+          'image': null as Object,
+        },
+        ...categoriesData.where((cat) => cat['parent_category_id'] == null).map((cat) => {
+          'name': cat['name'] as Object,
+          'id': cat['id'] as Object,
+          'icon': _getCategoryIcon(cat['name']) as Object,
+          'image': cat['icon_url'] as Object,
+        }).toList(),
+      ];
       
       // Fetch favorites if user is logged in
       Set<String> favorites = {};
@@ -177,28 +237,55 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         print('Error fetching favorites: $e');
       }
       
-      // Fetch listings from Supabase
+      // Fetch listings based on location
       List<Map<String, dynamic>> listings = [];
-      try {
-        listings = await _listingService.fetchListings(
-          sortBy: _sortBy,
-          offset: 0,
-          limit: _pageSize,
-        );
-      } catch (e) {
-        print('Error fetching listings: $e');
+      if (_locationDetected && _userLatitude != null && _userLongitude != null) {
+        try {
+          listings = await _listingService.searchListings(
+            latitude: _userLatitude,
+            longitude: _userLongitude,
+            sortBy: 'distance',
+            searchRadius: _maxDistance,
+            offset: 0,
+            limit: _pageSize,
+          );
+        } catch (e) {
+          print('Error fetching listings by distance: $e');
+        }
       }
       
-      // Fetch REAL premium listings from Supabase
+      // Fetch premium listings based on location
       List<Map<String, dynamic>> premiumListings = [];
-      try {
-        premiumListings = await _listingService.fetchPremiumListings(
-          categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
-          limit: 10,
-        );
-        print('Fetched ${premiumListings.length} premium listings');
-      } catch (e) {
-        print('Error fetching premium listings: $e');
+      if (_locationDetected && _userLatitude != null && _userLongitude != null) {
+        try {
+          premiumListings = await _listingService.fetchPremiumListings(
+            categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
+            limit: 50,
+          );
+          
+          // Sort by distance if location coordinates are available
+          if (premiumListings.isNotEmpty) {
+            for (var listing in premiumListings) {
+              if (listing['latitude'] != null && listing['longitude'] != null) {
+                double distance = _calculateDistance(
+                  _userLatitude!,
+                  _userLongitude!,
+                  listing['latitude'],
+                  listing['longitude'],
+                );
+                listing['distance'] = distance;
+              }
+            }
+            // Sort by distance
+            premiumListings.sort((a, b) => 
+              (a['distance'] ?? double.infinity).compareTo(b['distance'] ?? double.infinity)
+            );
+            // Take only nearby ones
+            premiumListings = premiumListings.take(10).toList();
+          }
+        } catch (e) {
+          print('Error fetching premium listings: $e');
+        }
       }
       
       setState(() {
@@ -211,7 +298,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       });
     } catch (e) {
       print('Error in _fetchData: $e');
-      // Don't use mock data - show empty state
       setState(() {
         _categories = CategoryData.mainCategories.map((cat) => {
           'name': cat['name'] as Object,
@@ -219,13 +305,12 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
           'icon': cat['icon'] as Object,
           'image': cat['image'] as Object,
         }).toList();
-        _listings = []; // Empty instead of mock
-        _premiumListings = []; // Empty instead of mock
+        _listings = [];
+        _premiumListings = [];
         _isLoadingPremium = false;
         _isLoadingFeed = false;
       });
       
-      // Show error to user
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error loading data. Please check your connection.'),
@@ -235,9 +320,25 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     }
   }
 
+  double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    const double earthRadius = 6371; // km
+    double dLat = _toRadians(lat2 - lat1);
+    double dLon = _toRadians(lon2 - lon1);
+    
+    double a = 
+      math.sin(dLat / 2) * math.sin(dLat / 2) +
+      math.cos(_toRadians(lat1)) * math.cos(_toRadians(lat2)) *
+      math.sin(dLon / 2) * math.sin(dLon / 2);
+    
+    double c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    return earthRadius * c;
+  }
+
+  double _toRadians(double degree) {
+    return degree * math.pi / 180;
+  }
 
   IconData _getCategoryIcon(String categoryName) {
-    // Map category names to icons
     switch (categoryName) {
       case 'Electronics':
         return Icons.devices_other_rounded;
@@ -259,7 +360,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   }
 
   void _onCategorySelected(String name) {
-    // Find the category ID
     final category = _categories.firstWhere(
       (cat) => cat['name'] == name,
       orElse: () => {'name': 'All', 'id': 'All', 'icon': Icons.category},
@@ -273,32 +373,54 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       _hasMoreData = true;
     });
     
-    // Refetch listings with new category
     _fetchFilteredListings();
   }
 
   Future<void> _fetchFilteredListings() async {
+    if (!_locationDetected) return;
+    
     setState(() {
       _isLoadingFeed = true;
-      _listings = []; // Clear existing listings
+      _listings = [];
       _currentOffset = 0;
     });
     
     try {
-      final listings = await _listingService.fetchListings(
+      final listings = await _listingService.searchListings(
+        latitude: _userLatitude,
+        longitude: _userLongitude,
         categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
-        sortBy: _sortBy,
+        sortBy: 'distance',
+        searchRadius: _maxDistance,
         offset: 0,
         limit: _pageSize,
       );
       
-      // Also fetch filtered premium listings
       List<Map<String, dynamic>> premiumListings = [];
       try {
         premiumListings = await _listingService.fetchPremiumListings(
           categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
-          limit: 10,
+          limit: 50,
         );
+        
+        // Sort premium by distance
+        if (premiumListings.isNotEmpty && _userLatitude != null && _userLongitude != null) {
+          for (var listing in premiumListings) {
+            if (listing['latitude'] != null && listing['longitude'] != null) {
+              double distance = _calculateDistance(
+                _userLatitude!,
+                _userLongitude!,
+                listing['latitude'],
+                listing['longitude'],
+              );
+              listing['distance'] = distance;
+            }
+          }
+          premiumListings.sort((a, b) => 
+            (a['distance'] ?? double.infinity).compareTo(b['distance'] ?? double.infinity)
+          );
+          premiumListings = premiumListings.take(10).toList();
+        }
       } catch (e) {
         print('Error fetching filtered premium listings: $e');
       }
@@ -347,7 +469,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   }
 
   List<Map<String, dynamic>> get _filteredListings {
-    // Listings are already filtered from the API
     return _listings;
   }
 
@@ -370,7 +491,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
             _maxDistance = filters['maxDistance'];
           });
           Navigator.pop(context);
-          _fetchFilteredListings(); // Refetch with new filters
+          _fetchFilteredListings();
         },
       ),
     );
@@ -399,7 +520,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         fullscreenDialog: true,
       ),
     ).then((_) {
-      // Refresh listings after creating a new one
       _fetchData();
     });
   }
@@ -412,7 +532,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   }
 
   Widget _buildListingWithPremium(int index) {
-    // Insert premium carousel after every 12 items
     if ((index + 1) % 13 == 0 && _premiumListings.isNotEmpty) {
       final premiumIndex = ((index + 1) ~/ 13) - 1;
       return Column(
@@ -447,15 +566,14 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                     ),
                   ),
                 ),
-             PremiumSection(
-  listings: _premiumListings,
-  onTap: _showListingDetails,
-  favoriteIds: _favoriteIds,
-  onFavoriteToggle: _toggleFavorite,
-  onCall: (phone) => MarketplaceHelpers.makePhoneCall(context, phone),
-  onWhatsApp: (phone) => MarketplaceHelpers.openWhatsApp(context, phone),
-),
-
+                PremiumSection(
+                  listings: _premiumListings,
+                  onTap: _showListingDetails,
+                  favoriteIds: _favoriteIds,
+                  onFavoriteToggle: _toggleFavorite,
+                  onCall: (phone) => MarketplaceHelpers.makePhoneCall(context, phone),
+                  onWhatsApp: (phone) => MarketplaceHelpers.openWhatsApp(context, phone),
+                ),
               ],
             ),
           ),
@@ -487,216 +605,246 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _fetchData,
-          color: Color(0xFF2563EB),
-          child: CustomScrollView(
-            controller: _scrollController,
-            physics: AlwaysScrollableScrollPhysics(),
-            slivers: [
-              // Top Bar with Logo and Location
-              SliverToBoxAdapter(
-                child: TopBarWidget(
-                  currentLocation: _currentLocation,
-                  onLocationTap: _detectLocation,
-                ),
-              ),
-              
-              // Full Width Search Bar
-              SliverToBoxAdapter(
-                child: SearchBarFullWidth(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => SearchPage(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              
-              // New App Info Banner
-              SliverToBoxAdapter(child: AppInfoBannerNew()),
-              
-              // Three Option Section
-              SliverToBoxAdapter(
-                child: ThreeOptionSection(
-                  onJobsTap: () {
-                    // Navigate to Jobs Homepage
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => JobsHomePage(), // You'll create this
-                      ),
-                    );
-                  },
-                  onTraditionalTap: () {
-                    // Navigate to Traditional Market Homepage
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TraditionalMarketHomePage(), // You'll create this
-                      ),
-                    );
-                  },
-                ),
-              ),
-              
-              // Premium Section at top
-              if (_premiumListings.isNotEmpty)
-                SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                        child: Text(
-                          'Premium Listings',
-                          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      _isLoadingPremium
-                          ? ShimmerPremiumSection()
-                          : PremiumSection(
-    listings: _premiumListings,
-    onTap: _showListingDetails,
-    favoriteIds: _favoriteIds,
-    onFavoriteToggle: _toggleFavorite,
-    onCall: (phone) => MarketplaceHelpers.makePhoneCall(context, phone),
-    onWhatsApp: (phone) => MarketplaceHelpers.openWhatsApp(context, phone),
-  ),
-
-
-                    ],
+        child: !_locationDetected 
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.location_off, size: 20.w, color: Colors.grey),
+                  SizedBox(height: 2.h),
+                  Text(
+                    'Location Required',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              
-              // Categories
-              SliverToBoxAdapter(
-                child: CategoriesSection(
-                  categories: _categories,
-                  selected: _selectedCategory,
-                  onSelect: _onCategorySelected,
-                ),
+                  SizedBox(height: 1.h),
+                  Text(
+                    'Please enable location to see nearby listings',
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  SizedBox(height: 3.h),
+                  ElevatedButton(
+                    onPressed: _detectLocation,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF2563EB),
+                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.5.h),
+                    ),
+                    child: Text(
+                      'Enable Location',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
-              
-              // Filter Bar - Below Categories, Above Feed
-              SliverToBoxAdapter(
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'All Listings',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      InkWell(
-                        onTap: _openAdvancedFilter,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Color(0xFF2563EB)),
-                            borderRadius: BorderRadius.circular(8),
+            )
+          : RefreshIndicator(
+              onRefresh: _fetchData,
+              color: Color(0xFF2563EB),
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  // Top Bar with Logo and Location
+                  SliverToBoxAdapter(
+                    child: TopBarWidget(
+                      currentLocation: _currentLocation,
+                      onLocationTap: _detectLocation,
+                    ),
+                  ),
+                  
+                  // Full Width Search Bar
+                  SliverToBoxAdapter(
+                    child: SearchBarFullWidth(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SearchPage(),
                           ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.filter_list,
-                                color: Color(0xFF2563EB),
-                                size: 4.5.w,
-                              ),
-                              SizedBox(width: 1.w),
-                              Text(
-                                'Filter',
-                                style: TextStyle(
-                                  color: Color(0xFF2563EB),
-                                  fontSize: 11.sp,
+                        );
+                      },
+                    ),
+                  ),
+                  
+                  // New App Info Banner
+                  SliverToBoxAdapter(child: AppInfoBannerNew()),
+                  
+                  // Three Option Section
+                  SliverToBoxAdapter(
+                    child: ThreeOptionSection(
+                      onJobsTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => JobsHomePage(),
+                          ),
+                        );
+                      },
+                      onTraditionalTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TraditionalMarketHomePage(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  
+                  // Premium Section at top
+                  if (_premiumListings.isNotEmpty)
+                    SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                            child: Text(
+                              'Premium Listings',
+                              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          _isLoadingPremium
+                              ? ShimmerPremiumSection()
+                              : PremiumSection(
+                                  listings: _premiumListings,
+                                  onTap: _showListingDetails,
+                                  favoriteIds: _favoriteIds,
+                                  onFavoriteToggle: _toggleFavorite,
+                                  onCall: (phone) => MarketplaceHelpers.makePhoneCall(context, phone),
+                                  onWhatsApp: (phone) => MarketplaceHelpers.openWhatsApp(context, phone),
                                 ),
+                        ],
+                      ),
+                    ),
+                  
+                  // Categories
+                  SliverToBoxAdapter(
+                    child: CategoriesSection(
+                      categories: _categories,
+                      selected: _selectedCategory,
+                      onSelect: _onCategorySelected,
+                    ),
+                  ),
+                  
+                  // Filter Bar
+                  SliverToBoxAdapter(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Nearby Listings',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          InkWell(
+                            onTap: _openAdvancedFilter,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Color(0xFF2563EB)),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                            ],
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.filter_list,
+                                    color: Color(0xFF2563EB),
+                                    size: 4.5.w,
+                                  ),
+                                  SizedBox(width: 1.w),
+                                  Text(
+                                    'Filter',
+                                    style: TextStyle(
+                                      color: Color(0xFF2563EB),
+                                      fontSize: 11.sp,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  // Product Feed with Premium insertions
+                  _isLoadingFeed && _filteredListings.isEmpty
+                      ? SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (_, __) => ShimmerProductCard(),
+                            childCount: 6,
+                          ),
+                        )
+                      : SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (_, index) => _buildListingWithPremium(index),
+                            childCount: _filteredListings.length + 
+                                       (_filteredListings.length ~/ 12),
+                          ),
+                        ),
+                  
+                  // Loading more indicator
+                  if (_isLoadingMore)
+                    SliverToBoxAdapter(
+                      child: Container(
+                        padding: EdgeInsets.all(2.h),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF2563EB),
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
+                    ),
+                  
+                  SliverPadding(padding: EdgeInsets.only(bottom: 10.h)),
+                ],
               ),
-              
-              // Product Feed with Premium insertions
-              _isLoadingFeed && _filteredListings.isEmpty
-                  ? SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (_, __) => ShimmerProductCard(),
-                        childCount: 6,
-                      ),
-                    )
-                  : SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (_, index) => _buildListingWithPremium(index),
-                        childCount: _filteredListings.length + 
-                                   (_filteredListings.length ~/ 12),
-                      ),
-                    ),
-              
-              // Loading more indicator
-              if (_isLoadingMore)
-                SliverToBoxAdapter(
-                  child: Container(
-                    padding: EdgeInsets.all(2.h),
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF2563EB),
-                      ),
-                    ),
-                  ),
-                ),
-              
-              SliverPadding(padding: EdgeInsets.only(bottom: 10.h)),
-            ],
-          ),
-        ),
+            ),
       ),
       bottomNavigationBar: BottomNavBarWidget(
-  currentIndex: _currentIndex,
-  hasMessageNotification: true,
-  onTabSelected: (index) {
-    setState(() => _currentIndex = index);
-    if (index == 1) {
-      // Search tab
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => SearchPage()),
-      );
-    } else if (index == 2) {
-      // Package tab - ADD THIS
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => PremiumPackagePage()),
-      );
-    } else if (index == 4) {
-      // Profile tab
-      _navigateToProfile();
-    }
-  },
-  onFabPressed: _openCreateListing,
-),
+        currentIndex: _currentIndex,
+        hasMessageNotification: true,
+        onTabSelected: (index) {
+          setState(() => _currentIndex = index);
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SearchPage()),
+            );
+          } else if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => PremiumPackagePage()),
+            );
+          } else if (index == 4) {
+            _navigateToProfile();
+          }
+        },
+        onFabPressed: _openCreateListing,
+      ),
       floatingActionButton: Column(
-  mainAxisSize: MainAxisSize.min,
-  children: [
-    FloatingActionButton(
-      onPressed: _openCreateListing,
-      backgroundColor: Color(0xFF2563EB),
-      child: Icon(Icons.add, color: Colors.white),
-      heroTag: 'sell_fab',
-    ),
-  ],
-),
-floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-);
-}
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            onPressed: _openCreateListing,
+            backgroundColor: Color(0xFF2563EB),
+            child: Icon(Icons.add, color: Colors.white),
+            heroTag: 'sell_fab',
+          ),
+        ],
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    );
+  }
 }
