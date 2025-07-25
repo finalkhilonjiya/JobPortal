@@ -163,33 +163,64 @@ class SquareProductCard extends StatelessWidget {
                             ),
                           ),
 
-                          // Call & WhatsApp buttons
-                          Row(
+                          // Distance, Call & WhatsApp buttons
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              InkWell(
-                                onTap: onCall,
-                                child: Container(
-                                  padding: EdgeInsets.all(2.w),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green[50],
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Colors.green),
+                              // Distance display
+                              if (data['distance'] != null)
+                                Container(
+                                  margin: EdgeInsets.only(bottom: 0.5.h),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.directions_walk,
+                                        size: 3.5.w,
+                                        color: Color(0xFF2563EB),
+                                      ),
+                                      SizedBox(width: 0.5.w),
+                                      Text(
+                                        '${data['distance'] < 1 ? (data['distance'] * 1000).toStringAsFixed(0) + ' m' : data['distance'].toStringAsFixed(1) + ' km'} away',
+                                        style: TextStyle(
+                                          color: Color(0xFF2563EB),
+                                          fontSize: 8.sp,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  child: Icon(Icons.call, color: Colors.green, size: 5.w),
                                 ),
-                              ),
-                              SizedBox(width: 2.w),
-                              InkWell(
-                                onTap: onWhatsApp,
-                                child: Container(
-                                  padding: EdgeInsets.all(2.w),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green[50],
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Colors.green),
+                              // Call & WhatsApp buttons
+                              Row(
+                                children: [
+                                  InkWell(
+                                    onTap: onCall,
+                                    child: Container(
+                                      padding: EdgeInsets.all(2.w),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green[50],
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: Colors.green),
+                                      ),
+                                      child: Icon(Icons.call, color: Colors.green, size: 5.w),
+                                    ),
                                   ),
-                                  child: FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 5.w),
-                                ),
+                                  SizedBox(width: 2.w),
+                                  InkWell(
+                                    onTap: onWhatsApp,
+                                    child: Container(
+                                      padding: EdgeInsets.all(2.w),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green[50],
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: Colors.green),
+                                      ),
+                                      child: FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 5.w),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
