@@ -179,14 +179,15 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         );
       } else {
         // Use hardcoded categories if API failed
-        mainCategories.addAll(
+                mainCategories.addAll(
           CategoryData.mainCategories.map((cat) => {
             'name': cat['name'],
-            'id': cat['name'], // Use name as ID for hardcoded
+            'id': cat['name'],
             'icon': cat['icon'],
-            'image': cat['image'],
+            'image': cat['image'] ?? '',
           }).toList()
         );
+
       }
       
       // Fetch favorites - don't fail if user not logged in
