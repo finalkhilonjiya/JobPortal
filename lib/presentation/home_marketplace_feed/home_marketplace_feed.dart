@@ -179,15 +179,14 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         );
       } else {
         // Use hardcoded categories if API failed
-                mainCategories.addAll(
+        mainCategories.addAll(
           CategoryData.mainCategories.map((cat) => {
             'name': cat['name'],
-            'id': cat['name'],
+            'id': cat['name'], // Use name as ID for hardcoded
             'icon': cat['icon'],
-            'image': cat['image'] ?? '',
+            'image': cat['image'],
           }).toList()
         );
-
       }
       
       // Fetch favorites - don't fail if user not logged in
@@ -283,7 +282,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     }
   }
 
- void _onCategorySelected(String name) {
+
+  void _onCategorySelected(String name) {
     final category = _categories.firstWhere(
       (cat) => cat['name'] == name,
       orElse: () => {'name': 'All', 'id': 'All', 'icon': Icons.category},
@@ -454,6 +454,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
           ),
           Container(
             margin: EdgeInsets.symmetric(vertical: 2.h),
+            padding: EdgeInsets.only(bottom: 2.h), // Add padding to prevent overflow
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -574,16 +575,19 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                           style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
                         ),
                       ),
-                      _isLoadingPremium
-                          ? ShimmerPremiumSection()
-                          : PremiumSection(
-                              listings: _premiumListings,
-                              onTap: _showListingDetails,
-                              favoriteIds: _favoriteIds,
-                              onFavoriteToggle: _toggleFavorite,
-                              onCall: (phone) => MarketplaceHelpers.makePhoneCall(context, phone),
-                              onWhatsApp: (phone) => MarketplaceHelpers.openWhatsApp(context, phone),
-                            ),
+                      Container(
+                        padding: EdgeInsets.only(bottom: 2.h), // Extra padding for premium section
+                        child: _isLoadingPremium
+                            ? ShimmerPremiumSection()
+                            : PremiumSection(
+                                listings: _premiumListings,
+                                onTap: _showListingDetails,
+                                favoriteIds: _favoriteIds,
+                                onFavoriteToggle: _toggleFavorite,
+                                onCall: (phone) => MarketplaceHelpers.makePhoneCall(context, phone),
+                                onWhatsApp: (phone) => MarketplaceHelpers.openWhatsApp(context, phone),
+                              ),
+                      ),
                     ],
                   ),
                 ),
