@@ -37,7 +37,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   bool _isLoadingPremium = true;
   bool _isLoadingFeed = true;
   bool _isLoadingMore = false;
-  List<Map<String, Object>> _categories = [];
+  List<Map<String, dynamic>> _categories = [];
   List<Map<String, dynamic>> _listings = [];
   List<Map<String, dynamic>> _premiumListings = [];
   String _selectedCategory = 'All';
@@ -158,11 +158,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       }
       
       // Build category list with All option
-      final mainCategories = [
+      final List<Map<String, dynamic>> mainCategories = [
         {
-          'name': 'All' as Object,
-          'id': 'All' as Object,
-          'icon': Icons.apps as Object,
+          'name': 'All',
+          'id': 'All',
+          'icon': Icons.apps,
           'image': null,
         },
       ];
@@ -171,9 +171,9 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       if (categoriesData.isNotEmpty) {
         mainCategories.addAll(
           categoriesData.where((cat) => cat['parent_category_id'] == null).map((cat) => {
-            'name': cat['name'] as Object,
-            'id': cat['id'] as Object,
-            'icon': _getCategoryIcon(cat['name']) as Object,
+            'name': cat['name'],
+            'id': cat['id'],
+            'icon': _getCategoryIcon(cat['name']),
             'image': cat['icon_url'],
           }).toList()
         );
@@ -181,9 +181,9 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         // Use hardcoded categories if API failed
         mainCategories.addAll(
           CategoryData.mainCategories.map((cat) => {
-            'name': cat['name'] as Object,
-            'id': cat['name'] as Object, // Use name as ID for hardcoded
-            'icon': cat['icon'] as Object,
+            'name': cat['name'],
+            'id': cat['name'], // Use name as ID for hardcoded
+            'icon': cat['icon'],
             'image': cat['image'],
           }).toList()
         );
@@ -240,15 +240,15 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         // Use hardcoded categories on error
         _categories = [
           {
-            'name': 'All' as Object,
-            'id': 'All' as Object,
-            'icon': Icons.apps as Object,
+            'name': 'All',
+            'id': 'All',
+            'icon': Icons.apps,
             'image': null,
           },
           ...CategoryData.mainCategories.map((cat) => {
-            'name': cat['name'] as Object,
-            'id': cat['name'] as Object,
-            'icon': cat['icon'] as Object,
+            'name': cat['name'],
+            'id': cat['name'],
+            'icon': cat['icon'],
             'image': cat['image'],
           }).toList()
         ];
@@ -282,7 +282,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     }
   }
 
-  void _onCategorySelected(String name) {
+ void _onCategorySelected(String name) {
     final category = _categories.firstWhere(
       (cat) => cat['name'] == name,
       orElse: () => {'name': 'All', 'id': 'All', 'icon': Icons.category},
@@ -590,7 +590,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
               // Categories
               SliverToBoxAdapter(
                 child: CategoriesSection(
-                  categories: _categories,
+                  categories: _categories.map((cat) => cat.cast<String, Object>()).toList(),
                   selected: _selectedCategory,
                   onSelect: _onCategorySelected,
                 ),
