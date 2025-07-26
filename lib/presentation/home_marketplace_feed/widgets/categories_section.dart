@@ -56,28 +56,41 @@ class CategoriesSection extends StatelessWidget {
                             ]
                           : [],
                     ),
-                    child: cat.containsKey('image') && cat['image'] != null
-                        ? Image.network(
-                            cat['image'] as String,
-                            width: 32,
-                            height: 32,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Icon(
-                                cat['icon'] as IconData,
-                                color: isSelected
-                                    ? Colors.white
-                                    : Color(0xFF2563EB),
-                                size: 26,
-                              );
-                            },
-                          )
-                        : Icon(
-                            cat['icon'] as IconData,
-                            color: isSelected
-                                ? Colors.white
-                                : Color(0xFF2563EB),
-                            size: 26,
-                          ),
+                                    child: cat['image'] != null && (cat['image'] as String).isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          cat['image'] as String,
+                          width: 32,
+                          height: 32,
+                          fit: BoxFit.contain,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(
+                              cat['icon'] as IconData,
+                              color: isSelected ? Colors.white : Color(0xFF2563EB),
+                              size: 26,
+                            );
+                          },
+                        ),
+                      )
+                    : Icon(
+                        cat['icon'] as IconData,
+                        color: isSelected ? Colors.white : Color(0xFF2563EB),
+                        size: 26,
+                      ),
+
                   ),
                   SizedBox(height: 6),
                   Text(
