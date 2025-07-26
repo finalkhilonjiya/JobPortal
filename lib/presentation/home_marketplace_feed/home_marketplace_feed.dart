@@ -50,6 +50,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   int _currentOffset = 0;
   final int _pageSize = 20;
   bool _hasMoreData = true;
+  bool _hasInitialLoadError = false;
   
   // Filter states
   String _priceRange = 'All';
@@ -60,8 +61,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   @override
   void initState() {
     super.initState();
-    _fetchData();
     _scrollController.addListener(_onScroll);
+    // Delay initial fetch to ensure auth is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchData();
+    });
     _detectLocation();
   }
 
@@ -86,7 +90,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   }
 
   Future<void> _loadMoreListings() async {
-    if (!_isLoadingMore && !_isLoadingFeed) {
+    if (!_isLoadingMore && !_isLoadingFeed && _hasMoreData) {
       setState(() => _isLoadingMore = true);
       
       try {
@@ -99,7 +103,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         
         setState(() {
           if (newListings.isEmpty) {
-            // If no more data, repeat from beginning (infinite scroll)
+            // If no more data, repeat from beginning
             _currentOffset = 0;
             _fetchListingsOnly();
           } else {
@@ -140,41 +144,61 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       _isLoadingFeed = true;
       _currentOffset = 0;
       _listings = [];
+      _hasInitialLoadError = false;
     });
     
     try {
-      // Fetch categories from Supabase
+      // Fetch categories - use hardcoded if API fails
       List<Map<String, dynamic>> categoriesData = [];
       try {
         categoriesData = await _listingService.getCategories();
       } catch (e) {
-        print('Error fetching categories: $e');
+        print('Error fetching categories from API: $e');
+        // Continue with empty categories, will use hardcoded
       }
       
+      // Build category list with All option
       final mainCategories = [
         {
           'name': 'All' as Object,
           'id': 'All' as Object,
           'icon': Icons.apps as Object,
-          'image': null as Object,
+          'image': null,
         },
-        ...categoriesData.where((cat) => cat['parent_category_id'] == null).map((cat) => {
-          'name': cat['name'] as Object,
-          'id': cat['id'] as Object,
-          'icon': _getCategoryIcon(cat['name']) as Object,
-          'image': cat['icon_url'] as Object,
-        }).toList(),
       ];
       
-      // Fetch favorites if user is logged in
+      // Add fetched categories or use hardcoded
+      if (categoriesData.isNotEmpty) {
+        mainCategories.addAll(
+          categoriesData.where((cat) => cat['parent_category_id'] == null).map((cat) => {
+            'name': cat['name'] as Object,
+            'id': cat['id'] as Object,
+            'icon': _getCategoryIcon(cat['name']) as Object,
+            'image': cat['icon_url'],
+          }).toList()
+        );
+      } else {
+        // Use hardcoded categories if API failed
+        mainCategories.addAll(
+          CategoryData.mainCategories.map((cat) => {
+            'name': cat['name'] as Object,
+            'id': cat['name'] as Object, // Use name as ID for hardcoded
+            'icon': cat['icon'] as Object,
+            'image': cat['image'],
+          }).toList()
+        );
+      }
+      
+      // Fetch favorites - don't fail if user not logged in
       Set<String> favorites = {};
       try {
         favorites = await _listingService.getUserFavorites();
       } catch (e) {
         print('Error fetching favorites: $e');
+        // Continue without favorites
       }
       
-      // Fetch listings from Supabase
+      // Fetch listings
       List<Map<String, dynamic>> listings = [];
       try {
         listings = await _listingService.fetchListings(
@@ -186,11 +210,10 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         print('Error fetching listings: $e');
       }
       
-      // Fetch REAL premium listings from Supabase
+      // Fetch premium listings
       List<Map<String, dynamic>> premiumListings = [];
       try {
         premiumListings = await _listingService.fetchPremiumListings(
-          categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
           limit: 10,
         );
         print('Fetched ${premiumListings.length} premium listings');
@@ -205,28 +228,36 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         _premiumListings = premiumListings;
         _isLoadingPremium = false;
         _isLoadingFeed = false;
+        
+        // Only show error if both listings and premium failed
+        if (listings.isEmpty && premiumListings.isEmpty && categoriesData.isEmpty) {
+          _hasInitialLoadError = true;
+        }
       });
     } catch (e) {
-      print('Error in _fetchData: $e');
+      print('Unexpected error in _fetchData: $e');
       setState(() {
-        _categories = CategoryData.mainCategories.map((cat) => {
-          'name': cat['name'] as Object,
-          'id': cat['name'] as Object,
-          'icon': cat['icon'] as Object,
-          'image': cat['image'] as Object,
-        }).toList();
+        // Use hardcoded categories on error
+        _categories = [
+          {
+            'name': 'All' as Object,
+            'id': 'All' as Object,
+            'icon': Icons.apps as Object,
+            'image': null,
+          },
+          ...CategoryData.mainCategories.map((cat) => {
+            'name': cat['name'] as Object,
+            'id': cat['name'] as Object,
+            'icon': cat['icon'] as Object,
+            'image': cat['image'],
+          }).toList()
+        ];
         _listings = [];
         _premiumListings = [];
         _isLoadingPremium = false;
         _isLoadingFeed = false;
+        _hasInitialLoadError = true;
       });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error loading data. Please check your connection.'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
 
@@ -292,6 +323,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         );
       } catch (e) {
         print('Error fetching filtered premium listings: $e');
+        // Keep existing premium listings if fetch fails
+        premiumListings = _premiumListings;
       }
       
       setState(() {
@@ -304,12 +337,10 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       print('Error fetching filtered listings: $e');
       setState(() {
         _listings = [];
-        _premiumListings = [];
         _isLoadingFeed = false;
       });
     }
   }
-
 
   void _toggleFavorite(String id) async {
     try {
@@ -482,7 +513,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
             controller: _scrollController,
             physics: AlwaysScrollableScrollPhysics(),
             slivers: [
-              // Top Bar with Logo and Location
+              // Top Bar
               SliverToBoxAdapter(
                 child: TopBarWidget(
                   currentLocation: _currentLocation,
@@ -490,7 +521,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                 ),
               ),
               
-              // Full Width Search Bar
+              // Search Bar
               SliverToBoxAdapter(
                 child: SearchBarFullWidth(
                   onTap: () {
@@ -504,10 +535,10 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                 ),
               ),
               
-              // New App Info Banner
+              // App Info Banner
               SliverToBoxAdapter(child: AppInfoBannerNew()),
               
-              // Three Option Section
+              // Three Options
               SliverToBoxAdapter(
                 child: ThreeOptionSection(
                   onJobsTap: () {
@@ -529,7 +560,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                 ),
               ),
               
-              // Premium Section at top
+              // Premium Section
               if (_premiumListings.isNotEmpty)
                 SliverToBoxAdapter(
                   child: Column(
@@ -565,7 +596,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                 ),
               ),
               
-              // Filter Bar - Below Categories, Above Feed
+              // Filter Bar
               SliverToBoxAdapter(
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
@@ -611,21 +642,49 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                 ),
               ),
               
-              // Product Feed with Premium insertions
-              _isLoadingFeed && _filteredListings.isEmpty
-                  ? SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (_, __) => ShimmerProductCard(),
-                        childCount: 6,
-                      ),
-                    )
-                  : SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (_, index) => _buildListingWithPremium(index),
-                        childCount: _filteredListings.length + 
-                                   (_filteredListings.length ~/ 12),
+              // Main Feed
+              if (_hasInitialLoadError && _listings.isEmpty)
+                SliverToBoxAdapter(
+                  child: Container(
+                    height: 50.h,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.wifi_off, size: 15.w, color: Colors.grey),
+                          SizedBox(height: 2.h),
+                          Text(
+                            'Unable to load listings',
+                            style: TextStyle(fontSize: 12.sp, color: Colors.grey[700]),
+                          ),
+                          SizedBox(height: 2.h),
+                          ElevatedButton(
+                            onPressed: _fetchData,
+                            child: Text('Retry'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF2563EB),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                  ),
+                )
+              else if (_isLoadingFeed && _filteredListings.isEmpty)
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, __) => ShimmerProductCard(),
+                    childCount: 6,
+                  ),
+                )
+              else
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, index) => _buildListingWithPremium(index),
+                    childCount: _filteredListings.length + 
+                               (_filteredListings.length ~/ 12),
+                  ),
+                ),
               
               // Loading more indicator
               if (_isLoadingMore)
