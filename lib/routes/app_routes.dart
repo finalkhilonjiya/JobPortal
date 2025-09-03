@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 // Existing screens
-import '../presentation/splash_screen/splash_screen.dart';
+// REMOVED: import '../presentation/splash_screen/splash_screen.dart';
 import '../presentation/login_screen/login_screen.dart';
-import '../presentation/onboarding_tutorial/onboarding_tutorial.dart';
+// REMOVED: import '../presentation/onboarding_tutorial/onboarding_tutorial.dart';
 import '../presentation/home_marketplace_feed/home_marketplace_feed.dart';
 import '../presentation/search_and_filters/search_and_filters.dart';
 import '../presentation/registration_screen/registration_screen.dart';
@@ -10,7 +10,6 @@ import '../presentation/listing_detail/listing_detail.dart';
 import '../presentation/user_profile/user_profile.dart';
 import '../presentation/chat_messaging/chat_messaging.dart';
 import '../presentation/favorites_and_saved_items/favorites_and_saved_items.dart';
-// REMOVED: import '../presentation/create_listing/create_listing.dart';
 import '../presentation/configuration_setup/configuration_setup.dart';
 
 // Additional screens we'll create
@@ -37,7 +36,7 @@ import '../presentation/configuration_setup/configuration_setup.dart';
 class AppRoutes {
   // 🏠 Core App Routes
   static const String initial = '/';
-  static const String splashScreen = '/splash-screen';
+  // REMOVED: static const String splashScreen = '/splash-screen';
   
   // 🔐 Authentication Routes
   static const String loginScreen = '/login-screen';
@@ -46,8 +45,8 @@ class AppRoutes {
   static const String emailVerificationScreen = '/email-verification-screen';
   static const String phoneVerificationScreen = '/phone-verification-screen';
   
-  // 🎪 Onboarding Routes
-  static const String onboardingTutorial = '/onboarding-tutorial';
+  // REMOVED: 🎪 Onboarding Routes
+  // static const String onboardingTutorial = '/onboarding-tutorial';
   
   // 🏪 Marketplace Routes
   static const String homeMarketplaceFeed = '/home-marketplace-feed';
@@ -131,9 +130,9 @@ class AppRoutes {
   static const String notFoundScreen = '/not-found-screen';
 
   static Map<String, WidgetBuilder> routes = {
-    // 🏠 Core App Routes
-    initial: (context) => const SplashScreen(),
-    splashScreen: (context) => const SplashScreen(),
+    // 🏠 Core App Routes - CHANGED: Now goes directly to login/home
+    initial: (context) => const LoginScreen(), // CHANGED: Was SplashScreen
+    // REMOVED: splashScreen: (context) => const SplashScreen(),
     
     // 🔐 Authentication Routes
     loginScreen: (context) => const LoginScreen(),
@@ -142,8 +141,8 @@ class AppRoutes {
     // emailVerificationScreen: (context) => const EmailVerificationScreen(),
     // phoneVerificationScreen: (context) => const PhoneVerificationScreen(),
     
-    // 🎪 Onboarding Routes
-    onboardingTutorial: (context) => const OnboardingTutorial(),
+    // REMOVED: 🎪 Onboarding Routes
+    // onboardingTutorial: (context) => const OnboardingTutorial(),
     
     // 🏪 Marketplace Routes
     homeMarketplaceFeed: (context) => const HomeMarketplaceFeed(),
@@ -266,10 +265,10 @@ class AppRoutes {
     await pushAndClearStack(context, homeMarketplaceFeed);
   }
 
-  /// Navigate to onboarding and clear stack
-  static Future<void> navigateToOnboarding(BuildContext context) async {
-    await pushAndClearStack(context, onboardingTutorial);
-  }
+  /// REMOVED: Navigate to onboarding (no longer needed)
+  // static Future<void> navigateToOnboarding(BuildContext context) async {
+  //   await pushAndClearStack(context, onboardingTutorial);
+  // }
 
   /// Handle unknown routes
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
