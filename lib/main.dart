@@ -304,25 +304,36 @@ class NavigationService {
 }
 
 void main() async {
-  // Enable performance profiling in debug mode
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Essential error handling only
   if (kDebugMode) {
     debugPrintRebuildDirtyWidgets = true;
   }
-  
-  WidgetsFlutterBinding.ensureInitialized();
 
-  // 🚨 CRITICAL: Enhanced error handling
   ErrorWidget.builder = (FlutterErrorDetails details) {
     debugPrint('❌ Widget Error: ${details.exception}');
     return CustomErrorWidget(errorDetails: details);
   };
 
-  // 🚨 CRITICAL: Device orientation and system UI
+  FlutterError.onError = (FlutterErrorDetails details) {
+    debugPrint('❌ Flutter error: ${details.exception}');
+    debugPrint('Stack trace: ${details.stack}');
+  };
+
+  // ✅ START APP IMMEDIATELY
+  runApp(MyApp());
+  
+  // ✅ MOVE HEAVY OPERATIONS AFTER APP STARTS (non-blocking)
+  _setupSystemUI();
+}
+
+// ✅ ADD THIS NEW FUNCTION
+void _setupSystemUI() async {
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp
   ]);
   
-  // Enhanced system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -331,14 +342,6 @@ void main() async {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
-
-  // Set up error handling
-  FlutterError.onError = (FlutterErrorDetails details) {
-    debugPrint('❌ Flutter error: ${details.exception}');
-    debugPrint('Stack trace: ${details.stack}');
-  };
-
-  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
