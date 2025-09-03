@@ -404,13 +404,15 @@ void initState() {
   WidgetsBinding.instance.addObserver(this);
   _splashStopwatch = Stopwatch()..start();
   
-  // Wait for first frame before accessing Provider
+  // ✅ START IMMEDIATELY WITHOUT DELAY
+  _stateNotifier = Provider.of<AppStateNotifier>(context, listen: false);
+  _initializationService = AppInitializationService(_stateNotifier);
+  
+  // ✅ START INITIALIZATION RIGHT AWAY
   WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (!mounted) return;
-    
-    _stateNotifier = Provider.of<AppStateNotifier>(context, listen: false);
-    _initializationService = AppInitializationService(_stateNotifier);
-    _initializeApp();
+    if (mounted) {
+      _initializeApp();
+    }
   });
 }
 
