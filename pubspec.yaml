@@ -97,6 +97,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_native_splash: ^2.3.2  # ← ADDED FOR NATIVE SPLASH SCREEN
 
 flutter:
   uses-material-design: true
@@ -109,9 +110,11 @@ flutter:
     - assets/images/ApplyJobs.png
     - assets/images/ListJobs.png
     - assets/images/ATM.png
+    - assets/images/logo_k.svg  # ← ENSURE THIS FILE EXISTS
     - assets/icons/
     - assets/fonts/
     - assets/animations/
+    
   fonts:
     - family: Poppins
       fonts:
@@ -122,3 +125,31 @@ flutter:
           weight: 600
         - asset: assets/fonts/Poppins-Bold.ttf
           weight: 700
+
+# ← NATIVE SPLASH SCREEN CONFIGURATION
+flutter_native_splash:
+  # Background color - Change to your brand color (hex format)
+  color: "#ffffff"
+  
+  # Logo/Image to display
+  image: assets/images/logo_k.svg
+  
+  # Image positioning
+  android_gravity: center
+  ios_content_mode: center
+  web_image_mode: center
+  
+  # Optional: Dark mode support (uncomment if you have dark theme logo)
+  # color_dark: "#000000"
+  # image_dark: assets/images/logo_k_dark.svg
+  
+  # Optional: Platform specific images
+  # android: assets/images/logo_android.png
+  # ios: assets/images/logo_ios.png
+  # web: assets/images/logo_web.png
+  
+  # Optional: Branding mode for Android 12+ (keeps logo visible longer)
+  android_12:
+    image: assets/images/logo_k.svg
+    color: "#ffffff"
+    # icon_background_color: "#ffffff"
