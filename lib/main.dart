@@ -433,39 +433,35 @@ void initState() {
   }
 
   Future<void> _handleInitialNavigation() async {
-    // Remove enforced minimum splash duration for instant splash
-    // final elapsed = _splashStopwatch.elapsedMilliseconds;
-    // final minimumMs = AppConfig.splashMinimumDuration.inMilliseconds;
-    // final delay = elapsed < minimumMs ? minimumMs - elapsed : 0;
-    // await Future.delayed(Duration(milliseconds: delay));
-    if (!mounted) return;
+  // ✅ NO ARTIFICIAL DELAYS - Keep commented out
+  if (!mounted) return;
 
-    try {
-      final initialState = _initializationService.determineInitialState();
-      _stateNotifier.setState(initialState);
-      
-      // Navigation flow: AppInitializer → splash → onboarding → auth → home
-      switch (initialState) {
-        case AppState.authenticated:
-          debugPrint('🔐 User already authenticated, navigating directly to home');
-          NavigationService.pushReplacementNamed(AppRoutes.homeMarketplaceFeed);
-          break;
-        case AppState.offline:
-          debugPrint('🌐 Offline mode, navigating to splash (limited features)');
-          NavigationService.pushReplacementNamed(AppRoutes.splashScreen);
-          break;
-        case AppState.unauthenticated:
-        case AppState.initialized:
-        default:
-          debugPrint('🔓 New user flow: navigating to splash → onboarding → auth');
-          NavigationService.pushReplacementNamed(AppRoutes.splashScreen);
-      }
-    } catch (e) {
-      debugPrint('❌ Navigation error: $e');
-      // Fallback to splash screen on any navigation error
-      NavigationService.pushReplacementNamed(AppRoutes.splashScreen);
+  try {
+    final initialState = _initializationService.determineInitialState();
+    _stateNotifier.setState(initialState);
+    
+    // ✅ NEW Navigation flow: AppInitializer → auth/home directly
+    switch (initialState) {
+      case AppState.authenticated:
+        debugPrint('🔐 User already authenticated, navigating directly to home');
+        NavigationService.pushReplacementNamed(AppRoutes.homeMarketplaceFeed);
+        break;
+      case AppState.offline:
+        debugPrint('🌐 Offline mode, navigating to home (limited features)');
+        NavigationService.pushReplacementNamed(AppRoutes.homeMarketplaceFeed);
+        break;
+      case AppState.unauthenticated:
+      case AppState.initialized:
+      default:
+        debugPrint('🔓 User not authenticated, navigating to login');
+        NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
     }
+  } catch (e) {
+    debugPrint('❌ Navigation error: $e');
+    // ✅ Fallback to login screen
+    NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
   }
+}
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -585,13 +581,13 @@ void initState() {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    _stateNotifier.isRetrying 
-                        ? 'Retrying connection...' 
-                        : 'Setting up your marketplace experience...',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[600],
-                    ),
-                  ),
+  _stateNotifier.isRetrying 
+      ? 'Retrying connection...' 
+      : 'Loading...',
+  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+    color: Colors.grey[600],
+  ),
+),
                 ],
               ),
             ),
