@@ -4,7 +4,7 @@ import 'package:sizer/sizer.dart';
 import 'dart:async';
 
 import '../../core/app_export.dart';
-import 'mobile_auth_service.dart'; // Import the service we created
+import 'mobile_auth_service.dart';
 
 class MobileLoginScreen extends StatefulWidget {
   const MobileLoginScreen({Key? key}) : super(key: key);
@@ -33,6 +33,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
 
   late AnimationController _animationController;
   late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
 
   final _authService = MobileAuthService();
 
@@ -58,6 +59,14 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       curve: Curves.easeOutCubic,
     ));
 
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
+
     _animationController.forward();
   }
 
@@ -65,7 +74,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     try {
       await _authService.initialize();
       
-      // Check if user is already authenticated
       if (_authService.isAuthenticated) {
         final sessionValid = await _authService.refreshSession();
         if (sessionValid) {
@@ -214,16 +222,15 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       setState(() {
         _errorMessage = null;
       });
-      
-      // Auto-verify when all 6 digits are entered
-      Future.delayed(Duration(milliseconds: 500), _handleVerifyOTP);
     }
   }
 
-  void _handleOTPBackspace(int index) {
-    if (_otpControllers[index].text.isEmpty && index > 0) {
-      _otpFocusNodes[index - 1].requestFocus();
-      _otpControllers[index - 1].clear();
+  void _handleOTPKeyDown(int index, RawKeyEvent key) {
+    if (key is RawKeyDownEvent && key.logicalKey == LogicalKeyboardKey.backspace) {
+      if (_otpControllers[index].text.isEmpty && index > 0) {
+        _otpFocusNodes[index - 1].requestFocus();
+        _otpControllers[index - 1].clear();
+      }
     }
   }
 
@@ -268,23 +275,27 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
             child: SingleChildScrollView(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
-                child: Card(
-                  elevation: 8,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildProgressIndicator(),
-                        SizedBox(height: 3.h),
-                        _buildLogo(),
-                        SizedBox(height: 3.h),
-                        if (_currentStep == 1) 
-                          _buildMobileStep()
-                        else 
-                          _buildOTPStep(),
-                      ],
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: Card(
+                      elevation: 8,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildLogo(),
+                            SizedBox(height: 4.h),
+                            if (_currentStep == 1) 
+                              _buildMobileStep()
+                            else 
+                              _buildOTPStep(),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -296,50 +307,16 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     );
   }
 
-  Widget _buildProgressIndicator() {
-    return Row(
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: Color(0xFF2563EB),
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Text('1', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ),
-        Expanded(
-          child: Container(
-            height: 2,
-            color: _currentStep == 2 ? Color(0xFF2563EB) : Colors.grey[300],
-          ),
-        ),
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: _currentStep == 2 ? Color(0xFF2563EB) : Colors.grey[300],
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Text('2', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildLogo() {
     return Column(
       children: [
         Container(
-          width: 72,
-          height: 72,
+          width: 80,
+          height: 80,
           decoration: BoxDecoration(
-            color: Color(0xFF2563EB),
+            color: Colors.grey[200],
             shape: BoxShape.circle,
+            border: Border.all(color: Colors.grey[300]!, width: 2),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.08),
@@ -349,18 +326,24 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(36),
+            borderRadius: BorderRadius.circular(40),
             child: Image.asset(
               'assets/images/company_logo.png',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => Center(
-                child: Text('LOGO', style: TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                child: Text(
+                  'Your Logo',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[500],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
             ),
           ),
         ),
-        SizedBox(height: 1.5.h),
+        SizedBox(height: 2.h),
         Text(
           'khilonjiya.com',
           style: TextStyle(
@@ -376,108 +359,97 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   }
 
   Widget _buildMobileStep() {
-    return SlideTransition(
-      position: _slideAnimation,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text('Enter Mobile Number', 
-            style: TextStyle(fontSize: 5.w, fontWeight: FontWeight.w600),
-            textAlign: TextAlign.center),
-          SizedBox(height: 1.h),
-          Text('We\'ll send you a verification code',
-            style: TextStyle(fontSize: 3.5.w, color: Colors.grey[600]),
-            textAlign: TextAlign.center),
-          SizedBox(height: 3.h),
-          
-          TextFormField(
-            controller: _mobileController,
-            keyboardType: TextInputType.phone,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(10),
-            ],
-            decoration: InputDecoration(
-              labelText: 'Mobile Number',
-              hintText: 'Enter 10-digit mobile number',
-              prefixIcon: Padding(
-                padding: EdgeInsets.all(3.w),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.phone_outlined, color: Colors.grey[600], size: 5.w),
-                    SizedBox(width: 2.w),
-                    Text('+91', style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w500)),
-                  ],
-                ),
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Color(0xFF2563EB), width: 2),
-              ),
-            ),
-            onFieldSubmitted: (value) {
-              if (_isMobileValid) _handleSendOTP();
-            },
-          ),
-          
-          if (_errorMessage != null) ...[
-            SizedBox(height: 1.h),
-            Text(_errorMessage!, style: TextStyle(fontSize: 3.w, color: Colors.red)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextFormField(
+          controller: _mobileController,
+          keyboardType: TextInputType.phone,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(10),
           ],
-          
-          SizedBox(height: 3.h),
-          
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _isMobileValid && !_isLoading ? _handleSendOTP : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF2563EB),
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          decoration: InputDecoration(
+            hintText: 'Enter your mobile number',
+            prefixIcon: Padding(
+              padding: EdgeInsets.all(3.w),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.phone_outlined, color: Colors.grey[600], size: 5.w),
+                  SizedBox(width: 2.w),
+                  Text('+91', style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w500)),
+                ],
               ),
-              child: _isLoading
-                  ? SizedBox(
-                      width: 24, height: 24,
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        strokeWidth: 2.5,
-                      ),
-                    )
-                  : Text('Send OTP', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
             ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Color(0xFF2563EB), width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.red, width: 1),
+            ),
+            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+          ),
+          style: TextStyle(fontSize: 4.5.w),
+          onFieldSubmitted: (value) {
+            if (_isMobileValid) _handleSendOTP();
+          },
+        ),
+        
+        if (_errorMessage != null) ...[
+          SizedBox(height: 1.h),
+          Padding(
+            padding: EdgeInsets.only(left: 3.w),
+            child: Text(_errorMessage!, style: TextStyle(fontSize: 3.w, color: Colors.red)),
           ),
         ],
-      ),
+        
+        SizedBox(height: 4.h),
+        
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _isMobileValid && !_isLoading ? _handleSendOTP : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFF2563EB),
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 2,
+            ),
+            child: _isLoading
+                ? SizedBox(
+                    width: 24, height: 24,
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      strokeWidth: 2.5,
+                    ),
+                  )
+                : Text('Continue', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildOTPStep() {
-    return SlideTransition(
-      position: _slideAnimation,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text('Verify Mobile Number',
-            style: TextStyle(fontSize: 5.w, fontWeight: FontWeight.w600),
-            textAlign: TextAlign.center),
-          SizedBox(height: 1.h),
-          Text('Enter the 6-digit code sent to\n${MobileAuthService.maskMobileNumber(_mobileController.text)}',
-            style: TextStyle(fontSize: 3.5.w, color: Colors.grey[600]),
-            textAlign: TextAlign.center),
-          SizedBox(height: 3.h),
-          
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: List.generate(6, (index) {
-              return Container(
-                width: 12.w,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: List.generate(6, (index) {
+            return Container(
+              width: 12.w,
+              child: RawKeyboardListener(
+                focusNode: FocusNode(),
+                onKey: (event) => _handleOTPKeyDown(index, event),
                 child: TextFormField(
                   controller: _otpControllers[index],
                   focusNode: _otpFocusNodes[index],
@@ -495,141 +467,96 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Color(0xFF2563EB), width: 2),
                     ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.red, width: 1),
+                    ),
                   ),
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   onChanged: (value) => _handleOTPChange(index, value),
-                  onTap: () {
-                    // Clear current field on tap
-                    _otpControllers[index].clear();
-                  },
-                  onEditingComplete: () {
-                    if (index < 5 && _otpControllers[index].text.isNotEmpty) {
-                      _otpFocusNodes[index + 1].requestFocus();
-                    }
-                  },
+                  onTap: () => _otpControllers[index].clear(),
                 ),
-              );
-            }),
-          ),
-          
-          if (_errorMessage != null) ...[
-            SizedBox(height: 2.h),
-            Text(
-              _errorMessage!, 
-              style: TextStyle(fontSize: 3.w, color: Colors.red), 
-              textAlign: TextAlign.center,
-            ),
-          ],
-          
-          SizedBox(height: 3.h),
-          
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _otpControllers.every((c) => c.text.isNotEmpty) && !_isLoading 
-                  ? _handleVerifyOTP 
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF2563EB),
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 2,
               ),
-              child: _isLoading
-                  ? SizedBox(
-                      width: 24, 
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        strokeWidth: 2.5,
-                      ),
-                    )
-                  : Text(
-                      'Verify OTP', 
-                      style: TextStyle(
-                        fontSize: 16.sp, 
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-            ),
-          ),
-          
+            );
+          }),
+        ),
+        
+        if (_errorMessage != null) ...[
           SizedBox(height: 2.h),
-          
-          // Resend Section
-          if (!_canResend && _resendTimer > 0)
-            Text(
-              'Resend OTP in ${_resendTimer}s',
-              style: TextStyle(
-                fontSize: 3.5.w, 
-                color: Colors.grey[600],
-              ),
-              textAlign: TextAlign.center,
-            )
-          else if (_canResend && _resendAttempts < 3)
-            TextButton(
-              onPressed: _handleResendOTP,
-              child: Text(
-                'Resend OTP',
-                style: TextStyle(
-                  fontSize: 3.5.w, 
-                  color: Color(0xFF2563EB), 
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            )
-          else if (_resendAttempts >= 3)
-            Text(
-              'Maximum resend attempts reached',
-              style: TextStyle(
-                fontSize: 3.w, 
-                color: Colors.red,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          
-          SizedBox(height: 1.h),
-          
-          // Back Button
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _currentStep = 1;
-                _errorMessage = null;
-              });
-              
-              // Clear OTP fields
-              for (var controller in _otpControllers) {
-                controller.clear();
-              }
-              
-              _timer?.cancel();
-              _animationController.reset();
-              _animationController.forward();
-            },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.arrow_back, 
-                  size: 4.w, 
-                  color: Colors.grey[600],
-                ),
-                SizedBox(width: 1.w),
-                Text(
-                  'Edit mobile number',
-                  style: TextStyle(
-                    fontSize: 3.5.w, 
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          Text(_errorMessage!, style: TextStyle(fontSize: 3.w, color: Colors.red), textAlign: TextAlign.center),
         ],
-      ),
+        
+        SizedBox(height: 4.h),
+        
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _otpControllers.every((c) => c.text.isNotEmpty) && !_isLoading 
+                ? _handleVerifyOTP 
+                : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFF2563EB),
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 2,
+            ),
+            child: _isLoading
+                ? SizedBox(
+                    width: 24, height: 24,
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      strokeWidth: 2.5,
+                    ),
+                  )
+                : Text('Verify OTP', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
+          ),
+        ),
+        
+        SizedBox(height: 2.h),
+        
+        if (!_canResend && _resendTimer > 0)
+          Text('Resend OTP in ${_resendTimer}s',
+            style: TextStyle(fontSize: 3.5.w, color: Colors.grey[600]),
+            textAlign: TextAlign.center)
+        else if (_canResend && _resendAttempts < 3)
+          TextButton(
+            onPressed: _handleResendOTP,
+            child: Text('Resend OTP',
+              style: TextStyle(fontSize: 3.5.w, color: Color(0xFF2563EB), fontWeight: FontWeight.w600)),
+          )
+        else if (_resendAttempts >= 3)
+          Text('Maximum resend attempts reached',
+            style: TextStyle(fontSize: 3.w, color: Colors.red),
+            textAlign: TextAlign.center),
+        
+        SizedBox(height: 1.h),
+        
+        TextButton(
+          onPressed: () {
+            setState(() {
+              _currentStep = 1;
+              _errorMessage = null;
+            });
+            for (var controller in _otpControllers) {
+              controller.clear();
+            }
+            _timer?.cancel();
+            _animationController.reset();
+            _animationController.forward();
+          },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.arrow_back, size: 4.w, color: Colors.grey[600]),
+              SizedBox(width: 1.w),
+              Text('Edit mobile number',
+                style: TextStyle(fontSize: 3.5.w, color: Colors.grey[600])),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
