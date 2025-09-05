@@ -1,23 +1,15 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../core/app_export.dart'; // Your existing imports
+
 class MobileAuthService {
   static final MobileAuthService _instance = MobileAuthService._internal();
   factory MobileAuthService() => _instance;
   MobileAuthService._internal();
-
-  // Supabase configuration
-  String get _supabaseUrl => const String.fromEnvironment('SUPABASE_URL');
-  String get _supabaseAnonKey => const String.fromEnvironment('SUPABASE_ANON_KEY');
-  
-  // Auth endpoints
-  String get _requestOtpUrl => '$_supabaseUrl/functions/v1/auth/request-otp';
-  String get _verifyOtpUrl => '$_supabaseUrl/functions/v1/auth/verify-otp';
-  String get _refreshSessionUrl => '$_supabaseUrl/functions/v1/auth/refresh-session';
 
   // Storage keys
   static const String _userKey = 'auth_user';
@@ -127,7 +119,7 @@ class MobileAuthService {
     }
   }
 
-  /// Send OTP to mobile number
+  /// Send OTP to mobile number using existing Supabase service
   Future<OtpResponse> sendOtp(String mobileNumber) async {
     try {
       // Validate mobile number format
@@ -136,26 +128,30 @@ class MobileAuthService {
         throw AuthException('Invalid mobile number format');
       }
 
-      final response = await http.post(
-        Uri.parse(_requestOtpUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_supabaseAnonKey',
-        },
-        body: jsonEncode({
-          'mobile_number': '+91$cleanMobile',
-        }),
+      debugPrint('Sending OTP to: +91$cleanMobile');
+
+      // Use your existing SupabaseService
+      final response = await SupabaseService().client.functions.invoke(
+        'auth/request-otp',
+        body: {'mobile_number': '+91$cleanMobile'},
       );
 
-      final data = jsonDecode(response.body);
+      debugPrint('OTP request response status: ${response.status}');
+      debugPrint('OTP request response data: ${response.data}');
 
-      if (response.statusCode == 200 && data['success'] == true) {
-        return OtpResponse(
-          success: true,
-          message: 'OTP sent successfully',
-        );
+      if (response.status == 200) {
+        final data = response.data;
+        if (data != null && data['success'] == true) {
+          return OtpResponse(
+            success: true,
+            message: 'OTP sent successfully',
+          );
+        } else {
+          throw AuthException(data?['error'] ?? 'Failed to send OTP');
+        }
       } else {
-        throw AuthException(data['error'] ?? 'Failed to send OTP');
+        final errorData = response.data;
+        throw AuthException(errorData?['error'] ?? 'Failed to send OTP');
       }
     } catch (e) {
       if (e is AuthException) rethrow;
@@ -164,41 +160,47 @@ class MobileAuthService {
     }
   }
 
-  /// Verify OTP and authenticate user
+  /// Verify OTP and authenticate user using existing Supabase service
   Future<AuthResponse> verifyOtp(String mobileNumber, String otp) async {
     try {
       final cleanMobile = mobileNumber.replaceAll(RegExp(r'[^\d]'), '');
       final deviceFingerprint = await _generateDeviceFingerprint();
 
-      final response = await http.post(
-        Uri.parse(_verifyOtpUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_supabaseAnonKey',
-        },
-        body: jsonEncode({
+      debugPrint('Verifying OTP for: +91$cleanMobile');
+
+      // Use your existing SupabaseService
+      final response = await SupabaseService().client.functions.invoke(
+        'auth/verify-otp',
+        body: {
           'mobile_number': '+91$cleanMobile',
           'otp': otp,
           'device_fingerprint': deviceFingerprint,
-        }),
+        },
       );
 
-      final data = jsonDecode(response.body);
+      debugPrint('OTP verify response status: ${response.status}');
+      debugPrint('OTP verify response data: ${response.data}');
 
-      if (response.statusCode == 200 && data['success'] == true) {
-        final user = data['user'] as Map<String, dynamic>;
-        final refreshToken = data['refreshToken'] as String;
+      if (response.status == 200) {
+        final data = response.data;
+        if (data != null && data['success'] == true) {
+          final user = data['user'] as Map<String, dynamic>;
+          final refreshToken = data['refreshToken'] as String;
 
-        // Store authentication data
-        await _storeAuthData(user, refreshToken);
+          // Store authentication data
+          await _storeAuthData(user, refreshToken);
 
-        return AuthResponse(
-          success: true,
-          user: user,
-          message: 'Authentication successful',
-        );
+          return AuthResponse(
+            success: true,
+            user: user,
+            message: 'Authentication successful',
+          );
+        } else {
+          throw AuthException(data?['error'] ?? 'Invalid or expired OTP');
+        }
       } else {
-        throw AuthException(data['error'] ?? 'Invalid or expired OTP');
+        final errorData = response.data;
+        throw AuthException(errorData?['error'] ?? 'Invalid or expired OTP');
       }
     } catch (e) {
       if (e is AuthException) rethrow;
@@ -207,29 +209,35 @@ class MobileAuthService {
     }
   }
 
-  /// Refresh user session
+  /// Refresh user session using existing Supabase service
   Future<bool> refreshSession() async {
     try {
       if (_currentUser == null || _refreshToken == null) {
+        debugPrint('No stored auth data for session refresh');
         return false;
       }
 
-      final response = await http.post(
-        Uri.parse(_refreshSessionUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_supabaseAnonKey',
-        },
-        body: jsonEncode({
+      debugPrint('Refreshing session for user: ${_currentUser!['id']}');
+
+      final response = await SupabaseService().client.functions.invoke(
+        'auth/refresh-session',
+        body: {
           'user_id': _currentUser!['id'],
           'refreshToken': _refreshToken,
-        }),
+        },
       );
 
-      final data = jsonDecode(response.body);
+      debugPrint('Session refresh response status: ${response.status}');
 
-      if (response.statusCode == 200 && data['success'] == true) {
-        return true;
+      if (response.status == 200) {
+        final data = response.data;
+        if (data != null && data['success'] == true) {
+          return true;
+        } else {
+          // Session invalid, clear stored data
+          await _clearAuthData();
+          return false;
+        }
       } else {
         // Session invalid, clear stored data
         await _clearAuthData();
@@ -256,6 +264,7 @@ class MobileAuthService {
 
   /// Logout user
   Future<void> logout() async {
+    debugPrint('Logging out user');
     await _clearAuthData();
   }
 
@@ -282,6 +291,18 @@ class MobileAuthService {
     final clean = mobile.replaceAll(RegExp(r'[^\d]'), '');
     return clean.length == 10 && clean[0] != '0';
   }
+
+  /// Check connection to Supabase (using existing service)
+  Future<bool> checkConnection() async {
+    try {
+      final healthStatus = await SupabaseService().getHealthStatus();
+      debugPrint('Supabase health check: $healthStatus');
+      return true;
+    } catch (e) {
+      debugPrint('Connection check failed: $e');
+      return false;
+    }
+  }
 }
 
 /// Response class for OTP operations
@@ -293,6 +314,9 @@ class OtpResponse {
     required this.success,
     required this.message,
   });
+
+  @override
+  String toString() => 'OtpResponse(success: $success, message: $message)';
 }
 
 /// Response class for authentication
@@ -306,6 +330,9 @@ class AuthResponse {
     this.user,
     required this.message,
   });
+
+  @override
+  String toString() => 'AuthResponse(success: $success, user: $user, message: $message)';
 }
 
 /// Custom exception for authentication errors
