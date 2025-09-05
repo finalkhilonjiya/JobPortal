@@ -13,7 +13,6 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.2
   
-  
   # State Management
   provider: ^6.1.1
   
@@ -25,7 +24,7 @@ dependencies:
   google_sign_in: ^6.3.0
   flutter_facebook_auth: ^7.1.2
   
-  # Environment Variables (IMPORTANT - Added for Supabase)
+  # Environment Variables
   flutter_dotenv: ^5.1.0
   
   # Storage & Preferences
@@ -92,25 +91,25 @@ dependencies:
   package_info_plus: ^8.3.0
   geocoding: ^2.1.0
   
+  # NEW DEPENDENCIES FOR MOBILE OTP LOGIN
+  crypto: ^3.0.3                    # For device fingerprint hashing
+  telephony: ^0.2.0                 # For SMS auto-detection (Android only)
   
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
-  flutter_native_splash: ^2.3.2  # ← ADDED FOR NATIVE SPLASH SCREEN
+  flutter_native_splash: ^2.3.2
 
 flutter:
   uses-material-design: true
   
   assets:
-    # Environment configuration (IMPORTANT - Added for Supabase)
+    # Environment configuration
     - .env
     
     # App assets
-    - assets/images/ApplyJobs.png
-    - assets/images/ListJobs.png
-    - assets/images/ATM.png
-    - assets/images/logo_k.svg  # ← ENSURE THIS FILE EXISTS
+    - assets/images/
     - assets/icons/
     - assets/fonts/
     - assets/animations/
@@ -126,30 +125,15 @@ flutter:
         - asset: assets/fonts/Poppins-Bold.ttf
           weight: 700
 
-# ← NATIVE SPLASH SCREEN CONFIGURATION
+# Native Splash Screen Configuration
 flutter_native_splash:
-  # Background color - Change to your brand color (hex format)
   color: "#ffffff"
-  
-  # Logo/Image to display
-  image: assets/images/logo_k.svg
-  
-  # Image positioning
+  image: assets/images/company_logo.png
   android_gravity: center
   ios_content_mode: center
   web_image_mode: center
   
-  # Optional: Dark mode support (uncomment if you have dark theme logo)
-  # color_dark: "#000000"
-  # image_dark: assets/images/logo_k_dark.svg
-  
-  # Optional: Platform specific images
-  # android: assets/images/logo_android.png
-  # ios: assets/images/logo_ios.png
-  # web: assets/images/logo_web.png
-  
-  # Optional: Branding mode for Android 12+ (keeps logo visible longer)
+  # Android 12+ branding
   android_12:
-    image: assets/images/logo_k.svg
+    image: assets/images/company_logo.png
     color: "#ffffff"
-    # icon_background_color: "#ffffff"
