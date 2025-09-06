@@ -34,8 +34,6 @@ export '../utils/favorite_service.dart';
 export '../utils/message_service.dart';
 
 // Presentation layer exports
-export '../presentation/splash_screen/splash_screen.dart';
-export '../presentation/onboarding_tutorial/onboarding_tutorial.dart';
 export '../presentation/home_marketplace_feed/home_marketplace_feed.dart';
 export '../presentation/user_profile/user_profile.dart';
 export '../presentation/favorites_and_saved_items/favorites_and_saved_items.dart';
