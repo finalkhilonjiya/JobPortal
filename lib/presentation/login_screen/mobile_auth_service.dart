@@ -46,7 +46,8 @@ class MobileAuthService {
       
       if (defaultTargetPlatform == TargetPlatform.android) {
         AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-        fingerprint = '${androidInfo.model}_${androidInfo.id}_${androidInfo.androidId}';
+        // Fixed: Use 'device' instead of 'androidId' which doesn't exist in newer versions
+        fingerprint = '${androidInfo.model}_${androidInfo.id}_${androidInfo.device}';
       } else if (defaultTargetPlatform == TargetPlatform.iOS) {
         IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
         fingerprint = '${iosInfo.model}_${iosInfo.identifierForVendor}';
@@ -100,7 +101,7 @@ class MobileAuthService {
       _refreshToken = refreshToken;
     } catch (e) {
       debugPrint('Error storing auth data: $e');
-      throw AuthException('Failed to store authentication data');
+      throw MobileAuthException('Failed to store authentication data');
     }
   }
 
@@ -125,7 +126,7 @@ class MobileAuthService {
       // Validate mobile number format
       final cleanMobile = mobileNumber.replaceAll(RegExp(r'[^\d]'), '');
       if (cleanMobile.length != 10 || cleanMobile[0] == '0') {
-        throw AuthException('Invalid mobile number format');
+        throw MobileAuthException('Invalid mobile number format');
       }
 
       debugPrint('Sending OTP to: +91$cleanMobile');
@@ -147,16 +148,16 @@ class MobileAuthService {
             message: 'OTP sent successfully',
           );
         } else {
-          throw AuthException(data?['error'] ?? 'Failed to send OTP');
+          throw MobileAuthException(data?['error'] ?? 'Failed to send OTP');
         }
       } else {
         final errorData = response.data;
-        throw AuthException(errorData?['error'] ?? 'Failed to send OTP');
+        throw MobileAuthException(errorData?['error'] ?? 'Failed to send OTP');
       }
     } catch (e) {
-      if (e is AuthException) rethrow;
+      if (e is MobileAuthException) rethrow;
       debugPrint('Send OTP error: $e');
-      throw AuthException('Network error. Please check your connection.');
+      throw MobileAuthException('Network error. Please check your connection.');
     }
   }
 
@@ -196,16 +197,16 @@ class MobileAuthService {
             message: 'Authentication successful',
           );
         } else {
-          throw AuthException(data?['error'] ?? 'Invalid or expired OTP');
+          throw MobileAuthException(data?['error'] ?? 'Invalid or expired OTP');
         }
       } else {
         final errorData = response.data;
-        throw AuthException(errorData?['error'] ?? 'Invalid or expired OTP');
+        throw MobileAuthException(errorData?['error'] ?? 'Invalid or expired OTP');
       }
     } catch (e) {
-      if (e is AuthException) rethrow;
+      if (e is MobileAuthException) rethrow;
       debugPrint('Verify OTP error: $e');
-      throw AuthException('Network error. Please check your connection.');
+      throw MobileAuthException('Network error. Please check your connection.');
     }
   }
 
@@ -335,12 +336,12 @@ class AuthResponse {
   String toString() => 'AuthResponse(success: $success, user: $user, message: $message)';
 }
 
-/// Custom exception for authentication errors
-class AuthException implements Exception {
+/// Custom exception for authentication errors (renamed to avoid conflict)
+class MobileAuthException implements Exception {
   final String message;
   
-  AuthException(this.message);
+  MobileAuthException(this.message);
   
   @override
-  String toString() => 'AuthException: $message';
+  String toString() => 'MobileAuthException: $message';
 }
