@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-
 // Enhanced Configuration Management
 class AppConfig {
   // Change from const to getters that use SupabaseService
@@ -14,7 +13,6 @@ class AppConfig {
   static const Duration initializationTimeout = Duration(seconds: 15);
   static const Duration navigationDelay = Duration(milliseconds: 100);
   static const Duration mountDelay = Duration(milliseconds: 500);
-  static const Duration splashMinimumDuration = Duration(seconds: 2);
   
   // App metadata
   static const String appName = 'khilonjiya.com';
@@ -81,7 +79,7 @@ class AppStateNotifier extends ChangeNotifier {
   void setState(AppState newState) {
     if (_state != newState) {
       _state = newState;
-      debugPrint('🔄 App state changed to: $newState');
+      debugPrint('App state changed to: $newState');
       notifyListeners();
     }
   }
@@ -93,7 +91,7 @@ class AppStateNotifier extends ChangeNotifier {
 
   void setOfflineMode(bool offline) {
     _isOfflineMode = offline;
-    debugPrint('🌐 Offline mode: $offline');
+    debugPrint('Offline mode: $offline');
     notifyListeners();
   }
 
@@ -135,7 +133,7 @@ class AppInitializationService {
     final stopwatch = Stopwatch()..start();
     
     try {
-      debugPrint('🚀 Starting app initialization...');
+      debugPrint('Starting app initialization...');
       
       // Register services
       _registerServices();
@@ -152,11 +150,11 @@ class AppInitializationService {
       _stateNotifier.setState(AppState.initialized);
       
       stopwatch.stop();
-      debugPrint('✅ App initialization completed in ${stopwatch.elapsedMilliseconds}ms');
+      debugPrint('App initialization completed in ${stopwatch.elapsedMilliseconds}ms');
       
     } catch (e, stackTrace) {
       stopwatch.stop();
-      debugPrint('❌ App initialization failed: $e');
+      debugPrint('App initialization failed: $e');
       debugPrint('Stack trace: $stackTrace');
       _stateNotifier.setError('Failed to initialize app: ${e.toString()}');
       rethrow;
@@ -173,41 +171,41 @@ class AppInitializationService {
 
   Future<void> _initializeSupabaseWithRetry({int maxRetries = 3}) async {
     // Debug environment variables
-    debugPrint('🔍 Checking Supabase credentials...');
-    debugPrint('🔍 SUPABASE_URL: ${AppConfig.supabaseUrl.isNotEmpty ? "SET" : "NOT SET"}');
-    debugPrint('🔍 SUPABASE_ANON_KEY: ${AppConfig.supabaseAnonKey.isNotEmpty ? "SET" : "NOT SET"}');
+    debugPrint('Checking Supabase credentials...');
+    debugPrint('SUPABASE_URL: ${AppConfig.supabaseUrl.isNotEmpty ? "SET" : "NOT SET"}');
+    debugPrint('SUPABASE_ANON_KEY: ${AppConfig.supabaseAnonKey.isNotEmpty ? "SET" : "NOT SET"}');
     
     if (!AppConfig.hasSupabaseCredentials) {
-      debugPrint('⚠️ Supabase credentials not found, enabling offline mode');
-      debugPrint('⚠️ Please ensure SUPABASE_URL and SUPABASE_ANON_KEY are set in Codemagic environment variables');
+      debugPrint('Supabase credentials not found, enabling offline mode');
+      debugPrint('Please ensure SUPABASE_URL and SUPABASE_ANON_KEY are set in Codemagic environment variables');
       _stateNotifier.setOfflineMode(true);
       return;
     }
 
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        debugPrint('🔄 Supabase initialization attempt $attempt/$maxRetries');
-        debugPrint('🔍 URL: ${AppConfig.supabaseUrl.substring(0, 20)}...');
-        debugPrint('🔍 Key: ${AppConfig.supabaseAnonKey.substring(0, 10)}...');
+        debugPrint('Supabase initialization attempt $attempt/$maxRetries');
+        debugPrint('URL: ${AppConfig.supabaseUrl.substring(0, 20)}...');
+        debugPrint('Key: ${AppConfig.supabaseAnonKey.substring(0, 10)}...');
         
         await SupabaseService.initialize()
             .timeout(AppConfig.initializationTimeout);
             
-        debugPrint('✅ Supabase initialization completed successfully');
+        debugPrint('Supabase initialization completed successfully');
         
         // Verify connection
         final healthStatus = await SupabaseService().getHealthStatus();
-        debugPrint('🔍 Health check: $healthStatus');
+        debugPrint('Health check: $healthStatus');
         
         return;
         
       } catch (e) {
-        debugPrint('❌ Supabase attempt $attempt failed: $e');
-        debugPrint('❌ Error type: ${e.runtimeType}');
+        debugPrint('Supabase attempt $attempt failed: $e');
+        debugPrint('Error type: ${e.runtimeType}');
         
         if (attempt == maxRetries) {
-          debugPrint('🔄 All attempts failed, enabling offline mode');
-          debugPrint('🔄 Please check your Supabase project settings and network connection');
+          debugPrint('All attempts failed, enabling offline mode');
+          debugPrint('Please check your Supabase project settings and network connection');
           _stateNotifier.setOfflineMode(true);
           return;
         }
@@ -223,7 +221,7 @@ class AppInitializationService {
       _authService.authStateChanges.listen(
         (data) {
           final event = data.event;
-          debugPrint('🔄 Auth state changed: $event');
+          debugPrint('Auth state changed: $event');
 
           switch (event) {
             case AuthChangeEvent.signedIn:
@@ -233,19 +231,19 @@ class AppInitializationService {
               _stateNotifier.setState(AppState.unauthenticated);
               break;
             case AuthChangeEvent.tokenRefreshed:
-              debugPrint('🔄 Token refreshed');
+              debugPrint('Token refreshed');
               break;
             default:
-              debugPrint('🔄 Unknown auth event: $event');
+              debugPrint('Unknown auth event: $event');
           }
         },
         onError: (error) {
-          debugPrint('❌ Auth state listener error: $error');
+          debugPrint('Auth state listener error: $error');
           _stateNotifier.setError('Authentication error: $error');
         },
       );
     } catch (e) {
-      debugPrint('❌ Failed to setup auth listener: $e');
+      debugPrint('Failed to setup auth listener: $e');
       _stateNotifier.setError('Failed to setup authentication: $e');
     }
   }
@@ -260,7 +258,7 @@ class AppInitializationService {
           ? AppState.authenticated 
           : AppState.unauthenticated;
     } catch (e) {
-      debugPrint('❌ Error determining auth state: $e');
+      debugPrint('Error determining auth state: $e');
       return AppState.unauthenticated;
     }
   }
@@ -275,30 +273,30 @@ class NavigationService {
   static Future<void> pushReplacementNamed(String routeName, {Object? arguments}) async {
     final currentContext = context;
     if (currentContext == null) {
-      debugPrint('❌ Navigation context not available');
+      debugPrint('Navigation context not available');
       return;
     }
     
     try {
-      debugPrint('🧭 Navigating to: $routeName');
+      debugPrint('Navigating to: $routeName');
       await Navigator.pushReplacementNamed(currentContext, routeName, arguments: arguments);
     } catch (e) {
-      debugPrint('❌ Navigation error: $e');
+      debugPrint('Navigation error: $e');
     }
   }
   
   static Future<void> pushNamed(String routeName, {Object? arguments}) async {
     final currentContext = context;
     if (currentContext == null) {
-      debugPrint('❌ Navigation context not available');
+      debugPrint('Navigation context not available');
       return;
     }
     
     try {
-      debugPrint('🧭 Pushing: $routeName');
+      debugPrint('Pushing: $routeName');
       await Navigator.pushNamed(currentContext, routeName, arguments: arguments);
     } catch (e) {
-      debugPrint('❌ Navigation error: $e');
+      debugPrint('Navigation error: $e');
     }
   }
 }
@@ -312,23 +310,23 @@ void main() async {
   }
 
   ErrorWidget.builder = (FlutterErrorDetails details) {
-    debugPrint('❌ Widget Error: ${details.exception}');
+    debugPrint('Widget Error: ${details.exception}');
     return CustomErrorWidget(errorDetails: details);
   };
 
   FlutterError.onError = (FlutterErrorDetails details) {
-    debugPrint('❌ Flutter error: ${details.exception}');
+    debugPrint('Flutter error: ${details.exception}');
     debugPrint('Stack trace: ${details.stack}');
   };
 
-  // ✅ START APP IMMEDIATELY
+  // START APP IMMEDIATELY
   runApp(MyApp());
   
-  // ✅ MOVE HEAVY OPERATIONS AFTER APP STARTS (non-blocking)
+  // MOVE HEAVY OPERATIONS AFTER APP STARTS (non-blocking)
   _setupSystemUI();
 }
 
-// ✅ ADD THIS NEW FUNCTION
+// Setup system UI
 void _setupSystemUI() async {
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp
@@ -364,7 +362,6 @@ class MyApp extends StatelessWidget {
                 themeMode: ThemeMode.system,
                 navigatorKey: NavigationService.navigatorKey,
                 
-                // 🚨 CRITICAL
                 builder: (context, child) {
                   return MediaQuery(
                     data: MediaQuery.of(context).copyWith(
@@ -396,25 +393,23 @@ class AppInitializer extends StatefulWidget {
 class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObserver {
   late final AppInitializationService _initializationService;
   late final AppStateNotifier _stateNotifier;
-  late final Stopwatch _splashStopwatch;
 
   @override
-void initState() {
-  super.initState();
-  WidgetsBinding.instance.addObserver(this);
-  _splashStopwatch = Stopwatch()..start();
-  
-  // ✅ START IMMEDIATELY WITHOUT DELAY
-  _stateNotifier = Provider.of<AppStateNotifier>(context, listen: false);
-  _initializationService = AppInitializationService(_stateNotifier);
-  
-  // ✅ START INITIALIZATION RIGHT AWAY
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (mounted) {
-      _initializeApp();
-    }
-  });
-}
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    
+    // START IMMEDIATELY WITHOUT DELAY
+    _stateNotifier = Provider.of<AppStateNotifier>(context, listen: false);
+    _initializationService = AppInitializationService(_stateNotifier);
+    
+    // START INITIALIZATION RIGHT AWAY
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _initializeApp();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -427,41 +422,40 @@ void initState() {
       await _initializationService.initialize();
       await _handleInitialNavigation();
     } catch (e) {
-      debugPrint('❌ App initialization failed: $e');
+      debugPrint('App initialization failed: $e');
       // Error state is already handled in the service
     }
   }
 
   Future<void> _handleInitialNavigation() async {
-  // ✅ NO ARTIFICIAL DELAYS - Keep commented out
-  if (!mounted) return;
+    if (!mounted) return;
 
-  try {
-    final initialState = _initializationService.determineInitialState();
-    _stateNotifier.setState(initialState);
-    
-    // ✅ NEW Navigation flow: AppInitializer → auth/home directly
-    switch (initialState) {
-      case AppState.authenticated:
-        debugPrint('🔐 User already authenticated, navigating directly to home');
-        NavigationService.pushReplacementNamed(AppRoutes.homeMarketplaceFeed);
-        break;
-      case AppState.offline:
-        debugPrint('🌐 Offline mode, navigating to home (limited features)');
-        NavigationService.pushReplacementNamed(AppRoutes.homeMarketplaceFeed);
-        break;
-      case AppState.unauthenticated:
-      case AppState.initialized:
-      default:
-        debugPrint('🔓 User not authenticated, navigating to login');
-        NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
+    try {
+      final initialState = _initializationService.determineInitialState();
+      _stateNotifier.setState(initialState);
+      
+      // Navigation flow: Direct to auth/home
+      switch (initialState) {
+        case AppState.authenticated:
+          debugPrint('User already authenticated, navigating directly to home');
+          NavigationService.pushReplacementNamed(AppRoutes.homeMarketplaceFeed);
+          break;
+        case AppState.offline:
+          debugPrint('Offline mode, navigating to login');
+          NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
+          break;
+        case AppState.unauthenticated:
+        case AppState.initialized:
+        default:
+          debugPrint('User not authenticated, navigating to login');
+          NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
+      }
+    } catch (e) {
+      debugPrint('Navigation error: $e');
+      // Fallback to login screen
+      NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
     }
-  } catch (e) {
-    debugPrint('❌ Navigation error: $e');
-    // ✅ Fallback to login screen
-    NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
   }
-}
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -469,17 +463,17 @@ void initState() {
     
     switch (state) {
       case AppLifecycleState.resumed:
-        debugPrint('📱 App resumed - checking auth state');
+        debugPrint('App resumed - checking auth state');
         // Optionally refresh auth state when app comes to foreground
         if (_initializationService.isInitialized && !_stateNotifier.isOfflineMode) {
           _checkAuthStateOnResume();
         }
         break;
       case AppLifecycleState.paused:
-        debugPrint('📱 App paused');
+        debugPrint('App paused');
         break;
       case AppLifecycleState.detached:
-        debugPrint('📱 App detached - cleaning up');
+        debugPrint('App detached - cleaning up');
         _cleanup();
         break;
       default:
@@ -491,20 +485,20 @@ void initState() {
     try {
       final currentState = _initializationService.determineInitialState();
       if (currentState != _stateNotifier.state) {
-        debugPrint('🔄 Auth state changed while app was in background');
+        debugPrint('Auth state changed while app was in background');
         _stateNotifier.setState(currentState);
       }
     } catch (e) {
-      debugPrint('❌ Error checking auth state on resume: $e');
+      debugPrint('Error checking auth state on resume: $e');
     }
   }
 
   Future<void> _cleanup() async {
     try {
       await ServiceLocator().dispose();
-      debugPrint('🧹 Cleanup completed');
+      debugPrint('Cleanup completed');
     } catch (e) {
-      debugPrint('❌ Cleanup error: $e');
+      debugPrint('Cleanup error: $e');
     }
   }
 
@@ -539,10 +533,30 @@ void initState() {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // App logo
-                    SizedBox(
+                    Container(
+                      width: 100,
                       height: 100,
-                      child: SvgPicture.asset(
-                        'assets/images/logo_k.svg',
+                      decoration: BoxDecoration(
+                        color: Color(0xFF2563EB),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 16,
+                            offset: Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          'K',
+                          style: TextStyle(
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -574,20 +588,20 @@ void initState() {
                     height: 40,
                     child: CircularProgressIndicator(
                       strokeWidth: 3,
-                                              valueColor: AlwaysStoppedAnimation<Color>(
+                      valueColor: AlwaysStoppedAnimation<Color>(
                           AppTheme.lightTheme.colorScheme.primary,
                         ),
                     ),
                   ),
                   const SizedBox(height: 24),
                   Text(
-  _stateNotifier.isRetrying 
-      ? 'Retrying connection...' 
-      : 'Loading...',
-  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-    color: Colors.grey[600],
-  ),
-),
+                    _stateNotifier.isRetrying 
+                        ? 'Retrying connection...' 
+                        : 'Loading...',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey[600],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -661,7 +675,7 @@ void initState() {
                     child: OutlinedButton.icon(
                       onPressed: () {
                         stateNotifier.setOfflineMode(true);
-                        NavigationService.pushReplacementNamed(AppRoutes.splashScreen);
+                        NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
                       },
                       icon: const Icon(Icons.cloud_off),
                       label: const Text('Continue'),
@@ -766,7 +780,7 @@ void initState() {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () {
-                        NavigationService.pushReplacementNamed(AppRoutes.splashScreen);
+                        NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
                       },
                       icon: const Icon(Icons.offline_bolt),
                       label: const Text('Continue'),
@@ -787,4 +801,4 @@ void initState() {
       ),
     );
   }
-}
+} 
