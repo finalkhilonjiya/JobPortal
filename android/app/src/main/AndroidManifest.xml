@@ -16,9 +16,10 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
     
-    <!-- NEW: SMS permissions for OTP auto-detection -->
+    <!-- SMS permissions for OTP auto-detection -->
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
     <application
         android:label="khilonjiya.com"
@@ -80,6 +81,15 @@
                 android:name="androidx.core.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- SMS AutoFill service for OTP detection -->
+        <receiver android:name="com.jaumard.smsautofill.SmsAutoFillReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.auth.api.phone.SMS_RETRIEVED" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
     <queries>
