@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
+import 'package:sms_autofill/sms_autofill.dart';
 import 'dart:async';
 
 import '../../core/app_export.dart';
@@ -14,7 +15,7 @@ class MobileLoginScreen extends StatefulWidget {
 }
 
 class _MobileLoginScreenState extends State<MobileLoginScreen> 
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, CodeAutoFill {
   
   final _mobileController = TextEditingController();
   final List<TextEditingController> _otpControllers = 
@@ -30,6 +31,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   bool _canResend = false;
   int _resendAttempts = 0;
   Timer? _timer;
+  String? _appSignature;
 
   late AnimationController _animationController;
   late Animation<Offset> _slideAnimation;
@@ -43,6 +45,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     _setupAnimations();
     _mobileController.addListener(_validateMobile);
     _initializeAuthService();
+    _initializeSMSAutoFill();
   }
 
   void _setupAnimations() {
@@ -70,6 +73,15 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     _animationController.forward();
   }
 
+  Future<void> _initializeSMSAutoFill() async {
+    try {
+      _appSignature = await SmsAutoFill().getAppSignature;
+      debugPrint('App Signature: $_appSignature');
+    } catch (e) {
+      debugPrint('SMS AutoFill initialization error: $e');
+    }
+  }
+
   Future<void> _initializeAuthService() async {
     try {
       await _authService.initialize();
@@ -87,6 +99,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
 
   @override
   void dispose() {
+    SmsAutoFill().unregisterListener();
     _animationController.dispose();
     _mobileController.dispose();
     _timer?.cancel();
@@ -99,6 +112,33 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     }
     
     super.dispose();
+  }
+
+  @override
+  void codeUpdated() {
+    // This method is called when SMS OTP is auto-detected
+    if (mounted && _currentStep == 2) {
+      final detectedCode = code;
+      if (detectedCode != null && detectedCode.length == 6) {
+        debugPrint('Auto-detected OTP: $detectedCode');
+        
+        // Fill OTP fields
+        for (int i = 0; i < 6; i++) {
+          _otpControllers[i].text = detectedCode[i];
+        }
+        
+        setState(() {
+          _errorMessage = null;
+        });
+        
+        // Auto-verify after a short delay
+        Future.delayed(Duration(milliseconds: 500), () {
+          if (mounted) {
+            _handleVerifyOTP();
+          }
+        });
+      }
+    }
   }
 
   void _validateMobile() {
@@ -124,6 +164,9 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
         _isLoading = false;
         _resendAttempts++;
       });
+      
+      // Start listening for SMS
+      await SmsAutoFill().listenForCode();
       
       _startResendTimer();
       _animationController.reset();
@@ -162,9 +205,12 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   Future<void> _handleResendOTP() async {
     if (!_canResend || _resendAttempts >= 3) return;
     
+    // Clear current OTP and stop listening
     for (var controller in _otpControllers) {
       controller.clear();
     }
+    SmsAutoFill().unregisterListener();
+    
     setState(() {
       _errorMessage = null;
     });
@@ -187,6 +233,9 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       setState(() {
         _isLoading = false;
       });
+      
+      // Stop listening for SMS
+      SmsAutoFill().unregisterListener();
       
       HapticFeedback.lightImpact();
       _showSuccessMessage('Login successful!');
@@ -442,43 +491,29 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: List.generate(6, (index) {
-            return Container(
-              width: 12.w,
-              child: RawKeyboardListener(
-                focusNode: FocusNode(),
-                onKey: (event) => _handleOTPKeyDown(index, event),
-                child: TextFormField(
-                  controller: _otpControllers[index],
-                  focusNode: _otpFocusNodes[index],
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.center,
-                  maxLength: 1,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    counterText: '',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Color(0xFF2563EB), width: 2),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.red, width: 1),
-                    ),
-                  ),
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  onChanged: (value) => _handleOTPChange(index, value),
-                  onTap: () => _otpControllers[index].clear(),
-                ),
-              ),
-            );
-          }),
+        // OTP Input with PinFieldAutoFill for better auto-detection
+        PinFieldAutoFill(
+          decoration: UnderlineDecoration(
+            textStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+            colorBuilder: FixedColorBuilder(Colors.black.withOpacity(0.3)),
+          ),
+          currentCode: _otpControllers.map((c) => c.text).join(),
+          onCodeSubmitted: (code) {
+            if (code.length == 6) {
+              for (int i = 0; i < 6; i++) {
+                _otpControllers[i].text = code[i];
+              }
+              _handleVerifyOTP();
+            }
+          },
+          onCodeChanged: (code) {
+            if (code != null) {
+              for (int i = 0; i < 6 && i < code.length; i++) {
+                _otpControllers[i].text = code[i];
+              }
+              setState(() {});
+            }
+          },
         ),
         
         if (_errorMessage != null) ...[
@@ -541,6 +576,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
             for (var controller in _otpControllers) {
               controller.clear();
             }
+            SmsAutoFill().unregisterListener();
             _timer?.cancel();
             _animationController.reset();
             _animationController.forward();
