@@ -674,4 +674,41 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
         else if (_canResend && _resendAttempts < 3)
           TextButton(
             onPressed: _handleResendOTP,
-            ch
+            child: Text(
+              'Resend code',
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFF6366F1),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        
+        SizedBox(height: 16),
+        
+        TextButton(
+          onPressed: () {
+            setState(() {
+              _currentStep = 1;
+              _errorMessage = null;
+            });
+            for (var controller in _otpControllers) {
+              controller.clear();
+            }
+            _timer?.cancel();
+            _animationController.reset();
+            _animationController.forward();
+          },
+          child: Text(
+            'Change mobile number',
+            style: TextStyle(
+              fontSize: 14,
+              color: Color(0xFF64748B),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
