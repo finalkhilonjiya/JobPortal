@@ -4,7 +4,7 @@ import 'package:sizer/sizer.dart';
 import 'dart:async';
 
 import '../../core/app_export.dart';
-import 'mobile_auth_service.dart'; // Import the service we created
+import 'mobile_auth_service.dart';
 
 class MobileLoginScreen extends StatefulWidget {
   const MobileLoginScreen({Key? key}) : super(key: key);
@@ -65,7 +65,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     try {
       await _authService.initialize();
       
-      // Check if user is already authenticated
       if (_authService.isAuthenticated) {
         final sessionValid = await _authService.refreshSession();
         if (sessionValid) {
@@ -127,7 +126,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = e is AuthException ? e.message : 'Failed to send OTP';
+        _errorMessage = e is MobileAuthException ? e.message : 'Failed to send OTP';
       });
     }
   }
@@ -189,7 +188,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = e is AuthException ? e.message : 'Invalid OTP';
+        _errorMessage = e is MobileAuthException ? e.message : 'Invalid OTP';
       });
     }
   }
@@ -276,8 +275,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _buildProgressIndicator(),
-                        SizedBox(height: 3.h),
                         _buildLogo(),
                         SizedBox(height: 3.h),
                         if (_currentStep == 1) 
@@ -296,50 +293,16 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     );
   }
 
-  Widget _buildProgressIndicator() {
-    return Row(
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: Color(0xFF2563EB),
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Text('1', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ),
-        Expanded(
-          child: Container(
-            height: 2,
-            color: _currentStep == 2 ? Color(0xFF2563EB) : Colors.grey[300],
-          ),
-        ),
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: _currentStep == 2 ? Color(0xFF2563EB) : Colors.grey[300],
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Text('2', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildLogo() {
     return Column(
       children: [
         Container(
-          width: 72,
-          height: 72,
+          width: 80,
+          height: 80,
           decoration: BoxDecoration(
-            color: Color(0xFF2563EB),
+            color: Colors.grey[200],
             shape: BoxShape.circle,
+            border: Border.all(color: Colors.grey[300]!, width: 2),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.08),
@@ -349,18 +312,24 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(36),
+            borderRadius: BorderRadius.circular(40),
             child: Image.asset(
               'assets/images/company_logo.png',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => Center(
-                child: Text('LOGO', style: TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                child: Text(
+                  'Your Logo',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[500],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
             ),
           ),
         ),
-        SizedBox(height: 1.5.h),
+        SizedBox(height: 2.h),
         Text(
           'khilonjiya.com',
           style: TextStyle(
@@ -381,15 +350,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Enter Mobile Number', 
-            style: TextStyle(fontSize: 5.w, fontWeight: FontWeight.w600),
-            textAlign: TextAlign.center),
-          SizedBox(height: 1.h),
-          Text('We\'ll send you a verification code',
-            style: TextStyle(fontSize: 3.5.w, color: Colors.grey[600]),
-            textAlign: TextAlign.center),
-          SizedBox(height: 3.h),
-          
           TextFormField(
             controller: _mobileController,
             keyboardType: TextInputType.phone,
@@ -398,8 +358,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
               LengthLimitingTextInputFormatter(10),
             ],
             decoration: InputDecoration(
-              labelText: 'Mobile Number',
-              hintText: 'Enter 10-digit mobile number',
+              hintText: 'Enter your mobile number',
               prefixIcon: Padding(
                 padding: EdgeInsets.all(3.w),
                 child: Row(
@@ -419,7 +378,9 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Color(0xFF2563EB), width: 2),
               ),
+              contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
             ),
+            style: TextStyle(fontSize: 4.5.w),
             onFieldSubmitted: (value) {
               if (_isMobileValid) _handleSendOTP();
             },
@@ -427,10 +388,13 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
           
           if (_errorMessage != null) ...[
             SizedBox(height: 1.h),
-            Text(_errorMessage!, style: TextStyle(fontSize: 3.w, color: Colors.red)),
+            Padding(
+              padding: EdgeInsets.only(left: 3.w),
+              child: Text(_errorMessage!, style: TextStyle(fontSize: 3.w, color: Colors.red)),
+            ),
           ],
           
-          SizedBox(height: 3.h),
+          SizedBox(height: 4.h),
           
           SizedBox(
             width: double.infinity,
@@ -441,6 +405,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 2,
               ),
               child: _isLoading
                   ? SizedBox(
@@ -450,7 +415,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                         strokeWidth: 2.5,
                       ),
                     )
-                  : Text('Send OTP', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
+                  : Text('Continue', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -464,15 +429,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Verify Mobile Number',
-            style: TextStyle(fontSize: 5.w, fontWeight: FontWeight.w600),
-            textAlign: TextAlign.center),
-          SizedBox(height: 1.h),
-          Text('Enter the 6-digit code sent to\n${MobileAuthService.maskMobileNumber(_mobileController.text)}',
-            style: TextStyle(fontSize: 3.5.w, color: Colors.grey[600]),
-            textAlign: TextAlign.center),
-          SizedBox(height: 3.h),
-          
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: List.generate(6, (index) {
@@ -498,15 +454,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                   ),
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   onChanged: (value) => _handleOTPChange(index, value),
-                  onTap: () {
-                    // Clear current field on tap
-                    _otpControllers[index].clear();
-                  },
-                  onEditingComplete: () {
-                    if (index < 5 && _otpControllers[index].text.isNotEmpty) {
-                      _otpFocusNodes[index + 1].requestFocus();
-                    }
-                  },
+                  onTap: () => _otpControllers[index].clear(),
                 ),
               );
             }),
@@ -521,7 +469,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
             ),
           ],
           
-          SizedBox(height: 3.h),
+          SizedBox(height: 4.h),
           
           SizedBox(
             width: double.infinity,
@@ -538,72 +486,44 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
               ),
               child: _isLoading
                   ? SizedBox(
-                      width: 24, 
-                      height: 24,
+                      width: 24, height: 24,
                       child: CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         strokeWidth: 2.5,
                       ),
                     )
-                  : Text(
-                      'Verify OTP', 
-                      style: TextStyle(
-                        fontSize: 16.sp, 
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  : Text('Verify OTP', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
             ),
           ),
           
           SizedBox(height: 2.h),
           
-          // Resend Section
           if (!_canResend && _resendTimer > 0)
-            Text(
-              'Resend OTP in ${_resendTimer}s',
-              style: TextStyle(
-                fontSize: 3.5.w, 
-                color: Colors.grey[600],
-              ),
-              textAlign: TextAlign.center,
-            )
+            Text('Resend OTP in ${_resendTimer}s',
+              style: TextStyle(fontSize: 3.5.w, color: Colors.grey[600]),
+              textAlign: TextAlign.center)
           else if (_canResend && _resendAttempts < 3)
             TextButton(
               onPressed: _handleResendOTP,
-              child: Text(
-                'Resend OTP',
-                style: TextStyle(
-                  fontSize: 3.5.w, 
-                  color: Color(0xFF2563EB), 
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              child: Text('Resend OTP',
+                style: TextStyle(fontSize: 3.5.w, color: Color(0xFF2563EB), fontWeight: FontWeight.w600)),
             )
           else if (_resendAttempts >= 3)
-            Text(
-              'Maximum resend attempts reached',
-              style: TextStyle(
-                fontSize: 3.w, 
-                color: Colors.red,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            Text('Maximum resend attempts reached',
+              style: TextStyle(fontSize: 3.w, color: Colors.red),
+              textAlign: TextAlign.center),
           
           SizedBox(height: 1.h),
           
-          // Back Button
           TextButton(
             onPressed: () {
               setState(() {
                 _currentStep = 1;
                 _errorMessage = null;
               });
-              
-              // Clear OTP fields
               for (var controller in _otpControllers) {
                 controller.clear();
               }
-              
               _timer?.cancel();
               _animationController.reset();
               _animationController.forward();
@@ -612,19 +532,10 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.arrow_back, 
-                  size: 4.w, 
-                  color: Colors.grey[600],
-                ),
+                Icon(Icons.arrow_back, size: 4.w, color: Colors.grey[600]),
                 SizedBox(width: 1.w),
-                Text(
-                  'Edit mobile number',
-                  style: TextStyle(
-                    fontSize: 3.5.w, 
-                    color: Colors.grey[600],
-                  ),
-                ),
+                Text('Edit mobile number',
+                  style: TextStyle(fontSize: 3.5.w, color: Colors.grey[600])),
               ],
             ),
           ),
