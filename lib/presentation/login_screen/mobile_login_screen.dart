@@ -73,10 +73,11 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   Future<void> _initializeAuthService() async {
     try {
       await _authService.initialize();
+final connected = await _authService.checkConnection(); // ← ADD
+setState(() {
+  _isSupabaseConnected = connected;                     // ← ADD
+});
 
-      setState(() {
-        _isSupabaseConnected = true;
-      });
 
       if (_authService.isAuthenticated) {
         final sessionValid = await _authService.refreshSession();
