@@ -6,8 +6,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 // Enhanced Configuration Management
 class AppConfig {
   // Change from const to getters that use SupabaseService
-  static String get supabaseUrl => SupabaseService.supabaseUrl;
-  static String get supabaseAnonKey => SupabaseService.supabaseAnonKey;
+  static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
+  static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
   
   // Timeouts and delays
   static const Duration initializationTimeout = Duration(seconds: 15);
@@ -172,6 +172,8 @@ class AppInitializationService {
   Future<void> _initializeSupabaseWithRetry({int maxRetries = 3}) async {
     // Debug environment variables
     debugPrint('Checking Supabase credentials...');
+    debugPrint('Raw SUPABASE_URL: ${dotenv.env['SUPABASE_URL']}');
+    debugPrint('Raw SUPABASE_ANON_KEY: ${dotenv.env['SUPABASE_ANON_KEY'] != null ? "SET" : "NOT SET"}');
     debugPrint('SUPABASE_URL: ${AppConfig.supabaseUrl.isNotEmpty ? "SET" : "NOT SET"}');
     debugPrint('SUPABASE_ANON_KEY: ${AppConfig.supabaseAnonKey.isNotEmpty ? "SET" : "NOT SET"}');
     
@@ -303,6 +305,14 @@ class NavigationService {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load .env file FIRST
+  try {
+    await dotenv.load(fileName: ".env");
+    debugPrint('✓ .env file loaded successfully');
+  } catch (e) {
+    debugPrint('⚠ .env file not found: $e');
+  }
 
   // Essential error handling only
   if (kDebugMode) {
