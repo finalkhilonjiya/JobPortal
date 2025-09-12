@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'core/app_export.dart';
-import 'features/auth/mobile_login_screen.dart';
-import 'features/auth/mobile_auth_service.dart';
+import './presentation/login_screen/mobile_login_screen.dart';
+import './presentation/login_screen/mobile_auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
