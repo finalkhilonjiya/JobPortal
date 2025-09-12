@@ -65,19 +65,8 @@ class MobileAuthService {
 
   /// Get Supabase client safely
   SupabaseClient get _supabaseClient {
-    try {
-      // First try to get from SupabaseService (your existing service)
-      return SupabaseService().client;
-    } catch (e) {
-      debugPrint('SupabaseService not available, trying Supabase.instance: $e');
-      
-      // Fallback to direct Supabase instance
-      try {
-        return Supabase.instance.client;
-      } catch (instanceError) {
-        throw MobileAuthException('Supabase not initialized: $instanceError');
-      }
-    }
+    // Use your existing SupabaseService directly
+    return SupabaseService().client;
   }
 
   /// Generate unique device fingerprint
