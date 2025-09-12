@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
-
 import '../../core/app_export.dart';
 import 'mobile_auth_service.dart';
 
 class MobileLoginScreen extends StatefulWidget {
   const MobileLoginScreen({Key? key}) : super(key: key);
-
   @override
   State<MobileLoginScreen> createState() => _MobileLoginScreenState();
 }
@@ -50,115 +48,79 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.5),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    ));
-
+    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic));
+    _fadeAnimation = Tween<double>(begin: 0, end: 1)
+        .animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOut));
     _animationController.forward();
   }
 
-  /// ✅ Only loads auth cache + device fingerprint (Supabase is already initialized in AppInitializer)
   Future<void> _initializeAuthService() async {
-  try {
-    await _authService.initialize();
-    final connected = await _authService.checkConnection();
-    setState(() {
-      _isSupabaseConnected = connected;
-      _authError = '';
-    });
-    if (_authService.isAuthenticated) {
-      final valid = await _authService.refreshSession();
-      if (valid) {
-        _navigateToHome();
-        return;
+    try {
+      await _authService.initialize();
+      final connected = await _authService.checkConnection();
+      setState(() {
+        _isSupabaseConnected = connected;
+        _authError = '';
+      });
+      if (_authService.isAuthenticated) {
+        final valid = await _authService.refreshSession();
+        if (valid) {
+          _navigateToHome();
+          return;
+        }
       }
+    } catch (e) {
+      setState(() {
+        _isSupabaseConnected = false;
+        _authError = 'Init error:\n${e.toString()}';
+      });
     }
-  } catch (e) {
-  setState(() {
-    _isSupabaseConnected = false;
-    _authError = 'Init error:\n${e.toString()}';   // ← already there
-  });
-  // NEW: keep the error visible even when button is disabled
-  // (no need to tap Continue)
-}
-
-}
-
+  }
 
   @override
   void dispose() {
     _animationController.dispose();
     _mobileController.dispose();
     _timer?.cancel();
-
-    for (var controller in _otpControllers) {
-      controller.dispose();
-    }
-    for (var node in _otpFocusNodes) {
-      node.dispose();
-    }
-
+    for (var c in _otpControllers) c.dispose();
+    for (var f in _otpFocusNodes) f.dispose();
     super.dispose();
   }
 
-  void _validateMobile() {
-    setState(() {
-      _isMobileValid =
-          MobileAuthService.isValidMobileNumber(_mobileController.text);
-      _errorMessage = null;
-    });
-  }
+  void _validateMobile() =>
+      setState(() => _isMobileValid = MobileAuthService.isValidMobileNumber(_mobileController.text));
 
   Future<void> _handleSendOTP() async {
     if (!_isMobileValid || _isLoading) return;
-
     if (!_isSupabaseConnected) {
-      _showErrorMessage(
-          'Not connected to authentication service. Please check your connection.');
+      _showErrorMessage('Not connected to authentication service.');
       return;
     }
-
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
-
     try {
-      debugPrint('Sending OTP to: ${_mobileController.text}');
       await _authService.sendOtp(_mobileController.text);
-
       setState(() {
         _currentStep = 2;
         _isLoading = false;
         _resendAttempts++;
       });
-
       _startResendTimer();
       _animationController.reset();
       _animationController.forward();
-
       HapticFeedback.lightImpact();
       _showSuccessMessage('OTP sent! Check Supabase logs for the code.');
     } catch (e) {
-  setState(() {
-    _isLoading = false;
-    _authError = 'SendOTP error:\n${e.toString()}';
-  });
-}
-
+      setState(() {
+        _isLoading = false;
+        _authError = 'SendOTP error:\n${e.toString()}';
+      });
+    }
   }
 
   void _startResendTimer() {
@@ -166,7 +128,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       _resendTimer = 30;
       _canResend = false;
     });
-
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
@@ -182,85 +143,46 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     });
   }
 
-  Future<void> _handleResendOTP() async {
-    if (!_canResend || _resendAttempts >= 3) return;
-
-    for (var controller in _otpControllers) {
-      controller.clear();
-    }
-    setState(() {
-      _errorMessage = null;
-    });
-
-    await _handleSendOTP();
-  }
-
   Future<void> _handleVerifyOTP() async {
     final otp = _otpControllers.map((c) => c.text).join();
-    debugPrint('Verifying OTP: $otp (${otp.length} digits)');
-
     if (otp.length != 6) {
-      setState(() {
-        _errorMessage = 'Please enter all 6 digits';
-      });
+      setState(() => _errorMessage = 'Please enter all 6 digits');
       return;
     }
-
     if (_isLoading) return;
-
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
-
     try {
       final response = await _authService.verifyOtp(_mobileController.text, otp);
-
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-
+        setState(() => _isLoading = false);
         HapticFeedback.lightImpact();
         _showSuccessMessage('Login successful! Redirecting...');
-
         await Future.delayed(const Duration(milliseconds: 1000));
         _navigateToHome();
       }
     } catch (e) {
-      debugPrint('OTP Verification Error: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = e is MobileAuthException
-              ? e.message
-              : 'Invalid OTP. Please check the code.';
+          _errorMessage = e is MobileAuthException ? e.message : 'Invalid OTP.';
         });
-
-        for (var controller in _otpControllers) {
-          controller.clear();
-        }
+        for (var c in _otpControllers) c.clear();
         _otpFocusNodes[0].requestFocus();
       }
     }
   }
 
   void _navigateToHome() {
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
-    }
+    if (mounted) Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
   }
 
   void _handleOTPChange(int index, String value) {
     if (value.length > 1) {
       if (value.length == 6 && index == 0) {
-        for (int i = 0; i < 6; i++) {
-          if (i < value.length) {
-            setState(() {
-              _otpControllers[i].text = value[i];
-            });
-          }
-        }
+        for (int i = 0; i < 6; i++) _otpControllers[i].text = value[i];
         _otpFocusNodes[5].requestFocus();
         Future.delayed(const Duration(milliseconds: 300), _handleVerifyOTP);
         return;
@@ -268,184 +190,151 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
         value = value[0];
       }
     }
-
     setState(() {
       _otpControllers[index].text = value;
       _errorMessage = null;
     });
-
-    if (value.isNotEmpty && index < 5) {
-      _otpFocusNodes[index + 1].requestFocus();
-    }
-
+    if (value.isNotEmpty && index < 5) _otpFocusNodes[index + 1].requestFocus();
     final otp = _otpControllers.map((c) => c.text).join();
-    if (otp.length == 6) {
-      Future.delayed(const Duration(milliseconds: 300), _handleVerifyOTP);
-    }
-  }
-
-  void _handleOTPKeyPress(int index, RawKeyEvent event) {
-    if (event is RawKeyDownEvent &&
-        event.logicalKey == LogicalKeyboardKey.backspace) {
-      if (_otpControllers[index].text.isEmpty && index > 0) {
-        _otpFocusNodes[index - 1].requestFocus();
-        setState(() {
-          _otpControllers[index - 1].text = '';
-        });
-      }
-    }
+    if (otp.length == 6) Future.delayed(const Duration(milliseconds: 300), _handleVerifyOTP);
   }
 
   void _showSuccessMessage(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle, color: Colors.white, size: 20),
-              const SizedBox(width: 12),
-              Expanded(child: Text(message, style: const TextStyle(color: Colors.white))),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white, size: 20),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message, style: const TextStyle(color: Colors.white))),
+          ],
         ),
-      );
-    }
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   void _showErrorMessage(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.error, color: Colors.white, size: 20),
-              const SizedBox(width: 12),
-              Expanded(child: Text(message, style: const TextStyle(color: Colors.white))),
-            ],
-          ),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 4),
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error, color: Colors.white, size: 20),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message, style: const TextStyle(color: Colors.white))),
+          ],
         ),
-      );
-    }
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
+  /* ----------  BUILD  ---------- */
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: const Color(0xFFF8FAFC),
-    resizeToAvoidBottomInset: true,
-    body: SafeArea(
-      child: SingleChildScrollView(
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-        ),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: MediaQuery.of(context).size.height -
-                MediaQuery.of(context).padding.top -
-                MediaQuery.of(context).padding.bottom,
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
           ),
-          child: IntrinsicHeight(
-            child: Column(
-              children: [
-                const SizedBox(height: 40),
-
-                /* ----------  Connection banner  ---------- */
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 24),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: _isSupabaseConnected
-                        ? Colors.green.withOpacity(0.1)
-                        : Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: _isSupabaseConnected
-                          ? Colors.green.withOpacity(0.3)
-                          : Colors.red.withOpacity(0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color:
-                              _isSupabaseConnected ? Colors.green : Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _isSupabaseConnected ? 'Connected' : 'Not Connected',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: _isSupabaseConnected
-                              ? Colors.green[700]
-                              : Colors.red[700],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                /* ----------  NEW error box  ---------- */
-                if (_authError.isNotEmpty)
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height -
+                  MediaQuery.of(context).padding.top -
+                  MediaQuery.of(context).padding.bottom,
+            ),
+            child: IntrinsicHeight(
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+                  /*  connection banner  */
                   Container(
-                    margin: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 8),
-                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
+                      color: _isSupabaseConnected
+                          ? Colors.green.withOpacity(0.1)
+                          : Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _isSupabaseConnected
+                            ? Colors.green.withOpacity(0.3)
+                            : Colors.red.withOpacity(0.3),
+                      ),
                     ),
-                    child: Text(
-                      _authError,
-                      style:
-                          TextStyle(color: Colors.red[800], fontSize: 12),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: _isSupabaseConnected ? Colors.green : Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _isSupabaseConnected ? 'Connected' : 'Not Connected',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: _isSupabaseConnected
+                                ? Colors.green[700]
+                                : Colors.red[700],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-
-                const SizedBox(height: 20),
-
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child:
-                      SizedBox(height: 180, child: Center(child: _buildLogo())),
-                ),
-
-                Expanded(
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child:
-                          _currentStep == 1 ? _buildMobileStep() : _buildOTPStep(),
+                  /*  error box  */
+                  if (_authError.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        _authError,
+                        style: TextStyle(color: Colors.red[800], fontSize: 12),
+                      ),
+                    ),
+                  const SizedBox(height: 20),
+                  FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SizedBox(height: 180, child: Center(child: _buildLogo())),
+                  ),
+                  Expanded(
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: _currentStep == 1 ? _buildMobileStep() : _buildOTPStep(),
+                      ),
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 32),
-              ],
+                  const SizedBox(height: 32),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   Widget _buildLogo() {
     return Column(
@@ -467,7 +356,7 @@ Widget build(BuildContext context) {
             child: Image.asset(
               'assets/images/company_logo.png',
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => const Center(
+              errorBuilder: (_, __, ___) => const Center(
                 child: Text(
                   'K',
                   style: TextStyle(
@@ -530,8 +419,7 @@ Widget build(BuildContext context) {
         ),
         if (_errorMessage != null) ...[
           const SizedBox(height: 16),
-          Text(_errorMessage!,
-              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w500)),
+          Text(_errorMessage!, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w500)),
         ],
         const SizedBox(height: 40),
         SizedBox(
@@ -584,9 +472,7 @@ Widget build(BuildContext context) {
               if (otp.length == 6 && !_isLoading) {
                 _handleVerifyOTP();
               } else {
-                setState(() {
-                  _errorMessage = 'Please enter all 6 digits';
-                });
+                setState(() => _errorMessage = 'Please enter all 6 digits');
               }
             },
             child: _isLoading
