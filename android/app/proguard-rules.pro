@@ -20,6 +20,11 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
+# Flutter Play-Core stubs (we don’t use split-install)
+-dontwarn com.google.android.play.core.**
+-keep class com.google.android.play.core.** { *; }
+
+
 # Flutter specific rules
 -keep class io.flutter.app.** { *; }
 -keep class io.flutter.plugin.**  { *; }
