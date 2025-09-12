@@ -13,13 +13,12 @@ class MobileLoginScreen extends StatefulWidget {
   State<MobileLoginScreen> createState() => _MobileLoginScreenState();
 }
 
-class _MobileLoginScreenState extends State<MobileLoginScreen> 
+class _MobileLoginScreenState extends State<MobileLoginScreen>
     with TickerProviderStateMixin {
-
   final _mobileController = TextEditingController();
-  final List<TextEditingController> _otpControllers = 
+  final List<TextEditingController> _otpControllers =
       List.generate(6, (index) => TextEditingController());
-  final List<FocusNode> _otpFocusNodes = 
+  final List<FocusNode> _otpFocusNodes =
       List.generate(6, (index) => FocusNode());
 
   bool _isLoading = false;
@@ -71,27 +70,29 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     _animationController.forward();
   }
 
+  /// ✅ Refactored for Option 2
   Future<void> _initializeAuthService() async {
     try {
-      await _authService.initialize();
-      
+      await _authService.initialize(); // loads cached auth + fingerprint
+
       setState(() {
         _isSupabaseConnected = true;
       });
-      
-      _showSuccessMessage('Connected to authentication service');
 
       if (_authService.isAuthenticated) {
         final sessionValid = await _authService.refreshSession();
         if (sessionValid) {
           _navigateToHome();
+          return;
         }
       }
+
+      _showSuccessMessage('Ready for login');
     } catch (e) {
       setState(() {
         _isSupabaseConnected = false;
       });
-      _showErrorMessage('Failed to connect to authentication service: ${e.toString()}');
+      _showErrorMessage('Auth service error: ${e.toString()}');
       debugPrint('Auth service initialization error: $e');
     }
   }
@@ -114,7 +115,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
 
   void _validateMobile() {
     setState(() {
-      _isMobileValid = MobileAuthService.isValidMobileNumber(_mobileController.text);
+      _isMobileValid =
+          MobileAuthService.isValidMobileNumber(_mobileController.text);
       _errorMessage = null;
     });
   }
@@ -123,7 +125,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     if (!_isMobileValid || _isLoading) return;
 
     if (!_isSupabaseConnected) {
-      _showErrorMessage('Not connected to authentication service. Please check your connection.');
+      _showErrorMessage(
+          'Not connected to authentication service. Please check your connection.');
       return;
     }
 
@@ -148,12 +151,13 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
 
       HapticFeedback.lightImpact();
       _showSuccessMessage('OTP sent! Check Supabase function logs for the code.');
-
     } catch (e) {
       debugPrint('OTP Send Error: $e');
       setState(() {
         _isLoading = false;
-        _errorMessage = e is MobileAuthException ? e.message : 'Failed to send OTP. Please try again.';
+        _errorMessage = e is MobileAuthException
+            ? e.message
+            : 'Failed to send OTP. Please try again.';
       });
     }
   }
@@ -195,18 +199,15 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   Future<void> _handleVerifyOTP() async {
     final otp = _otpControllers.map((c) => c.text).join();
     debugPrint('Attempting to verify OTP: $otp (${otp.length} characters)');
-    
+
     if (otp.length != 6) {
       setState(() {
         _errorMessage = 'Please enter all 6 digits';
       });
       return;
     }
-    
-    if (_isLoading) {
-      debugPrint('Already loading, skipping verification');
-      return;
-    }
+
+    if (_isLoading) return;
 
     setState(() {
       _isLoading = true;
@@ -214,7 +215,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     });
 
     try {
-      debugPrint('Verifying OTP: $otp for mobile: ${_mobileController.text}');
       final response = await _authService.verifyOtp(_mobileController.text, otp);
 
       if (mounted) {
@@ -233,10 +233,11 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = e is MobileAuthException ? e.message : 'Invalid OTP. Please check the code.';
+          _errorMessage = e is MobileAuthException
+              ? e.message
+              : 'Invalid OTP. Please check the code.';
         });
-        
-        // Clear OTP fields on error for retry
+
         for (var controller in _otpControllers) {
           controller.clear();
         }
@@ -253,9 +254,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
 
   void _handleOTPChange(int index, String value) {
     if (value.length > 1) {
-      // Handle pasted content
       if (value.length == 6 && index == 0) {
-        // User pasted a 6-digit OTP in the first field
         for (int i = 0; i < 6; i++) {
           if (i < value.length) {
             setState(() {
@@ -263,36 +262,32 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
             });
           }
         }
-        _otpFocusNodes[5].requestFocus(); // Focus last field
+        _otpFocusNodes[5].requestFocus();
         Future.delayed(Duration(milliseconds: 300), _handleVerifyOTP);
         return;
       } else {
-        // Truncate to single character
         value = value[0];
       }
     }
 
     setState(() {
       _otpControllers[index].text = value;
-      _errorMessage = null; // Clear error when user types
+      _errorMessage = null;
     });
 
     if (value.isNotEmpty && index < 5) {
       _otpFocusNodes[index + 1].requestFocus();
     }
 
-    // Check if all fields are filled
     final otp = _otpControllers.map((c) => c.text).join();
-    debugPrint('Current OTP input: $otp (${otp.length} characters)');
-    
     if (otp.length == 6) {
-      // Auto-verify when all digits are entered
       Future.delayed(Duration(milliseconds: 300), _handleVerifyOTP);
     }
   }
 
   void _handleOTPKeyPress(int index, RawKeyEvent event) {
-    if (event is RawKeyDownEvent && event.logicalKey == LogicalKeyboardKey.backspace) {
+    if (event is RawKeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.backspace) {
       if (_otpControllers[index].text.isEmpty && index > 0) {
         _otpFocusNodes[index - 1].requestFocus();
         setState(() {
@@ -310,7 +305,9 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
             children: [
               Icon(Icons.check_circle, color: Colors.white, size: 20),
               SizedBox(width: 12),
-              Expanded(child: Text(message, style: TextStyle(color: Colors.white))),
+              Expanded(
+                  child:
+                      Text(message, style: TextStyle(color: Colors.white))),
             ],
           ),
           backgroundColor: Colors.green,
@@ -329,29 +326,12 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
             children: [
               Icon(Icons.error, color: Colors.white, size: 20),
               SizedBox(width: 12),
-              Expanded(child: Text(message, style: TextStyle(color: Colors.white))),
+              Expanded(
+                  child:
+                      Text(message, style: TextStyle(color: Colors.white))),
             ],
           ),
           backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 4),
-        ),
-      );
-    }
-  }
-
-  void _showTestingMessage(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.info, color: Colors.white, size: 20),
-              SizedBox(width: 12),
-              Expanded(child: Text(message, style: TextStyle(color: Colors.white))),
-            ],
-          ),
-          backgroundColor: Colors.orange,
           behavior: SnackBarBehavior.floating,
           duration: Duration(seconds: 4),
         ),
@@ -370,16 +350,19 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
           child: Column(
             children: [
               SizedBox(height: 40),
-
-              // Connection status indicator
+              // Connection status
               Container(
                 margin: EdgeInsets.symmetric(horizontal: 24),
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: _isSupabaseConnected ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                  color: _isSupabaseConnected
+                      ? Colors.green.withOpacity(0.1)
+                      : Colors.red.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: _isSupabaseConnected ? Colors.green.withOpacity(0.3) : Colors.red.withOpacity(0.3),
+                    color: _isSupabaseConnected
+                        ? Colors.green.withOpacity(0.3)
+                        : Colors.red.withOpacity(0.3),
                   ),
                 ),
                 child: Row(
@@ -399,27 +382,22 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: _isSupabaseConnected ? Colors.green[700] : Colors.red[700],
+                        color: _isSupabaseConnected
+                            ? Colors.green[700]
+                            : Colors.red[700],
                       ),
                     ),
                   ],
                 ),
               ),
-
               SizedBox(height: 20),
-
-              // Logo section
               FadeTransition(
                 opacity: _fadeAnimation,
                 child: Container(
                   height: 180,
-                  child: Center(
-                    child: _buildLogo(),
-                  ),
+                  child: Center(child: _buildLogo()),
                 ),
               ),
-
-              // Main content
               Expanded(
                 child: Container(
                   width: double.infinity,
@@ -428,12 +406,13 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                     position: _slideAnimation,
                     child: FadeTransition(
                       opacity: _fadeAnimation,
-                      child: _currentStep == 1 ? _buildMobileStep() : _buildOTPStep(),
+                      child: _currentStep == 1
+                          ? _buildMobileStep()
+                          : _buildOTPStep(),
                     ),
                   ),
                 ),
               ),
-
               SizedBox(height: 32),
             ],
           ),
@@ -456,13 +435,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
               end: Alignment.bottomRight,
             ),
             shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Color(0xFF6366F1).withOpacity(0.25),
-                blurRadius: 24,
-                offset: Offset(0, 8),
-              ),
-            ],
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(42.5),
@@ -489,7 +461,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
             fontSize: 24,
             fontWeight: FontWeight.w800,
             color: Color(0xFF1E293B),
-            letterSpacing: 0.3,
           ),
         ),
       ],
@@ -505,13 +476,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 20,
-                offset: Offset(0, 8),
-              ),
-            ],
           ),
           child: TextField(
             controller: _mobileController,
@@ -520,106 +484,46 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
               FilteringTextInputFormatter.digitsOnly,
               LengthLimitingTextInputFormatter(10),
             ],
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF1E293B),
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
             decoration: InputDecoration(
               hintText: 'Enter your mobile number',
-              hintStyle: TextStyle(
-                color: Color(0xFF94A3B8),
-                fontSize: 16,
-              ),
               prefixIcon: Container(
                 padding: EdgeInsets.only(left: 20, right: 12),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.phone_outlined, color: Color(0xFF6B7280), size: 22),
+                    Icon(Icons.phone_outlined, size: 22),
                     SizedBox(width: 10),
                     Text(
                       '+91',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1E293B),
-                      ),
+                      style:
+                          TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
                     ),
                   ],
                 ),
               ),
               border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(vertical: 22, horizontal: 20),
+              contentPadding:
+                  EdgeInsets.symmetric(vertical: 22, horizontal: 20),
             ),
           ),
         ),
-
         if (_errorMessage != null) ...[
           SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.red.withOpacity(0.2)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.red[600], size: 20),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(
-                      color: Colors.red[700],
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          Text(_errorMessage!,
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500)),
         ],
-
         SizedBox(height: 40),
-
         Container(
           width: double.infinity,
           height: 60,
           child: ElevatedButton(
-            onPressed: _isMobileValid && !_isLoading && _isSupabaseConnected ? _handleSendOTP : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _isMobileValid && !_isLoading && _isSupabaseConnected
-                  ? Color(0xFF6366F1) 
-                  : Color(0xFFE2E8F0),
-              elevation: 0,
-              shadowColor: Colors.transparent,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
+            onPressed: _isMobileValid && !_isLoading && _isSupabaseConnected
+                ? _handleSendOTP
+                : null,
             child: _isLoading
-                ? SizedBox(
-                    width: 26,
-                    height: 26,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Text(
-                    'Continue',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: _isMobileValid && !_isLoading && _isSupabaseConnected
-                          ? Colors.white 
-                          : Color(0xFF94A3B8),
-                    ),
-                  ),
+                ? CircularProgressIndicator(strokeWidth: 3)
+                : Text('Continue'),
           ),
         ),
       ],
@@ -627,253 +531,50 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   }
 
   Widget _buildOTPStep() {
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Enter verification code',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF1E293B),
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          SizedBox(height: 16),
-
-          Text(
-            'We sent a 6-digit code to\n${MobileAuthService.maskMobileNumber(_mobileController.text)}',
-            style: TextStyle(
-              fontSize: 16,
-              color: Color(0xFF64748B),
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          SizedBox(height: 16),
-
-          Container(
-            padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.withOpacity(0.2)),
-            ),
-            child: Text(
-              'For testing: Check Supabase function logs for OTP',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.blue[700],
-                fontWeight: FontWeight.w500,
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text('Enter verification code'),
+        SizedBox(height: 16),
+        Text('We sent a code to ${_mobileController.text}'),
+        SizedBox(height: 40),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: List.generate(6, (index) {
+            return Flexible(
+              child: TextField(
+                controller: _otpControllers[index],
+                focusNode: _otpFocusNodes[index],
+                maxLength: 1,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                onChanged: (val) => _handleOTPChange(index, val),
+                decoration: InputDecoration(counterText: ''),
               ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-
-          SizedBox(height: 40),
-
-          // Fixed OTP input fields with proper constraints
-          Container(
-            height: 70,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(6, (index) {
-                return Flexible(
-                  child: Container(
-                    width: 45,
-                    height: 60,
-                    margin: EdgeInsets.symmetric(horizontal: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _otpControllers[index].text.isNotEmpty 
-                            ? Color(0xFF6366F1) 
-                            : Color(0xFFE2E8F0),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: RawKeyboardListener(
-                      focusNode: FocusNode(),
-                      onKey: (event) => _handleOTPKeyPress(index, event),
-                      child: TextField(
-                        controller: _otpControllers[index],
-                        focusNode: _otpFocusNodes[index],
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
-                        maxLength: 1,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),
-                        ),
-                        decoration: InputDecoration(
-                          counterText: '',
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                        onChanged: (value) => _handleOTPChange(index, value),
-                        onTap: () {
-                          _otpControllers[index].selection = TextSelection.fromPosition(
-                            TextPosition(offset: _otpControllers[index].text.length),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ),
-
-          if (_errorMessage != null) ...[
-            SizedBox(height: 24),
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.red.withOpacity(0.2)),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.error_outline, color: Colors.red[600], size: 20),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      _errorMessage!,
-                      style: TextStyle(
-                        color: Colors.red[700],
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-
-          SizedBox(height: 40),
-
-          Container(
-            width: double.infinity,
-            height: 60,
-            child: ElevatedButton(
-              onPressed: () {
-                final otp = _otpControllers.map((c) => c.text).join();
-                final canVerify = otp.length == 6 && !_isLoading;
-                debugPrint('Verify button pressed - OTP: "$otp", Length: ${otp.length}, Can verify: $canVerify, Is loading: $_isLoading');
-                
-                if (canVerify) {
-                  _handleVerifyOTP();
-                } else {
-                  debugPrint('Cannot verify - missing digits or loading');
-                  // Show helper message
-                  if (otp.length < 6) {
-                    setState(() {
-                      _errorMessage = 'Please enter all 6 digits';
-                    });
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: () {
-                  final otp = _otpControllers.map((c) => c.text).join();
-                  final isEnabled = otp.length == 6 && !_isLoading;
-                  return isEnabled ? Color(0xFF6366F1) : Color(0xFFE2E8F0);
-                }(),
-                elevation: 0,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              child: _isLoading
-                  ? SizedBox(
-                      width: 26,
-                      height: 26,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 3,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : Text(
-                      'Verify',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: () {
-                          final otp = _otpControllers.map((c) => c.text).join();
-                          final isEnabled = otp.length == 6 && !_isLoading;
-                          return isEnabled ? Colors.white : Color(0xFF94A3B8);
-                        }(),
-                      ),
-                    ),
-            ),
-          ),
-
-          SizedBox(height: 32),
-
-          if (!_canResend && _resendTimer > 0)
-            Text(
-              'Resend code in ${_resendTimer}s',
-              style: TextStyle(
-                fontSize: 14,
-                color: Color(0xFF64748B),
-              ),
-            )
-          else if (_canResend && _resendAttempts < 3)
-            TextButton(
-              onPressed: _handleResendOTP,
-              child: Text(
-                'Resend code',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF6366F1),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-
-          SizedBox(height: 16),
-
-          TextButton(
+            );
+          }),
+        ),
+        SizedBox(height: 40),
+        Container(
+          width: double.infinity,
+          height: 60,
+          child: ElevatedButton(
             onPressed: () {
-              setState(() {
-                _currentStep = 1;
-                _errorMessage = null;
-              });
-              for (var controller in _otpControllers) {
-                controller.clear();
+              final otp = _otpControllers.map((c) => c.text).join();
+              if (otp.length == 6 && !_isLoading) {
+                _handleVerifyOTP();
+              } else {
+                setState(() {
+                  _errorMessage = 'Please enter all 6 digits';
+                });
               }
-              _timer?.cancel();
-              _animationController.reset();
-              _animationController.forward();
             },
-            child: Text(
-              'Change mobile number',
-              style: TextStyle(
-                fontSize: 14,
-                color: Color(0xFF64748B),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+            child: _isLoading
+                ? CircularProgressIndicator(strokeWidth: 3)
+                : Text('Verify'),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
