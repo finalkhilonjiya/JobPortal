@@ -89,6 +89,18 @@ class MobileAuthService {
     _currentUser = null;
     _refreshToken = null;
   }
+  Future<bool> refreshSession() async {
+  /*  your old refresh logic here  */
+  try {
+    if (!isAuthenticated) return false;
+    // call your refresh edge-function here
+    return true;               // or false on failure
+  } catch (_) {
+    await _clearAuthData();
+    return false;
+  }
+}
+
 
   /* ----------  OTP FLOW  ---------- */
   Future<OtpResponse> sendOtp(String mobile) async {
