@@ -186,7 +186,7 @@ class MobileAuthService {
       debugPrint('Supabase URL: ${dotenv.env['SUPABASE_URL']}');
 
       // Call Supabase Edge Function
-      final response = await SupabaseService().client.functions.invoke(
+      final response = await Supabase.instance.client.functions.invoke(
         'request-otp',
         body: {
           'mobile_number': phoneNumber,
@@ -208,7 +208,7 @@ class MobileAuthService {
             return OtpResponse(
               success: true,
               message: data['message'] ?? 'OTP sent successfully',
-              otpForTesting: data['otp'], // For development/testing
+              otpForTesting: data['otp']?.toString(), // For development/testing
             );
           } else {
             final error = data['error'] ?? data['message'] ?? 'Failed to send OTP';
@@ -223,7 +223,7 @@ class MobileAuthService {
               return OtpResponse(
                 success: true,
                 message: jsonData['message'] ?? 'OTP sent successfully',
-                otpForTesting: jsonData['otp'], // For development/testing
+                otpForTesting: jsonData['otp']?.toString(), // For development/testing
               );
             } else {
               final error = jsonData['error'] ?? jsonData['message'] ?? 'Failed to send OTP';
@@ -289,7 +289,7 @@ class MobileAuthService {
       debugPrint('Device fingerprint: ${deviceFingerprint.substring(0, 8)}...');
       debugPrint('Function: verify-otp');
 
-      final response = await SupabaseService().client.functions.invoke(
+      final response = await Supabase.instance.client.functions.invoke(
         'verify-otp',
         body: {
           'mobile_number': phoneNumber,
@@ -379,7 +379,7 @@ class MobileAuthService {
 
       debugPrint('Refreshing session for user: ${_currentUser!['id']}');
 
-      final response = await SupabaseService().client.functions.invoke(
+      final response = await Supabase.instance.client.functions.invoke(
         'refresh-session',
         body: {
           'user_id': _currentUser!['id'],
@@ -485,7 +485,7 @@ class MobileAuthService {
       
       // Test connection with a simple function call or health check
       try {
-        final response = await SupabaseService().client.functions.invoke(
+        final response = await Supabase.instance.client.functions.invoke(
           'health-check',
           body: {'test': true},
         ).timeout(Duration(seconds: 10));
@@ -494,10 +494,10 @@ class MobileAuthService {
         return response.status == 200 || response.status == 404; // 404 is ok if function doesn't exist
         
       } catch (functionError) {
-        debugPrint('Function test failed, trying alternative: $functionError');
+        debugPrint('Function test failed, checking client availability: $functionError');
         
         // Alternative test - just verify we can access the client
-        final client = SupabaseService().client;
+        final client = Supabase.instance.client;
         debugPrint('Supabase client configured and accessible');
         return true;
       }
