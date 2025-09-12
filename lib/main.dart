@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
           // Initialization succeeded
           final authService = MobileAuthService();
           return authService.isAuthenticated
-              ? HomeScreen() // Replace with your actual home widget
+              ? HomeMarketplaceFeed() // Replace with your actual home widget
               : MobileLoginScreen();
         },
       ),
