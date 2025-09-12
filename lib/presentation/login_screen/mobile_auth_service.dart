@@ -71,11 +71,11 @@ class MobileAuthService {
     } catch (e) {
       debugPrint('SupabaseService not available, trying Supabase.instance: $e');
       
-      // Fallback to direct Supabase instance with safety check
-      if (Supabase.instance.initialized) {
+      // Fallback to direct Supabase instance
+      try {
         return Supabase.instance.client;
-      } else {
-        throw MobileAuthException('Supabase not initialized');
+      } catch (instanceError) {
+        throw MobileAuthException('Supabase not initialized: $instanceError');
       }
     }
   }
