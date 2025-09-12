@@ -87,11 +87,14 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       }
     }
   } catch (e) {
-    setState(() {
-      _isSupabaseConnected = false;
-      _authError = 'Init error:\n${e.toString()}';
-    });
-  }
+  setState(() {
+    _isSupabaseConnected = false;
+    _authError = 'Init error:\n${e.toString()}';   // ← already there
+  });
+  // NEW: keep the error visible even when button is disabled
+  // (no need to tap Continue)
+}
+
 }
 
 
