@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:sizer/sizer.dart';
 import 'dart:async';
 
 import '../../core/app_export.dart';
@@ -70,10 +69,10 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     _animationController.forward();
   }
 
-  /// ✅ Refactored for Option 2
+  /// ✅ Only loads auth cache + device fingerprint (Supabase is already initialized in AppInitializer)
   Future<void> _initializeAuthService() async {
     try {
-      await _authService.initialize(); // loads cached auth + fingerprint
+      await _authService.initialize();
 
       setState(() {
         _isSupabaseConnected = true;
@@ -150,7 +149,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       _animationController.forward();
 
       HapticFeedback.lightImpact();
-      _showSuccessMessage('OTP sent! Check Supabase function logs for the code.');
+      _showSuccessMessage('OTP sent! Check Supabase logs for the code.');
     } catch (e) {
       debugPrint('OTP Send Error: $e');
       setState(() {
@@ -169,7 +168,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     });
 
     _timer?.cancel();
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
           if (_resendTimer > 0) {
@@ -198,7 +197,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
 
   Future<void> _handleVerifyOTP() async {
     final otp = _otpControllers.map((c) => c.text).join();
-    debugPrint('Attempting to verify OTP: $otp (${otp.length} characters)');
+    debugPrint('Verifying OTP: $otp (${otp.length} digits)');
 
     if (otp.length != 6) {
       setState(() {
@@ -225,7 +224,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
         HapticFeedback.lightImpact();
         _showSuccessMessage('Login successful! Redirecting...');
 
-        await Future.delayed(Duration(milliseconds: 1000));
+        await Future.delayed(const Duration(milliseconds: 1000));
         _navigateToHome();
       }
     } catch (e) {
@@ -263,7 +262,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
           }
         }
         _otpFocusNodes[5].requestFocus();
-        Future.delayed(Duration(milliseconds: 300), _handleVerifyOTP);
+        Future.delayed(const Duration(milliseconds: 300), _handleVerifyOTP);
         return;
       } else {
         value = value[0];
@@ -281,7 +280,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
 
     final otp = _otpControllers.map((c) => c.text).join();
     if (otp.length == 6) {
-      Future.delayed(Duration(milliseconds: 300), _handleVerifyOTP);
+      Future.delayed(const Duration(milliseconds: 300), _handleVerifyOTP);
     }
   }
 
@@ -303,16 +302,14 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
         SnackBar(
           content: Row(
             children: [
-              Icon(Icons.check_circle, color: Colors.white, size: 20),
-              SizedBox(width: 12),
-              Expanded(
-                  child:
-                      Text(message, style: TextStyle(color: Colors.white))),
+              const Icon(Icons.check_circle, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              Expanded(child: Text(message, style: const TextStyle(color: Colors.white))),
             ],
           ),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -324,16 +321,14 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
         SnackBar(
           content: Row(
             children: [
-              Icon(Icons.error, color: Colors.white, size: 20),
-              SizedBox(width: 12),
-              Expanded(
-                  child:
-                      Text(message, style: TextStyle(color: Colors.white))),
+              const Icon(Icons.error, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              Expanded(child: Text(message, style: const TextStyle(color: Colors.white))),
             ],
           ),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 4),
+          duration: const Duration(seconds: 4),
         ),
       );
     }
@@ -342,79 +337,87 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF8FAFC),
+      resizeToAvoidBottomInset: true, // ✅ prevents pixel overflow
       body: SafeArea(
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          child: Column(
-            children: [
-              SizedBox(height: 40),
-              // Connection status
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: 24),
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: _isSupabaseConnected
-                      ? Colors.green.withOpacity(0.1)
-                      : Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: _isSupabaseConnected
-                        ? Colors.green.withOpacity(0.3)
-                        : Colors.red.withOpacity(0.3),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: _isSupabaseConnected ? Colors.green : Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      _isSupabaseConnected ? 'Connected' : 'Not Connected',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height -
+                  MediaQuery.of(context).padding.top -
+                  MediaQuery.of(context).padding.bottom,
+            ),
+            child: IntrinsicHeight(
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+
+                  // Connection status banner
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _isSupabaseConnected
+                          ? Colors.green.withOpacity(0.1)
+                          : Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
                         color: _isSupabaseConnected
-                            ? Colors.green[700]
-                            : Colors.red[700],
+                            ? Colors.green.withOpacity(0.3)
+                            : Colors.red.withOpacity(0.3),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 20),
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: Container(
-                  height: 180,
-                  child: Center(child: _buildLogo()),
-                ),
-              ),
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(horizontal: 24),
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: _currentStep == 1
-                          ? _buildMobileStep()
-                          : _buildOTPStep(),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: _isSupabaseConnected ? Colors.green : Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _isSupabaseConnected ? 'Connected' : 'Not Connected',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: _isSupabaseConnected
+                                ? Colors.green[700]
+                                : Colors.red[700],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
+
+                  const SizedBox(height: 20),
+                  FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SizedBox(height: 180, child: Center(child: _buildLogo())),
+                  ),
+
+                  Expanded(
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: _currentStep == 1 ? _buildMobileStep() : _buildOTPStep(),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+                ],
               ),
-              SizedBox(height: 32),
-            ],
+            ),
           ),
         ),
       ),
@@ -428,7 +431,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
         Container(
           width: 85,
           height: 85,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [Color(0xFF6366F1), Color(0xFFEC4899)],
               begin: Alignment.topLeft,
@@ -441,7 +444,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
             child: Image.asset(
               'assets/images/company_logo.png',
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Center(
+              errorBuilder: (context, error, stackTrace) => const Center(
                 child: Text(
                   'K',
                   style: TextStyle(
@@ -454,8 +457,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
             ),
           ),
         ),
-        SizedBox(height: 20),
-        Text(
+        const SizedBox(height: 20),
+        const Text(
           'khilonjiya.com',
           style: TextStyle(
             fontSize: 24,
@@ -472,7 +475,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
-          width: double.infinity,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
@@ -484,37 +486,32 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
               FilteringTextInputFormatter.digitsOnly,
               LengthLimitingTextInputFormatter(10),
             ],
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
             decoration: InputDecoration(
               hintText: 'Enter your mobile number',
-              prefixIcon: Container(
-                padding: EdgeInsets.only(left: 20, right: 12),
+              prefixIcon: Padding(
+                padding: const EdgeInsets.only(left: 20, right: 12),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: [
+                  children: const [
                     Icon(Icons.phone_outlined, size: 22),
                     SizedBox(width: 10),
-                    Text(
-                      '+91',
-                      style:
-                          TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-                    ),
+                    Text('+91', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
                   ],
                 ),
               ),
               border: InputBorder.none,
-              contentPadding:
-                  EdgeInsets.symmetric(vertical: 22, horizontal: 20),
+              contentPadding: const EdgeInsets.symmetric(vertical: 22, horizontal: 20),
             ),
           ),
         ),
         if (_errorMessage != null) ...[
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(_errorMessage!,
-              style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500)),
+              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w500)),
         ],
-        SizedBox(height: 40),
-        Container(
+        const SizedBox(height: 40),
+        SizedBox(
           width: double.infinity,
           height: 60,
           child: ElevatedButton(
@@ -522,8 +519,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                 ? _handleSendOTP
                 : null,
             child: _isLoading
-                ? CircularProgressIndicator(strokeWidth: 3)
-                : Text('Continue'),
+                ? const CircularProgressIndicator(strokeWidth: 3)
+                : const Text('Continue'),
           ),
         ),
       ],
@@ -534,10 +531,10 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text('Enter verification code'),
-        SizedBox(height: 16),
+        const Text('Enter verification code'),
+        const SizedBox(height: 16),
         Text('We sent a code to ${_mobileController.text}'),
-        SizedBox(height: 40),
+        const SizedBox(height: 40),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: List.generate(6, (index) {
@@ -549,13 +546,13 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
                 onChanged: (val) => _handleOTPChange(index, val),
-                decoration: InputDecoration(counterText: ''),
+                decoration: const InputDecoration(counterText: ''),
               ),
             );
           }),
         ),
-        SizedBox(height: 40),
-        Container(
+        const SizedBox(height: 40),
+        SizedBox(
           width: double.infinity,
           height: 60,
           child: ElevatedButton(
@@ -570,8 +567,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
               }
             },
             child: _isLoading
-                ? CircularProgressIndicator(strokeWidth: 3)
-                : Text('Verify'),
+                ? const CircularProgressIndicator(strokeWidth: 3)
+                : const Text('Verify'),
           ),
         ),
       ],
