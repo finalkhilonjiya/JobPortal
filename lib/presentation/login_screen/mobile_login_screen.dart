@@ -20,6 +20,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   final List<FocusNode> _otpFocusNodes =
       List.generate(6, (index) => FocusNode());
 
+  String _authError = '';
   bool _isLoading = false;
   bool _isMobileValid = false;
   String? _errorMessage;
@@ -71,31 +72,28 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
 
   /// ✅ Only loads auth cache + device fingerprint (Supabase is already initialized in AppInitializer)
   Future<void> _initializeAuthService() async {
-    try {
-      await _authService.initialize();
-final connected = await _authService.checkConnection(); // ← ADD
-setState(() {
-  _isSupabaseConnected = connected;                     // ← ADD
-});
-
-
-      if (_authService.isAuthenticated) {
-        final sessionValid = await _authService.refreshSession();
-        if (sessionValid) {
-          _navigateToHome();
-          return;
-        }
+  try {
+    await _authService.initialize();
+    final connected = await _authService.checkConnection();
+    setState(() {
+      _isSupabaseConnected = connected;
+      _authError = '';
+    });
+    if (_authService.isAuthenticated) {
+      final valid = await _authService.refreshSession();
+      if (valid) {
+        _navigateToHome();
+        return;
       }
-
-      _showSuccessMessage('Ready for login');
-    } catch (e) {
-      setState(() {
-        _isSupabaseConnected = false;
-      });
-      _showErrorMessage('Auth service error: ${e.toString()}');
-      debugPrint('Auth service initialization error: $e');
     }
+  } catch (e) {
+    setState(() {
+      _isSupabaseConnected = false;
+      _authError = 'Init error:\n${e.toString()}';
+    });
   }
+}
+
 
   @override
   void dispose() {
@@ -152,14 +150,12 @@ setState(() {
       HapticFeedback.lightImpact();
       _showSuccessMessage('OTP sent! Check Supabase logs for the code.');
     } catch (e) {
-      debugPrint('OTP Send Error: $e');
-      setState(() {
-        _isLoading = false;
-        _errorMessage = e is MobileAuthException
-            ? e.message
-            : 'Failed to send OTP. Please try again.';
-      });
-    }
+  setState(() {
+    _isLoading = false;
+    _authError = 'SendOTP error:\n${e.toString()}';
+  });
+}
+
   }
 
   void _startResendTimer() {
@@ -336,94 +332,117 @@ setState(() {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      resizeToAvoidBottomInset: true, // ✅ prevents pixel overflow
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: const Color(0xFFF8FAFC),
+    resizeToAvoidBottomInset: true,
+    body: SafeArea(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.only(
+          left: 24,
+          right: 24,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height -
+                MediaQuery.of(context).padding.top -
+                MediaQuery.of(context).padding.bottom,
           ),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height -
-                  MediaQuery.of(context).padding.top -
-                  MediaQuery.of(context).padding.bottom,
-            ),
-            child: IntrinsicHeight(
-              child: Column(
-                children: [
-                  const SizedBox(height: 40),
+          child: IntrinsicHeight(
+            child: Column(
+              children: [
+                const SizedBox(height: 40),
 
-                  // Connection status banner
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 24),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
+                /* ----------  Connection banner  ---------- */
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: _isSupabaseConnected
+                        ? Colors.green.withOpacity(0.1)
+                        : Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
                       color: _isSupabaseConnected
-                          ? Colors.green.withOpacity(0.1)
-                          : Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: _isSupabaseConnected
-                            ? Colors.green.withOpacity(0.3)
-                            : Colors.red.withOpacity(0.3),
-                      ),
+                          ? Colors.green.withOpacity(0.3)
+                          : Colors.red.withOpacity(0.3),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: _isSupabaseConnected ? Colors.green : Colors.red,
-                            shape: BoxShape.circle,
-                          ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color:
+                              _isSupabaseConnected ? Colors.green : Colors.red,
+                          shape: BoxShape.circle,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _isSupabaseConnected ? 'Connected' : 'Not Connected',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: _isSupabaseConnected
-                                ? Colors.green[700]
-                                : Colors.red[700],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SizedBox(height: 180, child: Center(child: _buildLogo())),
-                  ),
-
-                  Expanded(
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: _currentStep == 1 ? _buildMobileStep() : _buildOTPStep(),
                       ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _isSupabaseConnected ? 'Connected' : 'Not Connected',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: _isSupabaseConnected
+                              ? Colors.green[700]
+                              : Colors.red[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                /* ----------  NEW error box  ---------- */
+                if (_authError.isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _authError,
+                      style:
+                          TextStyle(color: Colors.red[800], fontSize: 12),
                     ),
                   ),
 
-                  const SizedBox(height: 32),
-                ],
-              ),
+                const SizedBox(height: 20),
+
+                FadeTransition(
+                  opacity: _fadeAnimation,
+                  child:
+                      SizedBox(height: 180, child: Center(child: _buildLogo())),
+                ),
+
+                Expanded(
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child:
+                          _currentStep == 1 ? _buildMobileStep() : _buildOTPStep(),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+              ],
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   Widget _buildLogo() {
     return Column(
