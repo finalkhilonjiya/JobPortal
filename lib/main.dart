@@ -1,3 +1,4 @@
+import 'core/navigation_service.dart';   // ← ADD THIS LINE
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
