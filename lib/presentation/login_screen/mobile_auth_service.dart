@@ -63,6 +63,23 @@ class MobileAuthService {
     }
   }
 
+  /// Get Supabase client safely
+  SupabaseClient get _supabaseClient {
+    try {
+      // First try to get from SupabaseService (your existing service)
+      return SupabaseService().client;
+    } catch (e) {
+      debugPrint('SupabaseService not available, trying Supabase.instance: $e');
+      
+      // Fallback to direct Supabase instance with safety check
+      if (Supabase.instance.initialized) {
+        return Supabase.instance.client;
+      } else {
+        throw MobileAuthException('Supabase not initialized');
+      }
+    }
+  }
+
   /// Generate unique device fingerprint
   Future<String> _generateDeviceFingerprint() async {
     if (_cachedDeviceFingerprint != null) {
@@ -185,8 +202,8 @@ class MobileAuthService {
       debugPrint('Function: request-otp');
       debugPrint('Supabase URL: ${dotenv.env['SUPABASE_URL']}');
 
-      // Call Supabase Edge Function
-      final response = await Supabase.instance.client.functions.invoke(
+      // Call Supabase Edge Function using safe client getter
+      final response = await _supabaseClient.functions.invoke(
         'request-otp',
         body: {
           'mobile_number': phoneNumber,
@@ -289,7 +306,7 @@ class MobileAuthService {
       debugPrint('Device fingerprint: ${deviceFingerprint.substring(0, 8)}...');
       debugPrint('Function: verify-otp');
 
-      final response = await Supabase.instance.client.functions.invoke(
+      final response = await _supabaseClient.functions.invoke(
         'verify-otp',
         body: {
           'mobile_number': phoneNumber,
@@ -379,7 +396,7 @@ class MobileAuthService {
 
       debugPrint('Refreshing session for user: ${_currentUser!['id']}');
 
-      final response = await Supabase.instance.client.functions.invoke(
+      final response = await _supabaseClient.functions.invoke(
         'refresh-session',
         body: {
           'user_id': _currentUser!['id'],
@@ -483,23 +500,14 @@ class MobileAuthService {
       
       debugPrint('Credentials loaded successfully');
       
-      // Test connection with a simple function call or health check
+      // Test if we can get the client
       try {
-        final response = await Supabase.instance.client.functions.invoke(
-          'health-check',
-          body: {'test': true},
-        ).timeout(Duration(seconds: 10));
-        
-        debugPrint('Health check response: ${response.status}');
-        return response.status == 200 || response.status == 404; // 404 is ok if function doesn't exist
-        
-      } catch (functionError) {
-        debugPrint('Function test failed, checking client availability: $functionError');
-        
-        // Alternative test - just verify we can access the client
-        final client = Supabase.instance.client;
-        debugPrint('Supabase client configured and accessible');
+        final client = _supabaseClient;
+        debugPrint('Supabase client accessible');
         return true;
+      } catch (e) {
+        debugPrint('Supabase client not accessible: $e');
+        return false;
       }
       
     } catch (e) {
