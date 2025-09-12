@@ -3,16 +3,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_export.dart';
 
 class MobileAuthService {
+  /* ----------  singleton  ---------- */
   static final MobileAuthService _instance = MobileAuthService._internal();
   factory MobileAuthService() => _instance;
   MobileAuthService._internal();
 
-  // Storage keys
+  /* ----------  keys  ---------- */
   static const String _userKey = 'auth_user';
   static const String _refreshTokenKey = 'refresh_token';
   static const String _deviceFingerprintKey = 'device_fingerprint';
@@ -22,300 +22,140 @@ class MobileAuthService {
   String? _refreshToken;
   bool _isInitialized = false;
 
-  /// Initialize the auth service (no Supabase init here, handled by AppInitializer)
+  /* ----------  INIT  ---------- */
   Future<void> initialize() async {
     try {
-      debugPrint('Initializing MobileAuthService...');
-
-      _checkEnvironmentVariables();
       await _loadStoredAuth();
       await _generateDeviceFingerprint();
-
-      // Only verify connection, don’t initialize Supabase
-      final connected = await checkConnection();
-      debugPrint('Supabase connection status: $connected');
-
       _isInitialized = true;
-      debugPrint('MobileAuthService initialized successfully');
     } catch (e) {
-      debugPrint('MobileAuthService initialization failed: $e');
       rethrow;
     }
   }
 
-  /// Check if environment variables are properly loaded
-  void _checkEnvironmentVariables() {
-    final supabaseUrl = dotenv.env['SUPABASE_URL'];
-    final supabaseKey = dotenv.env['SUPABASE_ANON_KEY'];
-
-    debugPrint('Environment variables check:');
-    debugPrint('SUPABASE_URL loaded: ${supabaseUrl != null}');
-    debugPrint('SUPABASE_ANON_KEY loaded: ${supabaseKey != null}');
-
-    if (supabaseUrl != null) {
-      debugPrint('URL format: ${supabaseUrl.contains('.supabase.co') ? 'Valid' : 'Invalid'}');
-    }
-
-    if (supabaseUrl == null || supabaseKey == null) {
-      throw MobileAuthException('Supabase credentials not found in .env file. Please check your configuration.');
-    }
-  }
-
-  /// Get Supabase client safely
+  /* ----------  SUPABASE CLIENT (safe)  ---------- */
   SupabaseClient get _supabaseClient {
-    return SupabaseService().client;
+    final client = Supabase.instance.client;
+    if (client == null) throw MobileAuthException('Supabase not initialized');
+    return client;
   }
 
-  /// Generate unique device fingerprint
+  /* ----------  DEVICE FINGERPRINT  ---------- */
   Future<String> _generateDeviceFingerprint() async {
-    if (_cachedDeviceFingerprint != null) {
-      return _cachedDeviceFingerprint!;
+    if (_cachedDeviceFingerprint != null) return _cachedDeviceFingerprint!;
+    final prefs = await SharedPreferences.getInstance();
+    String? stored = prefs.getString(_deviceFingerprintKey);
+    if (stored != null) {
+      _cachedDeviceFingerprint = stored;
+      return stored;
     }
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      String? stored = prefs.getString(_deviceFingerprintKey);
-
-      if (stored != null) {
-        _cachedDeviceFingerprint = stored;
-        debugPrint('Using stored device fingerprint');
-        return stored;
-      }
-
-      DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-      String fingerprint = '';
-
-      if (defaultTargetPlatform == TargetPlatform.android) {
-        AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-        fingerprint = '${androidInfo.model}_${androidInfo.id}_${androidInfo.device}';
-      } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-        IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
-        fingerprint = '${iosInfo.model}_${iosInfo.identifierForVendor}';
-      } else {
-        fingerprint = 'web_${DateTime.now().millisecondsSinceEpoch}';
-      }
-
-      var bytes = utf8.encode(fingerprint + DateTime.now().toIso8601String());
-      var digest = sha256.convert(bytes);
-      final hashedFingerprint = digest.toString();
-
-      await prefs.setString(_deviceFingerprintKey, hashedFingerprint);
-      _cachedDeviceFingerprint = hashedFingerprint;
-
-      debugPrint('Generated new device fingerprint');
-      return hashedFingerprint;
-    } catch (e) {
-      debugPrint('Device fingerprint error: $e');
-      final fallback = 'fallback_${DateTime.now().millisecondsSinceEpoch}';
-      _cachedDeviceFingerprint = fallback;
-      return fallback;
+    final buffer = StringBuffer();
+    final deviceInfo = DeviceInfoPlugin();
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      final android = await deviceInfo.androidInfo;
+      buffer.write('${android.model}_${android.id}_${android.device}');
+    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final ios = await deviceInfo.iosInfo;
+      buffer.write('${ios.model}_${ios.identifierForVendor}');
+    } else {
+      buffer.write('web_${DateTime.now().millisecondsSinceEpoch}');
     }
+    final hash = sha256.convert(utf8.encode(buffer.toString())).toString();
+    await prefs.setString(_deviceFingerprintKey, hash);
+    _cachedDeviceFingerprint = hash;
+    return hash;
   }
 
-  /// Load stored authentication data
+  /* ----------  LOCAL STORAGE  ---------- */
   Future<void> _loadStoredAuth() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-
-      final userJson = prefs.getString(_userKey);
-      if (userJson != null) {
-        _currentUser = jsonDecode(userJson);
-        debugPrint('Loaded stored user data');
-      }
-
-      _refreshToken = prefs.getString(_refreshTokenKey);
-      if (_refreshToken != null) {
-        debugPrint('Loaded stored refresh token');
-      }
-    } catch (e) {
-      debugPrint('Error loading stored auth: $e');
-    }
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = prefs.getString(_userKey);
+    if (userJson != null) _currentUser = jsonDecode(userJson);
+    _refreshToken = prefs.getString(_refreshTokenKey);
   }
 
-  /// Store authentication data
-  Future<void> _storeAuthData(Map<String, dynamic> user, String refreshToken) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-
-      await prefs.setString(_userKey, jsonEncode(user));
-      await prefs.setString(_refreshTokenKey, refreshToken);
-
-      _currentUser = user;
-      _refreshToken = refreshToken;
-
-      debugPrint('Stored authentication data for user: ${user['id']}');
-    } catch (e) {
-      debugPrint('Error storing auth data: $e');
-      throw MobileAuthException('Failed to store authentication data');
-    }
+  Future<void> _storeAuthData(Map<String, dynamic> user, String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userKey, jsonEncode(user));
+    await prefs.setString(_refreshTokenKey, token);
+    _currentUser = user;
+    _refreshToken = token;
   }
 
-  /// Clear stored authentication data
   Future<void> _clearAuthData() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-
-      await prefs.remove(_userKey);
-      await prefs.remove(_refreshTokenKey);
-
-      _currentUser = null;
-      _refreshToken = null;
-
-      debugPrint('Cleared authentication data');
-    } catch (e) {
-      debugPrint('Error clearing auth data: $e');
-    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_userKey);
+    await prefs.remove(_refreshTokenKey);
+    _currentUser = null;
+    _refreshToken = null;
   }
 
-  /// Send OTP to mobile number
-  Future<OtpResponse> sendOtp(String mobileNumber) async {
-    if (!_isInitialized) {
-      throw MobileAuthException('Service not initialized');
+  /* ----------  OTP FLOW  ---------- */
+  Future<OtpResponse> sendOtp(String mobile) async {
+    if (!_isInitialized) throw MobileAuthException('Service not initialized');
+    final clean = mobile.replaceAll(RegExp(r'[^\d]'), '');
+    if (clean.length != 10 || clean[0] == '0') {
+      throw MobileAuthException('Invalid mobile number format');
     }
-
-    try {
-      final cleanMobile = mobileNumber.replaceAll(RegExp(r'[^\d]'), '');
-      if (cleanMobile.length != 10 || cleanMobile[0] == '0') {
-        throw MobileAuthException('Invalid mobile number format');
-      }
-
-      final phoneNumber = '+91$cleanMobile';
-      debugPrint('=== SENDING OTP ===');
-      debugPrint('Phone number: $phoneNumber');
-
-      final response = await _supabaseClient.functions.invoke(
-        'request-otp',
-        body: {
-          'mobile_number': phoneNumber,
-          'timestamp': DateTime.now().toIso8601String(),
-        },
-      );
-
-      if (response.status == 200) {
-        final data = response.data;
-        if (data is Map<String, dynamic>) {
-          if (data['success'] == true || data['status'] == 'success') {
-            return OtpResponse(
-              success: true,
-              message: data['message'] ?? 'OTP sent successfully',
-              otpForTesting: data['otp']?.toString(),
-            );
-          }
-          throw MobileAuthException(data['error'] ?? 'Failed to send OTP');
-        }
-      }
-      throw MobileAuthException('HTTP ${response.status}: Failed to send OTP');
-    } catch (e) {
-      if (e is MobileAuthException) rethrow;
-      throw MobileAuthException('Network error: ${e.toString()}');
+    final phone = '+91$clean';
+    final res = await _supabaseClient.functions.invoke(
+      'request-otp',
+      body: {'mobile_number': phone, 'timestamp': DateTime.now().toIso8601String()},
+    );
+    if (res.status != 200 || res.data['success'] != true) {
+      throw MobileAuthException(res.data['error'] ?? 'OTP send failed');
     }
+    return OtpResponse(
+      success: true,
+      message: res.data['message'] ?? 'OTP sent',
+      otpForTesting: res.data['otp']?.toString(),
+    );
   }
 
-  /// Verify OTP and authenticate user
-  Future<AuthResponse> verifyOtp(String mobileNumber, String otp) async {
-    if (!_isInitialized) {
-      throw MobileAuthException('Service not initialized');
+  Future<AuthResponse> verifyOtp(String mobile, String otp) async {
+    if (!_isInitialized) throw MobileAuthException('Service not initialized');
+    final clean = mobile.replaceAll(RegExp(r'[^\d]'), '');
+    final phone = '+91$clean';
+    final fingerprint = await _generateDeviceFingerprint();
+    final res = await _supabaseClient.functions.invoke(
+      'verify-otp',
+      body: {
+        'mobile_number': phone,
+        'otp': otp,
+        'device_fingerprint': fingerprint,
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
+    if (res.status != 200 || res.data['success'] != true) {
+      throw MobileAuthException(res.data['error'] ?? 'Invalid OTP');
     }
-
-    try {
-      final cleanMobile = mobileNumber.replaceAll(RegExp(r'[^\d]'), '');
-      final phoneNumber = '+91$cleanMobile';
-      final deviceFingerprint = await _generateDeviceFingerprint();
-
-      final response = await _supabaseClient.functions.invoke(
-        'verify-otp',
-        body: {
-          'mobile_number': phoneNumber,
-          'otp': otp,
-          'device_fingerprint': deviceFingerprint,
-          'timestamp': DateTime.now().toIso8601String(),
-        },
-      );
-
-      if (response.status == 200) {
-        final data = response.data;
-        if (data is Map<String, dynamic> && (data['success'] == true || data['status'] == 'success')) {
-          final user = data['user'] as Map<String, dynamic>? ?? {
-            'id': DateTime.now().millisecondsSinceEpoch.toString(),
-            'mobile_number': phoneNumber,
-            'created_at': DateTime.now().toIso8601String(),
-            'verified': true,
-          };
-
-          final refreshToken = data['refreshToken'] as String? ??
-              data['refresh_token'] as String? ??
-              'refresh_${DateTime.now().millisecondsSinceEpoch}';
-
-          await _storeAuthData(user, refreshToken);
-
-          return AuthResponse(success: true, user: user, message: 'Authentication successful');
-        }
-        throw MobileAuthException(data['error'] ?? 'Invalid or expired OTP');
-      }
-      throw MobileAuthException('HTTP ${response.status}: Invalid OTP');
-    } catch (e) {
-      if (e is MobileAuthException) rethrow;
-      throw MobileAuthException('Network error: ${e.toString()}');
-    }
+    final user = res.data['user'] ?? {
+      'id': DateTime.now().millisecondsSinceEpoch.toString(),
+      'mobile_number': phone,
+      'created_at': DateTime.now().toIso8601String(),
+      'verified': true,
+    };
+    final refreshToken = res.data['refreshToken'] ?? res.data['refresh_token'] ?? 'refresh_${DateTime.now().millisecondsSinceEpoch}';
+    await _storeAuthData(user, refreshToken);
+    return AuthResponse(success: true, user: user, message: 'Authenticated');
   }
 
-  /// Refresh user session
-  Future<bool> refreshSession() async {
-    try {
-      if (_currentUser == null || _refreshToken == null) {
-        return false;
-      }
-
-      final response = await _supabaseClient.functions.invoke(
-        'refresh-session',
-        body: {
-          'user_id': _currentUser!['id'],
-          'refreshToken': _refreshToken,
-          'timestamp': DateTime.now().toIso8601String(),
-        },
-      );
-
-      if (response.status == 200) {
-        final data = response.data;
-        if (data is Map<String, dynamic> && (data['success'] == true || data['status'] == 'success')) {
-          return true;
-        } else {
-          await _clearAuthData();
-          return false;
-        }
-      } else {
-        await _clearAuthData();
-        return false;
-      }
-    } catch (_) {
-      await _clearAuthData();
-      return false;
-    }
-  }
-
+  /* ----------  UTILS  ---------- */
   bool get isAuthenticated => _currentUser != null && _refreshToken != null;
   Map<String, dynamic>? get currentUser => _currentUser;
   String? get userId => _currentUser?['id'];
   String? get userMobile => _currentUser?['mobile_number'];
 
-  Future<void> logout() async {
-    await _clearAuthData();
-  }
+  Future<void> logout() async => await _clearAuthData();
 
   static String formatMobileNumber(String mobile) {
     final clean = mobile.replaceAll(RegExp(r'[^\d]'), '');
-    if (clean.length == 10) {
-      return '${clean.substring(0, 5)}-${clean.substring(5)}';
-    }
-    return mobile;
+    return clean.length == 10 ? '${clean.substring(0, 5)}-${clean.substring(5)}' : mobile;
   }
 
   static String maskMobileNumber(String mobile) {
     final clean = mobile.replaceAll(RegExp(r'[^\d]'), '');
-    if (clean.length == 10) {
-      return '+91-${clean.substring(0, 2)}XXX-XX${clean.substring(8)}';
-    }
-    return '+91-XXXXX-XXXXX';
+    return clean.length == 10 ? '+91-${clean.substring(0, 2)}XXX-XX${clean.substring(8)}' : '+91-XXXXX-XXXXX';
   }
 
   static bool isValidMobileNumber(String mobile) {
@@ -325,36 +165,29 @@ class MobileAuthService {
 
   Future<bool> checkConnection() async {
     try {
-      final url = dotenv.env['SUPABASE_URL'];
-      final key = dotenv.env['SUPABASE_ANON_KEY'];
-      if (url == null || key == null) return false;
-      final client = _supabaseClient;
-      return client != null;
+      _supabaseClient; // will throw if singleton null
+      return true;
     } catch (_) {
       return false;
     }
   }
 }
 
-/// Response class for OTP operations
+/* ----------  MODELS  ---------- */
 class OtpResponse {
   final bool success;
   final String message;
   final String? otpForTesting;
-
   OtpResponse({required this.success, required this.message, this.otpForTesting});
 }
 
-/// Response class for authentication
 class AuthResponse {
   final bool success;
   final Map<String, dynamic>? user;
   final String message;
-
   AuthResponse({required this.success, this.user, required this.message});
 }
 
-/// Custom exception
 class MobileAuthException implements Exception {
   final String message;
   MobileAuthException(this.message);
