@@ -72,7 +72,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     try {
       await _authService.initialize();
       
-      // Check if user is already authenticated
       if (_authService.isAuthenticated) {
         final valid = await _authService.refreshSession();
         if (valid) {
@@ -82,7 +81,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       }
     } catch (e) {
       debugPrint('Auth service initialization error: $e');
-      // Don't show technical errors to user, service will still work
     }
   }
 
@@ -106,7 +104,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     setState(() {
       _isMobileValid =
           MobileAuthService.isValidMobileNumber(_mobileController.text);
-      if (_errorMessage != null) _errorMessage = null; // Clear errors on input
+      if (_errorMessage != null) _errorMessage = null;
     });
   }
 
@@ -168,7 +166,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   Future<void> _handleResendOTP() async {
     if (!_canResend || _resendAttempts >= 3) return;
 
-    // Clear OTP inputs
     for (var controller in _otpControllers) {
       controller.clear();
     }
@@ -221,7 +218,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
               : 'Verification failed. Please try again.';
         });
 
-        // Clear OTP inputs on error
         for (var controller in _otpControllers) {
           controller.clear();
         }
@@ -237,7 +233,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   }
 
   void _handleOTPChange(int index, String value) {
-    // Handle paste of full OTP
     if (value.length > 1) {
       if (value.length == 6 && index == 0) {
         for (int i = 0; i < 6; i++) {
@@ -251,21 +246,19 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
         Future.delayed(const Duration(milliseconds: 300), _handleVerifyOTP);
         return;
       } else {
-        value = value[0]; // Take only first character
+        value = value[0];
       }
     }
 
     setState(() {
       _otpControllers[index].text = value;
-      _errorMessage = null; // Clear error on input
+      _errorMessage = null;
     });
 
-    // Auto advance to next input
     if (value.isNotEmpty && index < 5) {
       _otpFocusNodes[index + 1].requestFocus();
     }
 
-    // Auto verify when all 6 digits entered
     final otp = _otpControllers.map((c) => c.text).join();
     if (otp.length == 6) {
       Future.delayed(const Duration(milliseconds: 300), _handleVerifyOTP);
@@ -327,7 +320,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F0F0), // Your background color
+      backgroundColor: const Color(0xFFF0F0F0),
       resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: SingleChildScrollView(
@@ -355,7 +348,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                         width: _currentStep == 1 ? 24 : 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF4285F4), // Your blue color
+                          color: const Color(0xFF4285F4),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -384,7 +377,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                           width: 100,
                           height: 100,
                           decoration: const BoxDecoration(
-                            color: Color(0xFF4285F4), // Your blue color
+                            color: Color(0xFF4285F4),
                             shape: BoxShape.circle,
                           ),
                           child: ClipRRect(
@@ -661,4 +654,155 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                 text: '+91 ${MobileAuthService.formatMobileNumber(_mobileController.text)}',
                 style: const TextStyle(
                   color: Color(0xFF4285F4),
-                  font
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 40),
+
+        // OTP input boxes
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: List.generate(6, (index) {
+            return SizedBox(
+              width: 48,
+              height: 56,
+              child: RawKeyboardListener(
+                focusNode: FocusNode(),
+                onKey: (event) => _handleOTPKeyPress(index, event),
+                child: TextField(
+                  controller: _otpControllers[index],
+                  focusNode: _otpFocusNodes[index],
+                  maxLength: 1,
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1E293B),
+                  ),
+                  decoration: InputDecoration(
+                    counterText: '',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 2),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: _otpControllers[index].text.isNotEmpty
+                            ? const Color(0xFF22C55E)
+                            : const Color(0xFFE2E8F0),
+                        width: 2,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF4285F4), width: 2),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  onChanged: (value) => _handleOTPChange(index, value),
+                ),
+              ),
+            );
+          }),
+        ),
+
+        if (_errorMessage != null) ...[
+          const SizedBox(height: 16),
+          Text(
+            _errorMessage!,
+            style: const TextStyle(
+              color: Colors.red,
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+
+        const SizedBox(height: 40),
+
+        // Verify button
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton(
+            onPressed: !_isLoading ? () {
+              final otp = _otpControllers.map((c) => c.text).join();
+              if (otp.length == 6) {
+                _handleVerifyOTP();
+              } else {
+                setState(() {
+                  _errorMessage = 'Please enter all 6 digits';
+                });
+              }
+            } : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: !_isLoading
+                  ? const Color(0xFF4285F4)
+                  : const Color(0xFFE2E8F0),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: _isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text(
+                    'Verify & Continue',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Resend section
+        const Text(
+          "Didn't receive code?",
+          style: TextStyle(
+            fontSize: 14,
+            color: Color(0xFF64748B),
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextButton(
+          onPressed: _canResend && _resendAttempts < 3 ? _handleResendOTP : null,
+          child: Text(
+            _canResend && _resendAttempts < 3
+                ? 'Resend OTP'
+                : _resendAttempts >= 3
+                    ? 'Max attempts reached'
+                    : 'Resend in ${_resendTimer}s',
+            style: TextStyle(
+              color: _canResend && _resendAttempts < 3
+                  ? const Color(0xFF4285F4)
+                  : const Color(0xFF94A3B8),
+              fontWeight: FontWeight.w600,
+              decoration: _canResend && _resendAttempts < 3
+                  ? TextDecoration.underline
+                  : null,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
