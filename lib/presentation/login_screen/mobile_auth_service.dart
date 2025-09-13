@@ -1,209 +1,363 @@
-// mobile_auth_service.dart
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:developer' as developer;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+import '../../core/app_export.dart';
 
 class MobileAuthService {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  static final MobileAuthService _instance = MobileAuthService._internal();
+  factory MobileAuthService() => _instance;
+  MobileAuthService._internal();
 
-  /// Request OTP for the given mobile number
-  /// Returns true if OTP was sent successfully, false otherwise
-  Future<bool> sendOtp(String mobileNumber) async {
+  // Storage keys
+  static const String _userKey = 'auth_user';
+  static const String _refreshTokenKey = 'refresh_token';
+  static const String _deviceFingerprintKey = 'device_fingerprint';
+
+  String? _cachedDeviceFingerprint;
+  Map<String, dynamic>? _currentUser;
+  String? _refreshToken;
+  bool _isInitialized = false;
+
+  /// Initialize the auth service (no Supabase init here, handled by AppInitializer)
+  Future<void> initialize() async {
     try {
-      // Validate mobile number before sending request
-      if (!isValidMobileNumber(mobileNumber)) {
-        developer.log("Invalid mobile number format: $mobileNumber");
-        return false;
-      }
+      debugPrint('Initializing MobileAuthService...');
 
-      final response = await _supabase.functions.invoke(
-        'smart-function',
-        body: {
-          'action': 'request-otp',
-          'mobile_number': mobileNumber,
-        },
-      );
+      _checkEnvironmentVariables();
+      await _loadStoredAuth();
+      await _generateDeviceFingerprint();
 
-      // Check if the function returned a success response
-      if (response.data != null && response.data is Map) {
-        return response.data['success'] == true;
-      }
+      // Only verify connection, don’t initialize Supabase
+      final connected = await checkConnection();
+      debugPrint('Supabase connection status: $connected');
 
-      return true; // Assume success if no error thrown
+      _isInitialized = true;
+      debugPrint('MobileAuthService initialized successfully');
     } catch (e) {
-      developer.log("Error sending OTP: $e");
-      return false;
-    }
-  }
-
-  /// Verify the OTP for the given mobile number
-  /// Returns true if OTP is valid and verification successful, false otherwise
-  Future<bool> verifyOtp(String mobileNumber, String otp) async {
-    try {
-      // Validate inputs
-      if (!isValidMobileNumber(mobileNumber) || !isValidOtp(otp)) {
-        developer.log("Invalid mobile number or OTP format");
-        return false;
-      }
-
-      final response = await _supabase.functions.invoke(
-        'smart-function',
-        body: {
-          'action': 'verify-otp',
-          'mobile_number': mobileNumber,
-          'otp': otp,
-        },
-      );
-
-      // Check response data
-      if (response.data != null && response.data is Map) {
-        final success = response.data['success'] == true;
-        
-        if (success) {
-          developer.log("OTP verification successful for: $mobileNumber");
-          
-          // Handle session or token if provided
-          if (response.data.containsKey('session') || 
-              response.data.containsKey('token')) {
-            // Store session/token if needed
-            await _handleAuthSuccess(response.data);
-          }
-        }
-        
-        return success;
-      }
-
-      return false;
-    } catch (e) {
-      developer.log("Error verifying OTP: $e");
-      return false;
-    }
-  }
-
-  /// Check if there's an active internet connection by testing Supabase connectivity
-  Future<bool> checkConnection() async {
-    try {
-      // Try to perform a simple query to test connection
-      await _supabase
-          .from('user_profiles')
-          .select('id')
-          .limit(1)
-          .timeout(const Duration(seconds: 10));
-      return true;
-    } catch (e) {
-      developer.log("Connection check failed: $e");
-      return false;
-    }
-  }
-
-  /// Check if the current session is valid
-  Future<bool> refreshSession() async {
-    try {
-      final session = _supabase.auth.currentSession;
-      
-      if (session == null) {
-        developer.log("No current session found");
-        return false;
-      }
-
-      // Check if session is expired
-      final now = DateTime.now();
-      final expiresAt = DateTime.fromMillisecondsSinceEpoch(
-        session.expiresAt! * 1000
-      );
-
-      if (now.isAfter(expiresAt)) {
-        developer.log("Session expired, attempting refresh");
-        
-        // Try to refresh the session
-        final response = await _supabase.auth.refreshSession();
-        return response.session != null;
-      }
-
-      return true;
-    } catch (e) {
-      developer.log("Error refreshing session: $e");
-      return false;
-    }
-  }
-
-  /// Get the current user session
-  Session? getCurrentSession() {
-    return _supabase.auth.currentSession;
-  }
-
-  /// Get the current user
-  User? getCurrentUser() {
-    return _supabase.auth.currentUser;
-  }
-
-  /// Sign out the current user
-  Future<void> signOut() async {
-    try {
-      await _supabase.auth.signOut();
-      developer.log("User signed out successfully");
-    } catch (e) {
-      developer.log("Error signing out: $e");
+      debugPrint('MobileAuthService initialization failed: $e');
       rethrow;
     }
   }
 
-  /// Handle successful authentication
-  Future<void> _handleAuthSuccess(Map<String, dynamic> data) async {
+  /// Check if environment variables are properly loaded
+  void _checkEnvironmentVariables() {
+    final supabaseUrl = dotenv.env['SUPABASE_URL'];
+    final supabaseKey = dotenv.env['SUPABASE_ANON_KEY'];
+
+    debugPrint('Environment variables check:');
+    debugPrint('SUPABASE_URL loaded: ${supabaseUrl != null}');
+    debugPrint('SUPABASE_ANON_KEY loaded: ${supabaseKey != null}');
+
+    if (supabaseUrl != null) {
+      debugPrint('URL format: ${supabaseUrl.contains('.supabase.co') ? 'Valid' : 'Invalid'}');
+    }
+
+    if (supabaseUrl == null || supabaseKey == null) {
+      throw MobileAuthException('Supabase credentials not found in .env file. Please check your configuration.');
+    }
+  }
+
+  /// Get Supabase client safely
+  SupabaseClient get _supabaseClient {
+    return SupabaseService().client;
+  }
+
+  /// Generate unique device fingerprint
+  Future<String> _generateDeviceFingerprint() async {
+    if (_cachedDeviceFingerprint != null) {
+      return _cachedDeviceFingerprint!;
+    }
+
     try {
-      // Store any additional user data or tokens as needed
-      if (data.containsKey('user_data')) {
-        // Handle user profile data
-        developer.log("Storing user data...");
+      final prefs = await SharedPreferences.getInstance();
+      String? stored = prefs.getString(_deviceFingerprintKey);
+
+      if (stored != null) {
+        _cachedDeviceFingerprint = stored;
+        debugPrint('Using stored device fingerprint');
+        return stored;
       }
-      
-      if (data.containsKey('preferences')) {
-        // Handle user preferences
-        developer.log("Storing user preferences...");
+
+      DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+      String fingerprint = '';
+
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+        fingerprint = '${androidInfo.model}_${androidInfo.id}_${androidInfo.device}';
+      } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+        IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+        fingerprint = '${iosInfo.model}_${iosInfo.identifierForVendor}';
+      } else {
+        fingerprint = 'web_${DateTime.now().millisecondsSinceEpoch}';
+      }
+
+      var bytes = utf8.encode(fingerprint + DateTime.now().toIso8601String());
+      var digest = sha256.convert(bytes);
+      final hashedFingerprint = digest.toString();
+
+      await prefs.setString(_deviceFingerprintKey, hashedFingerprint);
+      _cachedDeviceFingerprint = hashedFingerprint;
+
+      debugPrint('Generated new device fingerprint');
+      return hashedFingerprint;
+    } catch (e) {
+      debugPrint('Device fingerprint error: $e');
+      final fallback = 'fallback_${DateTime.now().millisecondsSinceEpoch}';
+      _cachedDeviceFingerprint = fallback;
+      return fallback;
+    }
+  }
+
+  /// Load stored authentication data
+  Future<void> _loadStoredAuth() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      final userJson = prefs.getString(_userKey);
+      if (userJson != null) {
+        _currentUser = jsonDecode(userJson);
+        debugPrint('Loaded stored user data');
+      }
+
+      _refreshToken = prefs.getString(_refreshTokenKey);
+      if (_refreshToken != null) {
+        debugPrint('Loaded stored refresh token');
       }
     } catch (e) {
-      developer.log("Error handling auth success: $e");
+      debugPrint('Error loading stored auth: $e');
     }
   }
 
-  /// Validate mobile number format
-  static bool isValidMobileNumber(String mobile) {
-    if (mobile.isEmpty) return false;
-    
-    // Remove any spaces, dashes, or special characters
-    final cleanMobile = mobile.replaceAll(RegExp(r'[^\d]'), '');
-    
-    // Check for Indian mobile number format (10 digits starting with 6-9)
-    final RegExp indianMobileRegex = RegExp(r'^[6-9]\d{9}$');
-    return indianMobileRegex.hasMatch(cleanMobile);
+  /// Store authentication data
+  Future<void> _storeAuthData(Map<String, dynamic> user, String refreshToken) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      await prefs.setString(_userKey, jsonEncode(user));
+      await prefs.setString(_refreshTokenKey, refreshToken);
+
+      _currentUser = user;
+      _refreshToken = refreshToken;
+
+      debugPrint('Stored authentication data for user: ${user['id']}');
+    } catch (e) {
+      debugPrint('Error storing auth data: $e');
+      throw MobileAuthException('Failed to store authentication data');
+    }
   }
 
-  /// Validate OTP format
-  static bool isValidOtp(String otp) {
-    if (otp.isEmpty) return false;
-    
-    // Remove any spaces
-    final cleanOtp = otp.replaceAll(' ', '');
-    
-    // Check if it's 4-6 digits
-    final RegExp otpRegex = RegExp(r'^\d{4,6}$');
-    return otpRegex.hasMatch(cleanOtp);
+  /// Clear stored authentication data
+  Future<void> _clearAuthData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      await prefs.remove(_userKey);
+      await prefs.remove(_refreshTokenKey);
+
+      _currentUser = null;
+      _refreshToken = null;
+
+      debugPrint('Cleared authentication data');
+    } catch (e) {
+      debugPrint('Error clearing auth data: $e');
+    }
   }
 
-  /// Format mobile number for display
+  /// Send OTP to mobile number
+  Future<OtpResponse> sendOtp(String mobileNumber) async {
+    if (!_isInitialized) {
+      throw MobileAuthException('Service not initialized');
+    }
+
+    try {
+      final cleanMobile = mobileNumber.replaceAll(RegExp(r'[^\d]'), '');
+      if (cleanMobile.length != 10 || cleanMobile[0] == '0') {
+        throw MobileAuthException('Invalid mobile number format');
+      }
+
+      final phoneNumber = '+91$cleanMobile';
+      debugPrint('=== SENDING OTP ===');
+      debugPrint('Phone number: $phoneNumber');
+
+      final response = await _supabaseClient.functions.invoke(
+        'request-otp',
+        body: {
+          'mobile_number': phoneNumber,
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+      );
+
+      if (response.status == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          if (data['success'] == true || data['status'] == 'success') {
+            return OtpResponse(
+              success: true,
+              message: data['message'] ?? 'OTP sent successfully',
+              otpForTesting: data['otp']?.toString(),
+            );
+          }
+          throw MobileAuthException(data['error'] ?? 'Failed to send OTP');
+        }
+      }
+      throw MobileAuthException('HTTP ${response.status}: Failed to send OTP');
+    } catch (e) {
+      if (e is MobileAuthException) rethrow;
+      throw MobileAuthException('Network error: ${e.toString()}');
+    }
+  }
+
+  /// Verify OTP and authenticate user
+  Future<AuthResponse> verifyOtp(String mobileNumber, String otp) async {
+    if (!_isInitialized) {
+      throw MobileAuthException('Service not initialized');
+    }
+
+    try {
+      final cleanMobile = mobileNumber.replaceAll(RegExp(r'[^\d]'), '');
+      final phoneNumber = '+91$cleanMobile';
+      final deviceFingerprint = await _generateDeviceFingerprint();
+
+      final response = await _supabaseClient.functions.invoke(
+        'verify-otp',
+        body: {
+          'mobile_number': phoneNumber,
+          'otp': otp,
+          'device_fingerprint': deviceFingerprint,
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+      );
+
+      if (response.status == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic> && (data['success'] == true || data['status'] == 'success')) {
+          final user = data['user'] as Map<String, dynamic>? ?? {
+            'id': DateTime.now().millisecondsSinceEpoch.toString(),
+            'mobile_number': phoneNumber,
+            'created_at': DateTime.now().toIso8601String(),
+            'verified': true,
+          };
+
+          final refreshToken = data['refreshToken'] as String? ??
+              data['refresh_token'] as String? ??
+              'refresh_${DateTime.now().millisecondsSinceEpoch}';
+
+          await _storeAuthData(user, refreshToken);
+
+          return AuthResponse(success: true, user: user, message: 'Authentication successful');
+        }
+        throw MobileAuthException(data['error'] ?? 'Invalid or expired OTP');
+      }
+      throw MobileAuthException('HTTP ${response.status}: Invalid OTP');
+    } catch (e) {
+      if (e is MobileAuthException) rethrow;
+      throw MobileAuthException('Network error: ${e.toString()}');
+    }
+  }
+
+  /// Refresh user session
+  Future<bool> refreshSession() async {
+    try {
+      if (_currentUser == null || _refreshToken == null) {
+        return false;
+      }
+
+      final response = await _supabaseClient.functions.invoke(
+        'refresh-session',
+        body: {
+          'user_id': _currentUser!['id'],
+          'refreshToken': _refreshToken,
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+      );
+
+      if (response.status == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic> && (data['success'] == true || data['status'] == 'success')) {
+          return true;
+        } else {
+          await _clearAuthData();
+          return false;
+        }
+      } else {
+        await _clearAuthData();
+        return false;
+      }
+    } catch (_) {
+      await _clearAuthData();
+      return false;
+    }
+  }
+
+  bool get isAuthenticated => _currentUser != null && _refreshToken != null;
+  Map<String, dynamic>? get currentUser => _currentUser;
+  String? get userId => _currentUser?['id'];
+  String? get userMobile => _currentUser?['mobile_number'];
+
+  Future<void> logout() async {
+    await _clearAuthData();
+  }
+
   static String formatMobileNumber(String mobile) {
-    final cleanMobile = mobile.replaceAll(RegExp(r'[^\d]'), '');
-    if (cleanMobile.length == 10) {
-      return '+91 ${cleanMobile.substring(0, 5)} ${cleanMobile.substring(5)}';
+    final clean = mobile.replaceAll(RegExp(r'[^\d]'), '');
+    if (clean.length == 10) {
+      return '${clean.substring(0, 5)}-${clean.substring(5)}';
     }
     return mobile;
   }
 
-  /// Get masked mobile number for display
-  static String getMaskedMobileNumber(String mobile) {
-    final cleanMobile = mobile.replaceAll(RegExp(r'[^\d]'), '');
-    if (cleanMobile.length == 10) {
-      return '+91 ${cleanMobile.substring(0, 2)}****${cleanMobile.substring(6)}';
+  static String maskMobileNumber(String mobile) {
+    final clean = mobile.replaceAll(RegExp(r'[^\d]'), '');
+    if (clean.length == 10) {
+      return '+91-${clean.substring(0, 2)}XXX-XX${clean.substring(8)}';
     }
-    return mobile;
+    return '+91-XXXXX-XXXXX';
   }
+
+  static bool isValidMobileNumber(String mobile) {
+    final clean = mobile.replaceAll(RegExp(r'[^\d]'), '');
+    return clean.length == 10 && clean[0] != '0';
+  }
+
+  Future<bool> checkConnection() async {
+    try {
+      final url = dotenv.env['SUPABASE_URL'];
+      final key = dotenv.env['SUPABASE_ANON_KEY'];
+      if (url == null || key == null) return false;
+      final client = _supabaseClient;
+      return client != null;
+    } catch (_) {
+      return false;
+    }
+  }
+}
+
+/// Response class for OTP operations
+class OtpResponse {
+  final bool success;
+  final String message;
+  final String? otpForTesting;
+
+  OtpResponse({required this.success, required this.message, this.otpForTesting});
+}
+
+/// Response class for authentication
+class AuthResponse {
+  final bool success;
+  final Map<String, dynamic>? user;
+  final String message;
+
+  AuthResponse({required this.success, this.user, required this.message});
+}
+
+/// Custom exception
+class MobileAuthException implements Exception {
+  final String message;
+  MobileAuthException(this.message);
+  @override
+  String toString() => 'MobileAuthException: $message';
 }
