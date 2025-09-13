@@ -124,7 +124,7 @@ class MobileAuthService {
       throw MobileAuthException(res.data['error'] ?? 'Invalid OTP');
     }
     final user = res.data['user'] ?? {
-      'id': phone.replace('+', ''),
+      'id': phone.replaceAll('+', ''),
       'mobile_number': phone,
       'created_at': DateTime.now().toIso8601String(),
       'verified': true,
