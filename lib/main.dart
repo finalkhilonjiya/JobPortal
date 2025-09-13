@@ -5,7 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import 'core/app_export.dart';
-import 'core/navigation_service.dart';   // ← kept
+import 'core/navigation_service.dart';
+import 'presentation/mobile_login_screen/mobile_auth_service.dart';
 
 /* ----------  CONFIG  ---------- */
 class AppConfig {
@@ -33,11 +34,24 @@ Future<void> main() async {
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   /* 2.  Env + Supabase (no delay) */
-  try { await dotenv.load(fileName: '.env'); } catch (_) {}
+  try { 
+    await dotenv.load(fileName: '.env'); 
+    debugPrint('Environment loaded successfully');
+  } catch (e) {
+    debugPrint('Failed to load .env file: $e');
+  }
+  
   if (AppConfig.hasSupabase) {
     try {
-      await Supabase.initialize(url: AppConfig.supabaseUrl, anonKey: AppConfig.supabaseAnonKey);
-    } catch (_) {/* offline handled below */}
+      await Supabase.initialize(
+        url: AppConfig.supabaseUrl, 
+        anonKey: AppConfig.supabaseAnonKey,
+      );
+      debugPrint('Supabase initialized successfully');
+    } catch (e) {
+      debugPrint('Supabase initialization failed: $e');
+      /* offline handled below */
+    }
   }
 
   /* 3.  Run app immediately */
@@ -102,16 +116,45 @@ class _AppInitializerState extends State<AppInitializer> {
   }
 
   Future<void> _bootstrap() async {
-    final auth = AuthService();
-    if (Supabase.instance.client == null) {
-      notifier.setState(AppState.offline);
-      NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
-      return;
-    }
-    if (auth.isAuthenticated()) {
-      notifier.setState(AppState.authenticated);
-      NavigationService.pushReplacementNamed(AppRoutes.homeMarketplaceFeed);
-    } else {
+    try {
+      debugPrint('Starting app bootstrap...');
+      
+      // Check if Supabase is available
+      if (Supabase.instance.client == null) {
+        debugPrint('Supabase not available, going offline');
+        notifier.setState(AppState.offline);
+        NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
+        return;
+      }
+
+      // Initialize authentication service
+      final auth = MobileAuthService();
+      await auth.initialize();
+      debugPrint('MobileAuthService initialized');
+
+      // Check if user is already authenticated
+      if (auth.isAuthenticated) {
+        debugPrint('User has stored session, validating...');
+        
+        // Validate stored session
+        final sessionValid = await auth.refreshSession();
+        if (sessionValid) {
+          debugPrint('Session valid, navigating to home');
+          notifier.setState(AppState.authenticated);
+          NavigationService.pushReplacementNamed(AppRoutes.homeMarketplaceFeed);
+        } else {
+          debugPrint('Session invalid, going to login');
+          notifier.setState(AppState.unauthenticated);
+          NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
+        }
+      } else {
+        debugPrint('No stored session, going to login');
+        notifier.setState(AppState.unauthenticated);
+        NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
+      }
+      
+    } catch (e) {
+      debugPrint('Bootstrap error: $e');
       notifier.setState(AppState.unauthenticated);
       NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
     }
@@ -121,17 +164,77 @@ class _AppInitializerState extends State<AppInitializer> {
   Widget build(BuildContext context) {
     return Consumer<AppStateNotifier>(
       builder: (_, n, __) => Scaffold(
+        backgroundColor: const Color(0xFFF0F0F0), // Match your login screen background
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircularProgressIndicator(strokeWidth: 3),
+              // Logo while loading
+              Container(
+                width: 80,
+                height: 80,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF4285F4), // Your blue color
+                  shape: BoxShape.circle,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(40),
+                  child: Image.asset(
+                    'assets/images/company_logo.png',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => const Center(
+                      child: Text(
+                        'K',
+                        style: TextStyle(
+                          fontSize: 36,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Khilonjiya.com',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              const SizedBox(height: 40),
+              const CircularProgressIndicator(
+                strokeWidth: 3,
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4285F4)),
+              ),
               const SizedBox(height: 16),
-              Text(n.state == AppState.initializing ? 'Loading…' : 'Redirecting…'),
+              Text(
+                _getLoadingText(n.state),
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _getLoadingText(AppState state) {
+    switch (state) {
+      case AppState.initializing:
+        return 'Initializing...';
+      case AppState.offline:
+        return 'Connecting...';
+      case AppState.authenticated:
+        return 'Welcome back!';
+      case AppState.unauthenticated:
+        return 'Loading...';
+    }
   }
 }
