@@ -1,10 +1,9 @@
-import 'core/navigation_service.dart';   // ← ADD THIS LINE
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
-import 'core/app_export.dart';   // your existing helpers
+import 'core/app_export.dart';
 
 /* ----------  CONFIG  ---------- */
 class AppConfig {
@@ -25,22 +24,26 @@ class AppStateNotifier with ChangeNotifier {
   }
 }
 
+/* ----------  NAV HELPER  ---------- */
+class NavigationService {
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static Future<void> pushReplacementNamed(String route, {Object? args}) async {
+    final ctx = navigatorKey.currentContext;
+    if (ctx != null) Navigator.pushReplacementNamed(ctx, route, arguments: args);
+  }
+}
+
 /* ----------  MAIN  ---------- */
 Future<void> main() async {
-  /* 1.  Flutter engine ready */
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-
-  /* 2.  Load env immediately */
   try { await dotenv.load(fileName: '.env'); } catch (_) {}
-
-  /* 3.  Init Supabase NOW – before runApp */
-  await _initSupabaseGlobally();
-
-  /* 4.  Run UI – first frame appears instantly */
+  if (AppConfig.hasSupabase) {
+    try {
+      await Supabase.initialize(url: AppConfig.supabaseUrl, anonKey: AppConfig.supabaseAnonKey);
+    } catch (_) {/* offline handled below */}
+  }
   runApp(const MyApp());
-
-  /* 5.  System chrome styling (non-blocking) */
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -51,23 +54,8 @@ Future<void> main() async {
   );
 }
 
-/* ----------  SUPABASE SINGLE INIT  ---------- */
-Future<void> _initSupabaseGlobally() async {
-  if (!AppConfig.hasSupabase) return; // offline build
-  try {
-    await Supabase.initialize(
-      url: AppConfig.supabaseUrl,
-      anonKey: AppConfig.supabaseAnonKey,
-    );
-  } catch (_) {
-    /* swallow – offline mode will be set later */
-  }
-}
-
-/* ----------  APP WIDGET  ---------- */
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
@@ -92,7 +80,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/* ----------  APP START WIDGET  ---------- */
 class AppInitializer extends StatefulWidget {
   const AppInitializer({Key? key}) : super(key: key);
   @override
@@ -106,7 +93,6 @@ class _AppInitializerState extends State<AppInitializer> {
   void initState() {
     super.initState();
     notifier = context.read<AppStateNotifier>();
-    /* start auth check immediately after first frame */
     WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrap());
   }
 
