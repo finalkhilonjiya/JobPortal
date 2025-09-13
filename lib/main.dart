@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:sizer/sizer.dart';
 import 'core/app_export.dart';
+import 'core/navigation_service.dart';   // ← kept
 
 /* ----------  CONFIG  ---------- */
 class AppConfig {
@@ -24,26 +26,24 @@ class AppStateNotifier with ChangeNotifier {
   }
 }
 
-/* ----------  NAV HELPER  ---------- */
-class NavigationService {
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-  static Future<void> pushReplacementNamed(String route, {Object? args}) async {
-    final ctx = navigatorKey.currentContext;
-    if (ctx != null) Navigator.pushReplacementNamed(ctx, route, arguments: args);
-  }
-}
-
 /* ----------  MAIN  ---------- */
 Future<void> main() async {
+  /* 1.  Engine ready */
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
+  /* 2.  Env + Supabase (no delay) */
   try { await dotenv.load(fileName: '.env'); } catch (_) {}
   if (AppConfig.hasSupabase) {
     try {
       await Supabase.initialize(url: AppConfig.supabaseUrl, anonKey: AppConfig.supabaseAnonKey);
     } catch (_) {/* offline handled below */}
   }
+
+  /* 3.  Run app immediately */
   runApp(const MyApp());
+
+  /* 4.  Chrome styling (non-blocking) */
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -54,6 +54,7 @@ Future<void> main() async {
   );
 }
 
+/* ----------  APP WIDGET  ---------- */
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
   @override
@@ -61,18 +62,20 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => AppStateNotifier(),
       child: Consumer<AppStateNotifier>(
-        builder: (_, notifier, __) => MaterialApp(
-          title: 'khilonjiya.com',
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: ThemeMode.system,
-          navigatorKey: NavigationService.navigatorKey,
-          debugShowCheckedModeBanner: false,
-          initialRoute: AppRoutes.initial,
-          routes: AppRoutes.routes,
-          builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.0)),
-            child: child!,
+        builder: (_, notifier, __) => Sizer(
+          builder: (_, __, ___) => MaterialApp(
+            title: 'khilonjiya.com',
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: ThemeMode.system,
+            navigatorKey: NavigationService.navigatorKey,
+            debugShowCheckedModeBanner: false,
+            initialRoute: AppRoutes.initial,
+            routes: AppRoutes.routes,
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.0)),
+              child: child!,
+            ),
           ),
         ),
       ),
@@ -80,6 +83,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
+/* ----------  APP START  ---------- */
 class AppInitializer extends StatefulWidget {
   const AppInitializer({Key? key}) : super(key: key);
   @override
@@ -93,6 +97,7 @@ class _AppInitializerState extends State<AppInitializer> {
   void initState() {
     super.initState();
     notifier = context.read<AppStateNotifier>();
+    /* start immediately after first frame */
     WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrap());
   }
 
