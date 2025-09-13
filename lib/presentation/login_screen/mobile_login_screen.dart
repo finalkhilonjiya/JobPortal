@@ -143,6 +143,13 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     });
   }
 
+  Future<void> _handleResendOTP() async {
+    if (!_canResend || _resendAttempts >= 3) return;
+    for (var controller in _otpControllers) controller.clear();
+    setState(() => _errorMessage = null);
+    await _handleSendOTP();
+  }
+
   Future<void> _handleVerifyOTP() async {
     final otp = _otpControllers.map((c) => c.text).join();
     if (otp.length != 6) {
@@ -235,7 +242,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     );
   }
 
-  /* ----------  BUILD  ---------- */
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -258,7 +264,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
               child: Column(
                 children: [
                   const SizedBox(height: 40),
-                  /*  connection banner  */
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 24),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -298,7 +303,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                       ],
                     ),
                   ),
-                  /*  error box  */
                   if (_authError.isNotEmpty)
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
