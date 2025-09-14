@@ -23,6 +23,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   bool _isLoading = false;
   bool _isMobileValid = false;
   String? _errorMessage;
+  String _debugInfo = '';
+  bool _showDebugInfo = false;
   int _currentStep = 1;
   int _resendTimer = 0;
   bool _canResend = false;
@@ -68,19 +70,31 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     _animationController.forward();
   }
 
+  void _addDebugInfo(String info) {
+    setState(() {
+      _debugInfo += '${DateTime.now().toString().substring(11, 19)}: $info\n';
+    });
+  }
+
   Future<void> _initializeAuthService() async {
     try {
+      _addDebugInfo('Starting auth service initialization...');
       await _authService.initialize();
+      _addDebugInfo('Auth service initialized successfully');
       
       if (_authService.isAuthenticated) {
+        _addDebugInfo('Found stored session, checking validity...');
         final valid = await _authService.refreshSession();
         if (valid) {
+          _addDebugInfo('Session valid, navigating to home');
           _navigateToHome();
           return;
+        } else {
+          _addDebugInfo('Session invalid, staying on login');
         }
       }
     } catch (e) {
-      debugPrint('Auth service initialization error: $e');
+      _addDebugInfo('Auth service init error: $e');
     }
   }
 
@@ -117,8 +131,9 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     });
 
     try {
-      debugPrint('Sending OTP to: ${_mobileController.text}');
+      _addDebugInfo('Sending OTP to: ${_mobileController.text}');
       await _authService.sendOtp(_mobileController.text);
+      _addDebugInfo('OTP sent successfully');
 
       setState(() {
         _currentStep = 2;
@@ -133,6 +148,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       HapticFeedback.lightImpact();
       _showSuccessMessage('OTP sent! Use 123456 to continue.');
     } catch (e) {
+      _addDebugInfo('Send OTP error: $e');
       setState(() {
         _isLoading = false;
         _errorMessage = e is MobileAuthException 
@@ -194,8 +210,12 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     });
 
     try {
-      debugPrint('Verifying OTP: $otp');
+      _addDebugInfo('Starting OTP verification...');
+      _addDebugInfo('OTP entered: $otp');
+      _addDebugInfo('Phone: +91${_mobileController.text.replaceAll(RegExp(r'[^\d]'), '')}');
+      
       final response = await _authService.verifyOtp(_mobileController.text, otp);
+      _addDebugInfo('Verification response received successfully');
 
       if (mounted) {
         setState(() {
@@ -209,7 +229,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
         _navigateToHome();
       }
     } catch (e) {
-      debugPrint('OTP Verification Error: $e');
+      _addDebugInfo('OTP verification error: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -297,150 +317,193 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     }
   }
 
-  void _showErrorMessage(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.error, color: Colors.white, size: 20),
-              const SizedBox(width: 12),
-              Expanded(child: Text(message, style: const TextStyle(color: Colors.white))),
-            ],
-          ),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 4),
-          margin: const EdgeInsets.all(16),
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F0F0),
       resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height -
-                  MediaQuery.of(context).padding.top -
-                  MediaQuery.of(context).padding.bottom,
-            ),
-            child: IntrinsicHeight(
-              child: Column(
+        child: Column(
+          children: [
+            // Debug toggle button
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const SizedBox(height: 40),
-
-                  // Step indicator
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: _currentStep == 1 ? 24 : 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF4285F4),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        width: _currentStep == 2 ? 24 : 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: _currentStep == 2 
-                              ? const Color(0xFF4285F4) 
-                              : const Color(0xFFE2E8F0),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                    ],
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _showDebugInfo = !_showDebugInfo;
+                      });
+                    },
+                    child: Text(
+                      _showDebugInfo ? 'Hide Debug' : 'Show Debug',
+                      style: const TextStyle(color: Color(0xFF4285F4)),
+                    ),
                   ),
+                  if (_showDebugInfo)
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _debugInfo = '';
+                        });
+                      },
+                      child: const Text(
+                        'Clear',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                ],
+              ),
+            ),
 
-                  const SizedBox(height: 40),
+            // Debug info panel
+            if (_showDebugInfo)
+              Container(
+                height: 200,
+                margin: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.black87,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: SingleChildScrollView(
+                  child: Text(
+                    _debugInfo.isEmpty ? 'Debug info will appear here...' : _debugInfo,
+                    style: const TextStyle(
+                      color: Colors.green,
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ),
+              ),
 
-                  // Logo section
-                  FadeTransition(
-                    opacity: _fadeAnimation,
+            // Main content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  left: 24,
+                  right: 24,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                ),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: MediaQuery.of(context).size.height -
+                        MediaQuery.of(context).padding.top -
+                        MediaQuery.of(context).padding.bottom -
+                        (_showDebugInfo ? 250 : 50),
+                  ),
+                  child: IntrinsicHeight(
                     child: Column(
                       children: [
-                        Container(
-                          width: 100,
-                          height: 100,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF4285F4),
-                            shape: BoxShape.circle,
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(50),
-                            child: Image.asset(
-                              'assets/images/company_logo.png',
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => const Center(
-                                child: Text(
-                                  'K',
-                                  style: TextStyle(
-                                    fontSize: 42,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                        const SizedBox(height: 20),
+
+                        // Step indicator
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: _currentStep == 1 ? 24 : 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF4285F4),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              width: _currentStep == 2 ? 24 : 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: _currentStep == 2 
+                                    ? const Color(0xFF4285F4) 
+                                    : const Color(0xFFE2E8F0),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 30),
+
+                        // Logo section
+                        FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 80,
+                                height: 80,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF4285F4),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(40),
+                                  child: Image.asset(
+                                    'assets/images/company_logo.png',
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => const Center(
+                                      child: Text(
+                                        'K',
+                                        style: TextStyle(
+                                          fontSize: 36,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Khilonjiya.com',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 40),
+
+                        // Main content
+                        Expanded(
+                          child: SlideTransition(
+                            position: _slideAnimation,
+                            child: FadeTransition(
+                              opacity: _fadeAnimation,
+                              child: _currentStep == 1 ? _buildMobileStep() : _buildOTPStep(),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        const Text(
-                          'Khilonjiya.com',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF1E293B),
+
+                        // Footer
+                        const Padding(
+                          padding: EdgeInsets.all(20),
+                          child: Text(
+                            'Khilonjiya India Private Limited 2025',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF64748B),
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ],
                     ),
                   ),
-
-                  const SizedBox(height: 60),
-
-                  // Main content
-                  Expanded(
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: _currentStep == 1 ? _buildMobileStep() : _buildOTPStep(),
-                      ),
-                    ),
-                  ),
-
-                  // Footer
-                  const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text(
-                      'Khilonjiya India Private Limited 2025',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
