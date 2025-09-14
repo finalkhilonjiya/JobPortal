@@ -8,7 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/app_export.dart';
 
-// SupabaseService class that was missing
+// SupabaseService class
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
   factory SupabaseService() => _instance;
@@ -42,35 +42,16 @@ class MobileAuthService {
   /// Initialize the auth service
   Future<void> initialize() async {
     try {
-      debugPrint('Initializing MobileAuthService...');
-
-      _checkEnvironmentVariables();
-      await _loadStoredAuth();
-      await _generateDeviceFingerprint();
-
-      // Check connection
-      final connected = await checkConnection();
-      debugPrint('Supabase connection status: $connected');
-
-      _isInitialized = true;
-      debugPrint('MobileAuthService initialized successfully');
-    } catch (e) {
-      debugPrint('MobileAuthService initialization failed: $e');
-      rethrow;
-    }
-  }
-
-  /// Check if environment variables are properly loaded
-  void _checkEnvironmentVariables() {
-    final supabaseUrl = dotenv.env['SUPABASE_URL'];
-    final supabaseKey = dotenv.env['SUPABASE_ANON_KEY'];
-
-    debugPrint('Environment variables check:');
-    debugPrint('SUPABASE_URL loaded: ${supabaseUrl != null}');
-    debugPrint('SUPABASE_ANON_KEY loaded: ${supabaseKey != null}');
+      debugPrint('DEBUG: SUPABASE_ANON_KEY length: ${supabaseKey?.length ?? 0}');
 
     if (supabaseUrl == null || supabaseKey == null) {
       throw MobileAuthException('Supabase credentials not found in .env file.');
+    }
+
+    if (supabaseUrl.contains('.supabase.co')) {
+      debugPrint('DEBUG: URL format looks valid');
+    } else {
+      debugPrint('DEBUG: WARNING - URL format may be invalid');
     }
   }
 
@@ -91,7 +72,7 @@ class MobileAuthService {
 
       if (stored != null) {
         _cachedDeviceFingerprint = stored;
-        debugPrint('Using stored device fingerprint');
+        debugPrint('DEBUG: Using stored device fingerprint: ${stored.substring(0, 10)}...');
         return stored;
       }
 
@@ -101,11 +82,14 @@ class MobileAuthService {
       if (defaultTargetPlatform == TargetPlatform.android) {
         AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
         fingerprint = '${androidInfo.model}_${androidInfo.id}_${androidInfo.device}';
+        debugPrint('DEBUG: Generated Android fingerprint base: $fingerprint');
       } else if (defaultTargetPlatform == TargetPlatform.iOS) {
         IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
         fingerprint = '${iosInfo.model}_${iosInfo.identifierForVendor}';
+        debugPrint('DEBUG: Generated iOS fingerprint base: $fingerprint');
       } else {
         fingerprint = 'web_${DateTime.now().millisecondsSinceEpoch}';
+        debugPrint('DEBUG: Generated web fingerprint base: $fingerprint');
       }
 
       var bytes = utf8.encode(fingerprint + DateTime.now().toIso8601String());
@@ -115,10 +99,10 @@ class MobileAuthService {
       await prefs.setString(_deviceFingerprintKey, hashedFingerprint);
       _cachedDeviceFingerprint = hashedFingerprint;
 
-      debugPrint('Generated new device fingerprint');
+      debugPrint('DEBUG: Generated new device fingerprint: ${hashedFingerprint.substring(0, 10)}...');
       return hashedFingerprint;
     } catch (e) {
-      debugPrint('Device fingerprint error: $e');
+      debugPrint('DEBUG: Device fingerprint error: $e');
       final fallback = 'fallback_${DateTime.now().millisecondsSinceEpoch}';
       _cachedDeviceFingerprint = fallback;
       return fallback;
@@ -133,15 +117,15 @@ class MobileAuthService {
       final userJson = prefs.getString(_userKey);
       if (userJson != null) {
         _currentUser = jsonDecode(userJson);
-        debugPrint('Loaded stored user data');
+        debugPrint('DEBUG: Loaded stored user data for: ${_currentUser!['id']}');
       }
 
       _refreshToken = prefs.getString(_refreshTokenKey);
       if (_refreshToken != null) {
-        debugPrint('Loaded stored refresh token');
+        debugPrint('DEBUG: Loaded stored refresh token: ${_refreshToken!.substring(0, 10)}...');
       }
     } catch (e) {
-      debugPrint('Error loading stored auth: $e');
+      debugPrint('DEBUG: Error loading stored auth: $e');
     }
   }
 
@@ -156,10 +140,10 @@ class MobileAuthService {
       _currentUser = user;
       _refreshToken = refreshToken;
 
-      debugPrint('Stored authentication data for user: ${user['id']}');
+      debugPrint('DEBUG: Stored authentication data for user: ${user['id']}');
     } catch (e) {
-      debugPrint('Error storing auth data: $e');
-      throw MobileAuthException('Failed to store authentication data');
+      debugPrint('DEBUG: Error storing auth data: $e');
+      throw MobileAuthException('Failed to store authentication data: $e');
     }
   }
 
@@ -174,9 +158,9 @@ class MobileAuthService {
       _currentUser = null;
       _refreshToken = null;
 
-      debugPrint('Cleared authentication data');
+      debugPrint('DEBUG: Cleared authentication data');
     } catch (e) {
-      debugPrint('Error clearing auth data: $e');
+      debugPrint('DEBUG: Error clearing auth data: $e');
     }
   }
 
@@ -193,21 +177,26 @@ class MobileAuthService {
       }
 
       final phoneNumber = '+91$cleanMobile';
-      debugPrint('=== SENDING OTP ===');
-      debugPrint('Phone number: $phoneNumber');
+      debugPrint('DEBUG: === SENDING OTP ===');
+      debugPrint('DEBUG: Phone number: $phoneNumber');
+      debugPrint('DEBUG: Supabase client available: ${_supabaseClient != null}');
+
+      final requestBody = {
+        'action': 'request-otp',
+        'mobile_number': phoneNumber,
+        'device_fingerprint': await _generateDeviceFingerprint(),
+      };
+      debugPrint('DEBUG: Request body: $requestBody');
 
       // Call your edge function with action parameter
       final response = await _supabaseClient.functions.invoke(
         'smart-function',
-        body: {
-          'action': 'request-otp',
-          'mobile_number': phoneNumber,
-          'device_fingerprint': await _generateDeviceFingerprint(),
-        },
+        body: requestBody,
       );
 
-      debugPrint('OTP Response Status: ${response.status}');
-      debugPrint('OTP Response Data: ${response.data}');
+      debugPrint('DEBUG: OTP Response Status: ${response.status}');
+      debugPrint('DEBUG: OTP Response Data: ${response.data}');
+      debugPrint('DEBUG: OTP Response Data Type: ${response.data.runtimeType}');
 
       if (response.status == 200) {
         final data = response.data;
@@ -215,16 +204,21 @@ class MobileAuthService {
           return OtpResponse(
             success: true,
             message: 'OTP sent successfully! Use 123456 for testing.',
-            otpForTesting: '123456', // Fixed OTP for development
+            otpForTesting: '123456',
           );
+        } else {
+          debugPrint('DEBUG: Unexpected success response format: $data');
         }
+      } else {
+        debugPrint('DEBUG: HTTP error - Status: ${response.status}');
       }
       
-      throw MobileAuthException('Failed to send OTP. Please try again.');
+      throw MobileAuthException('Failed to send OTP. HTTP ${response.status}: ${response.data}');
     } catch (e) {
-      debugPrint('Send OTP Error: $e');
+      debugPrint('DEBUG: Send OTP Error: $e');
+      debugPrint('DEBUG: Error type: ${e.runtimeType}');
       if (e is MobileAuthException) rethrow;
-      throw MobileAuthException('Network error. Please check your connection.');
+      throw MobileAuthException('Network error during OTP send: ${e.toString()}');
     }
   }
 
@@ -239,28 +233,56 @@ class MobileAuthService {
       final phoneNumber = '+91$cleanMobile';
       final deviceFingerprint = await _generateDeviceFingerprint();
 
-      debugPrint('=== VERIFYING OTP ===');
-      debugPrint('Phone: $phoneNumber, OTP: $otp');
+      debugPrint('DEBUG: === VERIFYING OTP ===');
+      debugPrint('DEBUG: Environment check:');
+      debugPrint('DEBUG: - SUPABASE_URL: ${dotenv.env['SUPABASE_URL']}');
+      debugPrint('DEBUG: - SUPABASE_ANON_KEY length: ${dotenv.env['SUPABASE_ANON_KEY']?.length ?? 0}');
+      debugPrint('DEBUG: - Supabase client available: ${_supabaseClient != null}');
+      
+      debugPrint('DEBUG: Request details:');
+      debugPrint('DEBUG: - Phone: $phoneNumber');
+      debugPrint('DEBUG: - OTP: $otp');
+      debugPrint('DEBUG: - Device fingerprint: ${deviceFingerprint.substring(0, 10)}...');
+
+      final requestBody = {
+        'action': 'verify-otp',
+        'mobile_number': phoneNumber,
+        'otp': otp,
+        'device_fingerprint': deviceFingerprint,
+      };
+      debugPrint('DEBUG: - Request body: $requestBody');
+
+      // Test the client first
+      try {
+        debugPrint('DEBUG: Testing Supabase client...');
+        final testUrl = dotenv.env['SUPABASE_URL'];
+        debugPrint('DEBUG: Base URL: $testUrl');
+        debugPrint('DEBUG: Function URL should be: $testUrl/functions/v1/smart-function');
+      } catch (testError) {
+        debugPrint('DEBUG: Client test error: $testError');
+      }
 
       // Call your edge function for verification
+      debugPrint('DEBUG: Calling smart-function...');
       final response = await _supabaseClient.functions.invoke(
         'smart-function',
-        body: {
-          'action': 'verify-otp',
-          'mobile_number': phoneNumber,
-          'otp': otp,
-          'device_fingerprint': deviceFingerprint,
-        },
+        body: requestBody,
       );
 
-      debugPrint('Verify Response Status: ${response.status}');
-      debugPrint('Verify Response Data: ${response.data}');
+      debugPrint('DEBUG: === RESPONSE RECEIVED ===');
+      debugPrint('DEBUG: Status: ${response.status}');
+      debugPrint('DEBUG: Data: ${response.data}');
+      debugPrint('DEBUG: Data type: ${response.data.runtimeType}');
 
       if (response.status == 200) {
         final data = response.data;
         if (data is Map<String, dynamic> && data['success'] == true) {
           final user = data['user'] as Map<String, dynamic>;
           final refreshToken = data['refreshToken'] as String;
+
+          debugPrint('DEBUG: Success response received');
+          debugPrint('DEBUG: User data: $user');
+          debugPrint('DEBUG: Refresh token: ${refreshToken.substring(0, 10)}...');
 
           // Store authentication data
           await _storeAuthData(user, refreshToken);
@@ -270,23 +292,30 @@ class MobileAuthService {
             user: user,
             message: 'Login successful!',
           );
+        } else {
+          debugPrint('DEBUG: Unexpected response format: $data');
         }
       }
 
       // Handle error response
       final errorData = response.data;
+      debugPrint('DEBUG: Error response: $errorData');
       if (errorData is Map<String, dynamic> && errorData['error'] != null) {
-        if (errorData['error'].toString().contains('Invalid or expired')) {
+        final errorMsg = errorData['error'].toString();
+        debugPrint('DEBUG: Server error message: $errorMsg');
+        if (errorMsg.contains('Invalid or expired')) {
           throw MobileAuthException('Invalid OTP. Please check and try again.');
         }
-        throw MobileAuthException('Verification failed. Please try again.');
+        throw MobileAuthException('Verification failed: $errorMsg');
       }
 
-      throw MobileAuthException('Invalid OTP. Please try again.');
+      throw MobileAuthException('Invalid OTP. HTTP ${response.status}');
     } catch (e) {
-      debugPrint('Verify OTP Error: $e');
+      debugPrint('DEBUG: Verify OTP Error: $e');
+      debugPrint('DEBUG: Error type: ${e.runtimeType}');
+      debugPrint('DEBUG: Stack trace: ${StackTrace.current}');
       if (e is MobileAuthException) rethrow;
-      throw MobileAuthException('Network error. Please check your connection.');
+      throw MobileAuthException('Network error during verification: ${e.toString()}');
     }
   }
 
@@ -294,11 +323,13 @@ class MobileAuthService {
   Future<bool> refreshSession() async {
     try {
       if (_currentUser == null || _refreshToken == null) {
-        debugPrint('No stored session to refresh');
+        debugPrint('DEBUG: No stored session to refresh');
         return false;
       }
 
-      debugPrint('=== REFRESHING SESSION ===');
+      debugPrint('DEBUG: === REFRESHING SESSION ===');
+      debugPrint('DEBUG: User ID: ${_currentUser!['id']}');
+      debugPrint('DEBUG: Refresh token: ${_refreshToken!.substring(0, 10)}...');
       
       final response = await _supabaseClient.functions.invoke(
         'smart-function',
@@ -309,22 +340,22 @@ class MobileAuthService {
         },
       );
 
-      debugPrint('Refresh Response Status: ${response.status}');
-      debugPrint('Refresh Response Data: ${response.data}');
+      debugPrint('DEBUG: Refresh Response Status: ${response.status}');
+      debugPrint('DEBUG: Refresh Response Data: ${response.data}');
 
       if (response.status == 200) {
         final data = response.data;
         if (data is Map<String, dynamic> && data['success'] == true) {
-          debugPrint('Session refreshed successfully');
+          debugPrint('DEBUG: Session refreshed successfully');
           return true;
         }
       }
 
-      debugPrint('Session refresh failed, clearing auth data');
+      debugPrint('DEBUG: Session refresh failed, clearing auth data');
       await _clearAuthData();
       return false;
     } catch (e) {
-      debugPrint('Session refresh error: $e');
+      debugPrint('DEBUG: Session refresh error: $e');
       await _clearAuthData();
       return false;
     }
@@ -339,7 +370,7 @@ class MobileAuthService {
   // Logout
   Future<void> logout() async {
     await _clearAuthData();
-    debugPrint('User logged out');
+    debugPrint('DEBUG: User logged out');
   }
 
   // Utility methods
@@ -368,11 +399,16 @@ class MobileAuthService {
     try {
       final url = dotenv.env['SUPABASE_URL'];
       final key = dotenv.env['SUPABASE_ANON_KEY'];
-      if (url == null || key == null) return false;
+      if (url == null || key == null) {
+        debugPrint('DEBUG: Connection check failed - missing credentials');
+        return false;
+      }
       
       final client = _supabaseClient;
+      debugPrint('DEBUG: Connection check passed - client available: ${client != null}');
       return client != null;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('DEBUG: Connection check error: $e');
       return false;
     }
   }
@@ -410,4 +446,31 @@ class MobileAuthException implements Exception {
   
   @override
   String toString() => 'MobileAuthException: $message';
-}
+} Starting MobileAuthService initialization...');
+
+      _checkEnvironmentVariables();
+      await _loadStoredAuth();
+      await _generateDeviceFingerprint();
+
+      // Check connection
+      final connected = await checkConnection();
+      debugPrint('DEBUG: Supabase connection status: $connected');
+
+      _isInitialized = true;
+      debugPrint('DEBUG: MobileAuthService initialized successfully');
+    } catch (e) {
+      debugPrint('DEBUG: MobileAuthService initialization failed: $e');
+      rethrow;
+    }
+  }
+
+  /// Check if environment variables are properly loaded
+  void _checkEnvironmentVariables() {
+    final supabaseUrl = dotenv.env['SUPABASE_URL'];
+    final supabaseKey = dotenv.env['SUPABASE_ANON_KEY'];
+
+    debugPrint('DEBUG: Environment variables check:');
+    debugPrint('DEBUG: SUPABASE_URL loaded: ${supabaseUrl != null}');
+    debugPrint('DEBUG: SUPABASE_URL value: ${supabaseUrl ?? "NULL"}');
+    debugPrint('DEBUG: SUPABASE_ANON_KEY loaded: ${supabaseKey != null}');
+    debugPrint('DEBUG:
