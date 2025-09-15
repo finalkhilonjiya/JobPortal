@@ -41,7 +41,7 @@ class MobileAuthService {
         final data = jsonDecode(sessionJson);
         _session = Session.fromJson(data);
         _currentUser = _session?.user.toJson();
-        
+
         debugPrint('Restored Supabase session for user: ${_currentUser?['id']}');
       } catch (e) {
         debugPrint('Failed to restore session: $e');
@@ -122,14 +122,10 @@ class MobileAuthService {
           accessToken: accessToken,
           refreshToken: refreshToken,
           tokenType: 'bearer',
-          if (user == null) return;          // or throw/redirect
-user: User.fromJson(user),
-
-
+          user: User.fromJson(user),
         );
 
         await _storeSession(session);
-        
 
         return AuthResponse(
           success: true,
