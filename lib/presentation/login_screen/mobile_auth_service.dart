@@ -117,12 +117,12 @@ class MobileAuthService {
         final accessToken = data['accessToken'] as String;
         final refreshToken = data['refreshToken'] as String;
 
-        // Build session for Supabase
+        // Build session for Supabase - FIXED: Remove the null assertion operator
         final session = Session(
           accessToken: accessToken,
           refreshToken: refreshToken,
           tokenType: 'bearer',
-          user: User.fromJson(user!),
+          user: User.fromJson(user),  // Changed from user! to user
         );
 
         await _storeSession(session);
