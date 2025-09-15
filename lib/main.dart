@@ -119,6 +119,9 @@ class _AppInitializerState extends State<AppInitializer> {
     try {
       debugPrint('Starting app bootstrap...');
       
+      // Extended delay to increase splash screen duration (double the time)
+      await Future.delayed(const Duration(milliseconds: 2000));
+
       // Check if Supabase is available
       if (Supabase.instance.client == null) {
         debugPrint('Supabase not available, going offline');
@@ -135,7 +138,7 @@ class _AppInitializerState extends State<AppInitializer> {
       // Check if user is already authenticated
       if (auth.isAuthenticated) {
         debugPrint('User has stored session, validating...');
-        
+
         // Validate stored session
         final sessionValid = await auth.refreshSession();
         if (sessionValid) {
@@ -152,7 +155,7 @@ class _AppInitializerState extends State<AppInitializer> {
         notifier.setState(AppState.unauthenticated);
         NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
       }
-      
+
     } catch (e) {
       debugPrint('Bootstrap error: $e');
       notifier.setState(AppState.unauthenticated);
@@ -164,7 +167,7 @@ class _AppInitializerState extends State<AppInitializer> {
   Widget build(BuildContext context) {
     return Consumer<AppStateNotifier>(
       builder: (_, n, __) => Scaffold(
-        backgroundColor: const Color(0xFFF0F0F0), // Match your login screen background
+        backgroundColor: const Color(0xFFF0F0F0),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -174,7 +177,7 @@ class _AppInitializerState extends State<AppInitializer> {
                 width: 80,
                 height: 80,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF4285F4), // Your blue color
+                  color: Color(0xFF4285F4),
                   shape: BoxShape.circle,
                 ),
                 child: ClipRRect(
@@ -201,7 +204,7 @@ class _AppInitializerState extends State<AppInitializer> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF1E293B),
+                  color: Color(0xFF4285F4), // Updated to primary blue color
                 ),
               ),
               const SizedBox(height: 40),
