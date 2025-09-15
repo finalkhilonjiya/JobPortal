@@ -122,7 +122,8 @@ class MobileAuthService {
           accessToken: accessToken,
           refreshToken: refreshToken,
           tokenType: 'bearer',
-          user: User.fromJson(user!),
+          user: User.fromJson(user ?? {}),
+
         );
 
         await _storeSession(session);
