@@ -50,6 +50,10 @@ class MobileAuthService {
       await _loadStoredAuth();
       await _generateDeviceFingerprint();
 
+      // 🔑 Try restoring Supabase session automatically
+      final restored = await refreshSession();
+      debugPrint('Session restore attempt: $restored');
+
       final connected = await checkConnection();
       debugPrint('Supabase connection status: $connected');
 
@@ -156,7 +160,8 @@ class MobileAuthService {
   Future<void> _storeAuthData(
     Map<String, dynamic> user, 
     String refreshToken, 
-    String authUserId
+    String authUserId,
+    String accessToken,
   ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -168,6 +173,14 @@ class MobileAuthService {
       _currentUser = user;
       _refreshToken = refreshToken;
       _authUserId = authUserId;
+
+      // 🔑 Set Supabase session
+      await Supabase.instance.client.auth.setSession(
+        AccessTokenResponse(
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+        ),
+      );
 
       debugPrint('Stored authentication data for user: ${user['id']}');
       debugPrint('Auth User ID: $authUserId');
@@ -290,13 +303,14 @@ class MobileAuthService {
           final user = data['user'] as Map<String, dynamic>;
           final refreshToken = data['refreshToken'] as String;
           final authUserId = data['auth_user_id'] as String;
+          final accessToken = data['accessToken'] as String;
 
           debugPrint('Authentication successful with Supabase Auth');
           debugPrint('User profile: ${user['id']}');
           debugPrint('Auth user: $authUserId');
 
-          // Store all authentication data
-          await _storeAuthData(user, refreshToken, authUserId);
+          // Store all authentication data & set session
+          await _storeAuthData(user, refreshToken, authUserId, accessToken);
 
           return AuthResponse(
             success: true,
@@ -327,33 +341,16 @@ class MobileAuthService {
   /// Refresh user session
   Future<bool> refreshSession() async {
     try {
-      if (_currentUser == null || _refreshToken == null || _authUserId == null) {
-        debugPrint('No stored session to refresh');
+      if (_refreshToken == null) {
+        debugPrint('No stored refresh token to refresh');
         return false;
       }
 
       debugPrint('=== REFRESHING SESSION WITH SUPABASE AUTH ===');
-      debugPrint('User ID: ${_currentUser!['id']}');
-      debugPrint('Auth User ID: $_authUserId');
-      
-      final response = await _supabaseClient.functions.invoke(
-        'smart-function',
-        body: {
-          'action': 'refresh-session',
-          'user_id': _authUserId, // Use Supabase Auth user ID
-          'refreshToken': _refreshToken,
-        },
-      );
-
-      debugPrint('Refresh Response Status: ${response.status}');
-      debugPrint('Refresh Response Data: ${response.data}');
-
-      if (response.status == 200) {
-        final data = response.data;
-        if (data is Map<String, dynamic> && data['success'] == true) {
-          debugPrint('Session refreshed successfully');
-          return true;
-        }
+      final res = await Supabase.instance.client.auth.refreshSession();
+      if (res.session != null) {
+        debugPrint('Session refreshed successfully: ${res.session!.user.id}');
+        return true;
       }
 
       debugPrint('Session refresh failed, clearing auth data');
