@@ -23,8 +23,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   bool _isLoading = false;
   bool _isMobileValid = false;
   String? _errorMessage;
-  String _debugInfo = '';
-  bool _showDebugInfo = false;
   int _currentStep = 1;
   int _resendTimer = 0;
   bool _canResend = false;
@@ -70,31 +68,19 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     _animationController.forward();
   }
 
-  void _addDebugInfo(String info) {
-    setState(() {
-      _debugInfo += '${DateTime.now().toString().substring(11, 19)}: $info\n';
-    });
-  }
-
   Future<void> _initializeAuthService() async {
     try {
-      _addDebugInfo('Starting auth service initialization...');
       await _authService.initialize();
-      _addDebugInfo('Auth service initialized successfully');
-      
+
       if (_authService.isAuthenticated) {
-        _addDebugInfo('Found stored session, checking validity...');
         final valid = await _authService.refreshSession();
         if (valid) {
-          _addDebugInfo('Session valid, navigating to home');
           _navigateToHome();
           return;
-        } else {
-          _addDebugInfo('Session invalid, staying on login');
         }
       }
     } catch (e) {
-      _addDebugInfo('Auth service init error: $e');
+      debugPrint('Auth service initialization error: $e');
     }
   }
 
@@ -131,9 +117,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     });
 
     try {
-      _addDebugInfo('Sending OTP to: ${_mobileController.text}');
       await _authService.sendOtp(_mobileController.text);
-      _addDebugInfo('OTP sent successfully');
 
       setState(() {
         _currentStep = 2;
@@ -148,7 +132,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       HapticFeedback.lightImpact();
       _showSuccessMessage('OTP sent! Use 123456 to continue.');
     } catch (e) {
-      _addDebugInfo('Send OTP error: $e');
       setState(() {
         _isLoading = false;
         _errorMessage = e is MobileAuthException 
@@ -210,12 +193,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     });
 
     try {
-      _addDebugInfo('Starting OTP verification...');
-      _addDebugInfo('OTP entered: $otp');
-      _addDebugInfo('Phone: +91${_mobileController.text.replaceAll(RegExp(r'[^\d]'), '')}');
-      
       final response = await _authService.verifyOtp(_mobileController.text, otp);
-      _addDebugInfo('Verification response received successfully');
 
       if (mounted) {
         setState(() {
@@ -229,7 +207,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
         _navigateToHome();
       }
     } catch (e) {
-      _addDebugInfo('OTP verification error: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -321,189 +298,80 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F0F0),
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
-        child: Column(
-          children: [
-            // Debug toggle button
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _showDebugInfo = !_showDebugInfo;
-                      });
-                    },
-                    child: Text(
-                      _showDebugInfo ? 'Hide Debug' : 'Show Debug',
-                      style: const TextStyle(color: Color(0xFF4285F4)),
-                    ),
-                  ),
-                  if (_showDebugInfo)
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _debugInfo = '';
-                        });
-                      },
-                      child: const Text(
-                        'Clear',
-                        style: TextStyle(color: Colors.red),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
+          child: Column(
+            children: [
+              // Logo section
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: Column(
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF4285F4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(40),
+                        child: Image.asset(
+                          'assets/images/company_logo.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => const Center(
+                            child: Text(
+                              'K',
+                              style: TextStyle(
+                                fontSize: 36,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                ],
-              ),
-            ),
-
-            // Debug info panel
-            if (_showDebugInfo)
-              Container(
-                height: 200,
-                margin: const EdgeInsets.all(8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.black87,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: SingleChildScrollView(
-                  child: Text(
-                    _debugInfo.isEmpty ? 'Debug info will appear here...' : _debugInfo,
-                    style: const TextStyle(
-                      color: Colors.green,
-                      fontSize: 12,
-                      fontFamily: 'monospace',
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Khilonjiya.com',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF4285F4),
+                      ),
                     ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 80),
+
+              // Main content
+              Expanded(
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: _currentStep == 1 ? _buildMobileStep() : _buildOTPStep(),
                   ),
                 ),
               ),
 
-            // Main content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.only(
-                  left: 24,
-                  right: 24,
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              // Footer
+              const Text(
+                '© Khilonjiya India Private Limited 2025',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w500,
                 ),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: MediaQuery.of(context).size.height -
-                        MediaQuery.of(context).padding.top -
-                        MediaQuery.of(context).padding.bottom -
-                        (_showDebugInfo ? 250 : 50),
-                  ),
-                  child: IntrinsicHeight(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 20),
-
-                        // Step indicator
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: _currentStep == 1 ? 24 : 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF4285F4),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              width: _currentStep == 2 ? 24 : 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: _currentStep == 2 
-                                    ? const Color(0xFF4285F4) 
-                                    : const Color(0xFFE2E8F0),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 30),
-
-                        // Logo section
-                        FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: Column(
-                            children: [
-                              Container(
-                                width: 80,
-                                height: 80,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF4285F4),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(40),
-                                  child: Image.asset(
-                                    'assets/images/company_logo.png',
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) => const Center(
-                                      child: Text(
-                                        'K',
-                                        style: TextStyle(
-                                          fontSize: 36,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'Khilonjiya.com',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF1E293B),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 40),
-
-                        // Main content
-                        Expanded(
-                          child: SlideTransition(
-                            position: _slideAnimation,
-                            child: FadeTransition(
-                              opacity: _fadeAnimation,
-                              child: _currentStep == 1 ? _buildMobileStep() : _buildOTPStep(),
-                            ),
-                          ),
-                        ),
-
-                        // Footer
-                        const Padding(
-                          padding: EdgeInsets.all(20),
-                          child: Text(
-                            'Khilonjiya India Private Limited 2025',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF64748B),
-                              fontWeight: FontWeight.w500,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                textAlign: TextAlign.center,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -513,67 +381,61 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text(
-          'Welcome',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF1E293B),
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Enter your mobile number to continue',
-          style: TextStyle(
-            fontSize: 16,
-            color: Color(0xFF64748B),
-            fontWeight: FontWeight.w500,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 40),
-
-        // Mobile input container
+        // Mobile input with subtle border
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                offset: const Offset(0, 4),
-                blurRadius: 20,
-              ),
-            ],
-            border: Border.all(
-              color: _isMobileValid 
-                  ? const Color(0xFF4285F4) 
-                  : Colors.transparent,
-              width: 2,
-            ),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Row(
               children: [
-                // Indian flag + country code
+                // Indian flag with proper colors and Ashok Chakra
                 Container(
-                  width: 24,
-                  height: 18,
+                  width: 28,
+                  height: 20,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(3),
+                    borderRadius: BorderRadius.circular(2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        offset: const Offset(0, 1),
+                        blurRadius: 3,
+                      ),
+                    ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(3),
+                    borderRadius: BorderRadius.circular(2),
                     child: Column(
                       children: [
+                        // Saffron
                         Expanded(
                           child: Container(color: const Color(0xFFFF9933)),
                         ),
+                        // White with Ashok Chakra
                         Expanded(
-                          child: Container(color: Colors.white),
+                          child: Container(
+                            color: Colors.white,
+                            child: Center(
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: const Color(0xFF000080),
+                                    width: 0.8,
+                                  ),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: CustomPaint(
+                                  painter: AshokChakraPainter(),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
+                        // Green
                         Expanded(
                           child: Container(color: const Color(0xFF138808)),
                         ),
@@ -586,17 +448,11 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                   '+91',
                   style: TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: Color(0xFF1E293B),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Container(
-                  width: 2,
-                  height: 24,
-                  color: const Color(0xFFF1F5F9),
-                ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 20),
                 Expanded(
                   child: TextField(
                     controller: _mobileController,
@@ -607,14 +463,14 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                     ],
                     style: const TextStyle(
                       fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                       color: Color(0xFF1E293B),
                     ),
                     decoration: const InputDecoration(
-                      hintText: 'Enter mobile number',
+                      hintText: 'Mobile number',
                       hintStyle: TextStyle(
-                        color: Color(0xFF94A3B8),
-                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF9CA3AF),
+                        fontWeight: FontWeight.w400,
                       ),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.zero,
@@ -631,7 +487,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
           Text(
             _errorMessage!,
             style: const TextStyle(
-              color: Colors.red,
+              color: Color(0xFFEF4444),
               fontWeight: FontWeight.w500,
               fontSize: 14,
             ),
@@ -639,7 +495,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
           ),
         ],
 
-        const SizedBox(height: 40),
+        const SizedBox(height: 50),
 
         // Continue button
         SizedBox(
@@ -654,7 +510,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
             child: _isLoading
@@ -676,7 +532,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
           ),
         ),
 
-        const SizedBox(height: 40),
+        const SizedBox(height: 50),
 
         const Text(
           'By continuing, you agree to our Terms & Privacy Policy',
@@ -725,7 +581,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
         ),
         const SizedBox(height: 40),
 
-        // OTP input boxes
+        // OTP input boxes with subtle borders
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: List.generate(6, (index) {
@@ -748,25 +604,27 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                   ),
                   decoration: InputDecoration(
                     counterText: '',
-                    filled: true,
-                    fillColor: Colors.white,
+                    filled: false,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 2),
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(
                         color: _otpControllers[index].text.isNotEmpty
                             ? const Color(0xFF22C55E)
-                            : const Color(0xFFE2E8F0),
-                        width: 2,
+                            : const Color(0xFFE5E7EB),
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF4285F4), width: 2),
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
                     ),
+                    fillColor: _otpControllers[index].text.isNotEmpty
+                        ? const Color(0xFF22C55E).withOpacity(0.05)
+                        : Colors.transparent,
+                    filled: _otpControllers[index].text.isNotEmpty,
                     contentPadding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   onChanged: (value) => _handleOTPChange(index, value),
@@ -781,7 +639,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
           Text(
             _errorMessage!,
             style: const TextStyle(
-              color: Colors.red,
+              color: Color(0xFFEF4444),
               fontWeight: FontWeight.w500,
               fontSize: 14,
             ),
@@ -813,7 +671,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
             child: _isLoading
@@ -868,4 +726,32 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       ],
     );
   }
+}
+
+// Custom painter for Ashok Chakra
+class AshokChakraPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF000080)
+      ..strokeWidth = 0.5
+      ..style = PaintingStyle.stroke;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    
+    // Draw vertical and horizontal lines
+    canvas.drawLine(
+      Offset(center.dx, 0),
+      Offset(center.dx, size.height),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(0, center.dy),
+      Offset(size.width, center.dy),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
