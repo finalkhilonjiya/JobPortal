@@ -122,7 +122,9 @@ class MobileAuthService {
           accessToken: accessToken,
           refreshToken: refreshToken,
           tokenType: 'bearer',
-          user: User.fromJson(user ?? {}),
+          if (user == null) return;          // or throw/redirect
+user: User.fromJson(user),
+
 
         );
 
