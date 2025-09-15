@@ -604,7 +604,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                   ),
                   decoration: InputDecoration(
                     counterText: '',
-                    filled: false,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
