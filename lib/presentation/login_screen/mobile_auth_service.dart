@@ -45,7 +45,13 @@ class MobileAuthService {
         // CRITICAL: Restore the session in Supabase client
         if (_session != null) {
           try {
-            await SupabaseService().client.auth.setSession(_session!.accessToken, _session!.refreshToken);
+            await SupabaseService().client.auth.recoverSession(jsonEncode({
+              'access_token': _session!.accessToken,
+              'refresh_token': _session!.refreshToken,
+              'expires_in': 3600,
+              'token_type': _session!.tokenType,
+              'user': _currentUser,
+            }));
             debugPrint('Successfully restored Supabase session for user: ${_currentUser?['id']}');
           } catch (e) {
             debugPrint('Failed to restore Supabase session: $e');
@@ -146,23 +152,16 @@ class MobileAuthService {
 
         // CRITICAL: Set the session in Supabase client so it knows user is authenticated
         try {
-          await SupabaseService().client.auth.setSession(accessToken, refreshToken);
+          await SupabaseService().client.auth.recoverSession(jsonEncode({
+            'access_token': accessToken,
+            'refresh_token': refreshToken,
+            'expires_in': 3600,
+            'token_type': 'bearer',
+            'user': user,
+          }));
           debugPrint('Successfully set Supabase session - User is now authenticated');
         } catch (e) {
           debugPrint('Warning: Could not set Supabase session: $e');
-          // Try alternative approach
-          try {
-            await SupabaseService().client.auth.recoverSession(jsonEncode({
-              'access_token': accessToken,
-              'refresh_token': refreshToken,
-              'expires_in': 3600,
-              'token_type': 'bearer',
-              'user': user,
-            }));
-            debugPrint('Successfully recovered Supabase session');
-          } catch (e2) {
-            debugPrint('Failed to recover session: $e2');
-          }
         }
 
         // Debug auth state after setting session
@@ -217,7 +216,13 @@ class MobileAuthService {
           
           // Update Supabase client session
           try {
-            await SupabaseService().client.auth.setSession(newAccessToken, newRefreshToken);
+            await SupabaseService().client.auth.recoverSession(jsonEncode({
+              'access_token': newAccessToken,
+              'refresh_token': newRefreshToken,
+              'expires_in': 3600,
+              'token_type': 'bearer',
+              'user': _session!.user.toJson(),
+            }));
           } catch (e) {
             debugPrint('Warning: Could not update Supabase session: $e');
           }
