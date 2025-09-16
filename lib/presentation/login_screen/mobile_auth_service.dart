@@ -117,12 +117,17 @@ class MobileAuthService {
         final accessToken = data['accessToken'] as String;
         final refreshToken = data['refreshToken'] as String;
 
-        // Build session for Supabase - FIXED: Remove the null assertion operator
+        // Build session for Supabase - FIXED: Handle nullable User.fromJson
+        final userObj = User.fromJson(user);
+        if (userObj == null) {
+          throw MobileAuthException('Failed to parse user data');
+        }
+        
         final session = Session(
           accessToken: accessToken,
           refreshToken: refreshToken,
           tokenType: 'bearer',
-          user: User.fromJson(user),  // Changed from user! to user
+          user: userObj,
         );
 
         await _storeSession(session);
