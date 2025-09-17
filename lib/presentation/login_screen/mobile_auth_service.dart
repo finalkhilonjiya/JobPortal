@@ -434,7 +434,7 @@ class MobileAuthService {
     
     // Check if token is close to expiry (refresh if less than 5 minutes left)
     if (currentSession.expiresAt != null) {
-      final expiresAt = DateTime.parse(currentSession.expiresAt!);
+      final expiresAt = DateTime.fromMillisecondsSinceEpoch(currentSession.expiresAt! * 1000);
       final now = DateTime.now();
       final minutesUntilExpiry = expiresAt.difference(now).inMinutes;
       
