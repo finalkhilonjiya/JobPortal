@@ -31,6 +31,8 @@ export '../utils/auth_service.dart'; // Re-enabled to ensure AuthService is avai
 export '../utils/category_service.dart';
 export '../utils/favorite_service.dart';
 export '../utils/message_service.dart';
+export '../services/listing_service.dart';
+
 
 // Presentation layer exports
 export '../presentation/home_marketplace_feed/home_marketplace_feed.dart';
