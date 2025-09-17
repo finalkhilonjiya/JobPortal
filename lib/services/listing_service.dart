@@ -748,7 +748,7 @@ class ListingService {
       }
 
       debugPrint('=== LISTING DATA TO INSERT ===');
-      debugPrint(listingData);
+      debugPrint(listingData.toString());
       debugPrint('===============================');
 
       // Insert into database
