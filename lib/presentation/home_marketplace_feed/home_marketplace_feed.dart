@@ -22,7 +22,7 @@ import 'dart:async';
 import './premium_package_page.dart';
 import 'widgets/categories_section.dart';
 import 'widgets/category_data.dart';
-import 'mobile_auth_service.dart';
+import '../login_screen/mobile_auth_service.dart';
 import '../../core/app_export.dart';
 
 class HomeMarketplaceFeed extends StatefulWidget {
@@ -161,7 +161,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
   void _redirectToLogin() {
     if (mounted) {
       Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRoutes.mobileLoginScreen,
+        '/mobile_login', // Update this to match your actual route name
         (route) => false,
       );
     }
@@ -996,4 +996,3 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
     );
   }
 }
-    
