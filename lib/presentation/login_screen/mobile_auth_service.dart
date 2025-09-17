@@ -52,7 +52,7 @@ class MobileAuthService {
           accessToken: sessionData['access_token'],
           refreshToken: sessionData['refresh_token'],
           expiresIn: sessionData['expires_in'] ?? 3600,
-          expiresAt: sessionData['expires_at'],
+          expiresAt: sessionData['expires_at'] != null ? DateTime.parse(sessionData['expires_at']) : null,
           tokenType: sessionData['token_type'] ?? 'bearer',
           user: User.fromJson(sessionData['user']),
         );
@@ -150,7 +150,7 @@ class MobileAuthService {
       accessToken: authResponse['accessToken'],
       refreshToken: authResponse['refreshToken'],
       expiresIn: 3600,
-      expiresAt: authResponse['expiresAt'],
+      expiresAt: authResponse['expiresAt'] != null ? DateTime.parse(authResponse['expiresAt']) : null,
       tokenType: authResponse['tokenType'] ?? 'bearer',
       user: User.fromJson(sessionData['user']),
     );
@@ -282,7 +282,7 @@ class MobileAuthService {
 
   /// Refresh session using both custom and Supabase refresh
   Future<bool> refreshSession() async {
-    if (_session == null || _session!.refreshToken.isEmpty) {
+    if (_session == null || _session!.refreshToken?.isEmpty == true) {
       debugPrint('No session to refresh');
       return false;
     }
@@ -356,7 +356,7 @@ class MobileAuthService {
             accessToken: data['accessToken'],
             refreshToken: data['refreshToken'],
             expiresIn: 3600,
-            expiresAt: data['expiresAt'],
+            expiresAt: data['expiresAt'] != null ? DateTime.parse(data['expiresAt']) : null,
             tokenType: 'bearer',
             user: _session!.user,
           );
