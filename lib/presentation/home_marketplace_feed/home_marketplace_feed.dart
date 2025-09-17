@@ -22,6 +22,8 @@ import 'dart:async';
 import './premium_package_page.dart';
 import 'widgets/categories_section.dart';
 import 'widgets/category_data.dart';
+import 'mobile_auth_service.dart';
+import '../../core/app_export.dart';
 
 class HomeMarketplaceFeed extends StatefulWidget {
   const HomeMarketplaceFeed({Key? key}) : super(key: key);
@@ -30,9 +32,15 @@ class HomeMarketplaceFeed extends StatefulWidget {
   State<HomeMarketplaceFeed> createState() => _HomeMarketplaceFeedState();
 }
 
-class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
+class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsBindingObserver {
   final ListingService _listingService = ListingService();
-  
+  final MobileAuthService _authService = MobileAuthService();
+
+  // Auth related state
+  bool _isCheckingAuth = true;
+  bool _isAuthenticatedUser = false;
+  String? _currentUserId;
+
   int _currentIndex = 0;
   bool _isLoadingPremium = true;
   bool _isLoadingFeed = true;
@@ -45,13 +53,13 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   Set<String> _favoriteIds = {};
   String _currentLocation = 'Guwahati, Assam';
   final ScrollController _scrollController = ScrollController();
-  
+
   // Pagination
   int _currentOffset = 0;
   final int _pageSize = 20;
   bool _hasMoreData = true;
   bool _hasInitialLoadError = false;
-  
+
   // Filter states
   String _priceRange = 'All';
   String _selectedSubcategory = 'All';
@@ -61,25 +69,111 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _scrollController.addListener(_onScroll);
-    // Delay initial fetch to ensure auth is ready
+    
+    // Initialize authentication first, then fetch data
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchData();
+      _initializeWithAuth();
     });
     _detectLocation();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _scrollController.dispose();
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    // Check auth when app becomes active
+    if (state == AppLifecycleState.resumed) {
+      _verifyAuthState();
+    }
+  }
+
+  /// Initialize authentication and then fetch data
+  Future<void> _initializeWithAuth() async {
+    setState(() {
+      _isCheckingAuth = true;
+    });
+
+    try {
+      // Initialize auth service
+      await _authService.initialize();
+      
+      // Check if user is authenticated
+      final isAuthenticated = _authService.isAuthenticated;
+      final userId = _authService.userId;
+      
+      debugPrint('Auth Check - Authenticated: $isAuthenticated, User ID: $userId');
+      
+      if (isAuthenticated && userId != null) {
+        setState(() {
+          _isAuthenticatedUser = true;
+          _currentUserId = userId;
+          _isCheckingAuth = false;
+        });
+        
+        // Try to refresh session to ensure it's valid
+        final sessionValid = await _authService.refreshSession();
+        if (!sessionValid) {
+          debugPrint('Session refresh failed, redirecting to login');
+          _redirectToLogin();
+          return;
+        }
+        
+        // Auth is valid, fetch data
+        await _fetchData();
+        
+      } else {
+        debugPrint('User not authenticated, redirecting to login');
+        _redirectToLogin();
+      }
+      
+    } catch (e) {
+      debugPrint('Auth initialization error: $e');
+      _redirectToLogin();
+    }
+  }
+
+  /// Verify auth state without full initialization
+  Future<void> _verifyAuthState() async {
+    if (!_authService.isAuthenticated) {
+      debugPrint('Auth verification failed, redirecting to login');
+      _redirectToLogin();
+      return;
+    }
+    
+    // Try to refresh session
+    final sessionValid = await _authService.refreshSession();
+    if (!sessionValid) {
+      debugPrint('Session verification failed, redirecting to login');
+      _redirectToLogin();
+    }
+  }
+
+  /// Redirect to login screen
+  void _redirectToLogin() {
+    if (mounted) {
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRoutes.mobileLoginScreen,
+        (route) => false,
+      );
+    }
+  }
+
   void _detectLocation() async {
     await Future.delayed(Duration(seconds: 1));
-    setState(() {
-      _currentLocation = 'Guwahati, Assam';
-    });
+    if (mounted) {
+      setState(() {
+        _currentLocation = 'Guwahati, Assam';
+      });
+    }
   }
 
   void _onScroll() {
@@ -90,55 +184,90 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   }
 
   Future<void> _loadMoreListings() async {
-    if (!_isLoadingMore && !_isLoadingFeed && _hasMoreData) {
+    if (!_isLoadingMore && !_isLoadingFeed && _hasMoreData && _isAuthenticatedUser) {
       setState(() => _isLoadingMore = true);
-      
+
       try {
+        // Verify auth before API call
+        if (!_authService.isSupabaseAuthenticated) {
+          debugPrint('Not authenticated for API call, refreshing session');
+          final refreshed = await _authService.refreshSession();
+          if (!refreshed) {
+            _redirectToLogin();
+            return;
+          }
+        }
+
         final newListings = await _listingService.fetchListings(
           categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
           sortBy: _sortBy,
           offset: _currentOffset + _pageSize,
           limit: _pageSize,
         );
-        
-        setState(() {
-          if (newListings.isEmpty) {
-            // If no more data, repeat from beginning
-            _currentOffset = 0;
-            _fetchListingsOnly();
-          } else {
-            _listings.addAll(newListings);
-            _currentOffset += _pageSize;
-          }
-          _isLoadingMore = false;
-        });
+
+        if (mounted) {
+          setState(() {
+            if (newListings.isEmpty) {
+              // If no more data, repeat from beginning
+              _currentOffset = 0;
+              _fetchListingsOnly();
+            } else {
+              _listings.addAll(newListings);
+              _currentOffset += _pageSize;
+            }
+            _isLoadingMore = false;
+          });
+        }
       } catch (e) {
-        print('Error loading more listings: $e');
-        setState(() => _isLoadingMore = false);
+        debugPrint('Error loading more listings: $e');
+        if (mounted) {
+          setState(() => _isLoadingMore = false);
+        }
+        
+        // Check if error is auth-related
+        if (e.toString().contains('auth') || e.toString().contains('401')) {
+          _verifyAuthState();
+        }
       }
     }
   }
 
   Future<void> _fetchListingsOnly() async {
+    if (!_isAuthenticatedUser) return;
+
     try {
+      // Verify auth before API call
+      if (!_authService.isSupabaseAuthenticated) {
+        final refreshed = await _authService.refreshSession();
+        if (!refreshed) {
+          _redirectToLogin();
+          return;
+        }
+      }
+
       final listings = await _listingService.fetchListings(
         categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
         sortBy: _sortBy,
         offset: 0,
         limit: _pageSize,
       );
-      
-      if (listings.isNotEmpty) {
+
+      if (listings.isNotEmpty && mounted) {
         setState(() {
           _listings.addAll(listings);
         });
       }
     } catch (e) {
-      print('Error fetching listings: $e');
+      debugPrint('Error fetching listings: $e');
+      if (e.toString().contains('auth') || e.toString().contains('401')) {
+        _verifyAuthState();
+      }
     }
   }
 
   Future<void> _fetchData() async {
+    if (!_isAuthenticatedUser) return;
+
     setState(() {
       _isLoadingPremium = true;
       _isLoadingFeed = true;
@@ -146,17 +275,31 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       _listings = [];
       _hasInitialLoadError = false;
     });
-    
+
     try {
+      // Verify Supabase auth state before making API calls
+      if (!_authService.isSupabaseAuthenticated) {
+        debugPrint('Supabase not authenticated, attempting refresh');
+        final refreshed = await _authService.refreshSession();
+        if (!refreshed) {
+          debugPrint('Session refresh failed during data fetch');
+          _redirectToLogin();
+          return;
+        }
+      }
+
+      debugPrint('Fetching data for authenticated user: $_currentUserId');
+
       // Fetch categories - use hardcoded if API fails
       List<Map<String, dynamic>> categoriesData = [];
       try {
         categoriesData = await _listingService.getCategories();
+        debugPrint('Fetched ${categoriesData.length} categories from API');
       } catch (e) {
-        print('Error fetching categories from API: $e');
+        debugPrint('Error fetching categories from API: $e');
         // Continue with empty categories, will use hardcoded
       }
-      
+
       // Build category list with All option
       final List<Map<String, dynamic>> mainCategories = [
         {
@@ -166,7 +309,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
           'image': null,
         },
       ];
-      
+
       // Add fetched categories or use hardcoded
       if (categoriesData.isNotEmpty) {
         mainCategories.addAll(
@@ -188,16 +331,21 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
           }).toList()
         );
       }
-      
-      // Fetch favorites - don't fail if user not logged in
+
+      // Fetch user favorites
       Set<String> favorites = {};
       try {
         favorites = await _listingService.getUserFavorites();
+        debugPrint('Fetched ${favorites.length} user favorites');
       } catch (e) {
-        print('Error fetching favorites: $e');
-        // Continue without favorites
+        debugPrint('Error fetching favorites: $e');
+        // Check if error is auth-related
+        if (e.toString().contains('auth') || e.toString().contains('401')) {
+          _verifyAuthState();
+          return;
+        }
       }
-      
+
       // Fetch listings
       List<Map<String, dynamic>> listings = [];
       try {
@@ -206,58 +354,76 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
           offset: 0,
           limit: _pageSize,
         );
+        debugPrint('Fetched ${listings.length} listings');
       } catch (e) {
-        print('Error fetching listings: $e');
+        debugPrint('Error fetching listings: $e');
+        if (e.toString().contains('auth') || e.toString().contains('401')) {
+          _verifyAuthState();
+          return;
+        }
       }
-      
+
       // Fetch premium listings
       List<Map<String, dynamic>> premiumListings = [];
       try {
         premiumListings = await _listingService.fetchPremiumListings(
           limit: 10,
         );
-        print('Fetched ${premiumListings.length} premium listings');
+        debugPrint('Fetched ${premiumListings.length} premium listings');
       } catch (e) {
-        print('Error fetching premium listings: $e');
+        debugPrint('Error fetching premium listings: $e');
+        if (e.toString().contains('auth') || e.toString().contains('401')) {
+          _verifyAuthState();
+          return;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _categories = mainCategories;
+          _favoriteIds = favorites;
+          _listings = listings;
+          _premiumListings = premiumListings;
+          _isLoadingPremium = false;
+          _isLoadingFeed = false;
+
+          // Only show error if both listings and premium failed
+          if (listings.isEmpty && premiumListings.isEmpty && categoriesData.isEmpty) {
+            _hasInitialLoadError = true;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Unexpected error in _fetchData: $e');
+      if (mounted) {
+        setState(() {
+          // Use hardcoded categories on error
+          _categories = [
+            {
+              'name': 'All',
+              'id': 'All',
+              'icon': Icons.apps,
+              'image': null,
+            },
+            ...CategoryData.mainCategories.map((cat) => {
+              'name': cat['name'],
+              'id': cat['name'],
+              'icon': cat['icon'],
+              'image': cat['image'],
+            }).toList()
+          ];
+          _listings = [];
+          _premiumListings = [];
+          _isLoadingPremium = false;
+          _isLoadingFeed = false;
+          _hasInitialLoadError = true;
+        });
       }
       
-      setState(() {
-        _categories = mainCategories;
-        _favoriteIds = favorites;
-        _listings = listings;
-        _premiumListings = premiumListings;
-        _isLoadingPremium = false;
-        _isLoadingFeed = false;
-        
-        // Only show error if both listings and premium failed
-        if (listings.isEmpty && premiumListings.isEmpty && categoriesData.isEmpty) {
-          _hasInitialLoadError = true;
-        }
-      });
-    } catch (e) {
-      print('Unexpected error in _fetchData: $e');
-      setState(() {
-        // Use hardcoded categories on error
-        _categories = [
-          {
-            'name': 'All',
-            'id': 'All',
-            'icon': Icons.apps,
-            'image': null,
-          },
-          ...CategoryData.mainCategories.map((cat) => {
-            'name': cat['name'],
-            'id': cat['name'],
-            'icon': cat['icon'],
-            'image': cat['image'],
-          }).toList()
-        ];
-        _listings = [];
-        _premiumListings = [];
-        _isLoadingPremium = false;
-        _isLoadingFeed = false;
-        _hasInitialLoadError = true;
-      });
+      // Check if error is auth-related
+      if (e.toString().contains('auth') || e.toString().contains('401')) {
+        _verifyAuthState();
+      }
     }
   }
 
@@ -282,13 +448,12 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     }
   }
 
-
   void _onCategorySelected(String name) {
     final category = _categories.firstWhere(
       (cat) => cat['name'] == name,
       orElse: () => {'name': 'All', 'id': 'All', 'icon': Icons.category},
     );
-    
+
     setState(() {
       _selectedCategory = name;
       _selectedCategoryId = category['id'] as String;
@@ -296,25 +461,36 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
       _currentOffset = 0;
       _hasMoreData = true;
     });
-    
+
     _fetchFilteredListings();
   }
 
   Future<void> _fetchFilteredListings() async {
+    if (!_isAuthenticatedUser) return;
+
     setState(() {
       _isLoadingFeed = true;
       _listings = [];
       _currentOffset = 0;
     });
-    
+
     try {
+      // Verify auth before API call
+      if (!_authService.isSupabaseAuthenticated) {
+        final refreshed = await _authService.refreshSession();
+        if (!refreshed) {
+          _redirectToLogin();
+          return;
+        }
+      }
+
       final listings = await _listingService.fetchListings(
         categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
         sortBy: _sortBy,
         offset: 0,
         limit: _pageSize,
       );
-      
+
       // Also fetch filtered premium listings
       List<Map<String, dynamic>> premiumListings = [];
       try {
@@ -323,50 +499,86 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
           limit: 10,
         );
       } catch (e) {
-        print('Error fetching filtered premium listings: $e');
+        debugPrint('Error fetching filtered premium listings: $e');
         // Keep existing premium listings if fetch fails
         premiumListings = _premiumListings;
       }
-      
-      setState(() {
-        _listings = listings;
-        _premiumListings = premiumListings;
-        _currentOffset = 0;
-        _isLoadingFeed = false;
-      });
+
+      if (mounted) {
+        setState(() {
+          _listings = listings;
+          _premiumListings = premiumListings;
+          _currentOffset = 0;
+          _isLoadingFeed = false;
+        });
+      }
     } catch (e) {
-      print('Error fetching filtered listings: $e');
-      setState(() {
-        _listings = [];
-        _isLoadingFeed = false;
-      });
+      debugPrint('Error fetching filtered listings: $e');
+      if (mounted) {
+        setState(() {
+          _listings = [];
+          _isLoadingFeed = false;
+        });
+      }
+      
+      if (e.toString().contains('auth') || e.toString().contains('401')) {
+        _verifyAuthState();
+      }
     }
   }
 
   void _toggleFavorite(String id) async {
-    try {
-      final isFavorited = await _listingService.toggleFavorite(id);
-      
-      setState(() {
-        if (isFavorited) {
-          _favoriteIds.add(id);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Added to favorites'), duration: Duration(seconds: 1)),
-          );
-        } else {
-          _favoriteIds.remove(id);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Removed from favorites'), duration: Duration(seconds: 1)),
-          );
-        }
-      });
-    } catch (e) {
+    if (!_isAuthenticatedUser) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Please login to add favorites'),
           backgroundColor: Colors.red,
         ),
       );
+      return;
+    }
+
+    try {
+      // Verify auth before API call
+      if (!_authService.isSupabaseAuthenticated) {
+        final refreshed = await _authService.refreshSession();
+        if (!refreshed) {
+          _redirectToLogin();
+          return;
+        }
+      }
+
+      final isFavorited = await _listingService.toggleFavorite(id);
+
+      if (mounted) {
+        setState(() {
+          if (isFavorited) {
+            _favoriteIds.add(id);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Added to favorites'), duration: Duration(seconds: 1)),
+            );
+          } else {
+            _favoriteIds.remove(id);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Removed from favorites'), duration: Duration(seconds: 1)),
+            );
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Toggle favorite error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update favorites'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      
+      if (e.toString().contains('auth') || e.toString().contains('401')) {
+        _verifyAuthState();
+      }
     }
   }
 
@@ -415,6 +627,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   }
 
   void _openCreateListing() {
+    if (!_isAuthenticatedUser) {
+      _redirectToLogin();
+      return;
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -427,6 +644,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
   }
 
   void _navigateToProfile() {
+    if (!_isAuthenticatedUser) {
+      _redirectToLogin();
+      return;
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => ProfilePage()),
@@ -454,7 +676,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
           ),
           Container(
             margin: EdgeInsets.symmetric(vertical: 2.h),
-            padding: EdgeInsets.only(bottom: 2.h), // Add padding to prevent overflow
+            padding: EdgeInsets.only(bottom: 2.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -483,10 +705,10 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
         ],
       );
     }
-    
+
     final actualIndex = index - ((index ~/ 13));
     if (actualIndex >= _filteredListings.length) return SizedBox.shrink();
-    
+
     return SquareProductCard(
       data: _filteredListings[actualIndex],
       isFavorite: _favoriteIds.contains(_filteredListings[actualIndex]['id']),
@@ -505,11 +727,40 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
 
   @override
   Widget build(BuildContext context) {
+    // Show loading screen while checking authentication
+    if (_isCheckingAuth) {
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: Color(0xFF2563EB)),
+              SizedBox(height: 2.h),
+              Text(
+                'Verifying authentication...',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Colors.grey[700],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Main authenticated UI
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: _fetchData,
+          onRefresh: () async {
+            await _verifyAuthState();
+            if (_isAuthenticatedUser) {
+              await _fetchData();
+            }
+          },
           color: Color(0xFF2563EB),
           child: CustomScrollView(
             controller: _scrollController,
@@ -522,7 +773,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                   onLocationTap: _detectLocation,
                 ),
               ),
-              
+
               // Search Bar
               SliverToBoxAdapter(
                 child: SearchBarFullWidth(
@@ -536,10 +787,10 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                   },
                 ),
               ),
-              
+
               // App Info Banner
               SliverToBoxAdapter(child: AppInfoBannerNew()),
-              
+
               // Three Options
               SliverToBoxAdapter(
                 child: ThreeOptionSection(
@@ -561,7 +812,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                   },
                 ),
               ),
-              
+
               // Premium Section
               if (_premiumListings.isNotEmpty)
                 SliverToBoxAdapter(
@@ -576,7 +827,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                         ),
                       ),
                       Container(
-                        padding: EdgeInsets.only(bottom: 2.h), // Extra padding for premium section
+                        padding: EdgeInsets.only(bottom: 2.h),
                         child: _isLoadingPremium
                             ? ShimmerPremiumSection()
                             : PremiumSection(
@@ -591,7 +842,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                     ],
                   ),
                 ),
-              
+
               // Categories
               SliverToBoxAdapter(
                 child: CategoriesSection(
@@ -600,7 +851,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                   onSelect: _onCategorySelected,
                 ),
               ),
-              
+
               // Filter Bar
               SliverToBoxAdapter(
                 child: Container(
@@ -646,7 +897,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                   ),
                 ),
               ),
-              
+
               // Main Feed
               if (_hasInitialLoadError && _listings.isEmpty)
                 SliverToBoxAdapter(
@@ -690,7 +941,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                                (_filteredListings.length ~/ 12),
                   ),
                 ),
-              
+
               // Loading more indicator
               if (_isLoadingMore)
                 SliverToBoxAdapter(
@@ -703,7 +954,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
                     ),
                   ),
                 ),
-              
+
               SliverPadding(padding: EdgeInsets.only(bottom: 10.h)),
             ],
           ),
@@ -745,3 +996,4 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> {
     );
   }
 }
+    
