@@ -13,25 +13,23 @@ class ListingService {
 
   /// Verify authentication before making API calls
   Future<void> _ensureAuthenticated() async {
+    debugPrint('ListingService: Checking authentication state');
+    
+    // Use the new ensureValidSession method
+    final sessionValid = await _authService.ensureValidSession();
+    
+    if (!sessionValid) {
+      throw Exception('Authentication required. Please login again.');
+    }
+    
     final currentUser = _supabase.auth.currentUser;
     final currentSession = _supabase.auth.currentSession;
     
     if (currentUser == null || currentSession == null) {
-      debugPrint('ListingService: No valid Supabase session, attempting refresh');
-      
-      final refreshed = await _authService.refreshSession();
-      if (!refreshed) {
-        throw Exception('Authentication required. Please login again.');
-      }
-      
-      // Verify refresh worked
-      final newUser = _supabase.auth.currentUser;
-      if (newUser == null) {
-        throw Exception('Authentication failed. Please login again.');
-      }
+      throw Exception('Authentication required. Please login again.');
     }
     
-    debugPrint('ListingService: Authentication verified for user: ${_supabase.auth.currentUser?.id}');
+    debugPrint('ListingService: Authentication verified for user: ${currentUser.id}');
   }
 
   /// Upload images to Supabase Storage
