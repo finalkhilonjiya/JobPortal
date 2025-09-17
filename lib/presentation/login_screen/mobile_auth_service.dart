@@ -48,12 +48,17 @@ class MobileAuthService {
         debugPrint('Found stored session for user: ${userData['id']}');
 
         // Create session object from stored data
+        final user = User.fromJson(sessionData['user']);
+        if (user == null) {
+          throw Exception('Failed to parse user data from stored session');
+        }
+        
         _session = Session(
           accessToken: sessionData['access_token'],
           refreshToken: sessionData['refresh_token'],
           expiresIn: sessionData['expires_in'] ?? 3600,
           tokenType: sessionData['token_type'] ?? 'bearer',
-          user: User.fromJson(sessionData['user']),
+          user: user,
         );
         _currentUser = userData;
 
@@ -145,12 +150,17 @@ class MobileAuthService {
     await prefs.setString(_userKey, jsonEncode(authResponse['user']));
 
     // Create Session object
+    final user = User.fromJson(sessionData['user']);
+    if (user == null) {
+      throw MobileAuthException('Failed to parse user data from auth response');
+    }
+    
     _session = Session(
       accessToken: authResponse['accessToken'],
       refreshToken: authResponse['refreshToken'],
       expiresIn: 3600,
       tokenType: authResponse['tokenType'] ?? 'bearer',
-      user: User.fromJson(sessionData['user']),
+      user: user,
     );
     _currentUser = authResponse['user'];
 
