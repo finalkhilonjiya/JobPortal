@@ -417,7 +417,38 @@ class MobileAuthService {
   String? get userId => _currentUser?['id'];
   Session? get currentSession => _session;
 
-  /// Enhanced debug method
+  /// Force refresh session before critical operations
+  Future<bool> ensureValidSession() async {
+    debugPrint('=== ENSURING VALID SESSION ===');
+    
+    final currentUser = SupabaseService().client.auth.currentUser;
+    final currentSession = SupabaseService().client.auth.currentSession;
+    
+    debugPrint('Current user exists: ${currentUser != null}');
+    debugPrint('Current session exists: ${currentSession != null}');
+    
+    if (currentUser == null || currentSession == null) {
+      debugPrint('No valid session, attempting refresh');
+      return await refreshSession();
+    }
+    
+    // Check if token is close to expiry (refresh if less than 5 minutes left)
+    if (currentSession.expiresAt != null) {
+      final expiresAt = DateTime.parse(currentSession.expiresAt!);
+      final now = DateTime.now();
+      final minutesUntilExpiry = expiresAt.difference(now).inMinutes;
+      
+      debugPrint('Token expires in $minutesUntilExpiry minutes');
+      
+      if (minutesUntilExpiry < 5) {
+        debugPrint('Token expires soon, refreshing');
+        return await refreshSession();
+      }
+    }
+    
+    debugPrint('Session is valid');
+    return true;
+  }
   void debugAuthState() {
     final supabaseUser = SupabaseService().client.auth.currentUser;
     final supabaseSession = SupabaseService().client.auth.currentSession;
