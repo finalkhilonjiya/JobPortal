@@ -1,10 +1,11 @@
 // File: services/listing_service.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:postgrest/postgrest.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'dart:math' as math;
 import '../models/listing_model.dart';
-import '../screens/marketplace/mobile_auth_service.dart';
+import '../presentation/login_screen/mobile_auth_service.dart';
 
 class ListingService {
   final SupabaseClient _supabase = Supabase.instance.client;
