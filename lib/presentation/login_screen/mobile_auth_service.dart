@@ -417,37 +417,134 @@ class MobileAuthService {
   String? get userId => _currentUser?['id'];
   Session? get currentSession => _session;
 
-  /// Force refresh session before critical operations
-  Future<bool> ensureValidSession() async {
-    debugPrint('=== ENSURING VALID SESSION ===');
+  /// Debug method with visual feedback instead of console logs
+  Future<void> debugAuthState({BuildContext? context}) async {
+    final supabaseUser = SupabaseService().client.auth.currentUser;
+    final supabaseSession = SupabaseService().client.auth.currentSession;
     
-    final currentUser = SupabaseService().client.auth.currentUser;
-    final currentSession = SupabaseService().client.auth.currentSession;
+    String debugInfo = '';
+    debugInfo += 'Local session: ${_session != null ? "EXISTS" : "MISSING"}\n';
+    debugInfo += 'Local user: ${_currentUser != null ? "EXISTS" : "MISSING"}\n';
+    if (_currentUser != null) {
+      debugInfo += 'Local user ID: ${_currentUser!['id']}\n';
+    }
+    debugInfo += 'Supabase user: ${supabaseUser != null ? "EXISTS" : "MISSING"}\n';
+    if (supabaseUser != null) {
+      debugInfo += 'Supabase user ID: ${supabaseUser.id}\n';
+    }
+    debugInfo += 'Supabase session: ${supabaseSession != null ? "EXISTS" : "MISSING"}\n';
     
-    debugPrint('Current user exists: ${currentUser != null}');
-    debugPrint('Current session exists: ${currentSession != null}');
-    
-    if (currentUser == null || currentSession == null) {
-      debugPrint('No valid session, attempting refresh');
-      return await refreshSession();
+    if (supabaseSession != null) {
+      debugInfo += 'Access token: ${supabaseSession.accessToken.isNotEmpty ? "EXISTS" : "MISSING"}\n';
     }
     
-    // Check if token is close to expiry (refresh if less than 5 minutes left)
-    if (currentSession.expiresAt != null) {
-      final expiresAt = DateTime.fromMillisecondsSinceEpoch(currentSession.expiresAt! * 1000);
-      final now = DateTime.now();
-      final minutesUntilExpiry = expiresAt.difference(now).inMinutes;
-      
-      debugPrint('Token expires in $minutesUntilExpiry minutes');
-      
-      if (minutesUntilExpiry < 5) {
-        debugPrint('Token expires soon, refreshing');
-        return await refreshSession();
+    // Test API call
+    bool apiTestPassed = false;
+    try {
+      final testResponse = await SupabaseService().client
+          .from('user_profiles')
+          .select('id')
+          .limit(1);
+      apiTestPassed = true;
+      debugInfo += 'API test: SUCCESS (${testResponse.length} results)';
+    } catch (e) {
+      debugInfo += 'API test: FAILED - $e';
+    }
+    
+    debugPrint('AUTH DEBUG: $debugInfo');
+    
+    // Show visual feedback if context provided
+    if (context != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Auth State: ${apiTestPassed ? "VALID" : "INVALID"}'),
+          backgroundColor: apiTestPassed ? Colors.green : Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  /// Force session restoration with visual feedback
+  Future<bool> forceRestoreSession({BuildContext? context}) async {
+    if (_session == null || _currentUser == null) {
+      debugPrint('No local session to restore');
+      if (context != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No stored session found'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 1),
+          ),
+        );
       }
+      return false;
     }
     
-    debugPrint('Session is valid');
-    return true;
+    try {
+      debugPrint('Attempting session restoration...');
+      if (context != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Restoring session...'),
+            backgroundColor: Colors.blue,
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+      
+      // Method 1: Direct token setting
+      final sessionString = jsonEncode({
+        'access_token': _session!.accessToken,
+        'refresh_token': _session!.refreshToken,
+        'expires_in': 3600,
+        'token_type': 'bearer',
+        'user': _session!.user.toJson(),
+      });
+      
+      await SupabaseService().client.auth.recoverSession(sessionString);
+      
+      // Verify it worked
+      final user = SupabaseService().client.auth.currentUser;
+      if (user != null) {
+        debugPrint('Session restoration successful');
+        if (context != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Session restored successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+        return true;
+      }
+      
+      debugPrint('Session restoration failed - no user after recovery');
+      if (context != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Session restore failed - no user'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+      return false;
+      
+    } catch (e) {
+      debugPrint('Session restoration error: $e');
+      if (context != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Session restore error: ${e.toString().substring(0, 50)}...'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return false;
+    }
   }
   void debugAuthState() {
     final supabaseUser = SupabaseService().client.auth.currentUser;
