@@ -151,20 +151,20 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
     );
 
     try {
-      // AUTHENTICATION DEBUGGING WITH VISUAL FEEDBACK
-      await _authService.debugAuthState(context: context);
+      // AUTHENTICATION DEBUGGING AND RESTORATION
+      debugPrint('=== PRE-SUBMISSION AUTH CHECK ===');
       
-      // Small delay to let user see the auth state feedback
-      await Future.delayed(Duration(milliseconds: 500));
+      // Try to ensure valid session first
+      final sessionValid = await _authService.ensureValidSession();
+      debugPrint('Session validation result: $sessionValid');
       
-      // Try to force restore session
-      final restored = await _authService.forceRestoreSession(context: context);
-      
-      if (!restored) {
-        // Try refresh as fallback
-        final refreshed = await _authService.refreshSession();
+      if (!sessionValid) {
+        debugPrint('Session validation failed, trying force restore');
+        // Try to force restore session
+        final restored = await _authService.forceRestoreSession();
+        debugPrint('Force restore result: $restored');
         
-        if (!refreshed) {
+        if (!restored) {
           // Close loading dialog
           Navigator.pop(context);
           
@@ -175,18 +175,19 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
                 children: [
                   Icon(Icons.warning, color: Colors.orange, size: 30),
                   SizedBox(width: 10),
-                  Text('Session Issue'),
+                  Text('Authentication Issue'),
                 ],
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Authentication troubleshooting:'),
+                  Text('Your session could not be restored.'),
                   SizedBox(height: 10),
-                  Text('• No stored session found'),
-                  Text('• Session restoration failed'),
-                  Text('• Session refresh failed'),
+                  Text('This may be due to:'),
+                  Text('• Expired login session'),
+                  Text('• Network connectivity issues'),
+                  Text('• Server authentication problems'),
                   SizedBox(height: 10),
                   Text('Please login again to continue.'),
                 ],
@@ -207,43 +208,17 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
             ),
           );
           return;
-        } else {
-          // Refresh succeeded, show feedback
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Session refreshed successfully'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 1),
-            ),
-          );
         }
       }
       
-      // Final auth verification
-      await _authService.debugAuthState(context: context);
-      await Future.delayed(Duration(milliseconds: 500));
+      debugPrint('Authentication successful, proceeding with listing creation');
 
       // Upload images first
       List<String> imageUrls = [];
       if (_formData['images'].isNotEmpty) {
-        // Show image upload feedback
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Uploading ${_formData['images'].length} images...'),
-            backgroundColor: Colors.blue,
-            duration: Duration(seconds: 1),
-          ),
-        );
-        
+        debugPrint('Uploading ${_formData['images'].length} images...');
         imageUrls = await _listingService.uploadImages(_formData['images']);
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Images uploaded successfully'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 1),
-          ),
-        );
+        debugPrint('Successfully uploaded images: $imageUrls');
       }
 
       // Prepare additional data based on category
@@ -266,14 +241,7 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
       if (_formData['bathrooms'].isNotEmpty) additionalData['bathrooms'] = _formData['bathrooms'];
       if (_formData['furnishingStatus'].isNotEmpty) additionalData['furnishingStatus'] = _formData['furnishingStatus'];
 
-      // Show listing creation feedback
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Creating listing...'),
-          backgroundColor: Colors.blue,
-          duration: Duration(seconds: 1),
-        ),
-      );
+      debugPrint('About to call createListing with title: ${_formData['title']}');
 
       // Create listing with coordinates
       final result = await _listingService.createListing(
@@ -292,6 +260,8 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
         imageUrls: imageUrls,
         additionalData: additionalData,
       );
+
+      debugPrint('Listing creation successful: $result');
 
       // Close loading dialog
       Navigator.pop(context);
@@ -332,31 +302,26 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
         ),
       );
     } catch (e) {
+      debugPrint('Listing creation error: $e');
+      
       // Close loading dialog
       Navigator.pop(context);
 
       // Determine error type and show appropriate feedback
-      String errorTitle = 'Error';
-      String errorMessage = e.toString();
-      Color errorColor = Colors.red;
-      
       if (e.toString().contains('Authentication required') || 
           e.toString().contains('Authentication expired') ||
           e.toString().contains('JWT') ||
           e.toString().contains('401') ||
           e.toString().contains('403')) {
         
-        errorTitle = 'Authentication Error';
-        errorColor = Colors.orange;
-        
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
             title: Row(
               children: [
-                Icon(Icons.warning, color: errorColor, size: 30),
+                Icon(Icons.warning, color: Colors.orange, size: 30),
                 SizedBox(width: 10),
-                Text(errorTitle),
+                Text('Authentication Error'),
               ],
             ),
             content: Column(
@@ -365,8 +330,20 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
               children: [
                 Text('Authentication failed during listing creation.'),
                 SizedBox(height: 10),
-                Text('Technical details:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                Text(errorMessage, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                Text('This usually means your login session has expired.'),
+                SizedBox(height: 10),
+                Text('Error details:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    e.toString(), 
+                    style: TextStyle(fontSize: 10, fontFamily: 'monospace')
+                  ),
+                ),
                 SizedBox(height: 10),
                 Text('Please login again to continue.'),
               ],
@@ -416,7 +393,7 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    errorMessage, 
+                    e.toString(), 
                     style: TextStyle(fontSize: 11, fontFamily: 'monospace')
                   ),
                 ),
