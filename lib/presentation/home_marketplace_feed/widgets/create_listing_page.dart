@@ -7,6 +7,7 @@ import './listing_form_tab2.dart';
 import './listing_form_tab3.dart';
 import './category_data.dart';
 import '../../../services/listing_service.dart';
+import '../../login_screen/mobile_auth_service.dart';
 
 class CreateListingPage extends StatefulWidget {
   const CreateListingPage({Key? key}) : super(key: key);
@@ -19,8 +20,9 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
   late TabController _tabController;
   int _currentTab = 0;
   final ListingService _listingService = ListingService();
+  final MobileAuthService _authService = MobileAuthService();
   bool _isSubmitting = false;
-  
+
   // Form Data - Added latitude and longitude
   final Map<String, dynamic> _formData = {
     'title': '',
@@ -135,13 +137,6 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
   void _submitListing() async {
     if (_isSubmitting) return;
 
-    // ADD THIS DEBUG CODE
-    print('=== FORM DATA DEBUG ===');
-    _formData.forEach((key, value) {
-      print('$key: $value (${value.runtimeType})');
-    });
-    print('======================');
-
     setState(() {
       _isSubmitting = true;
     });
@@ -156,31 +151,129 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
     );
 
     try {
+      // AUTHENTICATION DEBUGGING WITH VISUAL FEEDBACK
+      await _authService.debugAuthState(context: context);
+      
+      // Small delay to let user see the auth state feedback
+      await Future.delayed(Duration(milliseconds: 500));
+      
+      // Try to force restore session
+      final restored = await _authService.forceRestoreSession(context: context);
+      
+      if (!restored) {
+        // Try refresh as fallback
+        final refreshed = await _authService.refreshSession();
+        
+        if (!refreshed) {
+          // Close loading dialog
+          Navigator.pop(context);
+          
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.warning, color: Colors.orange, size: 30),
+                  SizedBox(width: 10),
+                  Text('Session Issue'),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Authentication troubleshooting:'),
+                  SizedBox(height: 10),
+                  Text('• No stored session found'),
+                  Text('• Session restoration failed'),
+                  Text('• Session refresh failed'),
+                  SizedBox(height: 10),
+                  Text('Please login again to continue.'),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Close dialog
+                    Navigator.pushNamedAndRemoveUntil(
+                      context, 
+                      '/mobile_login', 
+                      (route) => false
+                    );
+                  },
+                  child: Text('Login Again'),
+                ),
+              ],
+            ),
+          );
+          return;
+        } else {
+          // Refresh succeeded, show feedback
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Session refreshed successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+      }
+      
+      // Final auth verification
+      await _authService.debugAuthState(context: context);
+      await Future.delayed(Duration(milliseconds: 500));
+
       // Upload images first
       List<String> imageUrls = [];
       if (_formData['images'].isNotEmpty) {
+        // Show image upload feedback
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Uploading ${_formData['images'].length} images...'),
+            backgroundColor: Colors.blue,
+            duration: Duration(seconds: 1),
+          ),
+        );
+        
         imageUrls = await _listingService.uploadImages(_formData['images']);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Images uploaded successfully'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 1),
+          ),
+        );
       }
 
       // Prepare additional data based on category
       Map<String, dynamic> additionalData = {};
-      
+
       // Add category-specific fields if they have values
       if (_formData['brand'].isNotEmpty) additionalData['brand'] = _formData['brand'];
       if (_formData['model'].isNotEmpty) additionalData['model'] = _formData['model'];
       if (_formData['yearOfPurchase'].isNotEmpty) additionalData['yearOfPurchase'] = _formData['yearOfPurchase'];
       if (_formData['warrantyStatus'].isNotEmpty) additionalData['warrantyStatus'] = _formData['warrantyStatus'];
       if (_formData['availability'].isNotEmpty) additionalData['availability'] = _formData['availability'];
-      
+
       // Vehicle specific
       if (_formData['kilometresDriven'].isNotEmpty) additionalData['kilometresDriven'] = _formData['kilometresDriven'];
       if (_formData['fuelType'].isNotEmpty) additionalData['fuelType'] = _formData['fuelType'];
       if (_formData['transmissionType'].isNotEmpty) additionalData['transmissionType'] = _formData['transmissionType'];
-      
+
       // Real estate specific
       if (_formData['bedrooms'].isNotEmpty) additionalData['bedrooms'] = _formData['bedrooms'];
       if (_formData['bathrooms'].isNotEmpty) additionalData['bathrooms'] = _formData['bathrooms'];
       if (_formData['furnishingStatus'].isNotEmpty) additionalData['furnishingStatus'] = _formData['furnishingStatus'];
+
+      // Show listing creation feedback
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Creating listing...'),
+          backgroundColor: Colors.blue,
+          duration: Duration(seconds: 1),
+        ),
+      );
 
       // Create listing with coordinates
       final result = await _listingService.createListing(
@@ -191,8 +284,8 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
         priceType: _formData['priceType'],
         condition: _mapConditionToEnum(_formData['condition']),
         location: _formData['location'],
-        latitude: _formData['latitude'],    // Add this
-        longitude: _formData['longitude'],  // Add this
+        latitude: _formData['latitude'],
+        longitude: _formData['longitude'],
         sellerName: _formData['sellerName'],
         sellerPhone: _formData['sellerPhone'],
         userType: _formData['userType'],
@@ -203,7 +296,7 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
       // Close loading dialog
       Navigator.pop(context);
 
-      // Show success dialog
+      // Show success dialog with details
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -214,7 +307,19 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
               Text('Success!'),
             ],
           ),
-          content: Text('Your listing has been created successfully.'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Your listing has been created successfully.'),
+              SizedBox(height: 10),
+              Text('Details:', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text('• Title: ${_formData['title']}'),
+              Text('• Price: ₹${_formData['price']}'),
+              Text('• Location: ${_formData['location']}'),
+              if (imageUrls.isNotEmpty) Text('• Images: ${imageUrls.length} uploaded'),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () {
@@ -230,26 +335,104 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
       // Close loading dialog
       Navigator.pop(context);
 
-      // Show error dialog
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Row(
-            children: [
-              Icon(Icons.error, color: Colors.red, size: 30),
-              SizedBox(width: 10),
-              Text('Error'),
+      // Determine error type and show appropriate feedback
+      String errorTitle = 'Error';
+      String errorMessage = e.toString();
+      Color errorColor = Colors.red;
+      
+      if (e.toString().contains('Authentication required') || 
+          e.toString().contains('Authentication expired') ||
+          e.toString().contains('JWT') ||
+          e.toString().contains('401') ||
+          e.toString().contains('403')) {
+        
+        errorTitle = 'Authentication Error';
+        errorColor = Colors.orange;
+        
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Row(
+              children: [
+                Icon(Icons.warning, color: errorColor, size: 30),
+                SizedBox(width: 10),
+                Text(errorTitle),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Authentication failed during listing creation.'),
+                SizedBox(height: 10),
+                Text('Technical details:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                Text(errorMessage, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                SizedBox(height: 10),
+                Text('Please login again to continue.'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close dialog
+                  Navigator.pushNamedAndRemoveUntil(
+                    context, 
+                    '/mobile_login', 
+                    (route) => false
+                  );
+                },
+                child: Text('Login Again'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel'),
+              ),
             ],
           ),
-          content: Text('Failed to create listing: ${e.toString()}'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('OK'),
+        );
+      } else {
+        // Show detailed error dialog for non-auth errors
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Row(
+              children: [
+                Icon(Icons.error, color: Colors.red, size: 30),
+                SizedBox(width: 10),
+                Text('Creation Failed'),
+              ],
             ),
-          ],
-        ),
-      );
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Failed to create your listing.'),
+                SizedBox(height: 10),
+                Text('Error details:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    errorMessage, 
+                    style: TextStyle(fontSize: 11, fontFamily: 'monospace')
+                  ),
+                ),
+                SizedBox(height: 10),
+                Text('Please check your data and try again.', style: TextStyle(fontSize: 12)),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
     } finally {
       setState(() {
         _isSubmitting = false;
