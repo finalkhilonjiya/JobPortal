@@ -418,7 +418,21 @@ class MobileAuthService {
   String? get userId => _currentUser?['id'];
   Session? get currentSession => _session;
 
-  /// Enhanced debug method with basic session validation
+  /// Keep session alive by periodically refreshing
+  Future<void> keepSessionAlive() async {
+    if (!isAuthenticated) return;
+    
+    try {
+      // Try to refresh the session to keep it alive
+      final currentSession = SupabaseService().client.auth.currentSession;
+      if (currentSession != null && currentSession.refreshToken != null) {
+        await SupabaseService().client.auth.refreshSession(currentSession.refreshToken!);
+        debugPrint('Session refreshed to keep alive');
+      }
+    } catch (e) {
+      debugPrint('Keep alive refresh failed: $e');
+    }
+  }
   Future<bool> ensureValidSession() async {
     debugPrint('=== ENSURING VALID SESSION ===');
     
