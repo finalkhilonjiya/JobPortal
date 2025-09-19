@@ -77,6 +77,15 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
       _initializeWithAuth();
     });
     _detectLocation();
+    
+    // Keep session alive every 10 minutes
+    Timer.periodic(Duration(minutes: 10), (timer) {
+      if (mounted && _isAuthenticatedUser) {
+        _authService.keepSessionAlive();
+      } else if (!mounted) {
+        timer.cancel();
+      }
+    });
   }
 
   @override
