@@ -57,6 +57,24 @@ class JobsPortalHomePage extends StatelessWidget {
             child: Image.asset(
               'assets/images/company_logo.png',
               fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Color(0xFF2563EB),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'K',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.sp,
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           SizedBox(width: 3.w),
@@ -506,3 +524,4 @@ class JobListingFormPage extends StatelessWidget {
       ),
     );
   }
+}
