@@ -1,14 +1,15 @@
+// File: lib/presentation/home_marketplace_feed/widgets/three_option_section.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
 class ThreeOptionSection extends StatelessWidget {
   final VoidCallback? onJobsTap;
-  final VoidCallback? onTraditionalTap;
+  final VoidCallback? onConstructionTap;
 
   const ThreeOptionSection({
     Key? key,
     this.onJobsTap,
-    this.onTraditionalTap,
+    this.onConstructionTap,
   }) : super(key: key);
 
   @override
@@ -44,10 +45,10 @@ class ThreeOptionSection extends StatelessWidget {
             flex: 1,
             child: _buildOption(
               context,
-              'Assamese Traditional Market',
-              'assets/images/ATM.png',
+              'Khilonjiya Construction Services',
+              'assets/images/construction_services.png',
               Colors.purple,
-              onTraditionalTap,
+              onConstructionTap,
               isExpanded: true,
             ),
           ),
@@ -76,7 +77,7 @@ class ThreeOptionSection extends StatelessWidget {
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        height: 14.h, // Reduced height to accommodate text
+        height: 14.h, // Same height as original
         padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 1.h),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
@@ -103,7 +104,10 @@ class ThreeOptionSection extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        Icons.image,
+                        // Use appropriate icons for each section
+                        label.contains('Apply') ? Icons.work :
+                        label.contains('List') ? Icons.post_add :
+                        Icons.construction,
                         color: color,
                         size: isExpanded ? 7.w : 9.w,
                       ),
