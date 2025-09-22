@@ -1,4 +1,4 @@
-// File: screens/marketplace/home_marketplace_feed.dart
+// File: lib/presentation/home_marketplace_feed/home_marketplace_feed.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import './widgets/top_bar_widget.dart';
@@ -16,8 +16,8 @@ import './widgets/profile_page.dart';
 import './widgets/bottom_nav_bar_widget.dart';
 import './search_page.dart';
 import '../../services/listing_service.dart';
-import '../jobs/jobs_home_page.dart';
-import '../traditional_market/traditional_market_home_page.dart';
+import './construction_services_home_page.dart';
+import './jobs_portal_home_page.dart';
 import 'dart:async';
 import './premium_package_page.dart';
 import 'widgets/categories_section.dart';
@@ -54,6 +54,9 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
   String _currentLocation = 'Guwahati, Assam';
   final ScrollController _scrollController = ScrollController();
 
+  // Category mapping - maps CategoryData names to database IDs
+  Map<String, String> _categoryMapping = {};
+
   // Pagination
   int _currentOffset = 0;
   final int _pageSize = 20;
@@ -71,13 +74,13 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _scrollController.addListener(_onScroll);
-    
+
     // Initialize authentication first, then fetch data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeWithAuth();
     });
     _detectLocation();
-    
+
     // Keep session alive every 10 minutes
     Timer.periodic(Duration(minutes: 10), (timer) {
       if (mounted && _isAuthenticatedUser) {
@@ -98,7 +101,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    
+
     // Check auth when app becomes active
     if (state == AppLifecycleState.resumed) {
       _verifyAuthState();
@@ -114,20 +117,20 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
     try {
       // Initialize auth service
       await _authService.initialize();
-      
+
       // Check if user is authenticated
       final isAuthenticated = _authService.isAuthenticated;
       final userId = _authService.userId;
-      
+
       debugPrint('Auth Check - Authenticated: $isAuthenticated, User ID: $userId');
-      
+
       if (isAuthenticated && userId != null) {
         setState(() {
           _isAuthenticatedUser = true;
           _currentUserId = userId;
           _isCheckingAuth = false;
         });
-        
+
         // Try to refresh session to ensure it's valid
         final sessionValid = await _authService.refreshSession();
         if (!sessionValid) {
@@ -135,15 +138,15 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
           _redirectToLogin();
           return;
         }
-        
+
         // Auth is valid, fetch data
         await _fetchData();
-        
+
       } else {
         debugPrint('User not authenticated, redirecting to login');
         _redirectToLogin();
       }
-      
+
     } catch (e) {
       debugPrint('Auth initialization error: $e');
       _redirectToLogin();
@@ -157,7 +160,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
       _redirectToLogin();
       return;
     }
-    
+
     // Try to refresh session
     final sessionValid = await _authService.refreshSession();
     if (!sessionValid) {
@@ -207,8 +210,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
           }
         }
 
+        // Get the correct category ID for API call
+        String? categoryIdForApi = _getCategoryIdForApi(_selectedCategoryId);
+
         final newListings = await _listingService.fetchListings(
-          categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
+          categoryId: categoryIdForApi,
           sortBy: _sortBy,
           offset: _currentOffset + _pageSize,
           limit: _pageSize,
@@ -232,7 +238,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         if (mounted) {
           setState(() => _isLoadingMore = false);
         }
-        
+
         // Check if error is auth-related
         if (e.toString().contains('auth') || e.toString().contains('401')) {
           _verifyAuthState();
@@ -254,8 +260,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         }
       }
 
+      // Get the correct category ID for API call
+      String? categoryIdForApi = _getCategoryIdForApi(_selectedCategoryId);
+
       final listings = await _listingService.fetchListings(
-        categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
+        categoryId: categoryIdForApi,
         sortBy: _sortBy,
         offset: 0,
         limit: _pageSize,
@@ -272,6 +281,19 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         _verifyAuthState();
       }
     }
+  }
+
+  /// Get the correct category ID for API calls
+  String? _getCategoryIdForApi(String selectedCategoryId) {
+    if (selectedCategoryId == 'All') return null;
+    
+    // If it's already a database ID (from mapping), use it
+    if (_categoryMapping.containsValue(selectedCategoryId)) {
+      return selectedCategoryId;
+    }
+    
+    // If it's a CategoryData name, get the mapped database ID
+    return _categoryMapping[selectedCategoryId];
   }
 
   Future<void> _fetchData() async {
@@ -299,47 +321,23 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
 
       debugPrint('Fetching data for authenticated user: $_currentUserId');
 
-      // Fetch categories - use hardcoded if API fails
-      List<Map<String, dynamic>> categoriesData = [];
+      // Fetch categories from database and create mapping
+      List<Map<String, dynamic>> databaseCategories = [];
+      Map<String, String> categoryMapping = {};
+      
       try {
-        categoriesData = await _listingService.getCategories();
-        debugPrint('Fetched ${categoriesData.length} categories from API');
+        databaseCategories = await _listingService.getCategories();
+        debugPrint('Fetched ${databaseCategories.length} categories from API');
+        
+        // Create mapping between CategoryData names and database IDs
+        categoryMapping = _createCategoryMapping(databaseCategories);
       } catch (e) {
         debugPrint('Error fetching categories from API: $e');
-        // Continue with empty categories, will use hardcoded
+        // Continue with empty mapping, will use CategoryData only
       }
 
-      // Build category list with All option
-      final List<Map<String, dynamic>> mainCategories = [
-        {
-          'name': 'All',
-          'id': 'All',
-          'icon': Icons.apps,
-          'image': null,
-        },
-      ];
-
-      // Add fetched categories or use hardcoded
-      if (categoriesData.isNotEmpty) {
-        mainCategories.addAll(
-          categoriesData.where((cat) => cat['parent_category_id'] == null).map((cat) => {
-            'name': cat['name'],
-            'id': cat['id'],
-            'icon': _getCategoryIcon(cat['name']),
-            'image': cat['icon_url'],
-          }).toList()
-        );
-      } else {
-        // Use hardcoded categories if API failed
-        mainCategories.addAll(
-          CategoryData.mainCategories.map((cat) => {
-            'name': cat['name'],
-            'id': cat['name'], // Use name as ID for hardcoded
-            'icon': cat['icon'],
-            'image': cat['image'],
-          }).toList()
-        );
-      }
+      // Build category list - always use CategoryData for consistency
+      final List<Map<String, dynamic>> processedCategories = _buildCategoryList(categoryMapping);
 
       // Fetch user favorites
       Set<String> favorites = {};
@@ -389,7 +387,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
 
       if (mounted) {
         setState(() {
-          _categories = mainCategories;
+          _categories = processedCategories;
+          _categoryMapping = categoryMapping;
           _favoriteIds = favorites;
           _listings = listings;
           _premiumListings = premiumListings;
@@ -397,7 +396,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
           _isLoadingFeed = false;
 
           // Only show error if both listings and premium failed
-          if (listings.isEmpty && premiumListings.isEmpty && categoriesData.isEmpty) {
+          if (listings.isEmpty && premiumListings.isEmpty && databaseCategories.isEmpty) {
             _hasInitialLoadError = true;
           }
         });
@@ -406,21 +405,9 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
       debugPrint('Unexpected error in _fetchData: $e');
       if (mounted) {
         setState(() {
-          // Use hardcoded categories on error
-          _categories = [
-            {
-              'name': 'All',
-              'id': 'All',
-              'icon': Icons.apps,
-              'image': null,
-            },
-            ...CategoryData.mainCategories.map((cat) => {
-              'name': cat['name'],
-              'id': cat['name'],
-              'icon': cat['icon'],
-              'image': cat['image'],
-            }).toList()
-          ];
+          // Use CategoryData only on error
+          _categories = _buildCategoryList({});
+          _categoryMapping = {};
           _listings = [];
           _premiumListings = [];
           _isLoadingPremium = false;
@@ -428,7 +415,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
           _hasInitialLoadError = true;
         });
       }
-      
+
       // Check if error is auth-related
       if (e.toString().contains('auth') || e.toString().contains('401')) {
         _verifyAuthState();
@@ -436,25 +423,83 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
     }
   }
 
-  IconData _getCategoryIcon(String categoryName) {
-    switch (categoryName) {
-      case 'Electronics':
-        return Icons.devices_other_rounded;
-      case 'Vehicles':
-        return Icons.directions_car_filled_rounded;
-      case 'Furniture':
-        return Icons.chair_rounded;
-      case 'Properties for Sale':
-        return Icons.home_rounded;
-      case 'Room for Rent':
-        return Icons.meeting_room_rounded;
-      case 'PG Accommodation':
-        return Icons.apartment_rounded;
-      case 'Homestays':
-        return Icons.cottage_rounded;
-      default:
-        return Icons.category_rounded;
+  /// Create mapping between CategoryData names and database category IDs
+  Map<String, String> _createCategoryMapping(List<Map<String, dynamic>> databaseCategories) {
+    Map<String, String> mapping = {};
+    
+    // Define the rental categories we want to show
+    final targetCategories = [
+      'Room for Rent',
+      'PG Accommodation', 
+      'Homestays',
+      'Properties for Rent'
+    ];
+
+    for (String categoryName in targetCategories) {
+      // Try to find matching database category
+      final dbCategory = databaseCategories.firstWhere(
+        (cat) => cat['name'] == categoryName || 
+                 cat['name'].toLowerCase() == categoryName.toLowerCase() ||
+                 _isSimilarCategory(cat['name'], categoryName),
+        orElse: () => {},
+      );
+      
+      if (dbCategory.isNotEmpty && dbCategory['id'] != null) {
+        mapping[categoryName] = dbCategory['id'].toString();
+        debugPrint('Mapped "$categoryName" to database ID: ${dbCategory['id']}');
+      } else {
+        debugPrint('No database category found for: $categoryName');
+      }
     }
+    
+    return mapping;
+  }
+
+  /// Check if two category names are similar (for mapping flexibility)
+  bool _isSimilarCategory(String dbName, String localName) {
+    // Add custom mapping logic for similar category names
+    final similarityMap = {
+      'Properties for Rent': ['Property for Rent', 'Properties', 'Real Estate'],
+      'Room for Rent': ['Room Rental', 'Rooms', 'Single Room'],
+      'PG Accommodation': ['PG', 'Paying Guest', 'PG Hostel'],
+      'Homestays': ['Homestay', 'Home Stay', 'Guest House'],
+    };
+
+    return similarityMap[localName]?.any((similar) => 
+      dbName.toLowerCase().contains(similar.toLowerCase())) ?? false;
+  }
+
+  /// Build the category list using CategoryData with database ID mapping
+  List<Map<String, dynamic>> _buildCategoryList(Map<String, String> categoryMapping) {
+    final List<Map<String, dynamic>> processedCategories = [];
+    
+    // Always add "All" category first
+    processedCategories.add({
+      'name': 'All',
+      'id': 'All',
+      'icon': Icons.apps_rounded,
+      'image': 'https://cdn-icons-png.flaticon.com/512/8058/8058572.png',
+    });
+
+    // Add only the rental categories from CategoryData
+    final rentalCategories = CategoryData.mainCategories.where(
+      (cat) => cat['name'] != 'All' // Exclude "All" as we already added it
+    );
+
+    for (final cat in rentalCategories) {
+      final categoryName = cat['name'] as String;
+      final databaseId = categoryMapping[categoryName] ?? categoryName;
+      
+      processedCategories.add({
+        'name': categoryName,
+        'id': databaseId, // Use database ID if available, otherwise use name
+        'icon': cat['icon'],
+        'image': cat['image'],
+      });
+    }
+
+    debugPrint('Built ${processedCategories.length} categories for display');
+    return processedCategories;
   }
 
   void _onCategorySelected(String name) {
@@ -493,8 +538,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         }
       }
 
+      // Get the correct category ID for API call
+      String? categoryIdForApi = _getCategoryIdForApi(_selectedCategoryId);
+
       final listings = await _listingService.fetchListings(
-        categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
+        categoryId: categoryIdForApi,
         sortBy: _sortBy,
         offset: 0,
         limit: _pageSize,
@@ -504,7 +552,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
       List<Map<String, dynamic>> premiumListings = [];
       try {
         premiumListings = await _listingService.fetchPremiumListings(
-          categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
+          categoryId: categoryIdForApi,
           limit: 10,
         );
       } catch (e) {
@@ -529,7 +577,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
           _isLoadingFeed = false;
         });
       }
-      
+
       if (e.toString().contains('auth') || e.toString().contains('401')) {
         _verifyAuthState();
       }
@@ -584,7 +632,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
           ),
         );
       }
-      
+
       if (e.toString().contains('auth') || e.toString().contains('401')) {
         _verifyAuthState();
       }
@@ -661,6 +709,24 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => ProfilePage()),
+    );
+  }
+
+  void _navigateToJobs() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => JobsPortalHomePage(),
+      ),
+    );
+  }
+
+  void _navigateToConstructionServices() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ConstructionServicesHomePage(),
+      ),
     );
   }
 
@@ -775,7 +841,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
             controller: _scrollController,
             physics: AlwaysScrollableScrollPhysics(),
             slivers: [
-              // Top Bar
+              // Top Bar - Updated to use company logo
               SliverToBoxAdapter(
                 child: TopBarWidget(
                   currentLocation: _currentLocation,
@@ -800,25 +866,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
               // App Info Banner
               SliverToBoxAdapter(child: AppInfoBannerNew()),
 
-              // Three Options
+              // Three Options - Updated for Jobs and Construction Services
               SliverToBoxAdapter(
                 child: ThreeOptionSection(
-                  onJobsTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => JobsHomePage(),
-                      ),
-                    );
-                  },
-                  onTraditionalTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TraditionalMarketHomePage(),
-                      ),
-                    );
-                  },
+                  onJobsTap: _navigateToJobs,
+                  onConstructionTap: _navigateToConstructionServices,
                 ),
               ),
 
@@ -852,7 +904,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
                   ),
                 ),
 
-              // Categories
+              // Categories - Now only shows 4 rental categories
               SliverToBoxAdapter(
                 child: CategoriesSection(
                   categories: _categories.map((cat) => cat.cast<String, Object>()).toList(),
