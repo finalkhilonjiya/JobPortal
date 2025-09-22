@@ -9,66 +9,6 @@ class CategoryData {
       'subcategories': [],
     },
     {
-      'name': 'Electronics',
-      'icon': Icons.devices_other_rounded,
-      'image': 'https://cdn-icons-png.flaticon.com/512/3659/3659899.png',
-      'subcategories': [
-        'Mobile Phones',
-        'Laptops & Computers',
-        'Tablets',
-        'Televisions',
-        'Cameras & Accessories',
-        'Headphones & Earphones',
-        'Smart Watches & Wearables',
-        'Gaming Consoles',
-        'Home Appliances',
-        'Other Electronics',
-      ],
-    },
-    {
-      'name': 'Vehicles',
-      'icon': Icons.directions_car_filled_rounded,
-      'image': 'https://cdn-icons-png.flaticon.com/512/3774/3774278.png',
-      'subcategories': [
-        'Cars',
-        'Bikes & Scooters',
-        'Bicycles',
-        'Commercial Vehicles',
-        'Auto Rickshaws',
-        'Spare Parts & Accessories',
-        'Electric Vehicles (EVs)',
-      ],
-    },
-    {
-      'name': 'Furniture',
-      'icon': Icons.chair_rounded,
-      'image': 'https://cdn-icons-png.flaticon.com/512/5781/5781883.png',
-      'subcategories': [
-        'Sofas & Seating',
-        'Beds & Mattresses',
-        'Tables & Desks',
-        'Chairs',
-        'Cupboards & Wardrobes',
-        'TV Units',
-        'Dining Sets',
-        'Office Furniture',
-        'Other Furniture',
-      ],
-    },
-    {
-      'name': 'Properties for Sale',
-      'icon': Icons.home_rounded,
-      'image':
-          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQpfW240Q3lGejPKThC36IFQtecjL4Yi2Ml-dzErxh4MYC2O69dnH4BXZ_D&s=10',
-      'subcategories': [
-        'Flats / Apartments for Sale',
-        'Houses / Villas for Sale',
-        'Plots / Land for Sale',
-        'Commercial Properties for Sale',
-        'Agricultural Land for Sale',
-      ],
-    },
-    {
       'name': 'Room for Rent',
       'icon': Icons.meeting_room_rounded,
       'image':
@@ -115,6 +55,20 @@ class CategoryData {
         'Heritage Stay',
       ],
     },
+    {
+      'name': 'Properties for Rent',
+      'icon': Icons.home_work_rounded,
+      'image':
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQpfW240Q3lGejPKThC36IFQtecjL4Yi2Ml-dzErxh4MYC2O69dnH4BXZ_D&s=10',
+      'subcategories': [
+        'Flats / Apartments for Rent',
+        'Houses / Villas for Rent',
+        'Commercial Properties for Rent',
+        'Office Space for Rent',
+        'Shop / Showroom for Rent',
+        'Warehouse for Rent',
+      ],
+    },
   ];
 
   static List<String> getSubcategories(String category) {
@@ -127,21 +81,20 @@ class CategoryData {
 
   static bool shouldShowField(String category, String field) {
     final fieldCategories = {
-      'brand': ['Electronics', 'Vehicles', 'Furniture'],
-      'model': ['Electronics', 'Vehicles'],
-      'yearOfPurchase': ['Electronics', 'Vehicles', 'Furniture'],
-      'warrantyStatus': ['Electronics', 'Furniture'],
-      'kilometresDriven': ['Vehicles'],
-      'fuelType': ['Vehicles'],
-      'transmissionType': ['Vehicles'],
-      'bedrooms': ['Properties for Sale', 'Room for Rent', 'Homestays'],
-      'bathrooms': ['Properties for Sale', 'Room for Rent', 'Homestays'],
+      'bedrooms': ['Properties for Rent', 'Room for Rent', 'Homestays'],
+      'bathrooms': ['Properties for Rent', 'Room for Rent', 'Homestays'],
       'furnishingStatus': [
-        'Properties for Sale',
-        'Room for Rent',
+        'Properties for Rent',
+        'Room for Rent', 
         'PG Accommodation',
         'Homestays'
       ],
+      'rentAmount': ['Properties for Rent', 'Room for Rent', 'PG Accommodation', 'Homestays'],
+      'deposit': ['Properties for Rent', 'Room for Rent', 'PG Accommodation'],
+      'amenities': ['Properties for Rent', 'Room for Rent', 'PG Accommodation', 'Homestays'],
+      'preferredTenant': ['Properties for Rent', 'Room for Rent', 'PG Accommodation'],
+      'foodIncluded': ['PG Accommodation', 'Homestays'],
+      'occupancyType': ['PG Accommodation'],
     };
 
     return fieldCategories[field]?.contains(category) ?? false;
