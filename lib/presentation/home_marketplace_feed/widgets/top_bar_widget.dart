@@ -1,4 +1,4 @@
-// File: widgets/top_bar_widget.dart
+// File: lib/presentation/home_marketplace_feed/widgets/top_bar_widget.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:geolocator/geolocator.dart';
@@ -30,7 +30,7 @@ class _TopBarWidgetState extends State<TopBarWidget> {
 
   Future<void> _detectLocation() async {
     if (_isDetectingLocation) return;
-    
+
     setState(() {
       _isDetectingLocation = true;
       _currentLocation = 'Detecting...';
@@ -92,25 +92,37 @@ class _TopBarWidgetState extends State<TopBarWidget> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Logo and Title - NOT flexible, takes its required space
+          // Logo and Title - Updated to use company logo
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 height: 8.w,
                 width: 8.w,
-                decoration: BoxDecoration(
-                  color: Color(0xFF2563EB),
+                child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(
-                    'K',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14.sp,
-                    ),
+                  child: Image.asset(
+                    'assets/images/company_logo.png',
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      // Fallback to "K" if logo fails to load
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: Color(0xFF2563EB),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'K',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14.sp,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -125,10 +137,10 @@ class _TopBarWidgetState extends State<TopBarWidget> {
               ),
             ],
           ),
-          
+
           // Add some spacing
           SizedBox(width: 2.w),
-          
+
           // Location - Flexible to take remaining space
           Expanded(
             child: InkWell(
