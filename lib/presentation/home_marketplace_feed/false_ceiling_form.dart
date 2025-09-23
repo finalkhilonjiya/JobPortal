@@ -301,6 +301,27 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
       validator: required ? (value) => value?.isEmpty ?? true ? 'This field is required' : null : null,
       decoration: InputDecoration(
         labelText: label,
+        prefixIcon: Icon(icon, color: Color(0xFF2563EB)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Color(0xFF2563EB), width: 2),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdownField(
+    String label,
+    String value,
+    List<String> options,
+    Function(String?) onChanged,
+  ) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -404,25 +425,4 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
     _additionalDetailsController.dispose();
     super.dispose();
   }
-}(
-        labelText: label,
-        prefixIcon: Icon(icon, color: Color(0xFF2563EB)),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Color(0xFF2563EB), width: 2),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDropdownField(
-    String label,
-    String value,
-    List<String> options,
-    Function(String?) onChanged,
-  ) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      onChanged: onChanged,
-      decoration: InputDecoration
+}
