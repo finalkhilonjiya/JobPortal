@@ -1,8 +1,86 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'rcc_works_form.dart';
+import 'assam_type_form.dart';
+import 'electrical_works_form.dart';
+import 'false_ceiling_form.dart';
+import 'plumbing_form.dart';
+import 'interior_design_form.dart';
 
-class ConstructionServicesHomePage extends StatelessWidget {
+class ConstructionServicesHomePage extends StatefulWidget {
   const ConstructionServicesHomePage({Key? key}) : super(key: key);
+
+  @override
+  State<ConstructionServicesHomePage> createState() => _ConstructionServicesHomePageState();
+}
+
+class _ConstructionServicesHomePageState extends State<ConstructionServicesHomePage> {
+  String _currentLocation = 'Detecting...';
+  bool _isDetectingLocation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _detectLocation();
+  }
+
+  Future<void> _detectLocation() async {
+    if (_isDetectingLocation) return;
+
+    setState(() {
+      _isDetectingLocation = true;
+      _currentLocation = 'Detecting...';
+    });
+
+    try {
+      // Check permission
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            _currentLocation = 'Location denied';
+            _isDetectingLocation = false;
+          });
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _currentLocation = 'Location disabled';
+          _isDetectingLocation = false;
+        });
+        return;
+      }
+
+      // Get current position
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      // Get place name from coordinates
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        setState(() {
+          _currentLocation = '${place.locality ?? place.subAdministrativeArea ?? 'Unknown'}, ${place.administrativeArea ?? ''}';
+          _isDetectingLocation = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _currentLocation = 'Guwahati, Assam'; // Fallback
+        _isDetectingLocation = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +89,7 @@ class ConstructionServicesHomePage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Header Section
+            // Header Section with Real Location
             _buildHeader(context),
             
             // Body Content
@@ -34,7 +112,7 @@ class ConstructionServicesHomePage extends StatelessWidget {
                     // Features Section
                     _buildFeaturesSection(),
                     
-                    SizedBox(height: 10.h), // Space for bottom nav
+                    SizedBox(height: 10.h),
                   ],
                 ),
               ),
@@ -57,6 +135,24 @@ class ConstructionServicesHomePage extends StatelessWidget {
             child: Image.asset(
               'assets/images/company_logo.png',
               fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Color(0xFF2563EB),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'K',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.sp,
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           SizedBox(width: 3.w),
@@ -71,18 +167,33 @@ class ConstructionServicesHomePage extends StatelessWidget {
                   color: Colors.black87,
                 ),
               ),
-              Row(
-                children: [
-                  Icon(Icons.location_on, size: 4.w, color: Colors.grey),
-                  SizedBox(width: 1.w),
-                  Text(
-                    'Guwahati, Assam',
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: Colors.grey,
+              // Real Location Display
+              InkWell(
+                onTap: _detectLocation,
+                child: Row(
+                  children: [
+                    Icon(Icons.location_on, size: 4.w, color: Colors.grey),
+                    SizedBox(width: 1.w),
+                    Text(
+                      _currentLocation,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: Colors.grey,
+                      ),
                     ),
-                  ),
-                ],
+                    if (_isDetectingLocation) ...[
+                      SizedBox(width: 2.w),
+                      SizedBox(
+                        width: 3.w,
+                        height: 3.w,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 1.5,
+                          color: Color(0xFF2563EB),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -168,42 +279,42 @@ class ConstructionServicesHomePage extends StatelessWidget {
         subtitle: 'Reinforced concrete construction',
         icon: Icons.construction,
         colors: [Color(0xFFE8F5E8), Color(0xFFC8E6C9)],
-        onTap: () => _navigateToService(context, 'RCC Works'),
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => RCCWorksForm())),
       ),
       ServiceItem(
         title: 'Assam Type',
         subtitle: 'Traditional Assamese architecture',
         icon: Icons.home,
         colors: [Color(0xFFFFF3E0), Color(0xFFFFCC02)],
-        onTap: () => _navigateToService(context, 'Assam Type'),
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AssamTypeForm())),
       ),
       ServiceItem(
         title: 'Electrical Works',
         subtitle: 'Complete electrical solutions',
         icon: Icons.electrical_services,
         colors: [Color(0xFFE3F2FD), Color(0xFF90CAF9)],
-        onTap: () => _navigateToService(context, 'Electrical Works'),
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ElectricalWorksForm())),
       ),
       ServiceItem(
         title: 'False Ceiling',
         subtitle: 'Modern ceiling designs',
         icon: Icons.architecture,
         colors: [Color(0xFFF3E5F5), Color(0xFFCE93D8)],
-        onTap: () => _navigateToService(context, 'False Ceiling'),
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => FalseCeilingForm())),
       ),
       ServiceItem(
         title: 'Plumbing',
         subtitle: 'Complete plumbing solutions',
         icon: Icons.plumbing,
         colors: [Color(0xFFFFF8E1), Color(0xFFFFCC02)],
-        onTap: () => _navigateToService(context, 'Plumbing'),
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => PlumbingForm())),
       ),
       ServiceItem(
         title: 'Interior Design',
         subtitle: 'Custom interior solutions',
         icon: Icons.design_services,
         colors: [Color(0xFFFCE4EC), Color(0xFFF48FB1)],
-        onTap: () => _navigateToService(context, 'Interior Design'),
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => InteriorDesignForm())),
       ),
     ];
 
@@ -404,15 +515,6 @@ class ConstructionServicesHomePage extends StatelessWidget {
     );
   }
 
-  void _navigateToService(BuildContext context, String serviceName) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ServiceDetailPage(serviceName: serviceName),
-      ),
-    );
-  }
-
   void _showQuoteDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -427,7 +529,6 @@ class ConstructionServicesHomePage extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // Handle contact action
             },
             child: Text('Contact Us'),
           ),
@@ -437,7 +538,6 @@ class ConstructionServicesHomePage extends StatelessWidget {
   }
 
   void _navigateToProjects(BuildContext context) {
-    // Navigate to projects page
     print('Navigate to Our Projects');
   }
 }
@@ -456,35 +556,4 @@ class ServiceItem {
     required this.colors,
     required this.onTap,
   });
-}
-
-// Placeholder for Service Detail Page
-class ServiceDetailPage extends StatelessWidget {
-  final String serviceName;
-
-  const ServiceDetailPage({Key? key, required this.serviceName}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(serviceName),
-        backgroundColor: Color(0xFF2563EB),
-        foregroundColor: Colors.white,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              '$serviceName Details',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-            Text('Service packages and booking options will be displayed here.'),
-          ],
-        ),
-      ),
-    );
-  }
 }
