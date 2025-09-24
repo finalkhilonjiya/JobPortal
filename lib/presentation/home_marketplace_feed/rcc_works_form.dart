@@ -14,13 +14,11 @@ class _RCCWorksFormState extends State<RCCWorksForm> {
   // Form Controllers
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _addressController = TextEditingController();
   final _plotSizeController = TextEditingController();
-  final _budgetController = TextEditingController();
   final _additionalDetailsController = TextEditingController();
   
   // Dropdown Values
+  String _selectedDistrict = 'Kamrup Metropolitan';
   String _selectedProjectType = 'Residential Building';
   String _selectedFloors = '1 Floor (Ground)';
   String _selectedTimeframe = 'Within 1 Month';
@@ -31,6 +29,19 @@ class _RCCWorksFormState extends State<RCCWorksForm> {
   bool _needsMaterialSupply = false;
   bool _needsSoilTesting = false;
   bool _hasExistingPlans = false;
+  bool _needsConstruction = false;
+  bool _needsCompleteSolution = false;
+
+  // Assam Districts List
+  final List<String> assamDistricts = [
+    'Baksa', 'Barpeta', 'Biswanath', 'Bongaigaon', 'Cachar', 'Charaideo',
+    'Chirang', 'Darrang', 'Dhemaji', 'Dhubri', 'Dibrugarh', 'Dima Hasao',
+    'Goalpara', 'Golaghat', 'Hailakandi', 'Hojai', 'Jorhat', 'Kamrup',
+    'Kamrup Metropolitan', 'Karbi Anglong', 'Karimganj', 'Kokrajhar',
+    'Lakhimpur', 'Majuli', 'Morigaon', 'Nagaon', 'Nalbari', 'Sivasagar',
+    'Sonitpur', 'South Salmara-Mankachar', 'Tinsukia', 'Udalguri',
+    'West Karbi Anglong'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -164,9 +175,12 @@ class _RCCWorksFormState extends State<RCCWorksForm> {
           SizedBox(height: 3.w),
           _buildTextFormField(_phoneController, 'Phone Number *', Icons.phone, keyboardType: TextInputType.phone),
           SizedBox(height: 3.w),
-          _buildTextFormField(_emailController, 'Email Address', Icons.email, keyboardType: TextInputType.emailAddress, required: false),
-          SizedBox(height: 3.w),
-          _buildTextFormField(_addressController, 'Project Address *', Icons.location_on, maxLines: 2),
+          _buildDropdownField(
+            'District *',
+            _selectedDistrict,
+            assamDistricts,
+            (value) => setState(() => _selectedDistrict = value!),
+          ),
         ],
       ),
     );
@@ -212,6 +226,8 @@ class _RCCWorksFormState extends State<RCCWorksForm> {
       ),
       child: Column(
         children: [
+          _buildCheckboxTile('Complete Solution (Design + Construction)', _needsCompleteSolution, (value) => setState(() => _needsCompleteSolution = value!)),
+          _buildCheckboxTile('Construction Work', _needsConstruction, (value) => setState(() => _needsConstruction = value!)),
           _buildCheckboxTile('Design & Planning Services', _needsDesignPlanning, (value) => setState(() => _needsDesignPlanning = value!)),
           _buildCheckboxTile('Material Supply', _needsMaterialSupply, (value) => setState(() => _needsMaterialSupply = value!)),
           _buildCheckboxTile('Soil Testing Required', _needsSoilTesting, (value) => setState(() => _needsSoilTesting = value!)),
@@ -326,7 +342,7 @@ class _RCCWorksFormState extends State<RCCWorksForm> {
   Widget _buildSubmitButton() {
     return Container(
       width: double.infinity,
-      height: 12.h,
+      height: 7.h,
       child: ElevatedButton(
         onPressed: _submitForm,
         style: ElevatedButton.styleFrom(
@@ -336,22 +352,21 @@ class _RCCWorksFormState extends State<RCCWorksForm> {
           elevation: 2,
         ),
         child: Text(
-          'Submit Request for Quote',
+          'Request for Quote',
           style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
         ),
       ),
     );
   }
 
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       // Create data map for database submission
       Map<String, dynamic> formData = {
         'service_type': 'RCC Works',
         'name': _nameController.text,
         'phone': _phoneController.text,
-        'email': _emailController.text.isEmpty ? null : _emailController.text,
-        'project_address': _addressController.text,
+        'project_address': _selectedDistrict,
         'project_type': _selectedProjectType,
         'number_of_floors': _selectedFloors,
         'plot_size': _plotSizeController.text,
@@ -361,15 +376,23 @@ class _RCCWorksFormState extends State<RCCWorksForm> {
         'needs_material_supply': _needsMaterialSupply,
         'needs_soil_testing': _needsSoilTesting,
         'has_existing_plans': _hasExistingPlans,
+        'needs_construction': _needsConstruction,
+        'needs_complete_solution': _needsCompleteSolution,
         'additional_details': _additionalDetailsController.text,
-        'created_at': DateTime.now().toIso8601String(),
         'status': 'pending',
       };
 
-      // TODO: Submit to Supabase database
-      // await ConstructionService().submitRCCWorksRequest(formData);
-
-      _showSuccessDialog();
+      try {
+        // TODO: Replace with your actual Supabase service call
+        // await ConstructionService().submitRCCWorksRequest(formData);
+        
+        // For now, just print the data (remove this in production)
+        print('Form Data: $formData');
+        
+        _showSuccessDialog();
+      } catch (e) {
+        _showErrorDialog('Failed to submit request: ${e.toString()}');
+      }
     }
   }
 
@@ -392,14 +415,27 @@ class _RCCWorksFormState extends State<RCCWorksForm> {
     );
   }
 
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _emailController.dispose();
-    _addressController.dispose();
     _plotSizeController.dispose();
-    _budgetController.dispose();
     _additionalDetailsController.dispose();
     super.dispose();
   }
