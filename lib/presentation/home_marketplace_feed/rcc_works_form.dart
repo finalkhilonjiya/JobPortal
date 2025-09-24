@@ -361,41 +361,32 @@ class _RCCWorksFormState extends State<RCCWorksForm> {
   }
 
   void _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      // Create data map for database submission
-      Map<String, dynamic> formData = {
-        'service_type': 'RCC Works',
-        'name': _nameController.text,
-        'phone': _phoneController.text,
-        'project_address': _selectedDistrict,
-        'project_type': _selectedProjectType,
-        'number_of_floors': _selectedFloors,
-        'plot_size': _plotSizeController.text,
-        'budget_range': _selectedBudgetRange,
-        'timeline': _selectedTimeframe,
-        'needs_design_planning': _needsDesignPlanning,
-        'needs_material_supply': _needsMaterialSupply,
-        'needs_soil_testing': _needsSoilTesting,
-        'has_existing_plans': _hasExistingPlans,
-        'needs_construction': _needsConstruction,
-        'needs_complete_solution': _needsCompleteSolution,
-        'additional_details': _additionalDetailsController.text,
-        'status': 'pending',
-      };
+  if (_formKey.currentState!.validate()) {
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(child: CircularProgressIndicator()),
+    );
 
-      try {
-        // TODO: Replace with your actual Supabase service call
-        // await ConstructionService().submitRCCWorksRequest(formData);
-        
-        // For now, just print the data (remove this in production)
-        print('Form Data: $formData');
-        
-        _showSuccessDialog();
-      } catch (e) {
-        _showErrorDialog('Failed to submit request: ${e.toString()}');
-      }
+    Map<String, dynamic> formData = {
+      'service_type': 'RCC Works',
+      'name': _nameController.text,
+      'phone': _phoneController.text,
+      'project_address': _selectedDistrict,
+      // ... rest of your form data
+    };
+
+    try {
+      await ConstructionService().submitConstructionRequest(formData);
+      Navigator.pop(context); // Close loading
+      _showSuccessDialog();
+    } catch (e) {
+      Navigator.pop(context); // Close loading
+      _showErrorDialog('Failed to submit request: ${e.toString()}');
     }
   }
+}
 
   void _showSuccessDialog() {
     showDialog(
