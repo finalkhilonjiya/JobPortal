@@ -1,8 +1,80 @@
+// File: lib/presentation/home_marketplace_feed/jobs_portal_home_page.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'job_application_form.dart';
+import 'job_listing_form.dart';
 
-class JobsPortalHomePage extends StatelessWidget {
+class JobsPortalHomePage extends StatefulWidget {
   const JobsPortalHomePage({Key? key}) : super(key: key);
+
+  @override
+  State<JobsPortalHomePage> createState() => _JobsPortalHomePageState();
+}
+
+class _JobsPortalHomePageState extends State<JobsPortalHomePage> {
+  String _currentLocation = 'Detecting...';
+  bool _isDetectingLocation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _detectLocation();
+  }
+
+  Future<void> _detectLocation() async {
+    if (_isDetectingLocation) return;
+
+    setState(() {
+      _isDetectingLocation = true;
+      _currentLocation = 'Detecting...';
+    });
+
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            _currentLocation = 'Location denied';
+            _isDetectingLocation = false;
+          });
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _currentLocation = 'Location disabled';
+          _isDetectingLocation = false;
+        });
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        setState(() {
+          _currentLocation = '${place.locality ?? place.subAdministrativeArea ?? 'Unknown'}, ${place.administrativeArea ?? ''}';
+          _isDetectingLocation = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _currentLocation = 'Guwahati, Assam';
+        _isDetectingLocation = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,30 +83,17 @@ class JobsPortalHomePage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Header Section
             _buildHeader(context),
-            
-            // Body Content
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    // Welcome Banner
                     _buildWelcomeBanner(),
-                    
-                    // Main Action Buttons
                     _buildMainActionButtons(context),
-                    
-                    // Quick Stats
                     _buildQuickStats(),
-                    
-                    // Featured Jobs Section
                     _buildFeaturedJobsSection(),
-                    
-                    // Why Choose Us
                     _buildWhyChooseUs(),
-                    
-                    SizedBox(height: 10.h), // Space for bottom nav
+                    SizedBox(height: 10.h),
                   ],
                 ),
               ),
@@ -89,18 +148,32 @@ class JobsPortalHomePage extends StatelessWidget {
                   color: Colors.black87,
                 ),
               ),
-              Row(
-                children: [
-                  Icon(Icons.location_on, size: 4.w, color: Colors.grey),
-                  SizedBox(width: 1.w),
-                  Text(
-                    'Guwahati, Assam',
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: Colors.grey,
+              InkWell(
+                onTap: _detectLocation,
+                child: Row(
+                  children: [
+                    Icon(Icons.location_on, size: 4.w, color: Colors.grey),
+                    SizedBox(width: 1.w),
+                    Text(
+                      _currentLocation,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: Colors.grey,
+                      ),
                     ),
-                  ),
-                ],
+                    if (_isDetectingLocation) ...[
+                      SizedBox(width: 2.w),
+                      SizedBox(
+                        width: 3.w,
+                        height: 3.w,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 1.5,
+                          color: Color(0xFF2563EB),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -159,22 +232,25 @@ class JobsPortalHomePage extends StatelessWidget {
       margin: EdgeInsets.fromLTRB(4.w, 0, 4.w, 6.w),
       child: Column(
         children: [
-          // Apply for Jobs Button
           Container(
             width: double.infinity,
             height: 15.h,
-            child: ElevatedButton(
+            child: OutlinedButton(
               onPressed: () {
-                // Navigate to job application form
-                _navigateToJobApplication(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => JobApplicationForm(),
+                  ),
+                );
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF2563EB),
-                foregroundColor: Colors.white,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Color(0xFF2563EB),
+                side: BorderSide(color: Color(0xFF2563EB), width: 2),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                elevation: 4,
+                backgroundColor: Colors.white,
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -193,24 +269,25 @@ class JobsPortalHomePage extends StatelessWidget {
                     'Find opportunities that match your skills',
                     style: TextStyle(
                       fontSize: 10.sp,
-                      color: Colors.white70,
+                      color: Color(0xFF2563EB).withOpacity(0.7),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          
           SizedBox(height: 4.w),
-          
-          // List Jobs Button
           Container(
             width: double.infinity,
             height: 15.h,
             child: OutlinedButton(
               onPressed: () {
-                // Navigate to job listing form
-                _navigateToJobListing(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => JobListingForm(),
+                  ),
+                );
               },
               style: OutlinedButton.styleFrom(
                 foregroundColor: Color(0xFF2563EB),
@@ -444,84 +521,6 @@ class JobsPortalHomePage extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
       ],
-    );
-  }
-
-  void _navigateToJobApplication(BuildContext context) {
-    // Navigate to job application form
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => JobApplicationFormPage(),
-      ),
-    );
-  }
-
-  void _navigateToJobListing(BuildContext context) {
-    // Navigate to job listing form
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => JobListingFormPage(),
-      ),
-    );
-  }
-}
-
-// Placeholder for Job Application Form
-class JobApplicationFormPage extends StatelessWidget {
-  const JobApplicationFormPage({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Apply for Jobs'),
-        backgroundColor: Color(0xFF2563EB),
-        foregroundColor: Colors.white,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Job Application Form',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-            Text('Job application form will be implemented here.'),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// Placeholder for Job Listing Form
-class JobListingFormPage extends StatelessWidget {
-  const JobListingFormPage({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('List Jobs'),
-        backgroundColor: Color(0xFF2563EB),
-        foregroundColor: Colors.white,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Job Listing Form',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-            Text('Job listing form will be implemented here.'),
-          ],
-        ),
-      ),
     );
   }
 }
