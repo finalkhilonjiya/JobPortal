@@ -73,9 +73,7 @@ class ConstructionService {
     try {
       var query = _supabase
           .from('construction_service_requests')
-          .select()
-          .order('created_at', ascending: false)
-          .range(offset, offset + limit - 1);
+          .select();
 
       if (serviceType != null) {
         query = query.eq('service_type', serviceType);
@@ -84,6 +82,10 @@ class ConstructionService {
       if (status != null) {
         query = query.eq('status', status);
       }
+
+      query = query
+          .order('created_at', ascending: false)
+          .range(offset, offset + limit - 1);
 
       final response = await query;
       return List<Map<String, dynamic>>.from(response);
