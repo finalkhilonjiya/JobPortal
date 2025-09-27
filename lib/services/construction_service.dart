@@ -16,7 +16,7 @@ class ConstructionService {
 
       // Add timestamp
       requestData['created_at'] = DateTime.now().toIso8601String();
-      
+
       // Insert into database
       await _supabase
           .from('construction_service_requests')
@@ -140,20 +140,20 @@ class ConstructionService {
   Future<Map<String, dynamic>> getConstructionStats() async {
     try {
       // Get total requests
-      final totalRequests = await _supabase
+      final totalRequestsResponse = await _supabase
           .from('construction_service_requests')
-          .select('id', const FetchOptions(count: CountOption.exact));
+          .select('*', const FetchOptions(count: CountOption.exact));
 
       // Get pending requests
-      final pendingRequests = await _supabase
+      final pendingRequestsResponse = await _supabase
           .from('construction_service_requests')
-          .select('id', const FetchOptions(count: CountOption.exact))
+          .select('*', const FetchOptions(count: CountOption.exact))
           .eq('status', 'pending');
 
       // Get completed requests
-      final completedRequests = await _supabase
+      final completedRequestsResponse = await _supabase
           .from('construction_service_requests')
-          .select('id', const FetchOptions(count: CountOption.exact))
+          .select('*', const FetchOptions(count: CountOption.exact))
           .eq('status', 'completed');
 
       // Get requests by service type
@@ -170,9 +170,9 @@ class ConstructionService {
       }
 
       return {
-        'total_requests': totalRequests.count,
-        'pending_requests': pendingRequests.count,
-        'completed_requests': completedRequests.count,
+        'total_requests': totalRequestsResponse.count,
+        'pending_requests': pendingRequestsResponse.count,
+        'completed_requests': completedRequestsResponse.count,
         'service_type_counts': serviceTypeCounts,
       };
 
