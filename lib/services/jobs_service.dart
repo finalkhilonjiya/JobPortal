@@ -106,9 +106,7 @@ class JobsService {
       var query = _supabase
           .from('job_listings')
           .select()
-          .eq('status', 'active')
-          .order('created_at', ascending: false)
-          .range(offset, offset + limit - 1);
+          .eq('status', 'active');
 
       if (category != null) {
         query = query.eq('job_category', category);
@@ -117,6 +115,10 @@ class JobsService {
       if (district != null) {
         query = query.eq('district', district);
       }
+
+      query = query
+          .order('created_at', ascending: false)
+          .range(offset, offset + limit - 1);
 
       final response = await query;
       return List<Map<String, dynamic>>.from(response);
