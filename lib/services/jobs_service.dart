@@ -103,7 +103,7 @@ class JobsService {
     int offset = 0,
   }) async {
     try {
-      PostgrestFilterBuilder query = _supabase
+      var query = _supabase
           .from('job_listings')
           .select()
           .eq('status', 'active')
