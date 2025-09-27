@@ -103,24 +103,23 @@ class JobsService {
     int offset = 0,
   }) async {
     try {
-      var query = _supabase
+      var queryBuilder = _supabase
           .from('job_listings')
           .select()
           .eq('status', 'active');
 
       if (category != null) {
-        query = query.eq('job_category', category);
+        queryBuilder = queryBuilder.eq('job_category', category);
       }
 
       if (district != null) {
-        query = query.eq('district', district);
+        queryBuilder = queryBuilder.eq('district', district);
       }
 
-      query = query
+      final response = await queryBuilder
           .order('created_at', ascending: false)
           .range(offset, offset + limit - 1);
 
-      final response = await query;
       return List<Map<String, dynamic>>.from(response);
 
     } catch (e) {
