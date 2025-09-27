@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import '../../services/construction_service.dart';
 
 class AssamTypeForm extends StatefulWidget {
   const AssamTypeForm({Key? key}) : super(key: key);
@@ -10,23 +11,23 @@ class AssamTypeForm extends StatefulWidget {
 
 class _AssamTypeFormState extends State<AssamTypeForm> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Form Controllers
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _emailController = TextEditingController();
   final _addressController = TextEditingController();
   final _plotSizeController = TextEditingController();
   final _additionalDetailsController = TextEditingController();
-  
+
   // Dropdown Values
+  String _selectedDistrict = 'Kamrup Metropolitan';
   String _selectedHouseType = 'Traditional Assam House';
   String _selectedFloors = 'Single Story';
   String _selectedRoofType = 'Tin Roof';
   String _selectedFoundationType = 'Pillar Foundation';
   String _selectedTimeframe = 'Within 3 Months';
   String _selectedBudgetRange = '10-20 Lakhs';
-  
+
   // Checkbox Values
   bool _needsDesign = false;
   bool _needsMaterialSupply = false;
@@ -36,6 +37,17 @@ class _AssamTypeFormState extends State<AssamTypeForm> {
   bool _needsPlumbingWork = false;
   bool _hasLandReady = false;
   bool _needsPermits = false;
+
+  // Assam Districts List
+  final List<String> assamDistricts = [
+    'Baksa', 'Barpeta', 'Biswanath', 'Bongaigaon', 'Cachar', 'Charaideo',
+    'Chirang', 'Darrang', 'Dhemaji', 'Dhubri', 'Dibrugarh', 'Dima Hasao',
+    'Goalpara', 'Golaghat', 'Hailakandi', 'Hojai', 'Jorhat', 'Kamrup',
+    'Kamrup Metropolitan', 'Karbi Anglong', 'Karimganj', 'Kokrajhar',
+    'Lakhimpur', 'Majuli', 'Morigaon', 'Nagaon', 'Nalbari', 'Sivasagar',
+    'Sonitpur', 'South Salmara-Mankachar', 'Tinsukia', 'Udalguri',
+    'West Karbi Anglong'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -56,27 +68,27 @@ class _AssamTypeFormState extends State<AssamTypeForm> {
             children: [
               _buildServiceDescriptionCard(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Personal Information'),
               _buildPersonalInfoSection(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('House Specifications'),
               _buildHouseSpecsSection(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Services Required'),
               _buildServicesSection(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Budget & Timeline'),
               _buildBudgetTimelineSection(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Additional Information'),
               _buildAdditionalInfoSection(),
               SizedBox(height: 6.w),
-              
+
               _buildSubmitButton(),
               SizedBox(height: 4.w),
             ],
@@ -162,9 +174,12 @@ class _AssamTypeFormState extends State<AssamTypeForm> {
           SizedBox(height: 3.w),
           _buildTextFormField(_phoneController, 'Phone Number *', Icons.phone, keyboardType: TextInputType.phone),
           SizedBox(height: 3.w),
-          _buildTextFormField(_emailController, 'Email Address', Icons.email, keyboardType: TextInputType.emailAddress, required: false),
-          SizedBox(height: 3.w),
-          _buildTextFormField(_addressController, 'Construction Location *', Icons.location_on, maxLines: 2),
+          _buildDropdownField(
+            'District *',
+            _selectedDistrict,
+            assamDistricts,
+            (value) => setState(() => _selectedDistrict = value!),
+          ),
         ],
       ),
     );
@@ -255,9 +270,9 @@ class _AssamTypeFormState extends State<AssamTypeForm> {
           ),
           SizedBox(height: 3.w),
           _buildDropdownField(
-            'Construction Timeline',
+            'When do you want to start?',
             _selectedTimeframe,
-            ['Within 1 Month', 'Within 3 Months', '3-6 Months', '6-12 Months', 'Just Planning'],
+            ['Immediately', 'Within 1 Month', 'Within 3 Months', '3-6 Months', 'Just Planning'],
             (value) => setState(() => _selectedTimeframe = value!),
           ),
         ],
@@ -342,7 +357,7 @@ class _AssamTypeFormState extends State<AssamTypeForm> {
   Widget _buildSubmitButton() {
     return Container(
       width: double.infinity,
-      height: 12.h,
+      height: 7.h,
       child: ElevatedButton(
         onPressed: _submitForm,
         style: ElevatedButton.styleFrom(
@@ -352,21 +367,27 @@ class _AssamTypeFormState extends State<AssamTypeForm> {
           elevation: 2,
         ),
         child: Text(
-          'Submit Request for Quote',
+          'Request for Quote',
           style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
         ),
       ),
     );
   }
 
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState!.validate()) {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(child: CircularProgressIndicator()),
+      );
+
       Map<String, dynamic> formData = {
         'service_type': 'Assam Type',
         'name': _nameController.text,
         'phone': _phoneController.text,
-        'email': _emailController.text.isEmpty ? null : _emailController.text,
-        'project_address': _addressController.text,
+        'project_address': _selectedDistrict,
         'house_type': _selectedHouseType,
         'number_of_floors': _selectedFloors,
         'roof_type': _selectedRoofType,
@@ -383,11 +404,17 @@ class _AssamTypeFormState extends State<AssamTypeForm> {
         'has_land_ready': _hasLandReady,
         'needs_permits': _needsPermits,
         'additional_details': _additionalDetailsController.text,
-        'created_at': DateTime.now().toIso8601String(),
         'status': 'pending',
       };
 
-      _showSuccessDialog();
+      try {
+        await ConstructionService().submitAssamTypeRequest(formData);
+        Navigator.pop(context); // Close loading
+        _showSuccessDialog();
+      } catch (e) {
+        Navigator.pop(context); // Close loading
+        _showErrorDialog('Failed to submit request: ${e.toString()}');
+      }
     }
   }
 
@@ -400,9 +427,25 @@ class _AssamTypeFormState extends State<AssamTypeForm> {
         actions: [
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Go back to construction services
             },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
             child: Text('OK'),
           ),
         ],
@@ -414,7 +457,6 @@ class _AssamTypeFormState extends State<AssamTypeForm> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _emailController.dispose();
     _addressController.dispose();
     _plotSizeController.dispose();
     _additionalDetailsController.dispose();
