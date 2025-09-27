@@ -71,7 +71,7 @@ class ConstructionService {
     int offset = 0,
   }) async {
     try {
-      var query = _supabase
+      PostgrestFilterBuilder query = _supabase
           .from('construction_service_requests')
           .select()
           .order('created_at', ascending: false)
@@ -139,22 +139,25 @@ class ConstructionService {
   /// Get construction service statistics
   Future<Map<String, dynamic>> getConstructionStats() async {
     try {
-      // Get total requests
+      // Get total requests count by fetching all and counting locally
       final totalRequestsResponse = await _supabase
           .from('construction_service_requests')
-          .select('*', const FetchOptions(count: CountOption.exact));
+          .select('id');
+      final totalRequests = totalRequestsResponse.length;
 
-      // Get pending requests
+      // Get pending requests count
       final pendingRequestsResponse = await _supabase
           .from('construction_service_requests')
-          .select('*', const FetchOptions(count: CountOption.exact))
+          .select('id')
           .eq('status', 'pending');
+      final pendingRequests = pendingRequestsResponse.length;
 
-      // Get completed requests
+      // Get completed requests count
       final completedRequestsResponse = await _supabase
           .from('construction_service_requests')
-          .select('*', const FetchOptions(count: CountOption.exact))
+          .select('id')
           .eq('status', 'completed');
+      final completedRequests = completedRequestsResponse.length;
 
       // Get requests by service type
       final serviceTypeStats = await _supabase
@@ -170,9 +173,9 @@ class ConstructionService {
       }
 
       return {
-        'total_requests': totalRequestsResponse.count,
-        'pending_requests': pendingRequestsResponse.count,
-        'completed_requests': completedRequestsResponse.count,
+        'total_requests': totalRequests,
+        'pending_requests': pendingRequests,
+        'completed_requests': completedRequests,
         'service_type_counts': serviceTypeCounts,
       };
 
