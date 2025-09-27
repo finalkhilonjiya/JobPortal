@@ -27,11 +27,11 @@ class JobsService {
         await _supabase.storage
             .from('job-files')
             .upload(resumePath, resumeFile);
-        
+
         resumeUrl = _supabase.storage
             .from('job-files')
             .getPublicUrl(resumePath);
-        
+
         applicationData['resume_file_url'] = resumeUrl;
       }
 
@@ -41,11 +41,11 @@ class JobsService {
         await _supabase.storage
             .from('job-files')
             .upload(photoPath, photoFile);
-        
+
         photoUrl = _supabase.storage
             .from('job-files')
             .getPublicUrl(photoPath);
-        
+
         applicationData['photo_file_url'] = photoUrl;
       }
 
@@ -77,11 +77,11 @@ class JobsService {
         await _supabase.storage
             .from('job-files')
             .upload(filePath, jobDescriptionFile);
-        
+
         final fileUrl = _supabase.storage
             .from('job-files')
             .getPublicUrl(filePath);
-        
+
         jobListingData['job_description_file_url'] = fileUrl;
       }
 
