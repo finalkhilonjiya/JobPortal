@@ -71,7 +71,7 @@ class ConstructionService {
     int offset = 0,
   }) async {
     try {
-      PostgrestFilterBuilder query = _supabase
+      var query = _supabase
           .from('construction_service_requests')
           .select()
           .order('created_at', ascending: false)
