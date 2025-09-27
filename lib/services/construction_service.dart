@@ -71,23 +71,22 @@ class ConstructionService {
     int offset = 0,
   }) async {
     try {
-      var query = _supabase
+      var queryBuilder = _supabase
           .from('construction_service_requests')
           .select();
 
       if (serviceType != null) {
-        query = query.eq('service_type', serviceType);
+        queryBuilder = queryBuilder.eq('service_type', serviceType);
       }
 
       if (status != null) {
-        query = query.eq('status', status);
+        queryBuilder = queryBuilder.eq('status', status);
       }
 
-      query = query
+      final response = await queryBuilder
           .order('created_at', ascending: false)
           .range(offset, offset + limit - 1);
 
-      final response = await query;
       return List<Map<String, dynamic>>.from(response);
 
     } catch (e) {
