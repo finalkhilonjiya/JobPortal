@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import '../../services/construction_service.dart';
 
 class FalseCeilingForm extends StatefulWidget {
   const FalseCeilingForm({Key? key}) : super(key: key);
@@ -10,24 +11,23 @@ class FalseCeilingForm extends StatefulWidget {
 
 class _FalseCeilingFormState extends State<FalseCeilingForm> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Form Controllers
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _addressController = TextEditingController();
   final _areaController = TextEditingController();
   final _roomHeightController = TextEditingController();
   final _additionalDetailsController = TextEditingController();
-  
+
   // Dropdown Values
+  String _selectedDistrict = 'Kamrup Metropolitan';
   String _selectedCeilingType = 'POP (Plaster of Paris)';
   String _selectedRoomType = 'Living Room';
   String _selectedDesignComplexity = 'Simple/Plain';
   String _selectedLightingType = 'LED Lights';
   String _selectedTimeframe = 'Within 2 Weeks';
   String _selectedBudgetRange = '15,000 - 30,000';
-  
+
   // Checkbox Values
   bool _needsLightingWork = false;
   bool _needsFanPoints = false;
@@ -37,6 +37,17 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
   bool _hasExistingCeiling = false;
   bool _needsElectricalWork = false;
   bool _needsMaintenance = false;
+
+  // Assam Districts List
+  final List<String> assamDistricts = [
+    'Baksa', 'Barpeta', 'Biswanath', 'Bongaigaon', 'Cachar', 'Charaideo',
+    'Chirang', 'Darrang', 'Dhemaji', 'Dhubri', 'Dibrugarh', 'Dima Hasao',
+    'Goalpara', 'Golaghat', 'Hailakandi', 'Hojai', 'Jorhat', 'Kamrup',
+    'Kamrup Metropolitan', 'Karbi Anglong', 'Karimganj', 'Kokrajhar',
+    'Lakhimpur', 'Majuli', 'Morigaon', 'Nagaon', 'Nalbari', 'Sivasagar',
+    'Sonitpur', 'South Salmara-Mankachar', 'Tinsukia', 'Udalguri',
+    'West Karbi Anglong'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -57,27 +68,27 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
             children: [
               _buildServiceDescriptionCard(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Personal Information'),
               _buildPersonalInfoSection(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('False Ceiling Specifications'),
               _buildSpecsSection(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Additional Services'),
               _buildServicesSection(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Budget & Timeline'),
               _buildBudgetTimelineSection(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Additional Information'),
               _buildAdditionalInfoSection(),
               SizedBox(height: 6.w),
-              
+
               _buildSubmitButton(),
               SizedBox(height: 4.w),
             ],
@@ -103,12 +114,14 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
             children: [
               Icon(Icons.architecture, size: 6.w, color: Colors.purple[700]),
               SizedBox(width: 3.w),
-              Text(
-                'False Ceiling Services',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.purple[700],
+              Expanded(
+                child: Text(
+                  'False Ceiling Services',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.purple[700],
+                  ),
                 ),
               ),
             ],
@@ -163,9 +176,12 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
           SizedBox(height: 3.w),
           _buildTextFormField(_phoneController, 'Phone Number *', Icons.phone, keyboardType: TextInputType.phone),
           SizedBox(height: 3.w),
-          _buildTextFormField(_emailController, 'Email Address', Icons.email, keyboardType: TextInputType.emailAddress, required: false),
-          SizedBox(height: 3.w),
-          _buildTextFormField(_addressController, 'Work Location *', Icons.location_on, maxLines: 2),
+          _buildDropdownField(
+            'District *',
+            _selectedDistrict,
+            assamDistricts,
+            (value) => setState(() => _selectedDistrict = value!),
+          ),
         ],
       ),
     );
@@ -258,9 +274,9 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
           ),
           SizedBox(height: 3.w),
           _buildDropdownField(
-            'Completion Timeline',
+            'When do you want to start?',
             _selectedTimeframe,
-            ['Within 1 Week', 'Within 2 Weeks', 'Within 1 Month', '1-2 Months', 'Flexible'],
+            ['Immediately', 'Within 1 Week', 'Within 2 Weeks', 'Within 1 Month', 'Flexible'],
             (value) => setState(() => _selectedTimeframe = value!),
           ),
         ],
@@ -345,7 +361,7 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
   Widget _buildSubmitButton() {
     return Container(
       width: double.infinity,
-      height: 12.h,
+      height: 7.h,
       child: ElevatedButton(
         onPressed: _submitForm,
         style: ElevatedButton.styleFrom(
@@ -355,21 +371,27 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
           elevation: 2,
         ),
         child: Text(
-          'Submit Request for Quote',
+          'Request for Quote',
           style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
         ),
       ),
     );
   }
 
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState!.validate()) {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(child: CircularProgressIndicator()),
+      );
+
       Map<String, dynamic> formData = {
         'service_type': 'False Ceiling',
         'name': _nameController.text,
         'phone': _phoneController.text,
-        'email': _emailController.text.isEmpty ? null : _emailController.text,
-        'project_address': _addressController.text,
+        'project_address': _selectedDistrict,
         'ceiling_type': _selectedCeilingType,
         'room_type': _selectedRoomType,
         'design_complexity': _selectedDesignComplexity,
@@ -387,11 +409,17 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
         'has_existing_ceiling': _hasExistingCeiling,
         'needs_maintenance': _needsMaintenance,
         'additional_details': _additionalDetailsController.text,
-        'created_at': DateTime.now().toIso8601String(),
         'status': 'pending',
       };
 
-      _showSuccessDialog();
+      try {
+        await ConstructionService().submitFalseCeilingRequest(formData);
+        Navigator.pop(context); // Close loading
+        _showSuccessDialog();
+      } catch (e) {
+        Navigator.pop(context); // Close loading
+        _showErrorDialog('Failed to submit request: ${e.toString()}');
+      }
     }
   }
 
@@ -404,9 +432,25 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
         actions: [
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Go back to construction services
             },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
             child: Text('OK'),
           ),
         ],
@@ -418,8 +462,6 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _emailController.dispose();
-    _addressController.dispose();
     _areaController.dispose();
     _roomHeightController.dispose();
     _additionalDetailsController.dispose();
