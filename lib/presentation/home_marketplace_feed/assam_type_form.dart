@@ -114,12 +114,14 @@ class _AssamTypeFormState extends State<AssamTypeForm> {
             children: [
               Icon(Icons.home, size: 6.w, color: Colors.orange[800]),
               SizedBox(width: 3.w),
-              Text(
-                'Traditional Assam Type House',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.orange[800],
+              Expanded(
+                child: Text(
+                  'Traditional Assam Type House',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange[800],
+                  ),
                 ),
               ),
             ],
