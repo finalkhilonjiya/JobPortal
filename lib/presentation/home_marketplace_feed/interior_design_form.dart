@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import '../../services/construction_service.dart';
 
 class InteriorDesignForm extends StatefulWidget {
   const InteriorDesignForm({Key? key}) : super(key: key);
@@ -10,23 +11,22 @@ class InteriorDesignForm extends StatefulWidget {
 
 class _InteriorDesignFormState extends State<InteriorDesignForm> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Form Controllers
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _addressController = TextEditingController();
   final _areaSizeController = TextEditingController();
   final _additionalDetailsController = TextEditingController();
-  
+
   // Dropdown Values
+  String _selectedDistrict = 'Kamrup Metropolitan';
   String _selectedProjectType = 'Complete Interior';
   String _selectedPropertyType = 'Residential Apartment';
   String _selectedDesignStyle = 'Modern Contemporary';
   String _selectedRoomCount = '2 BHK';
   String _selectedTimeframe = '2-3 Months';
   String _selectedBudgetRange = '2-5 Lakhs';
-  
+
   // Checkbox Values - Rooms
   bool _needsLivingRoomDesign = false;
   bool _needsBedroomDesign = false;
@@ -36,7 +36,7 @@ class _InteriorDesignFormState extends State<InteriorDesignForm> {
   bool _needsStudyRoomDesign = false;
   bool _needsKidsRoomDesign = false;
   bool _needsBalconyDesign = false;
-  
+
   // Checkbox Values - Services
   bool _needsFurnitureDesign = false;
   bool _needsLightingDesign = false;
@@ -44,6 +44,17 @@ class _InteriorDesignFormState extends State<InteriorDesignForm> {
   bool _needsSpacePlanning = false;
   bool _needs3DVisualization = false;
   bool _needsImplementation = false;
+
+  // Assam Districts List
+  final List<String> assamDistricts = [
+    'Baksa', 'Barpeta', 'Biswanath', 'Bongaigaon', 'Cachar', 'Charaideo',
+    'Chirang', 'Darrang', 'Dhemaji', 'Dhubri', 'Dibrugarh', 'Dima Hasao',
+    'Goalpara', 'Golaghat', 'Hailakandi', 'Hojai', 'Jorhat', 'Kamrup',
+    'Kamrup Metropolitan', 'Karbi Anglong', 'Karimganj', 'Kokrajhar',
+    'Lakhimpur', 'Majuli', 'Morigaon', 'Nagaon', 'Nalbari', 'Sivasagar',
+    'Sonitpur', 'South Salmara-Mankachar', 'Tinsukia', 'Udalguri',
+    'West Karbi Anglong'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -64,31 +75,31 @@ class _InteriorDesignFormState extends State<InteriorDesignForm> {
             children: [
               _buildServiceDescriptionCard(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Personal Information'),
               _buildPersonalInfoSection(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Project Details'),
               _buildProjectDetailsSection(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Rooms to Design'),
               _buildRoomsSection(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Design Services'),
               _buildServicesSection(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Budget & Timeline'),
               _buildBudgetTimelineSection(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Additional Information'),
               _buildAdditionalInfoSection(),
               SizedBox(height: 6.w),
-              
+
               _buildSubmitButton(),
               SizedBox(height: 4.w),
             ],
@@ -114,12 +125,14 @@ class _InteriorDesignFormState extends State<InteriorDesignForm> {
             children: [
               Icon(Icons.design_services, size: 6.w, color: Colors.pink[700]),
               SizedBox(width: 3.w),
-              Text(
-                'Custom Interior Design Solutions',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.pink[700],
+              Expanded(
+                child: Text(
+                  'Custom Interior Design Solutions',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.pink[700],
+                  ),
                 ),
               ),
             ],
@@ -174,9 +187,12 @@ class _InteriorDesignFormState extends State<InteriorDesignForm> {
           SizedBox(height: 3.w),
           _buildTextFormField(_phoneController, 'Phone Number *', Icons.phone, keyboardType: TextInputType.phone),
           SizedBox(height: 3.w),
-          _buildTextFormField(_emailController, 'Email Address *', Icons.email, keyboardType: TextInputType.emailAddress),
-          SizedBox(height: 3.w),
-          _buildTextFormField(_addressController, 'Property Address *', Icons.location_on, maxLines: 2),
+          _buildDropdownField(
+            'District *',
+            _selectedDistrict,
+            assamDistricts,
+            (value) => setState(() => _selectedDistrict = value!),
+          ),
         ],
       ),
     );
@@ -288,9 +304,9 @@ class _InteriorDesignFormState extends State<InteriorDesignForm> {
           ),
           SizedBox(height: 3.w),
           _buildDropdownField(
-            'Project Timeline',
+            'When do you want to start?',
             _selectedTimeframe,
-            ['1 Month', '2-3 Months', '3-6 Months', '6-12 Months', '1+ Years', 'Flexible'],
+            ['Immediately', '1 Month', '2-3 Months', '3-6 Months', '6-12 Months', 'Just Planning'],
             (value) => setState(() => _selectedTimeframe = value!),
           ),
         ],
@@ -375,7 +391,7 @@ class _InteriorDesignFormState extends State<InteriorDesignForm> {
   Widget _buildSubmitButton() {
     return Container(
       width: double.infinity,
-      height: 12.h,
+      height: 7.h,
       child: ElevatedButton(
         onPressed: _submitForm,
         style: ElevatedButton.styleFrom(
@@ -385,21 +401,27 @@ class _InteriorDesignFormState extends State<InteriorDesignForm> {
           elevation: 2,
         ),
         child: Text(
-          'Submit Request for Quote',
+          'Request for Quote',
           style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
         ),
       ),
     );
   }
 
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState!.validate()) {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(child: CircularProgressIndicator()),
+      );
+
       Map<String, dynamic> formData = {
         'service_type': 'Interior Design',
         'name': _nameController.text,
         'phone': _phoneController.text,
-        'email': _emailController.text,
-        'project_address': _addressController.text,
+        'project_address': _selectedDistrict,
         'project_type': _selectedProjectType,
         'property_type': _selectedPropertyType,
         'design_style': _selectedDesignStyle,
@@ -422,11 +444,17 @@ class _InteriorDesignFormState extends State<InteriorDesignForm> {
         'needs_3d_visualization': _needs3DVisualization,
         'needs_implementation': _needsImplementation,
         'additional_details': _additionalDetailsController.text,
-        'created_at': DateTime.now().toIso8601String(),
         'status': 'pending',
       };
 
-      _showSuccessDialog();
+      try {
+        await ConstructionService().submitInteriorDesignRequest(formData);
+        Navigator.pop(context); // Close loading
+        _showSuccessDialog();
+      } catch (e) {
+        Navigator.pop(context); // Close loading
+        _showErrorDialog('Failed to submit request: ${e.toString()}');
+      }
     }
   }
 
@@ -439,9 +467,25 @@ class _InteriorDesignFormState extends State<InteriorDesignForm> {
         actions: [
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Go back to construction services
             },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
             child: Text('OK'),
           ),
         ],
@@ -453,8 +497,6 @@ class _InteriorDesignFormState extends State<InteriorDesignForm> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _emailController.dispose();
-    _addressController.dispose();
     _areaSizeController.dispose();
     _additionalDetailsController.dispose();
     super.dispose();
