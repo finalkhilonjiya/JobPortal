@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import '../../services/construction_service.dart';
 
 class ElectricalWorksForm extends StatefulWidget {
   const ElectricalWorksForm({Key? key}) : super(key: key);
@@ -10,22 +11,21 @@ class ElectricalWorksForm extends StatefulWidget {
 
 class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Form Controllers
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _addressController = TextEditingController();
   final _areaController = TextEditingController();
   final _additionalDetailsController = TextEditingController();
-  
+
   // Dropdown Values
+  String _selectedDistrict = 'Kamrup Metropolitan';
   String _selectedWorkType = 'New Installation';
   String _selectedPropertyType = 'Residential';
   String _selectedLoadRequirement = '5 KW';
   String _selectedTimeframe = 'Within 1 Week';
   String _selectedBudgetRange = '10,000 - 25,000';
-  
+
   // Checkbox Values
   bool _needsWiring = false;
   bool _needsSwitchBoard = false;
@@ -35,6 +35,17 @@ class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
   bool _needsStabilizer = false;
   bool _needsEarthing = false;
   bool _needsMCB = false;
+
+  // Assam Districts List
+  final List<String> assamDistricts = [
+    'Baksa', 'Barpeta', 'Biswanath', 'Bongaigaon', 'Cachar', 'Charaideo',
+    'Chirang', 'Darrang', 'Dhemaji', 'Dhubri', 'Dibrugarh', 'Dima Hasao',
+    'Goalpara', 'Golaghat', 'Hailakandi', 'Hojai', 'Jorhat', 'Kamrup',
+    'Kamrup Metropolitan', 'Karbi Anglong', 'Karimganj', 'Kokrajhar',
+    'Lakhimpur', 'Majuli', 'Morigaon', 'Nagaon', 'Nalbari', 'Sivasagar',
+    'Sonitpur', 'South Salmara-Mankachar', 'Tinsukia', 'Udalguri',
+    'West Karbi Anglong'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -56,32 +67,32 @@ class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
               // Service Description Card
               _buildServiceDescriptionCard(),
               SizedBox(height: 4.w),
-              
+
               // Personal Information Section
               _buildSectionHeader('Personal Information'),
               _buildPersonalInfoSection(),
               SizedBox(height: 4.w),
-              
+
               // Project Details Section
               _buildSectionHeader('Electrical Work Details'),
               _buildProjectDetailsSection(),
               SizedBox(height: 4.w),
-              
+
               // Services Required Section
               _buildSectionHeader('Services Required'),
               _buildServicesSection(),
               SizedBox(height: 4.w),
-              
+
               // Budget & Timeline Section
               _buildSectionHeader('Budget & Timeline'),
               _buildBudgetTimelineSection(),
               SizedBox(height: 4.w),
-              
+
               // Additional Information
               _buildSectionHeader('Additional Information'),
               _buildAdditionalInfoSection(),
               SizedBox(height: 6.w),
-              
+
               // Submit Button
               _buildSubmitButton(),
               SizedBox(height: 4.w),
@@ -168,9 +179,12 @@ class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
           SizedBox(height: 3.w),
           _buildTextFormField(_phoneController, 'Phone Number *', Icons.phone, keyboardType: TextInputType.phone),
           SizedBox(height: 3.w),
-          _buildTextFormField(_emailController, 'Email Address', Icons.email, keyboardType: TextInputType.emailAddress, required: false),
-          SizedBox(height: 3.w),
-          _buildTextFormField(_addressController, 'Work Address *', Icons.location_on, maxLines: 2),
+          _buildDropdownField(
+            'District *',
+            _selectedDistrict,
+            assamDistricts,
+            (value) => setState(() => _selectedDistrict = value!),
+          ),
         ],
       ),
     );
@@ -254,7 +268,7 @@ class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
           ),
           SizedBox(height: 3.w),
           _buildDropdownField(
-            'When do you need this completed?',
+            'When do you want to start?',
             _selectedTimeframe,
             ['Immediately', 'Within 1 Week', 'Within 2 Weeks', 'Within 1 Month', 'Flexible'],
             (value) => setState(() => _selectedTimeframe = value!),
@@ -341,7 +355,7 @@ class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
   Widget _buildSubmitButton() {
     return Container(
       width: double.infinity,
-      height: 12.h,
+      height: 7.h,
       child: ElevatedButton(
         onPressed: _submitForm,
         style: ElevatedButton.styleFrom(
@@ -351,22 +365,27 @@ class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
           elevation: 2,
         ),
         child: Text(
-          'Submit Request for Quote',
+          'Request for Quote',
           style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
         ),
       ),
     );
   }
 
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      // Create data map for database submission
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(child: CircularProgressIndicator()),
+      );
+
       Map<String, dynamic> formData = {
         'service_type': 'Electrical Works',
         'name': _nameController.text,
         'phone': _phoneController.text,
-        'email': _emailController.text.isEmpty ? null : _emailController.text,
-        'project_address': _addressController.text,
+        'project_address': _selectedDistrict,
         'work_type': _selectedWorkType,
         'property_type': _selectedPropertyType,
         'load_requirement': _selectedLoadRequirement,
@@ -382,11 +401,17 @@ class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
         'needs_earthing': _needsEarthing,
         'needs_mcb': _needsMCB,
         'additional_details': _additionalDetailsController.text,
-        'created_at': DateTime.now().toIso8601String(),
         'status': 'pending',
       };
 
-      _showSuccessDialog();
+      try {
+        await ConstructionService().submitElectricalWorksRequest(formData);
+        Navigator.pop(context); // Close loading
+        _showSuccessDialog();
+      } catch (e) {
+        Navigator.pop(context); // Close loading
+        _showErrorDialog('Failed to submit request: ${e.toString()}');
+      }
     }
   }
 
@@ -399,9 +424,25 @@ class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
         actions: [
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Go back to construction services
             },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
             child: Text('OK'),
           ),
         ],
@@ -413,8 +454,6 @@ class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _emailController.dispose();
-    _addressController.dispose();
     _areaController.dispose();
     _additionalDetailsController.dispose();
     super.dispose();
