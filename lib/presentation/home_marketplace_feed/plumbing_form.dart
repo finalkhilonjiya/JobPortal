@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import '../../services/construction_service.dart';
 
 class PlumbingForm extends StatefulWidget {
   const PlumbingForm({Key? key}) : super(key: key);
@@ -10,21 +11,20 @@ class PlumbingForm extends StatefulWidget {
 
 class _PlumbingFormState extends State<PlumbingForm> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Form Controllers
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _addressController = TextEditingController();
   final _additionalDetailsController = TextEditingController();
-  
+
   // Dropdown Values
+  String _selectedDistrict = 'Kamrup Metropolitan';
   String _selectedServiceType = 'New Installation';
   String _selectedPropertyType = 'Residential';
   String _selectedUrgency = 'Within 1 Week';
   String _selectedBudgetRange = '5,000 - 15,000';
   String _selectedBathroomCount = '1 Bathroom';
-  
+
   // Checkbox Values - Plumbing Services
   bool _needsPipeInstallation = false;
   bool _needsWaterTankWork = false;
@@ -34,12 +34,23 @@ class _PlumbingFormState extends State<PlumbingForm> {
   bool _needsWaterHeaterInstallation = false;
   bool _needsLeakageRepair = false;
   bool _needsDrainageCleaning = false;
-  
+
   // Checkbox Values - Fixtures
   bool _needsToiletInstallation = false;
   bool _needsBasinInstallation = false;
   bool _needsTapFittings = false;
   bool _needsShowerInstallation = false;
+
+  // Assam Districts List
+  final List<String> assamDistricts = [
+    'Baksa', 'Barpeta', 'Biswanath', 'Bongaigaon', 'Cachar', 'Charaideo',
+    'Chirang', 'Darrang', 'Dhemaji', 'Dhubri', 'Dibrugarh', 'Dima Hasao',
+    'Goalpara', 'Golaghat', 'Hailakandi', 'Hojai', 'Jorhat', 'Kamrup',
+    'Kamrup Metropolitan', 'Karbi Anglong', 'Karimganj', 'Kokrajhar',
+    'Lakhimpur', 'Majuli', 'Morigaon', 'Nagaon', 'Nalbari', 'Sivasagar',
+    'Sonitpur', 'South Salmara-Mankachar', 'Tinsukia', 'Udalguri',
+    'West Karbi Anglong'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -60,31 +71,31 @@ class _PlumbingFormState extends State<PlumbingForm> {
             children: [
               _buildServiceDescriptionCard(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Personal Information'),
               _buildPersonalInfoSection(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Plumbing Work Details'),
               _buildWorkDetailsSection(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Services Required'),
               _buildServicesSection(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Fixtures & Fittings'),
               _buildFixturesSection(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Budget & Timeline'),
               _buildBudgetTimelineSection(),
               SizedBox(height: 4.w),
-              
+
               _buildSectionHeader('Additional Information'),
               _buildAdditionalInfoSection(),
               SizedBox(height: 6.w),
-              
+
               _buildSubmitButton(),
               SizedBox(height: 4.w),
             ],
@@ -110,12 +121,14 @@ class _PlumbingFormState extends State<PlumbingForm> {
             children: [
               Icon(Icons.plumbing, size: 6.w, color: Colors.orange[800]),
               SizedBox(width: 3.w),
-              Text(
-                'Complete Plumbing Solutions',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.orange[800],
+              Expanded(
+                child: Text(
+                  'Complete Plumbing Solutions',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange[800],
+                  ),
                 ),
               ),
             ],
@@ -170,9 +183,12 @@ class _PlumbingFormState extends State<PlumbingForm> {
           SizedBox(height: 3.w),
           _buildTextFormField(_phoneController, 'Phone Number *', Icons.phone, keyboardType: TextInputType.phone),
           SizedBox(height: 3.w),
-          _buildTextFormField(_emailController, 'Email Address', Icons.email, keyboardType: TextInputType.emailAddress, required: false),
-          SizedBox(height: 3.w),
-          _buildTextFormField(_addressController, 'Service Address *', Icons.location_on, maxLines: 2),
+          _buildDropdownField(
+            'District *',
+            _selectedDistrict,
+            assamDistricts,
+            (value) => setState(() => _selectedDistrict = value!),
+          ),
         ],
       ),
     );
@@ -273,7 +289,7 @@ class _PlumbingFormState extends State<PlumbingForm> {
           ),
           SizedBox(height: 3.w),
           _buildDropdownField(
-            'Service Timeline',
+            'When do you want to start?',
             _selectedUrgency,
             ['Emergency (Same Day)', 'Within 2 Days', 'Within 1 Week', 'Within 2 Weeks', 'Flexible'],
             (value) => setState(() => _selectedUrgency = value!),
@@ -360,7 +376,7 @@ class _PlumbingFormState extends State<PlumbingForm> {
   Widget _buildSubmitButton() {
     return Container(
       width: double.infinity,
-      height: 12.h,
+      height: 7.h,
       child: ElevatedButton(
         onPressed: _submitForm,
         style: ElevatedButton.styleFrom(
@@ -370,21 +386,27 @@ class _PlumbingFormState extends State<PlumbingForm> {
           elevation: 2,
         ),
         child: Text(
-          'Submit Request for Quote',
+          'Request for Quote',
           style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
         ),
       ),
     );
   }
 
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState!.validate()) {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(child: CircularProgressIndicator()),
+      );
+
       Map<String, dynamic> formData = {
         'service_type': 'Plumbing',
         'name': _nameController.text,
         'phone': _phoneController.text,
-        'email': _emailController.text.isEmpty ? null : _emailController.text,
-        'project_address': _addressController.text,
+        'project_address': _selectedDistrict,
         'service_type_detail': _selectedServiceType,
         'property_type': _selectedPropertyType,
         'bathroom_count': _selectedBathroomCount,
@@ -403,11 +425,17 @@ class _PlumbingFormState extends State<PlumbingForm> {
         'needs_tap_fittings': _needsTapFittings,
         'needs_shower_installation': _needsShowerInstallation,
         'additional_details': _additionalDetailsController.text,
-        'created_at': DateTime.now().toIso8601String(),
         'status': 'pending',
       };
 
-      _showSuccessDialog();
+      try {
+        await ConstructionService().submitPlumbingRequest(formData);
+        Navigator.pop(context); // Close loading
+        _showSuccessDialog();
+      } catch (e) {
+        Navigator.pop(context); // Close loading
+        _showErrorDialog('Failed to submit request: ${e.toString()}');
+      }
     }
   }
 
@@ -420,9 +448,25 @@ class _PlumbingFormState extends State<PlumbingForm> {
         actions: [
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Go back to construction services
             },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
             child: Text('OK'),
           ),
         ],
@@ -434,8 +478,6 @@ class _PlumbingFormState extends State<PlumbingForm> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _emailController.dispose();
-    _addressController.dispose();
     _additionalDetailsController.dispose();
     super.dispose();
   }
