@@ -294,10 +294,116 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     }
   }
 
+  void _showTermsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 600, maxHeight: 600),
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Color(0xFFE5E7EB)),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Terms & Privacy Policy',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                ),
+                // Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Terms of Service',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'This is a demo Terms of Service document. The actual terms will be updated by the company.\n\n'
+                          'By using our services, you agree to be bound by these terms and conditions. Please read them carefully before proceeding.\n\n'
+                          '1. Acceptance of Terms\n'
+                          '2. User Responsibilities\n'
+                          '3. Service Usage\n'
+                          '4. Limitations of Liability\n'
+                          '5. Modifications to Terms',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF64748B),
+                            height: 1.6,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Privacy Policy',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'This is a demo Privacy Policy document. The actual policy will be updated by the company.\n\n'
+                          'We respect your privacy and are committed to protecting your personal data. This privacy policy will inform you about how we handle your personal information.\n\n'
+                          '1. Information We Collect\n'
+                          '2. How We Use Your Information\n'
+                          '3. Data Security\n'
+                          '4. Your Rights\n'
+                          '5. Contact Us',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF64748B),
+                            height: 1.6,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F0F0),
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Padding(
@@ -384,6 +490,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
         // Mobile input with subtle border
         Container(
           decoration: BoxDecoration(
+            color: Colors.white,
             border: Border.all(color: const Color(0xFFE5E7EB)),
             borderRadius: BorderRadius.circular(8),
           ),
@@ -534,13 +641,32 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
 
         const SizedBox(height: 50),
 
-        const Text(
-          'By continuing, you agree to our Terms & Privacy Policy',
-          style: TextStyle(
-            fontSize: 14,
-            color: Color(0xFF64748B),
-          ),
-          textAlign: TextAlign.center,
+        // Terms and Privacy Policy
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            const Text(
+              'By continuing, you agree to our ',
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFF64748B),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            GestureDetector(
+              onTap: _showTermsDialog,
+              child: const Text(
+                'Terms & Privacy Policy',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF4285F4),
+                  fontWeight: FontWeight.w600,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -622,8 +748,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                     ),
                     fillColor: _otpControllers[index].text.isNotEmpty
                         ? const Color(0xFF22C55E).withOpacity(0.05)
-                        : Colors.transparent,
-                    filled: _otpControllers[index].text.isNotEmpty,
+                        : Colors.white,
+                    filled: true,
                     contentPadding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   onChanged: (value) => _handleOTPChange(index, value),
@@ -737,7 +863,7 @@ class AshokChakraPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final center = Offset(size.width / 2, size.height / 2);
-    
+
     // Draw vertical and horizontal lines
     canvas.drawLine(
       Offset(center.dx, 0),
