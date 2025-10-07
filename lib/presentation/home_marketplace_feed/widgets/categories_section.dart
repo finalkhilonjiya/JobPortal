@@ -25,6 +25,8 @@ class CategoriesSection extends StatelessWidget {
         itemBuilder: (_, index) {
           final cat = categories[index];
           final isSelected = cat['name'] == selected;
+          final isAllCategory = cat['name'] == 'All';
+          
           return GestureDetector(
             onTap: () => onSelect(cat['name'] as String),
             child: Container(
@@ -56,41 +58,7 @@ class CategoriesSection extends StatelessWidget {
                             ]
                           : [],
                     ),
-                                    child: cat['image'] != null && (cat['image'] as String).isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          cat['image'] as String,
-                          width: 32,
-                          height: 32,
-                          fit: BoxFit.contain,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
-                                    : null,
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return Icon(
-                              cat['icon'] as IconData,
-                              color: isSelected ? Colors.white : Color(0xFF2563EB),
-                              size: 26,
-                            );
-                          },
-                        ),
-                      )
-                    : Icon(
-                        cat['icon'] as IconData,
-                        color: isSelected ? Colors.white : Color(0xFF2563EB),
-                        size: 26,
-                      ),
-
+                    child: _buildCategoryIcon(cat, isSelected, isAllCategory),
                   ),
                   SizedBox(height: 6),
                   Text(
@@ -109,6 +77,56 @@ class CategoriesSection extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildCategoryIcon(Map<String, Object> cat, bool isSelected, bool isAllCategory) {
+    // For "ALL" category, always use the icon (not the image) for better contrast
+    if (isAllCategory) {
+      return Icon(
+        cat['icon'] as IconData,
+        color: isSelected ? Colors.white : Color(0xFF2563EB),
+        size: 26,
+      );
+    }
+
+    // For other categories, try to load image first, fallback to icon
+    if (cat['image'] != null && (cat['image'] as String).isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          cat['image'] as String,
+          width: 32,
+          height: 32,
+          fit: BoxFit.contain,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return Icon(
+              cat['icon'] as IconData,
+              color: isSelected ? Colors.white : Color(0xFF2563EB),
+              size: 26,
+            );
+          },
+        ),
+      );
+    }
+
+    // Fallback to icon if no image
+    return Icon(
+      cat['icon'] as IconData,
+      color: isSelected ? Colors.white : Color(0xFF2563EB),
+      size: 26,
     );
   }
 }
