@@ -14,28 +14,49 @@ class ListingService {
   /// Verify authentication before making API calls
   Future<void> _ensureAuthenticated() async {
     debugPrint('ListingService: Checking authentication state');
-    
+
     // Use the new ensureValidSession method
     final sessionValid = await _authService.ensureValidSession();
-    
+
     if (!sessionValid) {
       throw Exception('Authentication required. Please login again.');
     }
-    
+
     final currentUser = _supabase.auth.currentUser;
     final currentSession = _supabase.auth.currentSession;
-    
+
     if (currentUser == null || currentSession == null) {
       throw Exception('Authentication required. Please login again.');
     }
-    
+
     debugPrint('ListingService: Authentication verified for user: ${currentUser.id}');
+  }
+
+  /// Get all subcategory IDs for a parent category
+  Future<List<String>> getSubcategoryIds(String parentCategoryId) async {
+    try {
+      debugPrint('Fetching subcategories for parent: $parentCategoryId');
+      
+      final response = await _supabase
+          .from('categories')
+          .select('id')
+          .eq('parent_category_id', parentCategoryId)
+          .eq('is_active', true);
+      
+      final subcategoryIds = List<String>.from(response.map((cat) => cat['id']));
+      debugPrint('Found ${subcategoryIds.length} subcategories for parent $parentCategoryId');
+      
+      return subcategoryIds;
+    } catch (e) {
+      debugPrint('Error fetching subcategory IDs: $e');
+      return [];
+    }
   }
 
   /// Upload images to Supabase Storage
   Future<List<String>> uploadImages(List<File> images) async {
     await _ensureAuthenticated();
-    
+
     List<String> imageUrls = [];
 
     for (int i = 0; i < images.length; i++) {
@@ -66,18 +87,32 @@ class ListingService {
     return imageUrls;
   }
 
-  /// Fetch all active listings with infinite scroll support (REGULAR LISTINGS ONLY)
+  /// Fetch all active listings with category filtering and distance sorting
   Future<List<Map<String, dynamic>>> fetchListings({
     String? categoryId,
     String? sortBy,
     int limit = 20,
     int offset = 0,
+    double? userLatitude,
+    double? userLongitude,
   }) async {
     await _ensureAuthenticated();
-    
+
     try {
-      debugPrint('Fetching regular listings: categoryId=$categoryId, limit=$limit, offset=$offset');
-      
+      debugPrint('Fetching listings: categoryId=$categoryId, limit=$limit, offset=$offset, userLat=$userLatitude, userLng=$userLongitude');
+
+      // If we have user coordinates and want distance sorting, use RPC function
+      if (userLatitude != null && userLongitude != null && sortBy == 'Distance') {
+        return await _fetchListingsWithDistance(
+          categoryId: categoryId,
+          userLatitude: userLatitude,
+          userLongitude: userLongitude,
+          limit: limit,
+          offset: offset,
+        );
+      }
+
+      // Otherwise, use regular query
       var query = _supabase
           .from('listings')
           .select('''
@@ -89,14 +124,25 @@ class ListingService {
             )
           ''')
           .eq('status', 'active')
-          .eq('is_premium', false); // FIXED: Only fetch regular listings, not premium
+          .eq('is_premium', false);
 
       // Apply category filter if provided
       if (categoryId != null && categoryId != 'All') {
-        query = query.eq('category_id', categoryId);
+        // Check if this is a parent category by trying to get its subcategories
+        final subcategoryIds = await getSubcategoryIds(categoryId);
+        
+        if (subcategoryIds.isNotEmpty) {
+          // This is a parent category, filter by all its subcategories
+          query = query.inFilter('category_id', subcategoryIds);
+          debugPrint('Filtering by parent category: $categoryId with ${subcategoryIds.length} subcategories');
+        } else {
+          // This is a subcategory itself, filter directly
+          query = query.eq('category_id', categoryId);
+          debugPrint('Filtering by subcategory: $categoryId');
+        }
       }
 
-      // Apply sorting and pagination in a single chain
+      // Apply sorting
       dynamic finalQuery = query;
       if (sortBy == 'Price (Low to High)') {
         finalQuery = query.order('price', ascending: true);
@@ -112,91 +158,147 @@ class ListingService {
 
       debugPrint('Fetched ${response.length} regular listings');
 
-      // First, get all unique parent category IDs
-      Set<String> parentCategoryIds = {};
-      for (var item in response) {
-        if (item['category']['parent_category_id'] != null) {
-          parentCategoryIds.add(item['category']['parent_category_id']);
-        }
-      }
-
-      // Fetch parent categories if needed
-      Map<String, String> parentCategoryNames = {};
-      if (parentCategoryIds.isNotEmpty) {
-        final parentCategories = await _supabase
-            .from('categories')
-            .select('id, name')
-            .inFilter('id', parentCategoryIds.toList());
-
-        for (var parent in parentCategories) {
-          parentCategoryNames[parent['id']] = parent['name'];
-        }
-      }
-
-      // Transform the data to match your existing format
-      return List<Map<String, dynamic>>.from(response.map((item) {
-        // Get first image from the images array
-        List<dynamic> images = item['images'] ?? [];
-        String mainImage = images.isNotEmpty ? images[0] : 'https://via.placeholder.com/300';
-
-        // Determine category and subcategory
-        String categoryName;
-        String subcategoryName;
-
-        if (item['category']['parent_category_id'] != null) {
-          // This is a subcategory
-          categoryName = parentCategoryNames[item['category']['parent_category_id']] ?? 'Uncategorized';
-          subcategoryName = item['category']['name'] ?? 'Uncategorized';
-        } else {
-          // This is a parent category
-          categoryName = item['category']['name'] ?? 'Uncategorized';
-          subcategoryName = item['category']['name'] ?? 'Uncategorized';
-        }
-
-        return {
-          'id': item['id'],
-          'title': item['title'] ?? 'Untitled',
-          'price': item['price'] ?? 0,
-          'image': mainImage,
-          'images': images,
-          'location': item['location'] ?? 'Location not specified',
-          'category': categoryName,
-          'subcategory': subcategoryName,
-          'description': item['description'] ?? '',
-          'condition': item['condition'] ?? 'used',
-          'phone': item['seller_phone'] ?? '',
-          'seller_name': item['seller_name'] ?? 'Seller',
-          'views': item['views_count'] ?? 0,
-          'created_at': item['created_at'],
-          'is_featured': item['is_featured'] ?? false,
-          'is_premium': false, // These are explicitly regular listings
-          // Additional fields
-          'brand': item['brand'],
-          'model': item['model'],
-          'year': item['year_of_purchase'],
-          'fuel_type': item['fuel_type'],
-          'transmission': item['transmission_type'],
-          'km_driven': item['kilometres_driven'],
-          'bedrooms': item['bedrooms'],
-          'bathrooms': item['bathrooms'],
-          'furnishing': item['furnishing_status'],
-          'latitude': item['latitude'],
-          'longitude': item['longitude'],
-        };
-      }));
+      return await _transformListingData(response);
     } catch (e) {
       debugPrint('Error fetching listings: $e');
-      
-      // Check if error is auth-related
+
       if (e.toString().contains('JWT') || 
           e.toString().contains('auth') || 
           e.toString().contains('401') ||
           e.toString().contains('403')) {
         throw Exception('Authentication expired. Please login again.');
       }
-      
+
       throw Exception('Failed to fetch listings: ${e.toString()}');
     }
+  }
+
+  /// Fetch listings with distance calculation using PostGIS
+  Future<List<Map<String, dynamic>>> _fetchListingsWithDistance({
+    String? categoryId,
+    required double userLatitude,
+    required double userLongitude,
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      debugPrint('Fetching listings with distance calculation');
+
+      // Get subcategory IDs if filtering by parent category
+      List<String>? categoryIds;
+      if (categoryId != null && categoryId != 'All') {
+        final subcategoryIds = await getSubcategoryIds(categoryId);
+        if (subcategoryIds.isNotEmpty) {
+          categoryIds = subcategoryIds;
+        } else {
+          categoryIds = [categoryId];
+        }
+      }
+
+      // Call RPC function for distance-based search
+      final response = await _supabase.rpc(
+        'search_listings_by_distance',
+        params: {
+          'user_lat': userLatitude,
+          'user_lng': userLongitude,
+          'search_radius': 500.0, // 500km radius
+          'category_ids': categoryIds,
+          'limit_count': limit,
+          'offset_count': offset,
+        },
+      );
+
+      debugPrint('Distance search returned ${response.length} results');
+
+      return await _transformListingData(response);
+    } catch (e) {
+      debugPrint('Error in distance search: $e');
+      // Fallback to regular fetch without distance
+      return await fetchListings(
+        categoryId: categoryId,
+        limit: limit,
+        offset: offset,
+      );
+    }
+  }
+
+  /// Transform listing data to common format
+  Future<List<Map<String, dynamic>>> _transformListingData(List<dynamic> response) async {
+    // Get all unique parent category IDs
+    Set<String> parentCategoryIds = {};
+    for (var item in response) {
+      if (item['category'] != null && item['category']['parent_category_id'] != null) {
+        parentCategoryIds.add(item['category']['parent_category_id']);
+      }
+    }
+
+    // Fetch parent categories if needed
+    Map<String, String> parentCategoryNames = {};
+    if (parentCategoryIds.isNotEmpty) {
+      final parentCategories = await _supabase
+          .from('categories')
+          .select('id, name')
+          .inFilter('id', parentCategoryIds.toList());
+
+      for (var parent in parentCategories) {
+        parentCategoryNames[parent['id']] = parent['name'];
+      }
+    }
+
+    // Transform the data
+    return List<Map<String, dynamic>>.from(response.map((item) {
+      List<dynamic> images = item['images'] ?? [];
+      String mainImage = images.isNotEmpty ? images[0] : 'https://via.placeholder.com/300';
+
+      // Determine category and subcategory
+      String categoryName;
+      String subcategoryName;
+
+      if (item['category'] != null) {
+        if (item['category']['parent_category_id'] != null) {
+          categoryName = parentCategoryNames[item['category']['parent_category_id']] ?? 'Uncategorized';
+          subcategoryName = item['category']['name'] ?? 'Uncategorized';
+        } else {
+          categoryName = item['category']['name'] ?? 'Uncategorized';
+          subcategoryName = item['category']['name'] ?? 'Uncategorized';
+        }
+      } else {
+        categoryName = 'Uncategorized';
+        subcategoryName = 'Uncategorized';
+      }
+
+      return {
+        'id': item['id'],
+        'title': item['title'] ?? 'Untitled',
+        'price': item['price'] ?? 0,
+        'image': mainImage,
+        'images': images,
+        'location': item['location'] ?? 'Location not specified',
+        'category': categoryName,
+        'subcategory': subcategoryName,
+        'description': item['description'] ?? '',
+        'condition': item['condition'] ?? 'used',
+        'phone': item['seller_phone'] ?? '',
+        'seller_name': item['seller_name'] ?? 'Seller',
+        'views': item['views_count'] ?? 0,
+        'created_at': item['created_at'],
+        'is_featured': item['is_featured'] ?? false,
+        'is_premium': item['is_premium'] ?? false,
+        'distance': item['distance'], // Distance in kilometers (if available)
+        'latitude': item['latitude'],
+        'longitude': item['longitude'],
+        // Additional fields
+        'brand': item['brand'],
+        'model': item['model'],
+        'year': item['year_of_purchase'],
+        'fuel_type': item['fuel_type'],
+        'transmission': item['transmission_type'],
+        'km_driven': item['kilometres_driven'],
+        'bedrooms': item['bedrooms'],
+        'bathrooms': item['bathrooms'],
+        'furnishing': item['furnishing_status'],
+      };
+    }));
   }
 
   /// Search listings by keywords and/or location
@@ -211,13 +313,12 @@ class ListingService {
     int offset = 0,
   }) async {
     await _ensureAuthenticated();
-    
+
     try {
       debugPrint('Searching listings: keywords=$keywords, location=$location');
-      
-      // If we have coordinates (either from current location or selected location)
+
+      // If we have coordinates, use distance-based search
       if (latitude != null && longitude != null) {
-        // Use distance-based search
         final response = await _supabase.rpc(
           'search_listings_by_distance',
           params: {
@@ -232,88 +333,7 @@ class ListingService {
         );
 
         debugPrint('Distance search returned ${response.length} results');
-
-        // Get parent categories for the results
-        Set<String> categoryIds = {};
-        for (var item in response) {
-          if (item['category_id'] != null) {
-            categoryIds.add(item['category_id']);
-          }
-        }
-
-        // Fetch categories with their parents
-        Map<String, Map<String, dynamic>> categoryInfo = {};
-        if (categoryIds.isNotEmpty) {
-          final categories = await _supabase
-              .from('categories')
-              .select('id, name, parent_category_id')
-              .inFilter('id', categoryIds.toList());
-
-          // Get parent category IDs
-          Set<String> parentIds = {};
-          for (var cat in categories) {
-            if (cat['parent_category_id'] != null) {
-              parentIds.add(cat['parent_category_id']);
-            }
-            categoryInfo[cat['id']] = cat;
-          }
-
-          // Fetch parent categories
-          if (parentIds.isNotEmpty) {
-            final parents = await _supabase
-                .from('categories')
-                .select('id, name')
-                .inFilter('id', parentIds.toList());
-
-            for (var parent in parents) {
-              categoryInfo[parent['id']] = parent;
-            }
-          }
-        }
-
-        // Transform the response
-        return List<Map<String, dynamic>>.from(response.map((item) {
-          List<dynamic> images = item['images'] ?? [];
-          String mainImage = images.isNotEmpty ? images[0] : 'https://via.placeholder.com/300';
-
-          // Determine category names
-          String categoryName = 'Uncategorized';
-          String subcategoryName = 'Uncategorized';
-
-          if (item['category_id'] != null && categoryInfo.containsKey(item['category_id'])) {
-            var catData = categoryInfo[item['category_id']]!;
-            if (catData['parent_category_id'] != null && 
-                categoryInfo.containsKey(catData['parent_category_id'])) {
-              categoryName = categoryInfo[catData['parent_category_id']]!['name'];
-              subcategoryName = catData['name'];
-            } else {
-              categoryName = catData['name'];
-              subcategoryName = catData['name'];
-            }
-          }
-
-          return {
-            'id': item['id'],
-            'title': item['title'] ?? 'Untitled',
-            'price': item['price'] ?? 0,
-            'image': mainImage,
-            'images': images,
-            'location': item['location'] ?? 'Location not specified',
-            'category': categoryName,
-            'subcategory': subcategoryName,
-            'description': item['description'] ?? '',
-            'condition': item['condition'] ?? 'used',
-            'phone': item['seller_phone'] ?? '',
-            'seller_name': item['seller_name'] ?? 'Seller',
-            'views': item['views_count'] ?? 0,
-            'created_at': item['created_at'],
-            'is_featured': item['is_featured'] ?? false,
-            'is_premium': item['is_premium'] ?? false,
-            'distance': item['distance'], // Distance in kilometers
-            'latitude': item['latitude'],
-            'longitude': item['longitude'],
-          };
-        }));
+        return await _transformListingData(response);
       } else {
         // Fall back to regular search without distance
         var query = _supabase
@@ -361,77 +381,103 @@ class ListingService {
         }
 
         debugPrint('Text search returned ${response.length} results');
-
-        // Get parent categories
-        Set<String> parentCategoryIds = {};
-        for (var item in response) {
-          if (item['category']['parent_category_id'] != null) {
-            parentCategoryIds.add(item['category']['parent_category_id']);
-          }
-        }
-
-        Map<String, String> parentCategoryNames = {};
-        if (parentCategoryIds.isNotEmpty) {
-          final parentCategories = await _supabase
-              .from('categories')
-              .select('id, name')
-              .inFilter('id', parentCategoryIds.toList());
-
-          for (var parent in parentCategories) {
-            parentCategoryNames[parent['id']] = parent['name'];
-          }
-        }
-
-        // Transform the data
-        return List<Map<String, dynamic>>.from(response.map((item) {
-          List<dynamic> images = item['images'] ?? [];
-          String mainImage = images.isNotEmpty ? images[0] : 'https://via.placeholder.com/300';
-
-          // Determine category and subcategory
-          String categoryName;
-          String subcategoryName;
-
-          if (item['category']['parent_category_id'] != null) {
-            categoryName = parentCategoryNames[item['category']['parent_category_id']] ?? 'Uncategorized';
-            subcategoryName = item['category']['name'] ?? 'Uncategorized';
-          } else {
-            categoryName = item['category']['name'] ?? 'Uncategorized';
-            subcategoryName = item['category']['name'] ?? 'Uncategorized';
-          }
-
-          return {
-            'id': item['id'],
-            'title': item['title'] ?? 'Untitled',
-            'price': item['price'] ?? 0,
-            'image': mainImage,
-            'images': images,
-            'location': item['location'] ?? 'Location not specified',
-            'category': categoryName,
-            'subcategory': subcategoryName,
-            'description': item['description'] ?? '',
-            'condition': item['condition'] ?? 'used',
-            'phone': item['seller_phone'] ?? '',
-            'seller_name': item['seller_name'] ?? 'Seller',
-            'views': item['views_count'] ?? 0,
-            'created_at': item['created_at'],
-            'is_featured': item['is_featured'] ?? false,
-            'is_premium': item['is_premium'] ?? false,
-            'latitude': item['latitude'],
-            'longitude': item['longitude'],
-          };
-        }));
+        return await _transformListingData(response);
       }
     } catch (e) {
       debugPrint('Error searching listings: $e');
-      
+
       if (e.toString().contains('JWT') || 
           e.toString().contains('auth') || 
           e.toString().contains('401') ||
           e.toString().contains('403')) {
         throw Exception('Authentication expired. Please login again.');
       }
-      
+
       throw Exception('Failed to search listings: ${e.toString()}');
+    }
+  }
+
+  /// Fetch premium/featured listings ONLY with distance sorting
+  Future<List<Map<String, dynamic>>> fetchPremiumListings({
+    String? categoryId,
+    int limit = 10,
+    double? userLatitude,
+    double? userLongitude,
+  }) async {
+    await _ensureAuthenticated();
+
+    try {
+      debugPrint('Fetching premium listings: categoryId=$categoryId, limit=$limit');
+
+      var query = _supabase
+          .from('listings')
+          .select('''
+            *,
+            category:categories!inner(
+              id,
+              name,
+              parent_category_id
+            )
+          ''')
+          .eq('status', 'active')
+          .eq('is_premium', true);
+
+      // Apply category filter if provided
+      if (categoryId != null && categoryId != 'All') {
+        final subcategoryIds = await getSubcategoryIds(categoryId);
+        
+        if (subcategoryIds.isNotEmpty) {
+          query = query.inFilter('category_id', subcategoryIds);
+          debugPrint('Filtering premium by parent category: $categoryId with ${subcategoryIds.length} subcategories');
+        } else {
+          query = query.eq('category_id', categoryId);
+          debugPrint('Filtering premium by subcategory: $categoryId');
+        }
+      }
+
+      final response = await query
+          .order('created_at', ascending: false)
+          .limit(limit);
+
+      debugPrint('Fetched ${response.length} premium listings');
+
+      var listings = await _transformListingData(response);
+
+      // If user coordinates are available, sort by distance
+      if (userLatitude != null && userLongitude != null) {
+        listings = listings.map((listing) {
+          if (listing['latitude'] != null && listing['longitude'] != null) {
+            final distance = _calculateDistance(
+              userLatitude,
+              userLongitude,
+              listing['latitude'],
+              listing['longitude'],
+            );
+            listing['distance'] = distance;
+          }
+          return listing;
+        }).toList();
+
+        // Sort by distance
+        listings.sort((a, b) {
+          final distA = a['distance'] ?? double.infinity;
+          final distB = b['distance'] ?? double.infinity;
+          return distA.compareTo(distB);
+        });
+      }
+
+      return listings;
+    } catch (e) {
+      debugPrint('Error fetching premium listings: $e');
+
+      if (e.toString().contains('JWT') || 
+          e.toString().contains('auth') || 
+          e.toString().contains('401') ||
+          e.toString().contains('403')) {
+        throw Exception('Authentication expired. Please login again.');
+      }
+
+      throw Exception('Failed to fetch premium listings: ${e.toString()}');
     }
   }
 
@@ -454,128 +500,12 @@ class ListingService {
     return degree * math.pi / 180;
   }
 
-  /// Fetch premium/featured listings ONLY
-  Future<List<Map<String, dynamic>>> fetchPremiumListings({
-    String? categoryId,
-    int limit = 10,
-  }) async {
-    await _ensureAuthenticated();
-    
-    try {
-      debugPrint('Fetching premium listings: categoryId=$categoryId, limit=$limit');
-      
-      var query = _supabase
-          .from('listings')
-          .select('''
-            *,
-            category:categories!inner(
-              id,
-              name,
-              parent_category_id
-            )
-          ''')
-          .eq('status', 'active')
-          .eq('is_premium', true); // Only fetch premium listings
-
-      // Apply category filter if provided
-      if (categoryId != null && categoryId != 'All') {
-        query = query.eq('category_id', categoryId);
-      }
-
-      final response = await query
-          .order('created_at', ascending: false)
-          .limit(limit);
-
-      debugPrint('Fetched ${response.length} premium listings');
-
-      // Get parent categories
-      Set<String> parentCategoryIds = {};
-      for (var item in response) {
-        if (item['category']['parent_category_id'] != null) {
-          parentCategoryIds.add(item['category']['parent_category_id']);
-        }
-      }
-
-      Map<String, String> parentCategoryNames = {};
-      if (parentCategoryIds.isNotEmpty) {
-        final parentCategories = await _supabase
-            .from('categories')
-            .select('id, name')
-            .inFilter('id', parentCategoryIds.toList());
-
-        for (var parent in parentCategories) {
-          parentCategoryNames[parent['id']] = parent['name'];
-        }
-      }
-
-      // Transform the data
-      return List<Map<String, dynamic>>.from(response.map((item) {
-        List<dynamic> images = item['images'] ?? [];
-        String mainImage = images.isNotEmpty ? images[0] : 'https://via.placeholder.com/300';
-
-        // Determine category and subcategory
-        String categoryName;
-        String subcategoryName;
-
-        if (item['category']['parent_category_id'] != null) {
-          categoryName = parentCategoryNames[item['category']['parent_category_id']] ?? 'Uncategorized';
-          subcategoryName = item['category']['name'] ?? 'Uncategorized';
-        } else {
-          categoryName = item['category']['name'] ?? 'Uncategorized';
-          subcategoryName = item['category']['name'] ?? 'Uncategorized';
-        }
-
-        return {
-          'id': item['id'],
-          'title': item['title'] ?? 'Untitled',
-          'price': item['price'] ?? 0,
-          'image': mainImage,
-          'images': images,
-          'location': item['location'] ?? 'Location not specified',
-          'category': categoryName,
-          'subcategory': subcategoryName,
-          'description': item['description'] ?? '',
-          'condition': item['condition'] ?? 'used',
-          'phone': item['seller_phone'] ?? '',
-          'seller_name': item['seller_name'] ?? 'Seller',
-          'is_featured': item['is_featured'] ?? false,
-          'is_premium': true, // These are explicitly premium listings
-          'views': item['views_count'] ?? 0,
-          'created_at': item['created_at'],
-          // Additional fields
-          'brand': item['brand'],
-          'model': item['model'],
-          'year': item['year_of_purchase'],
-          'fuel_type': item['fuel_type'],
-          'transmission': item['transmission_type'],
-          'km_driven': item['kilometres_driven'],
-          'bedrooms': item['bedrooms'],
-          'bathrooms': item['bathrooms'],
-          'furnishing': item['furnishing_status'],
-          'latitude': item['latitude'],
-          'longitude': item['longitude'],
-        };
-      }));
-    } catch (e) {
-      debugPrint('Error fetching premium listings: $e');
-      
-      if (e.toString().contains('JWT') || 
-          e.toString().contains('auth') || 
-          e.toString().contains('401') ||
-          e.toString().contains('403')) {
-        throw Exception('Authentication expired. Please login again.');
-      }
-      
-      throw Exception('Failed to fetch premium listings: ${e.toString()}');
-    }
-  }
-
   /// Get user's favorites
   Future<Set<String>> getUserFavorites() async {
     await _ensureAuthenticated();
-    
+
     try {
-      final user = _supabase.auth.currentUser!; // Safe to use ! after _ensureAuthenticated()
+      final user = _supabase.auth.currentUser!;
       debugPrint('Fetching favorites for user: ${user.id}');
 
       final response = await _supabase
@@ -586,19 +516,19 @@ class ListingService {
       final favorites = Set<String>.from(
         response.map((item) => item['listing_id'] as String)
       );
-      
+
       debugPrint('User has ${favorites.length} favorites');
       return favorites;
     } catch (e) {
       debugPrint('Error fetching favorites: $e');
-      
+
       if (e.toString().contains('JWT') || 
           e.toString().contains('auth') || 
           e.toString().contains('401') ||
           e.toString().contains('403')) {
         throw Exception('Authentication expired. Please login again.');
       }
-      
+
       throw Exception('Failed to fetch favorites: ${e.toString()}');
     }
   }
@@ -606,7 +536,7 @@ class ListingService {
   /// Toggle favorite
   Future<bool> toggleFavorite(String listingId) async {
     await _ensureAuthenticated();
-    
+
     try {
       final user = _supabase.auth.currentUser!;
       debugPrint('Toggling favorite for listing: $listingId, user: ${user.id}');
@@ -627,7 +557,7 @@ class ListingService {
             .eq('user_id', user.id)
             .eq('listing_id', listingId);
         debugPrint('Removed favorite for listing: $listingId');
-        return false; // Not favorited anymore
+        return false;
       } else {
         // Add favorite
         await _supabase
@@ -638,18 +568,18 @@ class ListingService {
               'created_at': DateTime.now().toIso8601String(),
             });
         debugPrint('Added favorite for listing: $listingId');
-        return true; // Now favorited
+        return true;
       }
     } catch (e) {
       debugPrint('Error toggling favorite: $e');
-      
+
       if (e.toString().contains('JWT') || 
           e.toString().contains('auth') || 
           e.toString().contains('401') ||
           e.toString().contains('403')) {
         throw Exception('Authentication expired. Please login again.');
       }
-      
+
       throw Exception('Failed to toggle favorite: ${e.toString()}');
     }
   }
@@ -672,12 +602,13 @@ class ListingService {
     Map<String, dynamic>? additionalData,
   }) async {
     await _ensureAuthenticated();
-    
+
     try {
       final user = _supabase.auth.currentUser!;
-      
+
       debugPrint('Creating listing for user: ${user.id}');
       debugPrint('Category ID: $categoryId');
+      debugPrint('Location: $location, Lat: $latitude, Lng: $longitude');
 
       // Prepare listing data
       final Map<String, dynamic> listingData = {
@@ -696,16 +627,15 @@ class ListingService {
         'seller_name': sellerName,
         'seller_phone': sellerPhone,
         'user_type': userType.toLowerCase(),
-        'is_premium': false, // Default to regular listing
+        'is_premium': false,
         'is_featured': false,
         'views_count': 0,
         'created_at': DateTime.now().toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
       };
 
-      // Add any additional data (like brand, model, etc.)
+      // Add any additional data
       if (additionalData != null) {
-        // Convert field names to snake_case for database
         final Map<String, dynamic> dbAdditionalData = {};
 
         if (additionalData['brand'] != null) {
@@ -746,7 +676,8 @@ class ListingService {
       }
 
       debugPrint('=== LISTING DATA TO INSERT ===');
-      debugPrint(listingData.toString());
+      debugPrint('Latitude: ${listingData['latitude']}');
+      debugPrint('Longitude: ${listingData['longitude']}');
       debugPrint('===============================');
 
       // Insert into database
@@ -760,14 +691,14 @@ class ListingService {
       return response;
     } catch (e) {
       debugPrint('Error creating listing: $e');
-      
+
       if (e.toString().contains('JWT') || 
           e.toString().contains('auth') || 
           e.toString().contains('401') ||
           e.toString().contains('403')) {
         throw Exception('Authentication expired. Please login again.');
       }
-      
+
       throw Exception('Failed to create listing: ${e.toString()}');
     }
   }
@@ -776,7 +707,7 @@ class ListingService {
   Future<List<Map<String, dynamic>>> getCategories() async {
     try {
       debugPrint('Fetching categories (public data)');
-      
+
       final response = await _supabase
           .from('categories')
           .select('*')
@@ -795,7 +726,7 @@ class ListingService {
   Future<List<Map<String, dynamic>>> getSubcategories(String parentCategoryId) async {
     try {
       debugPrint('Fetching subcategories for parent: $parentCategoryId');
-      
+
       final response = await _supabase
           .from('categories')
           .select('*')
