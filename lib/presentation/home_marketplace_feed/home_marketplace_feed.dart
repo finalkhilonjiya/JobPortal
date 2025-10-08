@@ -929,3 +929,133 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+         InkWell(
+                        onTap: _openAdvancedFilter,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Color(0xFF2563EB)),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.filter_list,
+                                color: Color(0xFF2563EB),
+                                size: 4.5.w,
+                              ),
+                              SizedBox(width: 1.w),
+                              Text(
+                                'Filter',
+                                style: TextStyle(
+                                  color: Color(0xFF2563EB),
+                                  fontSize: 11.sp,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Main Feed
+              if (_hasInitialLoadError && _listings.isEmpty)
+                SliverToBoxAdapter(
+                  child: Container(
+                    height: 50.h,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.wifi_off, size: 15.w, color: Colors.grey),
+                          SizedBox(height: 2.h),
+                          Text(
+                            'Unable to load listings',
+                            style: TextStyle(fontSize: 12.sp, color: Colors.grey[700]),
+                          ),
+                          SizedBox(height: 2.h),
+                          ElevatedButton(
+                            onPressed: _fetchData,
+                            child: Text('Retry'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF2563EB),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              else if (_isLoadingFeed && _filteredListings.isEmpty)
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, __) => ShimmerProductCard(),
+                    childCount: 6,
+                  ),
+                )
+              else
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, index) => _buildListingWithPremium(index),
+                    childCount: _filteredListings.length + 
+                               (_filteredListings.length ~/ 12),
+                  ),
+                ),
+
+              // Loading more indicator
+              if (_isLoadingMore)
+                SliverToBoxAdapter(
+                  child: Container(
+                    padding: EdgeInsets.all(2.h),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+                  ),
+                ),
+
+              SliverPadding(padding: EdgeInsets.only(bottom: 10.h)),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: BottomNavBarWidget(
+        currentIndex: _currentIndex,
+        hasMessageNotification: true,
+        onTabSelected: (index) {
+          setState(() => _currentIndex = index);
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SearchPage()),
+            );
+          } else if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => PremiumPackagePage()),
+            );
+          } else if (index == 4) {
+            _navigateToProfile();
+          }
+        },
+        onFabPressed: _openCreateListing,
+      ),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            onPressed: _openCreateListing,
+            backgroundColor: Color(0xFF2563EB),
+            child: Icon(Icons.add, color: Colors.white),
+            heroTag: 'sell_fab',
+          ),
+        ],
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    );
+  }
+}
