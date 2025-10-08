@@ -56,17 +56,17 @@ class CategoryData {
       ],
     },
     {
-      'name': 'Properties for Rent',
+      'name': 'Properties for Sale',
       'icon': Icons.home_work_rounded,
       'image':
           'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQpfW240Q3lGejPKThC36IFQtecjL4Yi2Ml-dzErxh4MYC2O69dnH4BXZ_D&s=10',
       'subcategories': [
-        'Flats / Apartments for Rent',
-        'Houses / Villas for Rent',
-        'Commercial Properties for Rent',
-        'Office Space for Rent',
-        'Shop / Showroom for Rent',
-        'Warehouse for Rent',
+        'Flats / Apartments for Sale',
+        'Houses / Villas for Sale',
+        'Commercial Properties for Sale',
+        'Office Space for Sale',
+        'Shop / Showroom for Sale',
+        'Land / Plots for Sale',
       ],
     },
   ];
@@ -81,18 +81,18 @@ class CategoryData {
 
   static bool shouldShowField(String category, String field) {
     final fieldCategories = {
-      'bedrooms': ['Properties for Rent', 'Room for Rent', 'Homestays'],
-      'bathrooms': ['Properties for Rent', 'Room for Rent', 'Homestays'],
+      'bedrooms': ['Properties for Sale', 'Room for Rent', 'Homestays'],
+      'bathrooms': ['Properties for Sale', 'Room for Rent', 'Homestays'],
       'furnishingStatus': [
-        'Properties for Rent',
+        'Properties for Sale',
         'Room for Rent', 
         'PG Accommodation',
         'Homestays'
       ],
-      'rentAmount': ['Properties for Rent', 'Room for Rent', 'PG Accommodation', 'Homestays'],
-      'deposit': ['Properties for Rent', 'Room for Rent', 'PG Accommodation'],
-      'amenities': ['Properties for Rent', 'Room for Rent', 'PG Accommodation', 'Homestays'],
-      'preferredTenant': ['Properties for Rent', 'Room for Rent', 'PG Accommodation'],
+      'rentAmount': ['Properties for Sale', 'Room for Rent', 'PG Accommodation', 'Homestays'],
+      'deposit': ['Properties for Sale', 'Room for Rent', 'PG Accommodation'],
+      'amenities': ['Properties for Sale', 'Room for Rent', 'PG Accommodation', 'Homestays'],
+      'preferredTenant': ['Properties for Sale', 'Room for Rent', 'PG Accommodation'],
       'foodIncluded': ['PG Accommodation', 'Homestays'],
       'occupancyType': ['PG Accommodation'],
     };
