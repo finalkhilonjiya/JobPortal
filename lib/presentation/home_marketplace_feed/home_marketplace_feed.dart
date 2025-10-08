@@ -36,6 +36,14 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
   final ListingService _listingService = ListingService();
   final MobileAuthService _authService = MobileAuthService();
 
+  // Hardcoded category mapping - matches database UUIDs exactly
+  static const Map<String, String> CATEGORY_UUID_MAPPING = {
+    'Room for Rent': 'a384cc43-d522-406b-8749-bb3bab919bc8',
+    'PG Accommodation': 'a0d49db8-dce7-438c-a820-0bc83c173cc8',
+    'Homestays': '7d16862e-5613-4ff8-afed-68ea27585f1c',
+    'Properties for Sale': '58a66e7b-0460-428b-8a05-2c2fdc52858e',
+  };
+
   // Auth related state
   bool _isCheckingAuth = true;
   bool _isAuthenticatedUser = false;
@@ -51,10 +59,15 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
   String _selectedCategory = 'All';
   String _selectedCategoryId = 'All';
   Set<String> _favoriteIds = {};
-  String _currentLocation = 'Guwahati, Assam';
+  String _currentLocation = 'Detecting location...';
+  
+  // User coordinates for distance-based sorting
+  double? _userLatitude;
+  double? _userLongitude;
+  
   final ScrollController _scrollController = ScrollController();
 
-  // Category mapping - maps CategoryData names to database IDs
+  // Category mapping
   Map<String, String> _categoryMapping = {};
 
   // Pagination
@@ -79,7 +92,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeWithAuth();
     });
-    _detectLocation();
 
     // Keep session alive every 10 minutes
     Timer.periodic(Duration(minutes: 10), (timer) {
@@ -173,18 +185,27 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
   void _redirectToLogin() {
     if (mounted) {
       Navigator.of(context).pushNamedAndRemoveUntil(
-        '/mobile_login', // Update this to match your actual route name
+        '/mobile_login',
         (route) => false,
       );
     }
   }
 
-  void _detectLocation() async {
-    await Future.delayed(Duration(seconds: 1));
+  /// Handle location update from TopBarWidget
+  void _onLocationDetected(double latitude, double longitude, String locationName) {
     if (mounted) {
       setState(() {
-        _currentLocation = 'Guwahati, Assam';
+        _userLatitude = latitude;
+        _userLongitude = longitude;
+        _currentLocation = locationName;
       });
+      
+      debugPrint('Location updated: $locationName (Lat: $latitude, Lng: $longitude)');
+      
+      // Refresh listings with new location if Distance sorting is active
+      if (_sortBy == 'Distance') {
+        _fetchFilteredListings();
+      }
     }
   }
 
@@ -218,6 +239,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
           sortBy: _sortBy,
           offset: _currentOffset + _pageSize,
           limit: _pageSize,
+          userLatitude: _userLatitude,
+          userLongitude: _userLongitude,
         );
 
         if (mounted) {
@@ -268,6 +291,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         sortBy: _sortBy,
         offset: 0,
         limit: _pageSize,
+        userLatitude: _userLatitude,
+        userLongitude: _userLongitude,
       );
 
       if (listings.isNotEmpty && mounted) {
@@ -286,14 +311,14 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
   /// Get the correct category ID for API calls
   String? _getCategoryIdForApi(String selectedCategoryId) {
     if (selectedCategoryId == 'All') return null;
-    
-    // If it's already a database ID (from mapping), use it
-    if (_categoryMapping.containsValue(selectedCategoryId)) {
+
+    // If it's already a UUID (from our mapping), use it directly
+    if (CATEGORY_UUID_MAPPING.containsValue(selectedCategoryId)) {
       return selectedCategoryId;
     }
-    
-    // If it's a CategoryData name, get the mapped database ID
-    return _categoryMapping[selectedCategoryId];
+
+    // If it's a category name, get the UUID from our mapping
+    return CATEGORY_UUID_MAPPING[selectedCategoryId];
   }
 
   Future<void> _fetchData() async {
@@ -324,16 +349,31 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
       // Fetch categories from database and create mapping
       List<Map<String, dynamic>> databaseCategories = [];
       Map<String, String> categoryMapping = {};
-      
+
       try {
         databaseCategories = await _listingService.getCategories();
         debugPrint('Fetched ${databaseCategories.length} categories from API');
+
+        // Use hardcoded mapping
+        categoryMapping = Map<String, String>.from(CATEGORY_UUID_MAPPING);
         
-        // Create mapping between CategoryData names and database IDs
-        categoryMapping = _createCategoryMapping(databaseCategories);
+        // Verify mapping against database
+        for (var entry in CATEGORY_UUID_MAPPING.entries) {
+          final dbCategory = databaseCategories.firstWhere(
+            (cat) => cat['id'] == entry.value,
+            orElse: () => {},
+          );
+          
+          if (dbCategory.isNotEmpty) {
+            debugPrint('✓ Verified: "${entry.key}" → ${entry.value} (DB: ${dbCategory['name']})');
+          } else {
+            debugPrint('⚠ Warning: "${entry.key}" UUID ${entry.value} not found in database');
+          }
+        }
       } catch (e) {
         debugPrint('Error fetching categories from API: $e');
-        // Continue with empty mapping, will use CategoryData only
+        // Continue with hardcoded mapping
+        categoryMapping = Map<String, String>.from(CATEGORY_UUID_MAPPING);
       }
 
       // Build category list - always use CategoryData for consistency
@@ -346,20 +386,21 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         debugPrint('Fetched ${favorites.length} user favorites');
       } catch (e) {
         debugPrint('Error fetching favorites: $e');
-        // Check if error is auth-related
         if (e.toString().contains('auth') || e.toString().contains('401')) {
           _verifyAuthState();
           return;
         }
       }
 
-      // Fetch listings
+      // Fetch listings with coordinates if available
       List<Map<String, dynamic>> listings = [];
       try {
         listings = await _listingService.fetchListings(
           sortBy: _sortBy,
           offset: 0,
           limit: _pageSize,
+          userLatitude: _userLatitude,
+          userLongitude: _userLongitude,
         );
         debugPrint('Fetched ${listings.length} listings');
       } catch (e) {
@@ -370,11 +411,13 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         }
       }
 
-      // Fetch premium listings
+      // Fetch premium listings with coordinates
       List<Map<String, dynamic>> premiumListings = [];
       try {
         premiumListings = await _listingService.fetchPremiumListings(
           limit: 10,
+          userLatitude: _userLatitude,
+          userLongitude: _userLongitude,
         );
         debugPrint('Fetched ${premiumListings.length} premium listings');
       } catch (e) {
@@ -406,8 +449,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
       if (mounted) {
         setState(() {
           // Use CategoryData only on error
-          _categories = _buildCategoryList({});
-          _categoryMapping = {};
+          _categories = _buildCategoryList(Map<String, String>.from(CATEGORY_UUID_MAPPING));
+          _categoryMapping = Map<String, String>.from(CATEGORY_UUID_MAPPING);
           _listings = [];
           _premiumListings = [];
           _isLoadingPremium = false;
@@ -423,56 +466,10 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
     }
   }
 
-  /// Create mapping between CategoryData names and database category IDs
-  Map<String, String> _createCategoryMapping(List<Map<String, dynamic>> databaseCategories) {
-    Map<String, String> mapping = {};
-    
-    // Define the rental categories we want to show
-    final targetCategories = [
-      'Room for Rent',
-      'PG Accommodation', 
-      'Homestays',
-      'Properties for Rent'
-    ];
-
-    for (String categoryName in targetCategories) {
-      // Try to find matching database category
-      final dbCategory = databaseCategories.firstWhere(
-        (cat) => cat['name'] == categoryName || 
-                 cat['name'].toLowerCase() == categoryName.toLowerCase() ||
-                 _isSimilarCategory(cat['name'], categoryName),
-        orElse: () => {},
-      );
-      
-      if (dbCategory.isNotEmpty && dbCategory['id'] != null) {
-        mapping[categoryName] = dbCategory['id'].toString();
-        debugPrint('Mapped "$categoryName" to database ID: ${dbCategory['id']}');
-      } else {
-        debugPrint('No database category found for: $categoryName');
-      }
-    }
-    
-    return mapping;
-  }
-
-  /// Check if two category names are similar (for mapping flexibility)
-  bool _isSimilarCategory(String dbName, String localName) {
-    // Add custom mapping logic for similar category names
-    final similarityMap = {
-      'Properties for Rent': ['Property for Rent', 'Properties', 'Real Estate'],
-      'Room for Rent': ['Room Rental', 'Rooms', 'Single Room'],
-      'PG Accommodation': ['PG', 'Paying Guest', 'PG Hostel'],
-      'Homestays': ['Homestay', 'Home Stay', 'Guest House'],
-    };
-
-    return similarityMap[localName]?.any((similar) => 
-      dbName.toLowerCase().contains(similar.toLowerCase())) ?? false;
-  }
-
   /// Build the category list using CategoryData with database ID mapping
   List<Map<String, dynamic>> _buildCategoryList(Map<String, String> categoryMapping) {
     final List<Map<String, dynamic>> processedCategories = [];
-    
+
     // Always add "All" category first
     processedCategories.add({
       'name': 'All',
@@ -481,21 +478,23 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
       'image': 'https://cdn-icons-png.flaticon.com/512/8058/8058572.png',
     });
 
-    // Add only the rental categories from CategoryData
+    // Add the rental categories from CategoryData with their UUIDs
     final rentalCategories = CategoryData.mainCategories.where(
-      (cat) => cat['name'] != 'All' // Exclude "All" as we already added it
+      (cat) => cat['name'] != 'All'
     );
 
     for (final cat in rentalCategories) {
       final categoryName = cat['name'] as String;
       final databaseId = categoryMapping[categoryName] ?? categoryName;
-      
+
       processedCategories.add({
         'name': categoryName,
-        'id': databaseId, // Use database ID if available, otherwise use name
+        'id': databaseId,
         'icon': cat['icon'],
         'image': cat['image'],
       });
+      
+      debugPrint('Category "$categoryName" mapped to UUID: $databaseId');
     }
 
     debugPrint('Built ${processedCategories.length} categories for display');
@@ -546,6 +545,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         sortBy: _sortBy,
         offset: 0,
         limit: _pageSize,
+        userLatitude: _userLatitude,
+        userLongitude: _userLongitude,
       );
 
       // Also fetch filtered premium listings
@@ -554,10 +555,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         premiumListings = await _listingService.fetchPremiumListings(
           categoryId: categoryIdForApi,
           limit: 10,
+          userLatitude: _userLatitude,
+          userLongitude: _userLongitude,
         );
       } catch (e) {
         debugPrint('Error fetching filtered premium listings: $e');
-        // Keep existing premium listings if fetch fails
         premiumListings = _premiumListings;
       }
 
@@ -841,11 +843,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
             controller: _scrollController,
             physics: AlwaysScrollableScrollPhysics(),
             slivers: [
-              // Top Bar - Updated to use company logo
+              // Top Bar with location callback
               SliverToBoxAdapter(
                 child: TopBarWidget(
                   currentLocation: _currentLocation,
-                  onLocationTap: _detectLocation,
+                  onLocationDetected: _onLocationDetected,
                 ),
               ),
 
@@ -866,7 +868,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
               // App Info Banner
               SliverToBoxAdapter(child: AppInfoBannerNew()),
 
-              // Three Options - Updated for Jobs and Construction Services
+              // Three Options
               SliverToBoxAdapter(
                 child: ThreeOptionSection(
                   onJobsTap: _navigateToJobs,
@@ -904,7 +906,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
                   ),
                 ),
 
-              // Categories - Now only shows 4 rental categories
+              // Categories
               SliverToBoxAdapter(
                 child: CategoriesSection(
                   categories: _categories.map((cat) => cat.cast<String, Object>()).toList(),
@@ -927,133 +929,3 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      InkWell(
-                        onTap: _openAdvancedFilter,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Color(0xFF2563EB)),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.filter_list,
-                                color: Color(0xFF2563EB),
-                                size: 4.5.w,
-                              ),
-                              SizedBox(width: 1.w),
-                              Text(
-                                'Filter',
-                                style: TextStyle(
-                                  color: Color(0xFF2563EB),
-                                  fontSize: 11.sp,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Main Feed
-              if (_hasInitialLoadError && _listings.isEmpty)
-                SliverToBoxAdapter(
-                  child: Container(
-                    height: 50.h,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.wifi_off, size: 15.w, color: Colors.grey),
-                          SizedBox(height: 2.h),
-                          Text(
-                            'Unable to load listings',
-                            style: TextStyle(fontSize: 12.sp, color: Colors.grey[700]),
-                          ),
-                          SizedBox(height: 2.h),
-                          ElevatedButton(
-                            onPressed: _fetchData,
-                            child: Text('Retry'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF2563EB),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                )
-              else if (_isLoadingFeed && _filteredListings.isEmpty)
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (_, __) => ShimmerProductCard(),
-                    childCount: 6,
-                  ),
-                )
-              else
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (_, index) => _buildListingWithPremium(index),
-                    childCount: _filteredListings.length + 
-                               (_filteredListings.length ~/ 12),
-                  ),
-                ),
-
-              // Loading more indicator
-              if (_isLoadingMore)
-                SliverToBoxAdapter(
-                  child: Container(
-                    padding: EdgeInsets.all(2.h),
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF2563EB),
-                      ),
-                    ),
-                  ),
-                ),
-
-              SliverPadding(padding: EdgeInsets.only(bottom: 10.h)),
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: BottomNavBarWidget(
-        currentIndex: _currentIndex,
-        hasMessageNotification: true,
-        onTabSelected: (index) {
-          setState(() => _currentIndex = index);
-          if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SearchPage()),
-            );
-          } else if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => PremiumPackagePage()),
-            );
-          } else if (index == 4) {
-            _navigateToProfile();
-          }
-        },
-        onFabPressed: _openCreateListing,
-      ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingActionButton(
-            onPressed: _openCreateListing,
-            backgroundColor: Color(0xFF2563EB),
-            child: Icon(Icons.add, color: Colors.white),
-            heroTag: 'sell_fab',
-          ),
-        ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-    );
-  }
-}
