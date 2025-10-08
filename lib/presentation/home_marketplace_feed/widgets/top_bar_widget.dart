@@ -6,12 +6,12 @@ import 'package:geocoding/geocoding.dart';
 
 class TopBarWidget extends StatefulWidget {
   final String currentLocation;
-  final VoidCallback onLocationTap;
+  final Function(double latitude, double longitude, String locationName)? onLocationDetected;
 
   const TopBarWidget({
     Key? key,
     required this.currentLocation,
-    required this.onLocationTap,
+    this.onLocationDetected,
   }) : super(key: key);
 
   @override
@@ -21,6 +21,8 @@ class TopBarWidget extends StatefulWidget {
 class _TopBarWidgetState extends State<TopBarWidget> {
   String _currentLocation = 'Detecting...';
   bool _isDetectingLocation = false;
+  double? _latitude;
+  double? _longitude;
 
   @override
   void initState() {
@@ -63,6 +65,10 @@ class _TopBarWidgetState extends State<TopBarWidget> {
         desiredAccuracy: LocationAccuracy.high,
       );
 
+      // Store coordinates
+      _latitude = position.latitude;
+      _longitude = position.longitude;
+
       // Get place name from coordinates
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
@@ -71,16 +77,26 @@ class _TopBarWidgetState extends State<TopBarWidget> {
 
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
+        final locationName = '${place.locality ?? place.subAdministrativeArea ?? 'Unknown'}, ${place.administrativeArea ?? ''}';
+        
         setState(() {
-          _currentLocation = '${place.locality ?? place.subAdministrativeArea ?? 'Unknown'}, ${place.administrativeArea ?? ''}';
+          _currentLocation = locationName;
           _isDetectingLocation = false;
         });
+
+        // Notify parent widget with coordinates and location name
+        if (widget.onLocationDetected != null && _latitude != null && _longitude != null) {
+          widget.onLocationDetected!(_latitude!, _longitude!, locationName);
+        }
+
+        debugPrint('Location detected: $locationName (Lat: $_latitude, Lng: $_longitude)');
       }
     } catch (e) {
       setState(() {
         _currentLocation = 'Location unavailable';
         _isDetectingLocation = false;
       });
+      debugPrint('Location detection error: $e');
     }
   }
 
@@ -92,7 +108,7 @@ class _TopBarWidgetState extends State<TopBarWidget> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Logo and Title - Updated to use company logo
+          // Logo and Title
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -105,7 +121,6 @@ class _TopBarWidgetState extends State<TopBarWidget> {
                     'assets/images/company_logo.png',
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) {
-                      // Fallback to "K" if logo fails to load
                       return Container(
                         decoration: BoxDecoration(
                           color: Color(0xFF2563EB),
@@ -138,10 +153,9 @@ class _TopBarWidgetState extends State<TopBarWidget> {
             ],
           ),
 
-          // Add some spacing
           SizedBox(width: 2.w),
 
-          // Location - Flexible to take remaining space
+          // Location
           Expanded(
             child: InkWell(
               onTap: _detectLocation,
