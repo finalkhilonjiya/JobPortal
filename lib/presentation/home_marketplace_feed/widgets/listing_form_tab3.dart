@@ -62,6 +62,8 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
         desiredAccuracy: LocationAccuracy.high,
       );
 
+      debugPrint('GPS Position: Lat ${position.latitude}, Lng ${position.longitude}');
+
       // Find nearest location from database
       final nearestLocation = await _locationService.findNearestLocation(
         position.latitude,
@@ -79,17 +81,20 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
           finalLat = nearestLocation.latitude;
           finalLng = nearestLocation.longitude;
         }
+        debugPrint('Found nearest location: $locationText');
       } else {
         // Fallback if no location found in database
         locationText = 'Current Location (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)})';
+        debugPrint('No location found in database, using coordinates');
       }
-      
+
       setState(() {
         _locationController.text = locationText;
         _isDetectingLocation = false;
       });
 
       // Update form data with location and coordinates
+      debugPrint('Saving to formData: location=$locationText, lat=$finalLat, lng=$finalLng');
       widget.onDataChanged({
         'location': locationText,
         'latitude': finalLat,
@@ -98,12 +103,14 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Location: $locationText'),
+          content: Text('Location captured: $locationText'),
           backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
         ),
       );
     } catch (e) {
       setState(() => _isDetectingLocation = false);
+      debugPrint('Location detection error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to detect location: $e'),
@@ -117,7 +124,9 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
     setState(() {
       _locationController.text = location.displayName;
     });
-    
+
+    debugPrint('Location selected: ${location.displayName}, Lat: ${location.latitude}, Lng: ${location.longitude}');
+
     // Update form data with location and coordinates
     widget.onDataChanged({
       'location': location.displayName,
@@ -211,7 +220,7 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
               ),
             ],
           ),
-          
+
           // Location confirmation with actual place name
           if (widget.formData['latitude'] != null && widget.formData['longitude'] != null)
             Container(
@@ -231,7 +240,7 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Location captured',
+                          'Location captured ✓',
                           style: TextStyle(
                             fontSize: 11.sp, 
                             color: Colors.green[700],
@@ -244,6 +253,15 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
                           style: TextStyle(
                             fontSize: 10.sp, 
                             color: Colors.grey[700],
+                          ),
+                        ),
+                        SizedBox(height: 0.3.h),
+                        Text(
+                          'Lat: ${widget.formData['latitude']?.toStringAsFixed(6)}, Lng: ${widget.formData['longitude']?.toStringAsFixed(6)}',
+                          style: TextStyle(
+                            fontSize: 9.sp, 
+                            color: Colors.grey[600],
+                            fontFamily: 'monospace',
                           ),
                         ),
                         if (!widget.formData['location'].toString().startsWith('Near'))
@@ -325,7 +343,8 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
                   '• Your ad will be live for 30 days\n'
                   '• We reserve the right to remove inappropriate content\n'
                   '• Provide accurate information about your product\n'
-                  '• You are responsible for the transaction',
+                  '• You are responsible for the transaction\n'
+                  '• Location coordinates help buyers find nearby listings',
                   style: TextStyle(fontSize: 10.sp, color: Colors.grey[700]),
                 ),
                 SizedBox(height: 2.h),
@@ -376,7 +395,7 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
                         Padding(
                           padding: EdgeInsets.only(top: 0.5.h),
                           child: Text(
-                            'Location coordinates help buyers find listings near them',
+                            'Location coordinates help buyers find listings near them and enable distance-based sorting',
                             style: TextStyle(fontSize: 9.sp, color: Color(0xFF2563EB)),
                           ),
                         ),
