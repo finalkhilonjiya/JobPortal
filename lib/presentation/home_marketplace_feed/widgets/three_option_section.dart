@@ -43,13 +43,16 @@ class ThreeOptionSection extends StatelessWidget {
             ],
           ),
           SizedBox(height: 2.h),
-          // Bottom Row - Construction Services (Full Width)
-          _buildOption(
-            context,
-            'Khilonjiya Construction Services',
-            'assets/images/construction_services.png',
-            Colors.purple,
-            onConstructionTap,
+          // Bottom Row - Construction Services (FULL WIDTH)
+          SizedBox(
+            width: double.infinity,
+            child: _buildOption(
+              context,
+              'Khilonjiya Construction Services',
+              'assets/images/construction_services.png',
+              Colors.purple,
+              onConstructionTap,
+            ),
           ),
         ],
       ),
