@@ -16,41 +16,40 @@ class ThreeOptionSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      child: Column(
         children: [
-          Expanded(
-            flex: 1,
-            child: _buildOption(
-              context,
-              'Apply for Jobs',
-              'assets/images/ApplyJobs.png',
-              Colors.green,
-              onJobsTap,
-            ),
+          // Top Row - Apply for Jobs | List Jobs
+          Row(
+            children: [
+              Expanded(
+                child: _buildOption(
+                  context,
+                  'Apply for Jobs',
+                  'assets/images/ApplyJobs.png',
+                  Colors.green,
+                  onJobsTap,
+                ),
+              ),
+              SizedBox(width: 2.w),
+              Expanded(
+                child: _buildOption(
+                  context,
+                  'List Jobs',
+                  'assets/images/ListJobs.png',
+                  Colors.orange,
+                  onJobsTap,
+                ),
+              ),
+            ],
           ),
-          SizedBox(width: 2.w),
-          Expanded(
-            flex: 1,
-            child: _buildOption(
-              context,
-              'List Jobs',
-              'assets/images/ListJobs.png',
-              Colors.orange,
-              onJobsTap,
-            ),
-          ),
-          SizedBox(width: 2.w),
-          Expanded(
-            flex: 1,
-            child: _buildOption(
-              context,
-              'Khilonjiya Construction Services',
-              'assets/images/construction_services.png',
-              Colors.purple,
-              onConstructionTap,
-              isExpanded: true,
-            ),
+          SizedBox(height: 2.h),
+          // Bottom Row - Construction Services (Full Width)
+          _buildOption(
+            context,
+            'Khilonjiya Construction Services',
+            'assets/images/construction_services.png',
+            Colors.purple,
+            onConstructionTap,
           ),
         ],
       ),
@@ -62,9 +61,8 @@ class ThreeOptionSection extends StatelessWidget {
     String label,
     String imagePath,
     Color color,
-    VoidCallback? onTap, {
-    bool isExpanded = false,
-  }) {
+    VoidCallback? onTap,
+  ) {
     return InkWell(
       onTap: () {
         if (onTap != null) {
@@ -77,7 +75,7 @@ class ThreeOptionSection extends StatelessWidget {
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        height: 14.h, // Same height as original
+        height: 14.h,
         padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 1.h),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
@@ -87,15 +85,15 @@ class ThreeOptionSection extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Icon container with adjusted size
+            // Icon container
             Container(
-              width: isExpanded ? 15.w : 18.w, // Smaller for expanded text
-              height: isExpanded ? 15.w : 18.w,
+              width: 18.w,
+              height: 18.w,
               child: ClipOval(
                 child: Image.asset(
                   imagePath,
-                  width: isExpanded ? 15.w : 18.w,
-                  height: isExpanded ? 15.w : 18.w,
+                  width: 18.w,
+                  height: 18.w,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
@@ -104,12 +102,11 @@ class ThreeOptionSection extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        // Use appropriate icons for each section
                         label.contains('Apply') ? Icons.work :
                         label.contains('List') ? Icons.post_add :
                         Icons.construction,
                         color: color,
-                        size: isExpanded ? 7.w : 9.w,
+                        size: 9.w,
                       ),
                     );
                   },
@@ -117,15 +114,15 @@ class ThreeOptionSection extends StatelessWidget {
               ),
             ),
             SizedBox(height: 0.8.h),
-            // Text with proper constraints
+            // Text
             Flexible(
               child: Text(
                 label,
                 style: TextStyle(
-                  fontSize: isExpanded ? 7.5.sp : 8.5.sp, // Smaller font for longer text
+                  fontSize: 8.5.sp,
                   fontWeight: FontWeight.w600,
                   color: color,
-                  height: 1.1, // Tighter line height
+                  height: 1.1,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
