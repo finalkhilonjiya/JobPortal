@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:geolocator/geolocator.dart';
-import '../../../widgets/location_autocomplete.dart';
-import '../../../services/location_service.dart';
+import '../../../services/google_places_service.dart';
+import 'dart:async';
 
 class ListingFormTab3 extends StatefulWidget {
   final Map<String, dynamic> formData;
@@ -23,8 +23,15 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
-  final LocationService _locationService = LocationService();
+  final GooglePlacesService _placesService = GooglePlacesService();
+  
   bool _isDetectingLocation = false;
+  bool _isSearching = false;
+  List<PlaceSuggestion> _suggestions = [];
+  Timer? _debounceTimer;
+  OverlayEntry? _overlayEntry;
+  final LayerLink _layerLink = LayerLink();
+  final FocusNode _locationFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -32,14 +39,192 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
     _nameController.text = widget.formData['sellerName'];
     _phoneController.text = widget.formData['sellerPhone'];
     _locationController.text = widget.formData['location'];
+    
+    _locationController.addListener(_onLocationTextChanged);
+    _locationFocusNode.addListener(_onFocusChanged);
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _nameController.dispose();
     _phoneController.dispose();
     _locationController.dispose();
+    _locationFocusNode.dispose();
+    _removeOverlay();
     super.dispose();
+  }
+
+  void _onFocusChanged() {
+    if (!_locationFocusNode.hasFocus) {
+      _removeOverlay();
+    }
+  }
+
+  void _onLocationTextChanged() {
+    _debounceTimer?.cancel();
+
+    final query = _locationController.text.trim();
+
+    if (query.length < 2) {
+      _removeOverlay();
+      return;
+    }
+
+    setState(() => _isSearching = true);
+
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () async {
+      final results = await _placesService.searchPlaces(query);
+
+      if (mounted) {
+        setState(() {
+          _suggestions = results;
+          _isSearching = false;
+        });
+
+        if (results.isNotEmpty) {
+          _showOverlay();
+        } else {
+          _removeOverlay();
+        }
+      }
+    });
+  }
+
+  void _showOverlay() {
+    _removeOverlay();
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        width: MediaQuery.of(context).size.width - 8.w,
+        child: CompositedTransformFollower(
+          link: _layerLink,
+          showWhenUnlinked: false,
+          offset: Offset(0, 60),
+          child: Material(
+            elevation: 8,
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              constraints: BoxConstraints(maxHeight: 40.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: _suggestions.length,
+                itemBuilder: (context, index) {
+                  final suggestion = _suggestions[index];
+                  return InkWell(
+                    onTap: () => _onSuggestionSelected(suggestion),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 4.w,
+                        vertical: 3.w,
+                      ),
+                      decoration: BoxDecoration(
+                        border: index != _suggestions.length - 1
+                            ? Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey.shade200,
+                                  width: 1,
+                                ),
+                              )
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            color: Color(0xFF2563EB),
+                            size: 5.w,
+                          ),
+                          SizedBox(width: 3.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  suggestion.mainText,
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                if (suggestion.secondaryText.isNotEmpty)
+                                  Text(
+                                    suggestion.secondaryText,
+                                    style: TextStyle(
+                                      fontSize: 10.sp,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  Future<void> _onSuggestionSelected(PlaceSuggestion suggestion) async {
+    _removeOverlay();
+    FocusScope.of(context).unfocus();
+
+    setState(() {
+      _locationController.text = suggestion.description;
+      _isSearching = true;
+    });
+
+    // Get place details (lat/lng)
+    final details = await _placesService.getPlaceDetails(suggestion.placeId);
+
+    if (details != null && mounted) {
+      setState(() => _isSearching = false);
+
+      debugPrint('Selected place: ${details.formattedAddress}');
+      debugPrint('Coordinates: Lat ${details.latitude}, Lng ${details.longitude}');
+
+      // Update form data
+      widget.onDataChanged({
+        'location': details.formattedAddress,
+        'latitude': details.latitude,
+        'longitude': details.longitude,
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Location captured: ${details.formattedAddress}'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      setState(() => _isSearching = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to get location details'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> _detectCurrentLocation() async {
@@ -64,50 +249,37 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
 
       debugPrint('GPS Position: Lat ${position.latitude}, Lng ${position.longitude}');
 
-      // Find nearest location from database
-      final nearestLocation = await _locationService.findNearestLocation(
+      // Reverse geocode using Google Places
+      final address = await _placesService.reverseGeocode(
         position.latitude,
         position.longitude,
       );
 
-      String locationText;
-      double finalLat = position.latitude;
-      double finalLng = position.longitude;
+      if (address != null && mounted) {
+        setState(() {
+          _locationController.text = address;
+          _isDetectingLocation = false;
+        });
 
-      if (nearestLocation != null) {
-        locationText = nearestLocation.displayName;
-        // Use the location's coordinates if it's an exact match
-        if (!nearestLocation.displayName.startsWith('Near ')) {
-          finalLat = nearestLocation.latitude;
-          finalLng = nearestLocation.longitude;
-        }
-        debugPrint('Found nearest location: $locationText');
+        debugPrint('Reverse geocoded address: $address');
+
+        // Update form data
+        widget.onDataChanged({
+          'location': address,
+          'latitude': position.latitude,
+          'longitude': position.longitude,
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Location captured: $address'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
       } else {
-        // Fallback if no location found in database
-        locationText = 'Current Location (${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)})';
-        debugPrint('No location found in database, using coordinates');
+        throw 'Failed to get address from coordinates';
       }
-
-      setState(() {
-        _locationController.text = locationText;
-        _isDetectingLocation = false;
-      });
-
-      // Update form data with location and coordinates
-      debugPrint('Saving to formData: location=$locationText, lat=$finalLat, lng=$finalLng');
-      widget.onDataChanged({
-        'location': locationText,
-        'latitude': finalLat,
-        'longitude': finalLng,
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Location captured: $locationText'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
     } catch (e) {
       setState(() => _isDetectingLocation = false);
       debugPrint('Location detection error: $e');
@@ -118,21 +290,6 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
         ),
       );
     }
-  }
-
-  void _onLocationSelected(LocationResult location) {
-    setState(() {
-      _locationController.text = location.displayName;
-    });
-
-    debugPrint('Location selected: ${location.displayName}, Lat: ${location.latitude}, Lng: ${location.longitude}');
-
-    // Update form data with location and coordinates
-    widget.onDataChanged({
-      'location': location.displayName,
-      'latitude': location.latitude,
-      'longitude': location.longitude,
-    });
   }
 
   @override
@@ -182,7 +339,7 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
           ),
           SizedBox(height: 2.h),
 
-          // Location with Autocomplete
+          // Location with Google Places Autocomplete
           Text(
             'Location *',
             style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
@@ -191,10 +348,45 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
           Row(
             children: [
               Expanded(
-                child: LocationAutocomplete(
-                  controller: _locationController,
-                  onLocationSelected: _onLocationSelected,
-                  hintText: 'Enter city name (e.g., Guwahati)',
+                child: CompositedTransformTarget(
+                  link: _layerLink,
+                  child: TextField(
+                    controller: _locationController,
+                    focusNode: _locationFocusNode,
+                    decoration: InputDecoration(
+                      hintText: 'Search for a location',
+                      prefixIcon: Icon(Icons.location_on, color: Color(0xFF2563EB)),
+                      suffixIcon: _isSearching
+                          ? Container(
+                              width: 48,
+                              height: 48,
+                              padding: EdgeInsets.all(12),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFF2563EB),
+                              ),
+                            )
+                          : _locationController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(Icons.clear, color: Colors.grey),
+                                  onPressed: () {
+                                    _locationController.clear();
+                                    _removeOverlay();
+                                    widget.onDataChanged({
+                                      'location': '',
+                                      'latitude': null,
+                                      'longitude': null,
+                                    });
+                                  },
+                                )
+                              : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                  ),
                 ),
               ),
               SizedBox(width: 2.w),
@@ -221,7 +413,7 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
             ],
           ),
 
-          // Location confirmation with actual place name
+          // Location confirmation
           if (widget.formData['latitude'] != null && widget.formData['longitude'] != null)
             Container(
               margin: EdgeInsets.only(top: 1.h),
@@ -254,6 +446,8 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
                             fontSize: 10.sp, 
                             color: Colors.grey[700],
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         SizedBox(height: 0.3.h),
                         Text(
@@ -264,15 +458,6 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
                             fontFamily: 'monospace',
                           ),
                         ),
-                        if (!widget.formData['location'].toString().startsWith('Near'))
-                          Text(
-                            'Exact location match',
-                            style: TextStyle(
-                              fontSize: 9.sp, 
-                              color: Colors.green[600],
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
                       ],
                     ),
                   ),
@@ -395,7 +580,7 @@ class _ListingFormTab3State extends State<ListingFormTab3> {
                         Padding(
                           padding: EdgeInsets.only(top: 0.5.h),
                           child: Text(
-                            'Location coordinates help buyers find listings near them and enable distance-based sorting',
+                            'Powered by Google Places • Accurate location helps buyers find listings near them',
                             style: TextStyle(fontSize: 9.sp, color: Color(0xFF2563EB)),
                           ),
                         ),
