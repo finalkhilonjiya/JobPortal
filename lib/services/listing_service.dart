@@ -99,10 +99,11 @@ class ListingService {
     await _ensureAuthenticated();
 
     try {
-      debugPrint('Fetching listings: categoryId=$categoryId, limit=$limit, offset=$offset, userLat=$userLatitude, userLng=$userLongitude');
+      debugPrint('Fetching listings: categoryId=$categoryId, sortBy=$sortBy, limit=$limit, offset=$offset, userLat=$userLatitude, userLng=$userLongitude');
 
-      // If we have user coordinates and want distance sorting, use RPC function
-      if (userLatitude != null && userLongitude != null && sortBy == 'Distance') {
+      // If Distance sorting is requested AND we have coordinates, use RPC function
+      if (sortBy == 'Distance' && userLatitude != null && userLongitude != null) {
+        debugPrint('Using distance-based sorting with RPC function');
         return await _fetchListingsWithDistance(
           categoryId: categoryId,
           userLatitude: userLatitude,
@@ -148,8 +149,10 @@ class ListingService {
         finalQuery = query.order('price', ascending: true);
       } else if (sortBy == 'Price (High to Low)') {
         finalQuery = query.order('price', ascending: false);
+      } else if (sortBy == 'Oldest') {
+        finalQuery = query.order('created_at', ascending: true);
       } else {
-        // Default to newest first
+        // Default to newest first (or if sortBy is 'Newest')
         finalQuery = query.order('created_at', ascending: false);
       }
 
@@ -158,7 +161,28 @@ class ListingService {
 
       debugPrint('Fetched ${response.length} regular listings');
 
-      return await _transformListingData(response);
+      // Transform data
+      var listings = await _transformListingData(response);
+
+      // If we have user coordinates, calculate distance for each listing (even if not sorting by distance)
+      if (userLatitude != null && userLongitude != null) {
+        listings = listings.map((listing) {
+          if (listing['latitude'] != null && listing['longitude'] != null) {
+            final distance = _calculateDistance(
+              userLatitude,
+              userLongitude,
+              listing['latitude'],
+              listing['longitude'],
+            );
+            listing['distance'] = distance;
+          }
+          return listing;
+        }).toList();
+        
+        debugPrint('Calculated distances for ${listings.length} listings');
+      }
+
+      return listings;
     } catch (e) {
       debugPrint('Error fetching listings: $e');
 
