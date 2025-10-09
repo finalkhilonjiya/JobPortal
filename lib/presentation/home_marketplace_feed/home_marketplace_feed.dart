@@ -64,6 +64,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
   // User coordinates for distance-based sorting
   double? _userLatitude;
   double? _userLongitude;
+  bool _locationDetected = false; // Track if location has been detected
   
   final ScrollController _scrollController = ScrollController();
 
@@ -79,7 +80,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
   // Filter states
   String _priceRange = 'All';
   String _selectedSubcategory = 'All';
-  String _sortBy = 'Newest';
+  String _sortBy = 'Distance'; // Default to Distance when location available
   double _maxDistance = 50.0;
 
   @override
@@ -198,14 +199,20 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         _userLatitude = latitude;
         _userLongitude = longitude;
         _currentLocation = locationName;
+        
+        // Set location detected flag
+        if (!_locationDetected) {
+          _locationDetected = true;
+          // Set default sort to Distance when location is first detected
+          _sortBy = 'Distance';
+          debugPrint('Location detected, switching default sort to Distance');
+        }
       });
       
       debugPrint('Location updated: $locationName (Lat: $latitude, Lng: $longitude)');
       
-      // Refresh listings with new location if Distance sorting is active
-      if (_sortBy == 'Distance') {
-        _fetchFilteredListings();
-      }
+      // Refresh listings with new location and distance sorting
+      _fetchFilteredListings();
     }
   }
 
@@ -392,17 +399,27 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         }
       }
 
+      // Determine sort method based on location availability
+      String sortMethod = _sortBy;
+      if (_locationDetected && _userLatitude != null && _userLongitude != null) {
+        sortMethod = 'Distance'; // Use distance sorting when location is available
+        debugPrint('Using distance sorting with user location');
+      } else {
+        sortMethod = 'Newest'; // Fallback to newest
+        debugPrint('Location not available, using newest sorting');
+      }
+
       // Fetch listings with coordinates if available
       List<Map<String, dynamic>> listings = [];
       try {
         listings = await _listingService.fetchListings(
-          sortBy: _sortBy,
+          sortBy: sortMethod,
           offset: 0,
           limit: _pageSize,
           userLatitude: _userLatitude,
           userLongitude: _userLongitude,
         );
-        debugPrint('Fetched ${listings.length} listings');
+        debugPrint('Fetched ${listings.length} listings with sort: $sortMethod');
       } catch (e) {
         debugPrint('Error fetching listings: $e');
         if (e.toString().contains('auth') || e.toString().contains('401')) {
@@ -540,9 +557,16 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
       // Get the correct category ID for API call
       String? categoryIdForApi = _getCategoryIdForApi(_selectedCategoryId);
 
+      // Use distance sorting if location is available, otherwise use current sort
+      String sortMethod = _sortBy;
+      if (_sortBy == 'Distance' && (_userLatitude == null || _userLongitude == null)) {
+        sortMethod = 'Newest'; // Fallback if distance sorting requested but no location
+        debugPrint('Distance sort requested but no location, falling back to Newest');
+      }
+
       final listings = await _listingService.fetchListings(
         categoryId: categoryIdForApi,
-        sortBy: _sortBy,
+        sortBy: sortMethod,
         offset: 0,
         limit: _pageSize,
         userLatitude: _userLatitude,
@@ -586,7 +610,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
     }
   }
 
-  void _toggleFavorite(String id) async {
+
+void _toggleFavorite(String id) async {
     if (!_isAuthenticatedUser) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -868,7 +893,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
               // App Info Banner
               SliverToBoxAdapter(child: AppInfoBannerNew()),
 
-              // Three Options
+              // Three Options - Updated to 2+1 layout
               SliverToBoxAdapter(
                 child: ThreeOptionSection(
                   onJobsTap: _navigateToJobs,
@@ -929,7 +954,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-         InkWell(
+                      InkWell(
                         onTap: _openAdvancedFilter,
                         child: Container(
                           padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
