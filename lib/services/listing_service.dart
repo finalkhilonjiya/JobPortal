@@ -666,69 +666,34 @@ Future<List<Map<String, dynamic>>> fetchListings({
       debugPrint('Location: $location, Lat: $latitude, Lng: $longitude');
 
       // Prepare listing data
-      final Map<String, dynamic> listingData = {
-        'seller_id': user.id,
-        'category_id': categoryId,
-        'title': title,
-        'description': description,
-        'price': price,
-        'price_type': priceType.toLowerCase(),
-        'condition': condition,
-        'status': 'active',
-        'location': location,
-        'latitude': latitude,
-        'longitude': longitude,
-        'images': imageUrls,
-        'seller_name': sellerName,
-        'seller_phone': sellerPhone,
-        'user_type': userType.toLowerCase(),
-        'is_premium': false,
-        'is_featured': false,
-        'views_count': 0,
-        'created_at': DateTime.now().toIso8601String(),
-        'updated_at': DateTime.now().toIso8601String(),
-      };
+final Map<String, dynamic> listingData = {
+  'seller_id': user.id,
+  'category_id': categoryId,
+  'title': title,
+  'description': description,
+  'price': price,
+  'price_type': priceType.toLowerCase(),
+  'condition': condition,
+  'status': 'active',
+  'location': location,
+  'latitude': latitude,
+  'longitude': longitude,
+  'images': imageUrls,
+  'seller_name': sellerName,
+  'seller_phone': sellerPhone,
+  'user_type': userType.toLowerCase(),
+  'is_premium': false,
+  'is_featured': false,
+  'views_count': 0,
+  'created_at': DateTime.now().toIso8601String(),
+  'updated_at': DateTime.now().toIso8601String(),
+};
 
-      // Add any additional data
-      if (additionalData != null) {
-        final Map<String, dynamic> dbAdditionalData = {};
-
-        if (additionalData['brand'] != null) {
-          dbAdditionalData['brand'] = additionalData['brand'];
-        }
-        if (additionalData['model'] != null) {
-          dbAdditionalData['model'] = additionalData['model'];
-        }
-        if (additionalData['yearOfPurchase'] != null) {
-          dbAdditionalData['year_of_purchase'] = int.tryParse(additionalData['yearOfPurchase'].toString());
-        }
-        if (additionalData['warrantyStatus'] != null) {
-          dbAdditionalData['warranty_status'] = additionalData['warrantyStatus'].toLowerCase();
-        }
-        if (additionalData['availability'] != null) {
-          dbAdditionalData['availability'] = additionalData['availability'];
-        }
-        if (additionalData['kilometresDriven'] != null) {
-          dbAdditionalData['kilometres_driven'] = int.tryParse(additionalData['kilometresDriven'].toString());
-        }
-        if (additionalData['fuelType'] != null) {
-          dbAdditionalData['fuel_type'] = additionalData['fuelType'].toLowerCase();
-        }
-        if (additionalData['transmissionType'] != null) {
-          dbAdditionalData['transmission_type'] = additionalData['transmissionType'].toLowerCase();
-        }
-        if (additionalData['bedrooms'] != null) {
-          dbAdditionalData['bedrooms'] = int.tryParse(additionalData['bedrooms'].toString());
-        }
-        if (additionalData['bathrooms'] != null) {
-          dbAdditionalData['bathrooms'] = int.tryParse(additionalData['bathrooms'].toString());
-        }
-        if (additionalData['furnishingStatus'] != null) {
-          dbAdditionalData['furnishing_status'] = additionalData['furnishingStatus'].toLowerCase();
-        }
-
-        listingData.addAll(dbAdditionalData);
-      }
+// Add search_tags from conditions (multi-select)
+if (additionalData != null && additionalData['conditions'] != null) {
+  listingData['search_tags'] = additionalData['conditions']; // Store as array
+  debugPrint('Storing conditions as search_tags: ${additionalData['conditions']}');
+}
 
       debugPrint('=== LISTING DATA TO INSERT ===');
       debugPrint('Latitude: ${listingData['latitude']}');
