@@ -88,114 +88,145 @@ class ListingService {
   }
 
   /// Fetch all active listings with category filtering and distance sorting
-  Future<List<Map<String, dynamic>>> fetchListings({
-    String? categoryId,
-    String? sortBy,
-    int limit = 20,
-    int offset = 0,
-    double? userLatitude,
-    double? userLongitude,
-  }) async {
-    await _ensureAuthenticated();
+Future<List<Map<String, dynamic>>> fetchListings({
+  String? categoryId,
+  String? sortBy,
+  int limit = 20,
+  int offset = 0,
+  double? userLatitude,
+  double? userLongitude,
+}) async {
+  await _ensureAuthenticated();
 
-    try {
-      debugPrint('Fetching listings: categoryId=$categoryId, sortBy=$sortBy, limit=$limit, offset=$offset, userLat=$userLatitude, userLng=$userLongitude');
+  try {
+    debugPrint('Fetching listings: categoryId=$categoryId, sortBy=$sortBy, limit=$limit, offset=$offset, userLat=$userLatitude, userLng=$userLongitude');
 
-      // If Distance sorting is requested AND we have coordinates, use RPC function
-      if (sortBy == 'Distance' && userLatitude != null && userLongitude != null) {
-        debugPrint('Using distance-based sorting with RPC function');
-        return await _fetchListingsWithDistance(
+    // If we have user coordinates, ALWAYS try distance-based sorting first
+    if (userLatitude != null && userLongitude != null) {
+      try {
+        debugPrint('User coordinates available, attempting distance-based fetch');
+        final distanceListings = await _fetchListingsWithDistance(
           categoryId: categoryId,
           userLatitude: userLatitude,
           userLongitude: userLongitude,
           limit: limit,
           offset: offset,
         );
-      }
-
-      // Otherwise, use regular query
-      var query = _supabase
-          .from('listings')
-          .select('''
-            *,
-            category:categories!inner(
-              id,
-              name,
-              parent_category_id
-            )
-          ''')
-          .eq('status', 'active')
-          .eq('is_premium', false);
-
-      // Apply category filter if provided
-      if (categoryId != null && categoryId != 'All') {
-        // Check if this is a parent category by trying to get its subcategories
-        final subcategoryIds = await getSubcategoryIds(categoryId);
         
-        if (subcategoryIds.isNotEmpty) {
-          // This is a parent category, filter by all its subcategories
-          query = query.inFilter('category_id', subcategoryIds);
-          debugPrint('Filtering by parent category: $categoryId with ${subcategoryIds.length} subcategories');
-        } else {
-          // This is a subcategory itself, filter directly
-          query = query.eq('category_id', categoryId);
-          debugPrint('Filtering by subcategory: $categoryId');
+        // If distance fetch succeeded and we want distance sorting (default), return as-is
+        if (sortBy == null || sortBy == 'Distance' || sortBy == 'Newest') {
+          debugPrint('Returning ${distanceListings.length} listings sorted by distance');
+          return distanceListings;
         }
-      }
-
-      // Apply sorting
-      dynamic finalQuery = query;
-      if (sortBy == 'Price (Low to High)') {
-        finalQuery = query.order('price', ascending: true);
-      } else if (sortBy == 'Price (High to Low)') {
-        finalQuery = query.order('price', ascending: false);
-      } else if (sortBy == 'Oldest') {
-        finalQuery = query.order('created_at', ascending: true);
-      } else {
-        // Default to newest first (or if sortBy is 'Newest')
-        finalQuery = query.order('created_at', ascending: false);
-      }
-
-      // Apply pagination
-      final response = await finalQuery.range(offset, offset + limit - 1);
-
-      debugPrint('Fetched ${response.length} regular listings');
-
-      // Transform data
-      var listings = await _transformListingData(response);
-
-      // If we have user coordinates, calculate distance for each listing (even if not sorting by distance)
-      if (userLatitude != null && userLongitude != null) {
-        listings = listings.map((listing) {
-          if (listing['latitude'] != null && listing['longitude'] != null) {
-            final distance = _calculateDistance(
-              userLatitude,
-              userLongitude,
-              listing['latitude'],
-              listing['longitude'],
-            );
-            listing['distance'] = distance;
-          }
-          return listing;
-        }).toList();
         
-        debugPrint('Calculated distances for ${listings.length} listings');
+        // If user wants different sorting (price), apply it
+        if (sortBy == 'Price (Low to High)') {
+          distanceListings.sort((a, b) => (a['price'] ?? 0).compareTo(b['price'] ?? 0));
+          debugPrint('Re-sorted ${distanceListings.length} listings by price (low to high)');
+          return distanceListings;
+        } else if (sortBy == 'Price (High to Low)') {
+          distanceListings.sort((a, b) => (b['price'] ?? 0).compareTo(a['price'] ?? 0));
+          debugPrint('Re-sorted ${distanceListings.length} listings by price (high to low)');
+          return distanceListings;
+        }
+        
+        return distanceListings;
+        
+      } catch (rpcError) {
+        debugPrint('RPC distance fetch failed: $rpcError, falling back to regular fetch with manual distance calculation');
+        // Continue to fallback logic below
       }
-
-      return listings;
-    } catch (e) {
-      debugPrint('Error fetching listings: $e');
-
-      if (e.toString().contains('JWT') || 
-          e.toString().contains('auth') || 
-          e.toString().contains('401') ||
-          e.toString().contains('403')) {
-        throw Exception('Authentication expired. Please login again.');
-      }
-
-      throw Exception('Failed to fetch listings: ${e.toString()}');
     }
+
+    // Fallback: Regular query without RPC
+    debugPrint('Using regular query (no coordinates or RPC failed)');
+    var query = _supabase
+        .from('listings')
+        .select('''
+          *,
+          category:categories!inner(
+            id,
+            name,
+            parent_category_id
+          )
+        ''')
+        .eq('status', 'active')
+        .eq('is_premium', false);
+
+    // Apply category filter if provided
+    if (categoryId != null && categoryId != 'All') {
+      final subcategoryIds = await getSubcategoryIds(categoryId);
+
+      if (subcategoryIds.isNotEmpty) {
+        query = query.inFilter('category_id', subcategoryIds);
+        debugPrint('Filtering by parent category: $categoryId with ${subcategoryIds.length} subcategories');
+      } else {
+        query = query.eq('category_id', categoryId);
+        debugPrint('Filtering by subcategory: $categoryId');
+      }
+    }
+
+    // Apply sorting (for when we don't have coordinates or as fallback)
+    dynamic finalQuery = query;
+    if (sortBy == 'Price (Low to High)') {
+      finalQuery = query.order('price', ascending: true);
+    } else if (sortBy == 'Price (High to Low)') {
+      finalQuery = query.order('price', ascending: false);
+    } else if (sortBy == 'Oldest') {
+      finalQuery = query.order('created_at', ascending: true);
+    } else {
+      // Default to newest first
+      finalQuery = query.order('created_at', ascending: false);
+    }
+
+    // Apply pagination
+    final response = await finalQuery.range(offset, offset + limit - 1);
+
+    debugPrint('Fetched ${response.length} regular listings');
+
+    // Transform data
+    var listings = await _transformListingData(response);
+
+    // IMPORTANT: Always calculate distance if we have coordinates (even in fallback)
+    if (userLatitude != null && userLongitude != null) {
+      listings = listings.map((listing) {
+        if (listing['latitude'] != null && listing['longitude'] != null) {
+          final distance = _calculateDistance(
+            userLatitude,
+            userLongitude,
+            listing['latitude'],
+            listing['longitude'],
+          );
+          listing['distance'] = distance;
+        }
+        return listing;
+      }).toList();
+
+      // Sort by distance if sortBy is null, 'Distance', or 'Newest' (default behavior)
+      if (sortBy == null || sortBy == 'Distance' || sortBy == 'Newest') {
+        listings.sort((a, b) {
+          final distA = a['distance'] ?? double.infinity;
+          final distB = b['distance'] ?? double.infinity;
+          return distA.compareTo(distB);
+        });
+        debugPrint('Manually sorted ${listings.length} listings by distance');
+      }
+    }
+
+    return listings;
+  } catch (e) {
+    debugPrint('Error fetching listings: $e');
+
+    if (e.toString().contains('JWT') || 
+        e.toString().contains('auth') || 
+        e.toString().contains('401') ||
+        e.toString().contains('403')) {
+      throw Exception('Authentication expired. Please login again.');
+    }
+
+    throw Exception('Failed to fetch listings: ${e.toString()}');
   }
+}
 
   /// Fetch listings with distance calculation using PostGIS
   Future<List<Map<String, dynamic>>> _fetchListingsWithDistance({
