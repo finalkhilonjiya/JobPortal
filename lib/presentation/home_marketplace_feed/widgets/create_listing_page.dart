@@ -23,7 +23,7 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
   final MobileAuthService _authService = MobileAuthService();
   bool _isSubmitting = false;
 
-  // Form Data - Added latitude and longitude
+  // Form Data - Added conditions list for multi-select
   final Map<String, dynamic> _formData = {
     'title': '',
     'category': '',
@@ -33,12 +33,13 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
     'description': '',
     'images': <File>[],
     'location': '',
-    'latitude': null,    // Add this
-    'longitude': null,   // Add this
+    'latitude': null,
+    'longitude': null,
     'sellerName': '',
     'sellerPhone': '',
     'userType': 'Individual',
-    'condition': 'Used',
+    'condition': 'good', // Single condition for backward compatibility
+    'conditions': <String>[], // Multi-select conditions array
     'brand': '',
     'model': '',
     'yearOfPurchase': '',
@@ -79,9 +80,14 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
                _formData['subcategory'].isNotEmpty &&
                _formData['images'].isNotEmpty;
       case 1:
-        // Tab 2: Product Details
+        // Tab 2: Product Details - Changed to 10 words minimum
+        final wordCount = _formData['description'].toString().split(' ').where((word) => word.isNotEmpty).length;
+        final hasConditions = _formData['conditions'] != null && 
+                              (_formData['conditions'] as List).isNotEmpty;
+        
         return _formData['price'].isNotEmpty &&
-               _formData['description'].length >= 10;
+               wordCount >= 10 &&
+               hasConditions;
       case 2:
         // Tab 3: Contact & Additional Info
         return _formData['sellerName'].isNotEmpty &&
@@ -101,12 +107,49 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
         _submitListing();
       }
     } else {
+      // Provide specific feedback based on current tab
+      String errorMessage = _getValidationErrorMessage(_currentTab);
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Please fill all required fields'),
+          content: Text(errorMessage),
           backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
         ),
       );
+    }
+  }
+
+  String _getValidationErrorMessage(int tab) {
+    switch (tab) {
+      case 0:
+        if (_formData['title'].isEmpty) return 'Please enter a title';
+        if (_formData['category'].isEmpty) return 'Please select a category';
+        if (_formData['subcategory'].isEmpty) return 'Please select a subcategory';
+        if (_formData['images'].isEmpty) return 'Please add at least one image';
+        return 'Please fill all required fields';
+      
+      case 1:
+        if (_formData['price'].isEmpty) return 'Please enter a price';
+        
+        final wordCount = _formData['description'].toString().split(' ').where((word) => word.isNotEmpty).length;
+        if (wordCount < 10) return 'Description must be at least 10 words';
+        
+        final hasConditions = _formData['conditions'] != null && 
+                              (_formData['conditions'] as List).isNotEmpty;
+        if (!hasConditions) return 'Please select at least one property feature';
+        
+        return 'Please fill all required fields';
+      
+      case 2:
+        if (_formData['sellerName'].isEmpty) return 'Please enter your name';
+        if (_formData['sellerPhone'].isEmpty) return 'Please enter your phone number';
+        if (_formData['location'].isEmpty) return 'Please select a location';
+        if (!_formData['termsAccepted']) return 'Please accept terms and conditions';
+        return 'Please fill all required fields';
+      
+      default:
+        return 'Please fill all required fields';
     }
   }
 
@@ -120,15 +163,19 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
   String _mapConditionToEnum(String condition) {
     switch (condition.toLowerCase()) {
       case 'new':
-        return 'new';
+        return 'excellent';
+      case 'furnished':
+        return 'good';
+      case 'not furnished':
+        return 'fair';
       case 'like new':
-        return 'like_new';
+        return 'excellent';
       case 'good':
         return 'good';
       case 'fair':
         return 'fair';
       case 'poor':
-        return 'poor';
+        return 'needs_renovation';
       default:
         return 'good';
     }
@@ -153,21 +200,21 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
     try {
       // AUTHENTICATION DEBUGGING AND RESTORATION
       debugPrint('=== PRE-SUBMISSION AUTH CHECK ===');
-      
+
       // Try to ensure valid session first
       final sessionValid = await _authService.ensureValidSession();
       debugPrint('Session validation result: $sessionValid');
-      
+
       if (!sessionValid) {
         debugPrint('Session validation failed, trying force restore');
         // Try to force restore session
         final restored = await _authService.forceRestoreSession();
         debugPrint('Force restore result: $restored');
-        
+
         if (!restored) {
           // Close loading dialog
           Navigator.pop(context);
-          
+
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
@@ -210,7 +257,7 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
           return;
         }
       }
-      
+
       debugPrint('Authentication successful, proceeding with listing creation');
 
       // Upload images first
@@ -223,6 +270,12 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
 
       // Prepare additional data based on category
       Map<String, dynamic> additionalData = {};
+
+      // Add multi-select conditions to additional data
+      if (_formData['conditions'] != null && (_formData['conditions'] as List).isNotEmpty) {
+        additionalData['conditions'] = _formData['conditions'];
+        debugPrint('Adding conditions to additional data: ${_formData['conditions']}');
+      }
 
       // Add category-specific fields if they have values
       if (_formData['brand'].isNotEmpty) additionalData['brand'] = _formData['brand'];
@@ -243,7 +296,7 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
 
       debugPrint('About to call createListing with title: ${_formData['title']}');
 
-      // Create listing with coordinates
+      // Create listing with coordinates and conditions
       final result = await _listingService.createListing(
         title: _formData['title'],
         categoryId: _formData['subcategory'],
@@ -288,6 +341,8 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
               Text('• Price: ₹${_formData['price']}'),
               Text('• Location: ${_formData['location']}'),
               if (imageUrls.isNotEmpty) Text('• Images: ${imageUrls.length} uploaded'),
+              if ((_formData['conditions'] as List).isNotEmpty)
+                Text('• Features: ${(_formData['conditions'] as List).join(', ')}'),
             ],
           ),
           actions: [
@@ -303,7 +358,7 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
       );
     } catch (e) {
       debugPrint('Listing creation error: $e');
-      
+
       // Close loading dialog
       Navigator.pop(context);
 
@@ -313,7 +368,7 @@ class _CreateListingPageState extends State<CreateListingPage> with SingleTicker
           e.toString().contains('JWT') ||
           e.toString().contains('401') ||
           e.toString().contains('403')) {
-        
+
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
