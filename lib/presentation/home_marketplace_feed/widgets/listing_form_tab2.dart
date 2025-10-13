@@ -26,6 +26,9 @@ class _ListingFormTab2State extends State<ListingFormTab2> {
   final TextEditingController _bedroomsController = TextEditingController();
   final TextEditingController _bathroomsController = TextEditingController();
 
+  // Multi-select conditions
+  Set<String> _selectedConditions = {};
+
   @override
   void initState() {
     super.initState();
@@ -37,11 +40,76 @@ class _ListingFormTab2State extends State<ListingFormTab2> {
     _kmController.text = widget.formData['kilometresDriven'];
     _bedroomsController.text = widget.formData['bedrooms'];
     _bathroomsController.text = widget.formData['bathrooms'];
+
+    // Initialize selected conditions from formData
+    if (widget.formData['conditions'] != null) {
+      if (widget.formData['conditions'] is List) {
+        _selectedConditions = Set<String>.from(widget.formData['conditions']);
+      } else if (widget.formData['conditions'] is Set) {
+        _selectedConditions = widget.formData['conditions'] as Set<String>;
+      }
+    }
   }
 
   bool _showFieldForCategory(String field) {
     final category = widget.formData['category'];
     return CategoryData.shouldShowField(category, field);
+  }
+
+  // Get condition options based on selected category
+  List<String> _getConditionOptionsForCategory() {
+    final category = widget.formData['category'];
+
+    switch (category) {
+      case 'Room for Rent':
+        return [
+          'Furnished',
+          'Not Furnished',
+          'Shared Bathroom',
+          'Single Occupancy',
+          'Double Occupancy',
+        ];
+      case 'PG Accommodation':
+        return [
+          'Furnished',
+          'Not Furnished',
+          'Shared Bathroom',
+          'Single Occupancy',
+          'Double Occupancy',
+        ];
+      case 'Homestays':
+        return [
+          'Furnished',
+          'Not Furnished',
+          'Single Occupancy',
+          'Double Occupancy',
+        ];
+      case 'Properties for Sale':
+        return [
+          'New',
+          'Furnished',
+          'Not Furnished',
+          'Sale Permission Available',
+        ];
+      default:
+        return ['Furnished', 'Not Furnished'];
+    }
+  }
+
+  void _toggleCondition(String condition) {
+    setState(() {
+      if (_selectedConditions.contains(condition)) {
+        _selectedConditions.remove(condition);
+      } else {
+        _selectedConditions.add(condition);
+      }
+      
+      // Update form data with selected conditions
+      widget.onDataChanged({
+        'conditions': _selectedConditions.toList(),
+        'condition': _selectedConditions.isEmpty ? 'good' : _selectedConditions.first.toLowerCase().replaceAll(' ', '_'),
+      });
+    });
   }
 
   @override
@@ -103,7 +171,7 @@ class _ListingFormTab2State extends State<ListingFormTab2> {
 
           // Description
           Text(
-            'Description * (Min 50 words)',
+            'Description * (Min 10 words)',
             style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 1.h),
@@ -111,7 +179,7 @@ class _ListingFormTab2State extends State<ListingFormTab2> {
             controller: _descriptionController,
             maxLines: 5,
             decoration: InputDecoration(
-              hintText: 'Describe your product/service in detail...',
+              hintText: 'Describe your property in detail...',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               filled: true,
               fillColor: Colors.white,
@@ -126,39 +194,53 @@ class _ListingFormTab2State extends State<ListingFormTab2> {
             'Words: ${_descriptionController.text.split(' ').where((word) => word.isNotEmpty).length}',
             style: TextStyle(
               fontSize: 10.sp,
-              color: _descriptionController.text.split(' ').where((word) => word.isNotEmpty).length >= 50
+              color: _descriptionController.text.split(' ').where((word) => word.isNotEmpty).length >= 10
                   ? Colors.green
                   : Colors.red,
             ),
           ),
           SizedBox(height: 2.h),
 
-          // Condition
+          // Multi-Select Conditions
           Text(
-            'Condition',
+            'Property Features * (Select all that apply)',
             style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 1.h),
           Wrap(
             spacing: 2.w,
-            children: ['New', 'Used', 'Like New', 'Refurbished'].map((condition) {
-              return ChoiceChip(
+            runSpacing: 1.h,
+            children: _getConditionOptionsForCategory().map((condition) {
+              final isSelected = _selectedConditions.contains(condition);
+              return FilterChip(
                 label: Text(condition),
-                selected: widget.formData['condition'] == condition,
-                onSelected: (selected) {
-                  if (selected) {
-                    widget.onDataChanged({'condition': condition});
-                  }
-                },
+                selected: isSelected,
+                onSelected: (selected) => _toggleCondition(condition),
                 selectedColor: Color(0xFF2563EB).withOpacity(0.2),
+                checkmarkColor: Color(0xFF2563EB),
                 labelStyle: TextStyle(
-                  color: widget.formData['condition'] == condition
-                      ? Color(0xFF2563EB)
-                      : Colors.black,
+                  color: isSelected ? Color(0xFF2563EB) : Colors.black,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+                backgroundColor: Colors.white,
+                side: BorderSide(
+                  color: isSelected ? Color(0xFF2563EB) : Colors.grey[300]!,
+                  width: isSelected ? 2 : 1,
                 ),
               );
             }).toList(),
           ),
+          if (_selectedConditions.isEmpty)
+            Padding(
+              padding: EdgeInsets.only(top: 0.5.h),
+              child: Text(
+                'Please select at least one feature',
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  color: Colors.red,
+                ),
+              ),
+            ),
           SizedBox(height: 2.h),
 
           // Category-specific fields
@@ -346,63 +428,6 @@ class _ListingFormTab2State extends State<ListingFormTab2> {
               ],
             ),
             SizedBox(height: 2.h),
-          ],
-
-          if (_showFieldForCategory('furnishingStatus')) ...[
-            Text(
-              'Furnishing Status',
-              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 1.h),
-            Wrap(
-              spacing: 2.w,
-              children: ['Furnished', 'Semi-Furnished', 'Unfurnished'].map((status) {
-                return ChoiceChip(
-                  label: Text(status),
-                  selected: widget.formData['furnishingStatus'] == status,
-                  onSelected: (selected) {
-                    if (selected) {
-                      widget.onDataChanged({'furnishingStatus': status});
-                    }
-                  },
-                  selectedColor: Color(0xFF2563EB).withOpacity(0.2),
-                  labelStyle: TextStyle(
-                    color: widget.formData['furnishingStatus'] == status
-                        ? Color(0xFF2563EB)
-                        : Colors.black,
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-
-          // Warranty Status
-          if (_showFieldForCategory('warrantyStatus')) ...[
-            Text(
-              'Warranty Status',
-              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 1.h),
-            Wrap(
-              spacing: 2.w,
-              children: ['Valid', 'Expired', 'None'].map((status) {
-                return ChoiceChip(
-                  label: Text(status),
-                  selected: widget.formData['warrantyStatus'] == status,
-                  onSelected: (selected) {
-                    if (selected) {
-                      widget.onDataChanged({'warrantyStatus': status});
-                    }
-                  },
-                  selectedColor: Color(0xFF2563EB).withOpacity(0.2),
-                  labelStyle: TextStyle(
-                    color: widget.formData['warrantyStatus'] == status
-                        ? Color(0xFF2563EB)
-                        : Colors.black,
-                  ),
-                );
-              }).toList(),
-            ),
           ],
 
           // Availability
