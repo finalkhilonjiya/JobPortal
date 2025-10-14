@@ -1,4 +1,5 @@
 // File: services/listing_service.dart
+// PART 1 OF 3 - Copy this entire file
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:postgrest/postgrest.dart';
 import 'package:flutter/foundation.dart';
@@ -11,24 +12,21 @@ class ListingService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final MobileAuthService _authService = MobileAuthService();
 
+  // Add a debug info property that can be displayed on screen
+  String lastFetchDebugInfo = '';
+
   /// Verify authentication before making API calls
   Future<void> _ensureAuthenticated() async {
     debugPrint('ListingService: Checking authentication state');
-
-    // Use the new ensureValidSession method
     final sessionValid = await _authService.ensureValidSession();
-
     if (!sessionValid) {
       throw Exception('Authentication required. Please login again.');
     }
-
     final currentUser = _supabase.auth.currentUser;
     final currentSession = _supabase.auth.currentSession;
-
     if (currentUser == null || currentSession == null) {
       throw Exception('Authentication required. Please login again.');
     }
-
     debugPrint('ListingService: Authentication verified for user: ${currentUser.id}');
   }
 
@@ -36,16 +34,13 @@ class ListingService {
   Future<List<String>> getSubcategoryIds(String parentCategoryId) async {
     try {
       debugPrint('Fetching subcategories for parent: $parentCategoryId');
-      
       final response = await _supabase
           .from('categories')
           .select('id')
           .eq('parent_category_id', parentCategoryId)
           .eq('is_active', true);
-      
       final subcategoryIds = List<String>.from(response.map((cat) => cat['id']));
       debugPrint('Found ${subcategoryIds.length} subcategories for parent $parentCategoryId');
-      
       return subcategoryIds;
     } catch (e) {
       debugPrint('Error fetching subcategory IDs: $e');
@@ -56,26 +51,15 @@ class ListingService {
   /// Upload images to Supabase Storage
   Future<List<String>> uploadImages(List<File> images) async {
     await _ensureAuthenticated();
-
     List<String> imageUrls = [];
-
     for (int i = 0; i < images.length; i++) {
       final file = images[i];
       final userId = _supabase.auth.currentUser!.id;
       final fileName = '${userId}_${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
       final storagePath = 'listings/$fileName';
-
       try {
-        // Upload to Supabase Storage
-        await _supabase.storage
-            .from('listings')
-            .upload(storagePath, file);
-
-        // Get public URL
-        final url = _supabase.storage
-            .from('listings')
-            .getPublicUrl(storagePath);
-
+        await _supabase.storage.from('listings').upload(storagePath, file);
+        final url = _supabase.storage.from('listings').getPublicUrl(storagePath);
         imageUrls.add(url);
         debugPrint('Successfully uploaded image: $fileName');
       } catch (e) {
@@ -83,150 +67,211 @@ class ListingService {
         throw Exception('Failed to upload image ${i + 1}: ${e.toString()}');
       }
     }
-
     return imageUrls;
   }
 
   /// Fetch all active listings with category filtering and distance sorting
-Future<List<Map<String, dynamic>>> fetchListings({
-  String? categoryId,
-  String? sortBy,
-  int limit = 20,
-  int offset = 0,
-  double? userLatitude,
-  double? userLongitude,
-}) async {
-  await _ensureAuthenticated();
+  Future<List<Map<String, dynamic>>> fetchListings({
+    String? categoryId,
+    String? sortBy,
+    int limit = 20,
+    int offset = 0,
+    double? userLatitude,
+    double? userLongitude,
+  }) async {
+    await _ensureAuthenticated();
 
-  try {
-    debugPrint('Fetching listings: categoryId=$categoryId, sortBy=$sortBy, limit=$limit, offset=$offset, userLat=$userLatitude, userLng=$userLongitude');
+    try {
+      // BUILD DEBUG INFO STRING
+      lastFetchDebugInfo = '🔍 FETCH DEBUG\n';
+      lastFetchDebugInfo += 'Category: ${categoryId ?? "All"}\n';
+      lastFetchDebugInfo += 'Sort: ${sortBy ?? "null"}\n';
+      lastFetchDebugInfo += 'User Lat: ${userLatitude?.toStringAsFixed(4) ?? "null"}\n';
+      lastFetchDebugInfo += 'User Lng: ${userLongitude?.toStringAsFixed(4) ?? "null"}\n';
+      
+      debugPrint('Fetching listings: categoryId=$categoryId, sortBy=$sortBy, limit=$limit, offset=$offset, userLat=$userLatitude, userLng=$userLongitude');
 
-    // If we have user coordinates, ALWAYS try distance-based sorting first
-    if (userLatitude != null && userLongitude != null) {
-      try {
-        debugPrint('User coordinates available, attempting distance-based fetch');
-        final distanceListings = await _fetchListingsWithDistance(
-          categoryId: categoryId,
-          userLatitude: userLatitude,
-          userLongitude: userLongitude,
-          limit: limit,
-          offset: offset,
-        );
-        
-        // If distance fetch succeeded and we want distance sorting (default), return as-is
-        if (sortBy == null || sortBy == 'Distance' || sortBy == 'Newest') {
-          debugPrint('Returning ${distanceListings.length} listings sorted by distance');
-          return distanceListings;
-        }
-        
-        // If user wants different sorting (price), apply it
-        if (sortBy == 'Price (Low to High)') {
-          distanceListings.sort((a, b) => (a['price'] ?? 0).compareTo(b['price'] ?? 0));
-          debugPrint('Re-sorted ${distanceListings.length} listings by price (low to high)');
-          return distanceListings;
-        } else if (sortBy == 'Price (High to Low)') {
-          distanceListings.sort((a, b) => (b['price'] ?? 0).compareTo(a['price'] ?? 0));
-          debugPrint('Re-sorted ${distanceListings.length} listings by price (high to low)');
-          return distanceListings;
-        }
-        
-        return distanceListings;
-        
-      } catch (rpcError) {
-        debugPrint('RPC distance fetch failed: $rpcError, falling back to regular fetch with manual distance calculation');
-        // Continue to fallback logic below
-      }
-    }
-
-    // Fallback: Regular query without RPC
-    debugPrint('Using regular query (no coordinates or RPC failed)');
-    var query = _supabase
-        .from('listings')
-        .select('''
-          *,
-          category:categories!inner(
-            id,
-            name,
-            parent_category_id
-          )
-        ''')
-        .eq('status', 'active')
-        .eq('is_premium', false);
-
-    // Apply category filter if provided
-    if (categoryId != null && categoryId != 'All') {
-      final subcategoryIds = await getSubcategoryIds(categoryId);
-
-      if (subcategoryIds.isNotEmpty) {
-        query = query.inFilter('category_id', subcategoryIds);
-        debugPrint('Filtering by parent category: $categoryId with ${subcategoryIds.length} subcategories');
-      } else {
-        query = query.eq('category_id', categoryId);
-        debugPrint('Filtering by subcategory: $categoryId');
-      }
-    }
-
-    // Apply sorting (for when we don't have coordinates or as fallback)
-    dynamic finalQuery = query;
-    if (sortBy == 'Price (Low to High)') {
-      finalQuery = query.order('price', ascending: true);
-    } else if (sortBy == 'Price (High to Low)') {
-      finalQuery = query.order('price', ascending: false);
-    } else if (sortBy == 'Oldest') {
-      finalQuery = query.order('created_at', ascending: true);
-    } else {
-      // Default to newest first
-      finalQuery = query.order('created_at', ascending: false);
-    }
-
-    // Apply pagination
-    final response = await finalQuery.range(offset, offset + limit - 1);
-
-    debugPrint('Fetched ${response.length} regular listings');
-
-    // Transform data
-    var listings = await _transformListingData(response);
-
-    // IMPORTANT: Always calculate distance if we have coordinates (even in fallback)
-    if (userLatitude != null && userLongitude != null) {
-      listings = listings.map((listing) {
-        if (listing['latitude'] != null && listing['longitude'] != null) {
-          final distance = _calculateDistance(
-            userLatitude,
-            userLongitude,
-            listing['latitude'],
-            listing['longitude'],
+      // If we have user coordinates, ALWAYS try distance-based sorting first
+      if (userLatitude != null && userLongitude != null) {
+        try {
+          lastFetchDebugInfo += '✅ Using distance-based fetch\n';
+          debugPrint('User coordinates available, attempting distance-based fetch');
+          
+          final distanceListings = await _fetchListingsWithDistance(
+            categoryId: categoryId,
+            userLatitude: userLatitude,
+            userLongitude: userLongitude,
+            limit: limit,
+            offset: offset,
           );
-          listing['distance'] = distance;
+
+          lastFetchDebugInfo += '📦 Got ${distanceListings.length} listings\n';
+          
+          // Show first 3 listings with distance
+          if (distanceListings.isNotEmpty) {
+            lastFetchDebugInfo += '\nFirst 3 listings:\n';
+            for (var i = 0; i < math.min(3, distanceListings.length); i++) {
+              final listing = distanceListings[i];
+              final title = listing['title']?.toString() ?? 'No title';
+              final shortTitle = title.substring(0, math.min(20, title.length));
+              lastFetchDebugInfo += '${i + 1}. $shortTitle\n';
+              lastFetchDebugInfo += '   Distance: ${listing['distance']?.toStringAsFixed(2) ?? "null"} km\n';
+            }
+          }
+
+          // If distance fetch succeeded and we want distance sorting (default), return as-is
+          if (sortBy == null || sortBy == 'Distance' || sortBy == 'Newest') {
+            lastFetchDebugInfo += '✅ Returning sorted by distance\n';
+            debugPrint('Returning ${distanceListings.length} listings sorted by distance');
+            return distanceListings;
+          }
+
+          // If user wants different sorting (price), apply it
+          if (sortBy == 'Price (Low to High)') {
+            distanceListings.sort((a, b) => (a['price'] ?? 0).compareTo(b['price'] ?? 0));
+            lastFetchDebugInfo += '💰 Re-sorted by price (low to high)\n';
+            debugPrint('Re-sorted ${distanceListings.length} listings by price (low to high)');
+            return distanceListings;
+          } else if (sortBy == 'Price (High to Low)') {
+            distanceListings.sort((a, b) => (b['price'] ?? 0).compareTo(a['price'] ?? 0));
+            lastFetchDebugInfo += '💰 Re-sorted by price (high to low)\n';
+            debugPrint('Re-sorted ${distanceListings.length} listings by price (high to low)');
+            return distanceListings;
+          }
+
+          return distanceListings;
+
+        } catch (rpcError) {
+          final errorMsg = rpcError.toString();
+          final shortError = errorMsg.substring(0, math.min(50, errorMsg.length));
+          lastFetchDebugInfo += '⚠️ RPC failed: $shortError\n';
+          lastFetchDebugInfo += '🔄 Falling back to manual calculation\n';
+          debugPrint('RPC distance fetch failed: $rpcError, falling back to regular fetch with manual distance calculation');
+          // Continue to fallback logic below
         }
-        return listing;
-      }).toList();
-
-      // Sort by distance if sortBy is null, 'Distance', or 'Newest' (default behavior)
-      if (sortBy == null || sortBy == 'Distance' || sortBy == 'Newest') {
-        listings.sort((a, b) {
-          final distA = a['distance'] ?? double.infinity;
-          final distB = b['distance'] ?? double.infinity;
-          return distA.compareTo(distB);
-        });
-        debugPrint('Manually sorted ${listings.length} listings by distance');
+      } else {
+        lastFetchDebugInfo += '⚠️ No user coordinates available\n';
       }
+
+      // Fallback: Regular query without RPC
+      lastFetchDebugInfo += '📋 Using regular query\n';
+      debugPrint('Using regular query (no coordinates or RPC failed)');
+      
+      var query = _supabase
+          .from('listings')
+          .select('''
+            *,
+            category:categories!inner(
+              id,
+              name,
+              parent_category_id
+            )
+          ''')
+          .eq('status', 'active')
+          .eq('is_premium', false);
+
+      // Apply category filter if provided
+      if (categoryId != null && categoryId != 'All') {
+        final subcategoryIds = await getSubcategoryIds(categoryId);
+        if (subcategoryIds.isNotEmpty) {
+          query = query.inFilter('category_id', subcategoryIds);
+          debugPrint('Filtering by parent category: $categoryId with ${subcategoryIds.length} subcategories');
+        } else {
+          query = query.eq('category_id', categoryId);
+          debugPrint('Filtering by subcategory: $categoryId');
+        }
+      }
+
+      // Apply sorting
+      dynamic finalQuery = query;
+      if (sortBy == 'Price (Low to High)') {
+        finalQuery = query.order('price', ascending: true);
+        lastFetchDebugInfo += '💰 Sorted by price (low to high)\n';
+      } else if (sortBy == 'Price (High to Low)') {
+        finalQuery = query.order('price', ascending: false);
+        lastFetchDebugInfo += '💰 Sorted by price (high to low)\n';
+      } else if (sortBy == 'Oldest') {
+        finalQuery = query.order('created_at', ascending: true);
+        lastFetchDebugInfo += '📅 Sorted by oldest\n';
+      } else {
+        finalQuery = query.order('created_at', ascending: false);
+        lastFetchDebugInfo += '📅 Sorted by newest\n';
+      }
+
+      // Apply pagination
+      final response = await finalQuery.range(offset, offset + limit - 1);
+      lastFetchDebugInfo += '📦 Got ${response.length} listings from DB\n';
+      debugPrint('Fetched ${response.length} regular listings');
+
+      // Transform data
+      var listings = await _transformListingData(response);
+
+      // IMPORTANT: Always calculate distance if we have coordinates (even in fallback)
+      if (userLatitude != null && userLongitude != null) {
+        lastFetchDebugInfo += '📏 Calculating distances manually\n';
+        
+        int calculatedCount = 0;
+        listings = listings.map((listing) {
+          if (listing['latitude'] != null && listing['longitude'] != null) {
+            final distance = _calculateDistance(
+              userLatitude,
+              userLongitude,
+              listing['latitude'],
+              listing['longitude'],
+            );
+            listing['distance'] = distance;
+            calculatedCount++;
+          }
+          return listing;
+        }).toList();
+
+        lastFetchDebugInfo += '✅ Calculated distance for $calculatedCount listings\n';
+
+        // Sort by distance if sortBy is null, 'Distance', or 'Newest'
+        if (sortBy == null || sortBy == 'Distance' || sortBy == 'Newest') {
+          listings.sort((a, b) {
+            final distA = a['distance'] ?? double.infinity;
+            final distB = b['distance'] ?? double.infinity;
+            return distA.compareTo(distB);
+          });
+          lastFetchDebugInfo += '✅ Manually sorted by distance\n';
+          debugPrint('Manually sorted ${listings.length} listings by distance');
+        }
+
+        // Show first 3 after sorting
+        if (listings.isNotEmpty) {
+          lastFetchDebugInfo += '\nFirst 3 after sort:\n';
+          for (var i = 0; i < math.min(3, listings.length); i++) {
+            final listing = listings[i];
+            final title = listing['title']?.toString() ?? 'No title';
+            final shortTitle = title.substring(0, math.min(20, title.length));
+            lastFetchDebugInfo += '${i + 1}. $shortTitle\n';
+            lastFetchDebugInfo += '   Distance: ${listing['distance']?.toStringAsFixed(2) ?? "null"} km\n';
+          }
+        }
+      }
+
+      lastFetchDebugInfo += '✅ Returning ${listings.length} listings\n';
+      return listings;
+      
+    } catch (e) {
+      final errorMsg = e.toString();
+      final shortError = errorMsg.substring(0, math.min(100, errorMsg.length));
+      lastFetchDebugInfo += '❌ ERROR: $shortError\n';
+      debugPrint('Error fetching listings: $e');
+
+      if (e.toString().contains('JWT') || 
+          e.toString().contains('auth') || 
+          e.toString().contains('401') ||
+          e.toString().contains('403')) {
+        throw Exception('Authentication expired. Please login again.');
+      }
+      throw Exception('Failed to fetch listings: ${e.toString()}');
     }
-
-    return listings;
-  } catch (e) {
-    debugPrint('Error fetching listings: $e');
-
-    if (e.toString().contains('JWT') || 
-        e.toString().contains('auth') || 
-        e.toString().contains('401') ||
-        e.toString().contains('403')) {
-      throw Exception('Authentication expired. Please login again.');
-    }
-
-    throw Exception('Failed to fetch listings: ${e.toString()}');
   }
-}
+
+
+// PART 2 OF 3 - CONTINUE FROM PART 1
 
   /// Fetch listings with distance calculation using PostGIS
   Future<List<Map<String, dynamic>>> _fetchListingsWithDistance({
@@ -256,7 +301,7 @@ Future<List<Map<String, dynamic>>> fetchListings({
         params: {
           'user_lat': userLatitude,
           'user_lng': userLongitude,
-          'search_radius': 500.0, // 500km radius
+          'search_radius': 500.0,
           'category_ids': categoryIds,
           'limit_count': limit,
           'offset_count': offset,
@@ -264,16 +309,10 @@ Future<List<Map<String, dynamic>>> fetchListings({
       );
 
       debugPrint('Distance search returned ${response.length} results');
-
       return await _transformListingData(response);
     } catch (e) {
       debugPrint('Error in distance search: $e');
-      // Fallback to regular fetch without distance
-      return await fetchListings(
-        categoryId: categoryId,
-        limit: limit,
-        offset: offset,
-      );
+      throw e; // Throw to trigger fallback
     }
   }
 
@@ -339,10 +378,9 @@ Future<List<Map<String, dynamic>>> fetchListings({
         'created_at': item['created_at'],
         'is_featured': item['is_featured'] ?? false,
         'is_premium': item['is_premium'] ?? false,
-        'distance': item['distance'], // Distance in kilometers (if available)
+        'distance': item['distance'],
         'latitude': item['latitude'],
         'longitude': item['longitude'],
-        // Additional fields
         'brand': item['brand'],
         'model': item['model'],
         'year': item['year_of_purchase'],
@@ -372,7 +410,6 @@ Future<List<Map<String, dynamic>>> fetchListings({
     try {
       debugPrint('Searching listings: keywords=$keywords, location=$location');
 
-      // If we have coordinates, use distance-based search
       if (latitude != null && longitude != null) {
         final response = await _supabase.rpc(
           'search_listings_by_distance',
@@ -390,7 +427,6 @@ Future<List<Map<String, dynamic>>> fetchListings({
         debugPrint('Distance search returned ${response.length} results');
         return await _transformListingData(response);
       } else {
-        // Fall back to regular search without distance
         var query = _supabase
             .from('listings')
             .select('''
@@ -403,7 +439,6 @@ Future<List<Map<String, dynamic>>> fetchListings({
             ''')
             .eq('status', 'active');
 
-        // Apply keyword search
         if (keywords != null && keywords.isNotEmpty) {
           query = query.or(
             'title.ilike.%$keywords%,'
@@ -413,12 +448,10 @@ Future<List<Map<String, dynamic>>> fetchListings({
           );
         }
 
-        // Apply location filter
         if (location != null && location.isNotEmpty && !location.contains('Current Location')) {
           query = query.ilike('location', '%$location%');
         }
 
-        // Build the final query with sorting and pagination
         final List<Map<String, dynamic>> response;
 
         if (sortBy == 'Price (Low to High)') {
@@ -477,10 +510,9 @@ Future<List<Map<String, dynamic>>> fetchListings({
           .eq('status', 'active')
           .eq('is_premium', true);
 
-      // Apply category filter if provided
       if (categoryId != null && categoryId != 'All') {
         final subcategoryIds = await getSubcategoryIds(categoryId);
-        
+
         if (subcategoryIds.isNotEmpty) {
           query = query.inFilter('category_id', subcategoryIds);
           debugPrint('Filtering premium by parent category: $categoryId with ${subcategoryIds.length} subcategories');
@@ -498,7 +530,6 @@ Future<List<Map<String, dynamic>>> fetchListings({
 
       var listings = await _transformListingData(response);
 
-      // If user coordinates are available, sort by distance
       if (userLatitude != null && userLongitude != null) {
         listings = listings.map((listing) {
           if (listing['latitude'] != null && listing['longitude'] != null) {
@@ -513,7 +544,6 @@ Future<List<Map<String, dynamic>>> fetchListings({
           return listing;
         }).toList();
 
-        // Sort by distance
         listings.sort((a, b) {
           final distA = a['distance'] ?? double.infinity;
           final distB = b['distance'] ?? double.infinity;
@@ -536,9 +566,8 @@ Future<List<Map<String, dynamic>>> fetchListings({
     }
   }
 
-  // Helper method to calculate distance between two points
   double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-    const double earthRadius = 6371; // km
+    const double earthRadius = 6371;
     double dLat = _toRadians(lat2 - lat1);
     double dLon = _toRadians(lon2 - lon1);
 
@@ -555,7 +584,6 @@ Future<List<Map<String, dynamic>>> fetchListings({
     return degree * math.pi / 180;
   }
 
-  /// Get user's favorites
   Future<Set<String>> getUserFavorites() async {
     await _ensureAuthenticated();
 
@@ -588,7 +616,6 @@ Future<List<Map<String, dynamic>>> fetchListings({
     }
   }
 
-  /// Toggle favorite
   Future<bool> toggleFavorite(String listingId) async {
     await _ensureAuthenticated();
 
@@ -596,7 +623,6 @@ Future<List<Map<String, dynamic>>> fetchListings({
       final user = _supabase.auth.currentUser!;
       debugPrint('Toggling favorite for listing: $listingId, user: ${user.id}');
 
-      // Check if already favorited
       final existing = await _supabase
           .from('favorites')
           .select('id')
@@ -605,7 +631,6 @@ Future<List<Map<String, dynamic>>> fetchListings({
           .maybeSingle();
 
       if (existing != null) {
-        // Remove favorite
         await _supabase
             .from('favorites')
             .delete()
@@ -614,7 +639,6 @@ Future<List<Map<String, dynamic>>> fetchListings({
         debugPrint('Removed favorite for listing: $listingId');
         return false;
       } else {
-        // Add favorite
         await _supabase
             .from('favorites')
             .insert({
@@ -639,7 +663,8 @@ Future<List<Map<String, dynamic>>> fetchListings({
     }
   }
 
-  /// Create a new listing
+// PART 3 OF 3 - CONTINUE FROM PART 2 - THIS IS THE FINAL PART
+
   Future<Map<String, dynamic>> createListing({
     required String title,
     required String categoryId,
@@ -665,42 +690,58 @@ Future<List<Map<String, dynamic>>> fetchListings({
       debugPrint('Category ID: $categoryId');
       debugPrint('Location: $location, Lat: $latitude, Lng: $longitude');
 
-      // Prepare listing data
-final Map<String, dynamic> listingData = {
-  'seller_id': user.id,
-  'category_id': categoryId,
-  'title': title,
-  'description': description,
-  'price': price,
-  'price_type': priceType.toLowerCase(),
-  'condition': condition,
-  'status': 'active',
-  'location': location,
-  'latitude': latitude,
-  'longitude': longitude,
-  'images': imageUrls,
-  'seller_name': sellerName,
-  'seller_phone': sellerPhone,
-  'user_type': userType.toLowerCase(),
-  'is_premium': false,
-  'is_featured': false,
-  'views_count': 0,
-  'created_at': DateTime.now().toIso8601String(),
-  'updated_at': DateTime.now().toIso8601String(),
-};
+      final Map<String, dynamic> listingData = {
+        'seller_id': user.id,
+        'category_id': categoryId,
+        'title': title,
+        'description': description,
+        'price': price,
+        'price_type': priceType.toLowerCase(),
+        'condition': condition,
+        'status': 'active',
+        'location': location,
+        'latitude': latitude,
+        'longitude': longitude,
+        'images': imageUrls,
+        'seller_name': sellerName,
+        'seller_phone': sellerPhone,
+        'user_type': userType.toLowerCase(),
+        'is_premium': false,
+        'is_featured': false,
+        'views_count': 0,
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      };
 
-// Add search_tags from conditions (multi-select)
-if (additionalData != null && additionalData['conditions'] != null) {
-  listingData['search_tags'] = additionalData['conditions']; // Store as array
-  debugPrint('Storing conditions as search_tags: ${additionalData['conditions']}');
-}
+      if (additionalData != null && additionalData['conditions'] != null) {
+        listingData['search_tags'] = additionalData['conditions'];
+        debugPrint('Storing conditions as search_tags: ${additionalData['conditions']}');
+      }
+
+      // Add other additional data fields
+      if (additionalData != null) {
+        final Map<String, dynamic> dbAdditionalData = {};
+
+        if (additionalData['brand'] != null) dbAdditionalData['brand'] = additionalData['brand'];
+        if (additionalData['model'] != null) dbAdditionalData['model'] = additionalData['model'];
+        if (additionalData['yearOfPurchase'] != null) dbAdditionalData['year_of_purchase'] = int.tryParse(additionalData['yearOfPurchase'].toString());
+        if (additionalData['warrantyStatus'] != null) dbAdditionalData['warranty_status'] = additionalData['warrantyStatus'].toLowerCase();
+        if (additionalData['availability'] != null) dbAdditionalData['availability'] = additionalData['availability'];
+        if (additionalData['kilometresDriven'] != null) dbAdditionalData['kilometres_driven'] = int.tryParse(additionalData['kilometresDriven'].toString());
+        if (additionalData['fuelType'] != null) dbAdditionalData['fuel_type'] = additionalData['fuelType'].toLowerCase();
+        if (additionalData['transmissionType'] != null) dbAdditionalData['transmission_type'] = additionalData['transmissionType'].toLowerCase();
+        if (additionalData['bedrooms'] != null) dbAdditionalData['bedrooms'] = int.tryParse(additionalData['bedrooms'].toString());
+        if (additionalData['bathrooms'] != null) dbAdditionalData['bathrooms'] = int.tryParse(additionalData['bathrooms'].toString());
+        if (additionalData['furnishingStatus'] != null) dbAdditionalData['furnishing_status'] = additionalData['furnishingStatus'].toLowerCase();
+
+        listingData.addAll(dbAdditionalData);
+      }
 
       debugPrint('=== LISTING DATA TO INSERT ===');
       debugPrint('Latitude: ${listingData['latitude']}');
       debugPrint('Longitude: ${listingData['longitude']}');
       debugPrint('===============================');
 
-      // Insert into database
       final response = await _supabase
           .from('listings')
           .insert(listingData)
@@ -723,7 +764,6 @@ if (additionalData != null && additionalData['conditions'] != null) {
     }
   }
 
-  /// Get categories for dropdown (does not require auth - public data)
   Future<List<Map<String, dynamic>>> getCategories() async {
     try {
       debugPrint('Fetching categories (public data)');
@@ -742,7 +782,6 @@ if (additionalData != null && additionalData['conditions'] != null) {
     }
   }
 
-  /// Get subcategories for a parent category (does not require auth - public data)
   Future<List<Map<String, dynamic>>> getSubcategories(String parentCategoryId) async {
     try {
       debugPrint('Fetching subcategories for parent: $parentCategoryId');
@@ -762,3 +801,5 @@ if (additionalData != null && additionalData['conditions'] != null) {
     }
   }
 }
+
+// END OF FILE - This is the complete listing_service.dart
