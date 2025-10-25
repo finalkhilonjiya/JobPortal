@@ -61,7 +61,7 @@ class _ProfilePageState extends State<ProfilePage> {
           _isLoading = false;
         });
       }
-    }  catch (e) {
+    }  } catch (e) {
   debugPrint('Error loading user profile: $e');
   setState(() => _isLoading = false);
   
