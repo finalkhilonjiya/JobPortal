@@ -91,7 +91,7 @@ class _ConstructionServicesHomePageState extends State<ConstructionServicesHomeP
           children: [
             // Header Section with Real Location
             _buildHeader(context),
-            
+
             // Body Content
             Expanded(
               child: SingleChildScrollView(
@@ -99,19 +99,18 @@ class _ConstructionServicesHomePageState extends State<ConstructionServicesHomeP
                   children: [
                     // Search Bar
                     _buildSearchBar(),
-                    
+
                     // Welcome Banner
                     _buildWelcomeBanner(),
-                    
+
                     // Services Grid
                     _buildServicesGrid(context),
-                    
-                    // Action Buttons
-                    _buildActionButtons(context),
-                    
+
+                    // ✅ REMOVED: Action Buttons section
+
                     // Features Section
                     _buildFeaturesSection(),
-                    
+
                     SizedBox(height: 10.h),
                   ],
                 ),
@@ -399,62 +398,6 @@ class _ConstructionServicesHomePageState extends State<ConstructionServicesHomeP
     );
   }
 
-  Widget _buildActionButtons(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.fromLTRB(4.w, 0, 4.w, 6.w),
-      child: Row(
-        children: [
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () {
-                _showQuoteDialog(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF2563EB),
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 4.w),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              child: Text(
-                'Get Free Quote',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-          SizedBox(width: 3.w),
-          Expanded(
-            child: OutlinedButton(
-              onPressed: () {
-                _navigateToProjects(context);
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Color(0xFF2563EB),
-                side: BorderSide(color: Color(0xFF2563EB), width: 2),
-                padding: EdgeInsets.symmetric(vertical: 4.w),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                'Our Projects',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildFeaturesSection() {
     return Container(
       margin: EdgeInsets.fromLTRB(4.w, 0, 4.w, 6.w),
@@ -513,32 +456,6 @@ class _ConstructionServicesHomePageState extends State<ConstructionServicesHomeP
         ),
       ],
     );
-  }
-
-  void _showQuoteDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Get Free Quote'),
-        content: Text('Contact us for a free consultation and quote for your construction needs.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: Text('Contact Us'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _navigateToProjects(BuildContext context) {
-    print('Navigate to Our Projects');
   }
 }
 
