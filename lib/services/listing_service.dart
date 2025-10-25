@@ -87,7 +87,7 @@ class ListingService {
       if (userLatitude != null && userLongitude != null) {
         try {
           debugPrint('🚀 Using PostGIS function for regular listings');
-          
+
           // Get category IDs for filter
           List<String>? categoryIds;
           if (categoryId != null && categoryId != 'All') {
@@ -113,7 +113,7 @@ class ListingService {
           );
 
           debugPrint('✅ PostGIS returned ${response.length} regular listings');
-          
+
           var listings = await _transformListingData(response);
 
           // Apply price sorting if requested
@@ -135,7 +135,7 @@ class ListingService {
 
       // FALLBACK: Manual calculation
       debugPrint('📋 Using manual distance calculation');
-      
+
       var query = _supabase
           .from('listings')
           .select('''
@@ -221,7 +221,7 @@ class ListingService {
       if (userLatitude != null && userLongitude != null) {
         try {
           debugPrint('🚀 Using PostGIS function for premium listings');
-          
+
           // Get category IDs for filter
           List<String>? categoryIds;
           if (categoryId != null && categoryId != 'All') {
@@ -257,7 +257,7 @@ class ListingService {
 
       // FALLBACK: Manual calculation
       debugPrint('📋 Using manual distance calculation for premium');
-      
+
       var query = _supabase
           .from('listings')
           .select('''
@@ -386,6 +386,7 @@ Future<List<Map<String, dynamic>>> _transformListingData(List<dynamic> response)
         'bedrooms': item['bedrooms'],
         'bathrooms': item['bathrooms'],
         'furnishing': item['furnishing_status'],
+        'status': item['status'],
       };
     }));
   }
@@ -645,6 +646,138 @@ Future<Map<String, dynamic>> createListing({
     } catch (e) {
       debugPrint('Error fetching subcategories: $e');
       throw Exception('Failed to fetch subcategories: ${e.toString()}');
+    }
+  }
+
+  /// NEW METHOD: Get user profile data
+  Future<Map<String, dynamic>> getUserProfile(String userId) async {
+    await _ensureAuthenticated();
+    
+    try {
+      final response = await _supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+      
+      return Map<String, dynamic>.from(response);
+    } catch (e) {
+      debugPrint('Error fetching user profile: $e');
+      if (e.toString().contains('JWT') || 
+          e.toString().contains('auth') || 
+          e.toString().contains('401') ||
+          e.toString().contains('403')) {
+        throw Exception('Authentication expired. Please login again.');
+      }
+      throw Exception('Failed to fetch user profile: ${e.toString()}');
+    }
+  }
+
+  /// NEW METHOD: Get user's own listings
+  Future<List<Map<String, dynamic>>> getUserListings() async {
+    await _ensureAuthenticated();
+    
+    try {
+      final user = _supabase.auth.currentUser!;
+      
+      final response = await _supabase
+          .from('listings')
+          .select('''
+            *,
+            category:categories!inner(
+              id,
+              name,
+              parent_category_id
+            )
+          ''')
+          .eq('seller_id', user.id)
+          .order('created_at', ascending: false);
+      
+      return await _transformListingData(response);
+    } catch (e) {
+      debugPrint('Error fetching user listings: $e');
+      if (e.toString().contains('JWT') || 
+          e.toString().contains('auth') || 
+          e.toString().contains('401') ||
+          e.toString().contains('403')) {
+        throw Exception('Authentication expired. Please login again.');
+      }
+      throw Exception('Failed to fetch user listings: ${e.toString()}');
+    }
+  }
+
+  /// NEW METHOD: Delete a listing
+  Future<void> deleteListing(String listingId) async {
+    await _ensureAuthenticated();
+    
+    try {
+      final user = _supabase.auth.currentUser!;
+      
+      // Verify ownership before deleting
+      final listing = await _supabase
+          .from('listings')
+          .select('seller_id')
+          .eq('id', listingId)
+          .single();
+      
+      if (listing['seller_id'] != user.id) {
+        throw Exception('You can only delete your own listings');
+      }
+      
+      await _supabase
+          .from('listings')
+          .delete()
+          .eq('id', listingId);
+      
+      debugPrint('Listing deleted successfully: $listingId');
+    } catch (e) {
+      debugPrint('Error deleting listing: $e');
+      if (e.toString().contains('JWT') || 
+          e.toString().contains('auth') || 
+          e.toString().contains('401') ||
+          e.toString().contains('403')) {
+        throw Exception('Authentication expired. Please login again.');
+      }
+      throw Exception('Failed to delete listing: ${e.toString()}');
+    }
+  }
+
+  /// NEW METHOD: Update listing status (e.g., mark as sold)
+  Future<void> updateListingStatus(String listingId, String newStatus) async {
+    await _ensureAuthenticated();
+    
+    try {
+      final user = _supabase.auth.currentUser!;
+      
+      // Verify ownership before updating
+      final listing = await _supabase
+          .from('listings')
+          .select('seller_id')
+          .eq('id', listingId)
+          .single();
+      
+      if (listing['seller_id'] != user.id) {
+        throw Exception('You can only update your own listings');
+      }
+      
+      await _supabase
+          .from('listings')
+          .update({
+            'status': newStatus,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', listingId);
+      
+      debugPrint('Listing status updated to $newStatus: $listingId');
+    } catch (e) {
+      debugPrint('Error updating listing status: $e');
+      if (e.toString().contains('JWT') || 
+          e.toString().contains('auth') || 
+          e.toString().contains('401') ||
+          e.toString().contains('403')) {
+        throw Exception('Authentication expired. Please login again.');
+      }
+      throw Exception('Failed to update listing status: ${e.toString()}');
     }
   }
 }
