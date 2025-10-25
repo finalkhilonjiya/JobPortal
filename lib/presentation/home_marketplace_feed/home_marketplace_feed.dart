@@ -8,6 +8,7 @@ import './widgets/three_option_section.dart';
 import './widgets/premium_section.dart';
 import './widgets/square_product_card.dart';
 import './widgets/listing_details_fullscreen.dart';
+import '../login_screen/mobile_login_screen.dart';
 import './widgets/shimmer_widgets.dart';
 import './widgets/marketplace_helpers.dart';
 import './widgets/advanced_filter_sheet.dart';
@@ -184,14 +185,15 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
 
   /// Redirect to login screen
   void _redirectToLogin() {
-    if (mounted) {
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        '/mobile_login',
-        (route) => false,
-      );
-    }
+  if (mounted) {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (context) => MobileLoginScreen(),
+      ),
+      (route) => false,
+    );
   }
-
+}
   /// Handle location update from TopBarWidget
   void _onLocationDetected(double latitude, double longitude, String locationName) {
     if (mounted) {
