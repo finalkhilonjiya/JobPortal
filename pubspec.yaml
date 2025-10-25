@@ -125,22 +125,23 @@ flutter:
         - asset: assets/fonts/Poppins-Bold.ttf
           weight: 700
 
-# ✅ UPDATED: Native Splash Screen Configuration - BIGGER LOGO
+# ✅ UPDATED: Native Splash Screen Configuration - 100% BACKGROUND IMAGE
 flutter_native_splash:
+  # Background color (fallback)
   color: "#ffffff"
-  image: assets/images/company_logo.png
   
-  # ⭐ CHANGED: fill_horizontal makes logo 70-80% of screen width
-  android_gravity: fill_horizontal
-  ios_content_mode: scaleAspectFit
-  web_image_mode: center
+  # ⭐ LOGO AS FULL SCREEN BACKGROUND (100% COVERAGE)
+  background_image: assets/images/company_logo.png
   
-  # Fullscreen mode for maximum impact
+  # Enable platforms
+  android: true
+  ios: true
+  web: false
+  
+  # Fullscreen mode
   fullscreen: true
   
-  # Android 12+ branding
+  # Android 12+ support
   android_12:
-    image: assets/images/company_logo.png
     color: "#ffffff"
-    image_dark: assets/images/company_logo.png
-    color_dark: "#ffffff"
+    background_image: assets/images/company_logo.png
