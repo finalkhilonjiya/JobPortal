@@ -4,6 +4,7 @@ import './packages_page.dart';
 import './my_listings_page.dart';
 import '../../login_screen/mobile_auth_service.dart';
 import '../../../services/listing_service.dart';
+import '../../login_screen/mobile_login_screen.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -60,40 +61,54 @@ class _ProfilePageState extends State<ProfilePage> {
           _isLoading = false;
         });
       }
-    } catch (e) {
-      debugPrint('Error loading user profile: $e');
-      setState(() => _isLoading = false);
-      
-      // If auth error, redirect to login
-      if (e.toString().contains('auth') || e.toString().contains('401')) {
-        _handleLogout();
-      }
+    }  catch (e) {
+  debugPrint('Error loading user profile: $e');
+  setState(() => _isLoading = false);
+  
+  // If auth error, redirect to login
+  if (e.toString().contains('auth') || e.toString().contains('401')) {
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => MobileLoginScreen(),
+        ),
+        (route) => false,
+      );
     }
   }
+}
 
   Future<void> _handleLogout() async {
-    try {
-      // Clear session using auth service
-      await _authService.logout();
-      
-      // Navigate to login and clear navigation stack
-      if (mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          '/mobile_login',
-          (route) => false,
-        );
-      }
-    } catch (e) {
-      debugPrint('Logout error: $e');
-      // Force navigation even if logout fails
-      if (mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          '/mobile_login',
-          (route) => false,
-        );
-      }
+  try {
+    debugPrint('🚪 Starting logout process...');
+    
+    // Clear session using auth service
+    await _authService.logout();
+    
+    debugPrint('✅ Session cleared, navigating to login...');
+    
+    // Navigate to login and clear navigation stack
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => MobileLoginScreen(),
+        ),
+        (route) => false,
+      );
+    }
+  } catch (e) {
+    debugPrint('❌ Logout error: $e');
+    // Force navigation even if logout fails
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => MobileLoginScreen(),
+        ),
+        (route) => false,
+      );
     }
   }
+}
 
   void _showLogoutConfirmation() {
     showDialog(
