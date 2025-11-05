@@ -93,13 +93,14 @@ dependencies:
 
   # NEW DEPENDENCIES FOR MOBILE OTP LOGIN
   crypto: ^3.0.3                    # For device fingerprint hashing
-  sms_autofill: ^2.3.0                 # For SMS auto-detection (Android only)
+  sms_autofill: ^2.3.0              # For SMS auto-detection (Android only)
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
   flutter_native_splash: ^2.3.2
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
@@ -125,23 +126,22 @@ flutter:
         - asset: assets/fonts/Poppins-Bold.ttf
           weight: 700
 
-# ✅ UPDATED: Native Splash Screen Configuration - 100% BACKGROUND IMAGE
+# ✅ Native Splash Screen Configuration (Full Background)
 flutter_native_splash:
-  # Background color (fallback)
   color: "#ffffff"
-  
-  # ⭐ LOGO AS FULL SCREEN BACKGROUND (100% COVERAGE)
   background_image: assets/images/company_logo.png
-  
-  # Enable platforms
   android: true
   ios: true
   web: false
-  
-  # Fullscreen mode
   fullscreen: true
-  
-  # Android 12+ support
   android_12:
     color: "#ffffff"
     background_image: assets/images/company_logo.png
+
+# ✅ App Icon Configuration
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/app_icon.png"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/icons/app_icon.png"
