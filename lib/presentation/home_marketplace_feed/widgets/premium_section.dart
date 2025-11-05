@@ -168,14 +168,14 @@ class _PremiumSectionState extends State<PremiumSection> {
               final isFavorite = widget.favoriteIds.contains(listing['id']);
 
               return Container(
-                width: 100.w, // FULL WIDTH - 100% screen width
-                margin: EdgeInsets.zero, // NO MARGIN for edge-to-edge
+                width: 92.w, // FULL WIDTH - 100% screen width
+                margin: EdgeInsets.symmetric(horizontal: 4.w), // NO MARGIN for edge-to-edge
                 child: Stack(
                   children: [
                     // Full width card container
                     Container(
-                      width: 100.w, // Ensure full width
-                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h), // Internal padding only
+                      width: double.infinity, // Ensure full width
+                      padding: EdgeInsets.symmetric(vertical: 1.h), // Internal padding only
                       child: SquareProductCard(
                         data: listing,
                         isFavorite: isFavorite,
