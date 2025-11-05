@@ -1,7 +1,8 @@
+// File: lib/presentation/home_marketplace_feed/widgets/premium_section.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'square_product_card.dart';
-import 'all_premium_listings_page.dart'; // Add this import
+import 'all_premium_listings_page.dart';
 
 class PremiumSection extends StatefulWidget {
   final List<Map<String, dynamic>> listings;
@@ -10,7 +11,7 @@ class PremiumSection extends StatefulWidget {
   final Function(String) onFavoriteToggle;
   final Function(String) onCall;
   final Function(String) onWhatsApp;
-  
+
   const PremiumSection({
     required this.listings,
     required this.onTap,
@@ -26,12 +27,12 @@ class PremiumSection extends StatefulWidget {
 
 class _PremiumSectionState extends State<PremiumSection> {
   late ScrollController _scrollController;
-  
+
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    
+
     // Auto-scroll for infinite loop effect
     if (widget.listings.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -39,23 +40,23 @@ class _PremiumSectionState extends State<PremiumSection> {
       });
     }
   }
-  
+
   void _startAutoScroll() {
     if (!mounted || widget.listings.isEmpty) return;
-    
+
     Future.delayed(Duration(seconds: 3), () {
       if (!mounted) return;
-      
-      // Calculate width: full screen width minus horizontal padding
-      double cardWidth = 100.w - 8.w; // Full width minus padding
-      
+
+      // Calculate width: FULL screen width (100%)
+      double cardWidth = 100.w;
+
       _scrollController.animateTo(
-        _scrollController.offset + cardWidth + 4.w, // Card width + spacing
+        _scrollController.offset + cardWidth,
         duration: Duration(milliseconds: 500),
         curve: Curves.easeInOut,
       ).then((_) {
         if (!mounted) return;
-        
+
         // Check if we've reached near the end
         if (_scrollController.offset >= _scrollController.position.maxScrollExtent - cardWidth) {
           // Jump back to start for infinite loop
@@ -65,26 +66,26 @@ class _PremiumSectionState extends State<PremiumSection> {
       });
     });
   }
-  
+
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     if (widget.listings.isEmpty) {
       return SizedBox.shrink();
     }
-    
+
     // Triple the listings for infinite scroll effect
     final infiniteListings = [
       ...widget.listings,
       ...widget.listings,
       ...widget.listings,
     ];
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -100,6 +101,13 @@ class _PremiumSectionState extends State<PremiumSection> {
                     colors: [Color(0xFF2563EB), Color(0xFF0EA5E9)],
                   ),
                   borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF2563EB).withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -139,76 +147,79 @@ class _PremiumSectionState extends State<PremiumSection> {
                     style: TextStyle(
                       color: Color(0xFF2563EB),
                       fontSize: 9.sp,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
             ],
           ),
         ),
-        
-        // Horizontal Scrollable List - ONE card at a time
+
+        // Horizontal Scrollable List - FULL WIDTH (Edge to Edge)
         Container(
-          height: 50.h, // Increased further to prevent ANY overflow
+          height: 52.h, // Increased height to prevent overflow
           child: ListView.builder(
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.only(left: 4.w, right: 4.w, bottom: 2.h),
+            padding: EdgeInsets.zero, // REMOVED ALL PADDING for full width
             itemCount: infiniteListings.length,
             itemBuilder: (context, index) {
               final listing = infiniteListings[index];
               final isFavorite = widget.favoriteIds.contains(listing['id']);
-              
+
               return Container(
-                width: 92.w, // Almost full width for ONE card display
-                margin: EdgeInsets.only(right: 4.w), // Spacing between cards
+                width: 100.w, // FULL WIDTH - 100% screen width
+                margin: EdgeInsets.zero, // NO MARGIN for edge-to-edge
                 child: Stack(
                   children: [
-                    // Center the card horizontally
-                    Center(
-                      child: Container(
-                        width: 92.w, // Full container width
-                        child: SquareProductCard(
-                          data: listing,
-                          isFavorite: isFavorite,
-                          onFavoriteToggle: () => widget.onFavoriteToggle(listing['id']),
-                          onTap: () => widget.onTap(listing),
-                          onCall: () => widget.onCall(listing['phone'] ?? ''),
-                          onWhatsApp: () => widget.onWhatsApp(listing['phone'] ?? ''),
-                        ),
+                    // Full width card container
+                    Container(
+                      width: 100.w, // Ensure full width
+                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h), // Internal padding only
+                      child: SquareProductCard(
+                        data: listing,
+                        isFavorite: isFavorite,
+                        onFavoriteToggle: () => widget.onFavoriteToggle(listing['id']),
+                        onTap: () => widget.onTap(listing),
+                        onCall: () => widget.onCall(listing['phone'] ?? ''),
+                        onWhatsApp: () => widget.onWhatsApp(listing['phone'] ?? ''),
                       ),
                     ),
-                    
-                    // Premium Badge Overlay - adjusted position
+
+                    // Premium Badge Overlay with enhanced styling
                     Positioned(
-                      top: 1.h,
-                      left: 4.w, // Adjusted for centered card
+                      top: 2.h,
+                      left: 6.w,
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
+                        padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [Color(0xFF2563EB), Color(0xFF0EA5E9)],
+                            colors: [
+                              Color(0xFFFFD700), // Gold
+                              Color(0xFFFFA500), // Orange
+                            ],
                           ),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              blurRadius: 4,
-                              offset: Offset(0, 2),
+                              color: Colors.black.withOpacity(0.4),
+                              blurRadius: 8,
+                              offset: Offset(0, 3),
                             ),
                           ],
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.star, color: Colors.white, size: 9.sp),
-                            SizedBox(width: 0.5.w),
+                            Icon(Icons.workspace_premium, color: Colors.white, size: 10.sp),
+                            SizedBox(width: 1.w),
                             Text(
                               'PREMIUM',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 8.sp,
+                                fontSize: 9.sp,
                                 fontWeight: FontWeight.bold,
-                                letterSpacing: 0.3,
+                                letterSpacing: 0.5,
                               ),
                             ),
                           ],
