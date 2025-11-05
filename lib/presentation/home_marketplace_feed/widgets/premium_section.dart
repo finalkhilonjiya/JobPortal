@@ -43,7 +43,8 @@ class _PremiumSectionState extends State<PremiumSection> {
     Future.delayed(Duration(seconds: 3), () {
       if (!mounted) return;
 
-      double cardWidth = 92.w; // card width only (no margin)
+      // Card width = 92.w (content) + 4.w (right margin)
+      double cardWidth = 96.w;
 
       _scrollController.animateTo(
         _scrollController.offset + cardWidth,
@@ -151,24 +152,20 @@ class _PremiumSectionState extends State<PremiumSection> {
 
         // Horizontal Premium Cards
         SizedBox(
-          height: 42.h, // Same height as SquareProductCard
+          height: 44.h, // Slightly taller to account for vertical margins
           child: ListView.builder(
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
             physics: BouncingScrollPhysics(),
-            padding: EdgeInsets.only(left: 4.w), // Left padding only
+            padding: EdgeInsets.only(left: 4.w), // Left padding matches regular listings
             itemCount: infiniteListings.length,
             itemBuilder: (context, index) {
               final listing = infiniteListings[index];
               final isFavorite = widget.favoriteIds.contains(listing['id']);
 
               return Container(
-                width: 92.w, // ✅ Full card width matching regular listings
-                margin: EdgeInsets.only(
-                  right: 4.w, // Right margin only
-                  top: 1.h,
-                  bottom: 1.h,
-                ),
+                width: 92.w, // ✅ Exact width matching regular listings
+                margin: EdgeInsets.only(right: 4.w), // ✅ Right margin only
                 child: Stack(
                   children: [
                     SquareProductCard(
@@ -180,6 +177,7 @@ class _PremiumSectionState extends State<PremiumSection> {
                       onCall: () => widget.onCall(listing['phone'] ?? ''),
                       onWhatsApp: () =>
                           widget.onWhatsApp(listing['phone'] ?? ''),
+                      removePadding: true, // ✅ NEW: Remove inner horizontal padding
                     ),
 
                     // Premium Badge Overlay
