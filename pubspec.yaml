@@ -138,7 +138,7 @@ flutter_native_splash:
     color: "#ffffff"
     background_image: assets/images/company_logo.png
 
-# ✅ App Icon Configuration
+# ✅ App Launcher Icon Configuration
 flutter_launcher_icons:
   android: true
   ios: true
