@@ -1012,3 +1012,166 @@ void _onCategorySelected(String name) {
   }
 }
 
+// ==================== NEW AUTO-SLIDING BANNER WIDGET ====================
+class AutoSlidingBanner extends StatefulWidget {
+  const AutoSlidingBanner({Key? key}) : super(key: key);
+
+  @override
+  State<AutoSlidingBanner> createState() => _AutoSlidingBannerState();
+}
+
+class _AutoSlidingBannerState extends State<AutoSlidingBanner> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+  Timer? _timer;
+
+  final List<String> _bannerImages = [
+    'assets/images/slide1.jpg',
+    'assets/images/slide2.jpg',
+    'assets/images/slide3.jpg',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _startAutoSlide();
+  }
+
+  void _startAutoSlide() {
+    _timer = Timer.periodic(Duration(seconds: 4), (timer) {
+      if (_currentPage < _bannerImages.length - 1) {
+        _currentPage++;
+      } else {
+        _currentPage = 0;
+      }
+
+      if (_pageController.hasClients) {
+        _pageController.animateToPage(
+          _currentPage,
+          duration: Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 0, vertical: 2.h),
+      height: 25.h,
+      child: Stack(
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() {
+                _currentPage = index;
+              });
+            },
+            itemCount: _bannerImages.length,
+            itemBuilder: (context, index) {
+              return Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.zero,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.asset(
+                      _bannerImages[index],
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey[300],
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.image_not_supported,
+                                  size: 15.w,
+                                  color: Colors.grey[600],
+                                ),
+                                SizedBox(height: 1.h),
+                                Text(
+                                  'Image not found',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 10.sp,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.3),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+
+          Positioned(
+            bottom: 2.h,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                _bannerImages.length,
+                (index) => AnimatedContainer(
+                  duration: Duration(milliseconds: 300),
+                  margin: EdgeInsets.symmetric(horizontal: 1.w),
+                  height: 1.h,
+                  width: _currentPage == index ? 6.w : 2.w,
+                  decoration: BoxDecoration(
+                    color: _currentPage == index
+                        ? Colors.white
+                        : Colors.white.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(1.h),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
