@@ -1066,7 +1066,7 @@ class _AutoSlidingBannerState extends State<AutoSlidingBanner> {
   Widget build(BuildContext context) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-      height: 30.h,
+      height: 20.h, // ← Updated to 20.h for rectangular shape
       child: Stack(
         children: [
           PageView.builder(
@@ -1081,7 +1081,7 @@ class _AutoSlidingBannerState extends State<AutoSlidingBanner> {
               return Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  borderRadius: borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12), // ← FIXED
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),
@@ -1090,7 +1090,7 @@ class _AutoSlidingBannerState extends State<AutoSlidingBanner> {
                     ),
                   ],
                 ),
-                clipBehavior: Clip.antiAlias,
+                clipBehavior: Clip.antiAlias, // ← Added for rounded corners
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
