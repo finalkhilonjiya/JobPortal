@@ -1,4 +1,3 @@
-// File: lib/presentation/home_marketplace_feed/widgets/premium_section.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'square_product_card.dart';
@@ -33,11 +32,8 @@ class _PremiumSectionState extends State<PremiumSection> {
     super.initState();
     _scrollController = ScrollController();
 
-    // Auto-scroll for infinite loop effect
     if (widget.listings.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _startAutoScroll();
-      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _startAutoScroll());
     }
   }
 
@@ -47,19 +43,17 @@ class _PremiumSectionState extends State<PremiumSection> {
     Future.delayed(Duration(seconds: 3), () {
       if (!mounted) return;
 
-      // Calculate width: FULL screen width (100%)
-      double cardWidth = 100.w;
+      double cardWidth = 92.w + 8.w; // width + horizontal margin
 
       _scrollController.animateTo(
         _scrollController.offset + cardWidth,
-        duration: Duration(milliseconds: 500),
+        duration: Duration(milliseconds: 600),
         curve: Curves.easeInOut,
       ).then((_) {
         if (!mounted) return;
 
-        // Check if we've reached near the end
-        if (_scrollController.offset >= _scrollController.position.maxScrollExtent - cardWidth) {
-          // Jump back to start for infinite loop
+        if (_scrollController.offset >=
+            _scrollController.position.maxScrollExtent - cardWidth) {
           _scrollController.jumpTo(0);
         }
         _startAutoScroll();
@@ -79,7 +73,7 @@ class _PremiumSectionState extends State<PremiumSection> {
       return SizedBox.shrink();
     }
 
-    // Triple the listings for infinite scroll effect
+    // Triple listings for infinite scroll illusion
     final infiniteListings = [
       ...widget.listings,
       ...widget.listings,
@@ -89,7 +83,7 @@ class _PremiumSectionState extends State<PremiumSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Premium Section Header
+        // Header
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
           child: Row(
@@ -155,49 +149,45 @@ class _PremiumSectionState extends State<PremiumSection> {
           ),
         ),
 
-        // Horizontal Scrollable List - FULL WIDTH (Edge to Edge)
-        Container(
-          height: 52.h, // Increased height to prevent overflow
+        // Horizontal Premium Cards
+        SizedBox(
+          height: 42.h, // Same height as SquareProductCard
           child: ListView.builder(
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.zero, // REMOVED ALL PADDING for full width
+            physics: BouncingScrollPhysics(),
+            padding: EdgeInsets.zero,
             itemCount: infiniteListings.length,
             itemBuilder: (context, index) {
               final listing = infiniteListings[index];
               final isFavorite = widget.favoriteIds.contains(listing['id']);
 
               return Container(
-                width: 92.w, // FULL WIDTH - 100% screen width
-                margin: EdgeInsets.symmetric(horizontal: 4.w), // NO MARGIN for edge-to-edge
+                width: 92.w, // ✅ same width ratio as full listings
+                margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
                 child: Stack(
                   children: [
-                    // Full width card container
-                    Container(
-                      width: double.infinity, // Ensure full width
-                      padding: EdgeInsets.symmetric(vertical: 1.h), // Internal padding only
-                      child: SquareProductCard(
-                        data: listing,
-                        isFavorite: isFavorite,
-                        onFavoriteToggle: () => widget.onFavoriteToggle(listing['id']),
-                        onTap: () => widget.onTap(listing),
-                        onCall: () => widget.onCall(listing['phone'] ?? ''),
-                        onWhatsApp: () => widget.onWhatsApp(listing['phone'] ?? ''),
-                      ),
+                    SquareProductCard(
+                      data: listing,
+                      isFavorite: isFavorite,
+                      onFavoriteToggle: () =>
+                          widget.onFavoriteToggle(listing['id']),
+                      onTap: () => widget.onTap(listing),
+                      onCall: () => widget.onCall(listing['phone'] ?? ''),
+                      onWhatsApp: () =>
+                          widget.onWhatsApp(listing['phone'] ?? ''),
                     ),
 
-                    // Premium Badge Overlay with enhanced styling
+                    // Premium Badge Overlay
                     Positioned(
                       top: 2.h,
                       left: 6.w,
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 3.w, vertical: 0.8.h),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [
-                              Color(0xFFFFD700), // Gold
-                              Color(0xFFFFA500), // Orange
-                            ],
+                            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
                           ),
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
@@ -211,7 +201,8 @@ class _PremiumSectionState extends State<PremiumSection> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.workspace_premium, color: Colors.white, size: 10.sp),
+                            Icon(Icons.workspace_premium,
+                                color: Colors.white, size: 10.sp),
                             SizedBox(width: 1.w),
                             Text(
                               'PREMIUM',
