@@ -1066,7 +1066,7 @@ class _AutoSlidingBannerState extends State<AutoSlidingBanner> {
   Widget build(BuildContext context) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-      height: 30.h, // ← Updated to 20.h for rectangular shape
+      height: 23.h, // ← Updated to 20.h for rectangular shape
       child: Stack(
         children: [
           PageView.builder(
