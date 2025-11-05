@@ -1096,7 +1096,7 @@ class _AutoSlidingBannerState extends State<AutoSlidingBanner> {
                   children: [
                     Image.asset(
                       _bannerImages[index],
-                      fit: BoxFit.cover,
+                      fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
                           color: Colors.grey[300],
