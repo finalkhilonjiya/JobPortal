@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import './widgets/top_bar_widget.dart';
 import './widgets/search_bar_full_width.dart';
-import './widgets/app_info_banner_new.dart';
 import './widgets/three_option_section.dart';
 import './widgets/premium_section.dart';
 import './widgets/square_product_card.dart';
@@ -61,12 +60,12 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
   String _selectedCategoryId = 'All';
   Set<String> _favoriteIds = {};
   String _currentLocation = 'Detecting location...';
-  
+
   // User coordinates for distance-based sorting
   double? _userLatitude;
   double? _userLongitude;
-  bool _locationDetected = false; // Track if location has been detected
-  
+  bool _locationDetected = false;
+
   final ScrollController _scrollController = ScrollController();
 
   // Category mapping
@@ -81,7 +80,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
   // Filter states
   String _priceRange = 'All';
   String _selectedSubcategory = 'All';
-  String _sortBy = 'Distance'; // Default to Distance when location available
+  String _sortBy = 'Distance';
   double _maxDistance = 50.0;
 
   @override
@@ -90,12 +89,10 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
     WidgetsBinding.instance.addObserver(this);
     _scrollController.addListener(_onScroll);
 
-    // Initialize authentication first, then fetch data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeWithAuth();
     });
 
-    // Keep session alive every 10 minutes
     Timer.periodic(Duration(minutes: 10), (timer) {
       if (mounted && _isAuthenticatedUser) {
         _authService.keepSessionAlive();
@@ -115,24 +112,18 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-
-    // Check auth when app becomes active
     if (state == AppLifecycleState.resumed) {
       _verifyAuthState();
     }
   }
 
-  /// Initialize authentication and then fetch data
   Future<void> _initializeWithAuth() async {
     setState(() {
       _isCheckingAuth = true;
     });
 
     try {
-      // Initialize auth service
       await _authService.initialize();
-
-      // Check if user is authenticated
       final isAuthenticated = _authService.isAuthenticated;
       final userId = _authService.userId;
 
@@ -145,7 +136,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
           _isCheckingAuth = false;
         });
 
-        // Try to refresh session to ensure it's valid
         final sessionValid = await _authService.refreshSession();
         if (!sessionValid) {
           debugPrint('Session refresh failed, redirecting to login');
@@ -153,21 +143,17 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
           return;
         }
 
-        // Auth is valid, fetch data
         await _fetchData();
-
       } else {
         debugPrint('User not authenticated, redirecting to login');
         _redirectToLogin();
       }
-
     } catch (e) {
       debugPrint('Auth initialization error: $e');
       _redirectToLogin();
     }
   }
 
-  /// Verify auth state without full initialization
   Future<void> _verifyAuthState() async {
     if (!_authService.isAuthenticated) {
       debugPrint('Auth verification failed, redirecting to login');
@@ -175,7 +161,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
       return;
     }
 
-    // Try to refresh session
     final sessionValid = await _authService.refreshSession();
     if (!sessionValid) {
       debugPrint('Session verification failed, redirecting to login');
@@ -183,37 +168,32 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
     }
   }
 
-  /// Redirect to login screen
   void _redirectToLogin() {
-  if (mounted) {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (context) => MobileLoginScreen(),
-      ),
-      (route) => false,
-    );
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => MobileLoginScreen(),
+        ),
+        (route) => false,
+      );
+    }
   }
-}
-  /// Handle location update from TopBarWidget
+
   void _onLocationDetected(double latitude, double longitude, String locationName) {
     if (mounted) {
       setState(() {
         _userLatitude = latitude;
         _userLongitude = longitude;
         _currentLocation = locationName;
-        
-        // Set location detected flag
+
         if (!_locationDetected) {
           _locationDetected = true;
-          // Set default sort to Distance when location is first detected
           _sortBy = 'Distance';
           debugPrint('Location detected, switching default sort to Distance');
         }
       });
-      
+
       debugPrint('Location updated: $locationName (Lat: $latitude, Lng: $longitude)');
-      
-      // Refresh listings with new location and distance sorting
       _fetchFilteredListings();
     }
   }
@@ -230,7 +210,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
       setState(() => _isLoadingMore = true);
 
       try {
-        // Verify auth before API call
         if (!_authService.isSupabaseAuthenticated) {
           debugPrint('Not authenticated for API call, refreshing session');
           final refreshed = await _authService.refreshSession();
@@ -240,7 +219,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
           }
         }
 
-        // Get the correct category ID for API call
         String? categoryIdForApi = _getCategoryIdForApi(_selectedCategoryId);
 
         final newListings = await _listingService.fetchListings(
@@ -255,7 +233,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         if (mounted) {
           setState(() {
             if (newListings.isEmpty) {
-              // If no more data, repeat from beginning
               _currentOffset = 0;
               _fetchListingsOnly();
             } else {
@@ -271,7 +248,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
           setState(() => _isLoadingMore = false);
         }
 
-        // Check if error is auth-related
         if (e.toString().contains('auth') || e.toString().contains('401')) {
           _verifyAuthState();
         }
@@ -283,7 +259,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
     if (!_isAuthenticatedUser) return;
 
     try {
-      // Verify auth before API call
       if (!_authService.isSupabaseAuthenticated) {
         final refreshed = await _authService.refreshSession();
         if (!refreshed) {
@@ -292,7 +267,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         }
       }
 
-      // Get the correct category ID for API call
       String? categoryIdForApi = _getCategoryIdForApi(_selectedCategoryId);
 
       final listings = await _listingService.fetchListings(
@@ -317,16 +291,13 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
     }
   }
 
-  /// Get the correct category ID for API calls
   String? _getCategoryIdForApi(String selectedCategoryId) {
     if (selectedCategoryId == 'All') return null;
 
-    // If it's already a UUID (from our mapping), use it directly
     if (CATEGORY_UUID_MAPPING.containsValue(selectedCategoryId)) {
       return selectedCategoryId;
     }
 
-    // If it's a category name, get the UUID from our mapping
     return CATEGORY_UUID_MAPPING[selectedCategoryId];
   }
 
@@ -342,7 +313,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
     });
 
     try {
-      // Verify Supabase auth state before making API calls
       if (!_authService.isSupabaseAuthenticated) {
         debugPrint('Supabase not authenticated, attempting refresh');
         final refreshed = await _authService.refreshSession();
@@ -355,7 +325,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
 
       debugPrint('Fetching data for authenticated user: $_currentUserId');
 
-      // Fetch categories from database and create mapping
       List<Map<String, dynamic>> databaseCategories = [];
       Map<String, String> categoryMapping = {};
 
@@ -363,16 +332,14 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         databaseCategories = await _listingService.getCategories();
         debugPrint('Fetched ${databaseCategories.length} categories from API');
 
-        // Use hardcoded mapping
         categoryMapping = Map<String, String>.from(CATEGORY_UUID_MAPPING);
-        
-        // Verify mapping against database
+
         for (var entry in CATEGORY_UUID_MAPPING.entries) {
           final dbCategory = databaseCategories.firstWhere(
             (cat) => cat['id'] == entry.value,
             orElse: () => {},
           );
-          
+
           if (dbCategory.isNotEmpty) {
             debugPrint('✓ Verified: "${entry.key}" → ${entry.value} (DB: ${dbCategory['name']})');
           } else {
@@ -381,14 +348,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         }
       } catch (e) {
         debugPrint('Error fetching categories from API: $e');
-        // Continue with hardcoded mapping
         categoryMapping = Map<String, String>.from(CATEGORY_UUID_MAPPING);
       }
 
-      // Build category list - always use CategoryData for consistency
       final List<Map<String, dynamic>> processedCategories = _buildCategoryList(categoryMapping);
 
-      // Fetch user favorites
       Set<String> favorites = {};
       try {
         favorites = await _listingService.getUserFavorites();
@@ -401,17 +365,15 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         }
       }
 
-      // Determine sort method based on location availability
       String sortMethod = _sortBy;
       if (_locationDetected && _userLatitude != null && _userLongitude != null) {
-        sortMethod = 'Distance'; // Use distance sorting when location is available
+        sortMethod = 'Distance';
         debugPrint('Using distance sorting with user location');
       } else {
-        sortMethod = 'Newest'; // Fallback to newest
+        sortMethod = 'Newest';
         debugPrint('Location not available, using newest sorting');
       }
 
-      // Fetch listings with coordinates if available
       List<Map<String, dynamic>> listings = [];
       try {
         listings = await _listingService.fetchListings(
@@ -430,7 +392,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         }
       }
 
-      // Fetch premium listings with coordinates
       List<Map<String, dynamic>> premiumListings = [];
       try {
         premiumListings = await _listingService.fetchPremiumListings(
@@ -457,7 +418,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
           _isLoadingPremium = false;
           _isLoadingFeed = false;
 
-          // Only show error if both listings and premium failed
           if (listings.isEmpty && premiumListings.isEmpty && databaseCategories.isEmpty) {
             _hasInitialLoadError = true;
           }
@@ -467,7 +427,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
       debugPrint('Unexpected error in _fetchData: $e');
       if (mounted) {
         setState(() {
-          // Use CategoryData only on error
           _categories = _buildCategoryList(Map<String, String>.from(CATEGORY_UUID_MAPPING));
           _categoryMapping = Map<String, String>.from(CATEGORY_UUID_MAPPING);
           _listings = [];
@@ -478,18 +437,15 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         });
       }
 
-      // Check if error is auth-related
       if (e.toString().contains('auth') || e.toString().contains('401')) {
         _verifyAuthState();
       }
     }
   }
 
-  /// Build the category list using CategoryData with database ID mapping
   List<Map<String, dynamic>> _buildCategoryList(Map<String, String> categoryMapping) {
     final List<Map<String, dynamic>> processedCategories = [];
 
-    // Always add "All" category first
     processedCategories.add({
       'name': 'All',
       'id': 'All',
@@ -497,7 +453,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
       'image': 'https://cdn-icons-png.flaticon.com/512/8058/8058572.png',
     });
 
-    // Add the rental categories from CategoryData with their UUIDs
     final rentalCategories = CategoryData.mainCategories.where(
       (cat) => cat['name'] != 'All'
     );
@@ -512,7 +467,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         'icon': cat['icon'],
         'image': cat['image'],
       });
-      
+
       debugPrint('Category "$categoryName" mapped to UUID: $databaseId');
     }
 
@@ -520,7 +475,8 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
     return processedCategories;
   }
 
-  void _onCategorySelected(String name) {
+
+void _onCategorySelected(String name) {
     final category = _categories.firstWhere(
       (cat) => cat['name'] == name,
       orElse: () => {'name': 'All', 'id': 'All', 'icon': Icons.category},
@@ -547,7 +503,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
     });
 
     try {
-      // Verify auth before API call
       if (!_authService.isSupabaseAuthenticated) {
         final refreshed = await _authService.refreshSession();
         if (!refreshed) {
@@ -556,13 +511,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         }
       }
 
-      // Get the correct category ID for API call
       String? categoryIdForApi = _getCategoryIdForApi(_selectedCategoryId);
 
-      // Use distance sorting if location is available, otherwise use current sort
       String sortMethod = _sortBy;
       if (_sortBy == 'Distance' && (_userLatitude == null || _userLongitude == null)) {
-        sortMethod = 'Newest'; // Fallback if distance sorting requested but no location
+        sortMethod = 'Newest';
         debugPrint('Distance sort requested but no location, falling back to Newest');
       }
 
@@ -575,7 +528,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
         userLongitude: _userLongitude,
       );
 
-      // Also fetch filtered premium listings
       List<Map<String, dynamic>> premiumListings = [];
       try {
         premiumListings = await _listingService.fetchPremiumListings(
@@ -612,8 +564,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
     }
   }
 
-
-void _toggleFavorite(String id) async {
+  void _toggleFavorite(String id) async {
     if (!_isAuthenticatedUser) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -625,7 +576,6 @@ void _toggleFavorite(String id) async {
     }
 
     try {
-      // Verify auth before API call
       if (!_authService.isSupabaseAuthenticated) {
         final refreshed = await _authService.refreshSession();
         if (!refreshed) {
@@ -780,7 +730,6 @@ void _toggleFavorite(String id) async {
           ),
           Container(
             margin: EdgeInsets.symmetric(vertical: 2.h),
-            padding: EdgeInsets.only(bottom: 2.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -831,7 +780,6 @@ void _toggleFavorite(String id) async {
 
   @override
   Widget build(BuildContext context) {
-    // Show loading screen while checking authentication
     if (_isCheckingAuth) {
       return Scaffold(
         backgroundColor: Colors.grey[50],
@@ -854,7 +802,6 @@ void _toggleFavorite(String id) async {
       );
     }
 
-    // Main authenticated UI
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
@@ -870,7 +817,6 @@ void _toggleFavorite(String id) async {
             controller: _scrollController,
             physics: AlwaysScrollableScrollPhysics(),
             slivers: [
-              // Top Bar with location callback
               SliverToBoxAdapter(
                 child: TopBarWidget(
                   currentLocation: _currentLocation,
@@ -878,7 +824,6 @@ void _toggleFavorite(String id) async {
                 ),
               ),
 
-              // Search Bar
               SliverToBoxAdapter(
                 child: SearchBarFullWidth(
                   onTap: () {
@@ -892,10 +837,9 @@ void _toggleFavorite(String id) async {
                 ),
               ),
 
-              // App Info Banner
-              SliverToBoxAdapter(child: AppInfoBannerNew()),
+              // NEW: Auto-Sliding Image Banner
+              SliverToBoxAdapter(child: AutoSlidingBanner()),
 
-              // Three Options - Updated to 2+1 layout
               SliverToBoxAdapter(
                 child: ThreeOptionSection(
                   onJobsTap: _navigateToJobs,
@@ -903,37 +847,21 @@ void _toggleFavorite(String id) async {
                 ),
               ),
 
-              // Premium Section
+              // Premium Section - FULL WIDTH
               if (_premiumListings.isNotEmpty)
                 SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                        child: Text(
-                          'Premium Listings',
-                          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                  child: _isLoadingPremium
+                      ? ShimmerPremiumSection()
+                      : PremiumSection(
+                          listings: _premiumListings,
+                          onTap: _showListingDetails,
+                          favoriteIds: _favoriteIds,
+                          onFavoriteToggle: _toggleFavorite,
+                          onCall: (phone) => MarketplaceHelpers.makePhoneCall(context, phone),
+                          onWhatsApp: (phone) => MarketplaceHelpers.openWhatsApp(context, phone),
                         ),
-                      ),
-                      Container(
-                        padding: EdgeInsets.only(bottom: 2.h),
-                        child: _isLoadingPremium
-                            ? ShimmerPremiumSection()
-                            : PremiumSection(
-                                listings: _premiumListings,
-                                onTap: _showListingDetails,
-                                favoriteIds: _favoriteIds,
-                                onFavoriteToggle: _toggleFavorite,
-                                onCall: (phone) => MarketplaceHelpers.makePhoneCall(context, phone),
-                                onWhatsApp: (phone) => MarketplaceHelpers.openWhatsApp(context, phone),
-                              ),
-                      ),
-                    ],
-                  ),
                 ),
 
-              // Categories
               SliverToBoxAdapter(
                 child: CategoriesSection(
                   categories: _categories.map((cat) => cat.cast<String, Object>()).toList(),
@@ -942,7 +870,6 @@ void _toggleFavorite(String id) async {
                 ),
               ),
 
-              // Filter Bar
               SliverToBoxAdapter(
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
@@ -988,7 +915,6 @@ void _toggleFavorite(String id) async {
                 ),
               ),
 
-              // Main Feed
               if (_hasInitialLoadError && _listings.isEmpty)
                 SliverToBoxAdapter(
                   child: Container(
@@ -1032,7 +958,6 @@ void _toggleFavorite(String id) async {
                   ),
                 ),
 
-              // Loading more indicator
               if (_isLoadingMore)
                 SliverToBoxAdapter(
                   child: Container(
@@ -1086,3 +1011,4 @@ void _toggleFavorite(String id) async {
     );
   }
 }
+
