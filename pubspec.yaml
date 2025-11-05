@@ -92,8 +92,8 @@ dependencies:
   geocoding: ^2.1.0
 
   # NEW DEPENDENCIES FOR MOBILE OTP LOGIN
-  crypto: ^3.0.3                    # For device fingerprint hashing
-  sms_autofill: ^2.3.0              # For SMS auto-detection (Android only)
+  crypto: ^3.0.3
+  sms_autofill: ^2.3.0
 
 dev_dependencies:
   flutter_test:
@@ -126,7 +126,7 @@ flutter:
         - asset: assets/fonts/Poppins-Bold.ttf
           weight: 700
 
-# ✅ Native Splash Screen Configuration (Full Background)
+# ✅ Native Splash Screen Configuration
 flutter_native_splash:
   color: "#ffffff"
   background_image: assets/images/company_logo.png
