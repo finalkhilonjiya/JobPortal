@@ -43,7 +43,7 @@ class _PremiumSectionState extends State<PremiumSection> {
     Future.delayed(Duration(seconds: 3), () {
       if (!mounted) return;
 
-      double cardWidth = 92.w + 8.w; // width + horizontal margin
+      double cardWidth = 92.w; // card width only (no margin)
 
       _scrollController.animateTo(
         _scrollController.offset + cardWidth,
@@ -156,15 +156,19 @@ class _PremiumSectionState extends State<PremiumSection> {
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
             physics: BouncingScrollPhysics(),
-            padding: EdgeInsets.zero,
+            padding: EdgeInsets.only(left: 4.w), // Left padding only
             itemCount: infiniteListings.length,
             itemBuilder: (context, index) {
               final listing = infiniteListings[index];
               final isFavorite = widget.favoriteIds.contains(listing['id']);
 
               return Container(
-                width: 92.w, // ✅ same width ratio as full listings
-                margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                width: 92.w, // ✅ Full card width matching regular listings
+                margin: EdgeInsets.only(
+                  right: 4.w, // Right margin only
+                  top: 1.h,
+                  bottom: 1.h,
+                ),
                 child: Stack(
                   children: [
                     SquareProductCard(
@@ -181,7 +185,7 @@ class _PremiumSectionState extends State<PremiumSection> {
                     // Premium Badge Overlay
                     Positioned(
                       top: 2.h,
-                      left: 6.w,
+                      left: 4.w,
                       child: Container(
                         padding: EdgeInsets.symmetric(
                             horizontal: 3.w, vertical: 0.8.h),
