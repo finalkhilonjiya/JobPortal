@@ -9,6 +9,7 @@ class SquareProductCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onCall;
   final VoidCallback onWhatsApp;
+  final bool removePadding; // NEW: Controls whether to show margins
 
   const SquareProductCard({
     required this.data,
@@ -17,12 +18,15 @@ class SquareProductCard extends StatelessWidget {
     required this.onTap,
     required this.onCall,
     required this.onWhatsApp,
+    this.removePadding = false, // Default false for backward compatibility
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+      margin: removePadding 
+          ? EdgeInsets.symmetric(vertical: 1.h) // Only vertical margin for premium
+          : EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h), // Full margin for regular
       child: InkWell(
         onTap: onTap,
         child: Card(
