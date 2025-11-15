@@ -119,8 +119,8 @@ class _AppInitializerState extends State<AppInitializer> {
     try {
       debugPrint('Starting app bootstrap...');
       
-      // Extended delay to increase splash screen duration (double the time)
-      await Future.delayed(const Duration(milliseconds: 2000));
+      // ✅ CHANGED: Extended delay to 4 seconds for splash screen duration
+      await Future.delayed(const Duration(milliseconds: 4000));
 
       // Check if Supabase is available
       if (Supabase.instance.client == null) {
