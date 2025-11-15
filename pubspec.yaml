@@ -101,7 +101,7 @@ flutter:
 # Displays your logo in FREE FORM (no shape) centered on white background for 4 seconds
 flutter_native_splash:
   color: "#ffffff"                      # White background color
-  image: assets/icons/app_icon.png      # Your logo displayed in free form, centered
+  image: assets/icons/spash_logo.png      # Your logo displayed in free form, centered
   android: true                          # Enable for Android
   ios: false                             # Disabled for iOS as requested
   web: false                             # No web splash
