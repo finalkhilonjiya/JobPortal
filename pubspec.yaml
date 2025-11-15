@@ -96,18 +96,22 @@ flutter:
           weight: 600
         - asset: assets/fonts/Poppins-Bold.ttf
           weight: 700
-# ✅ Native Splash Screen Configuration - UPDATED TO USE APP ICON
+
+# ✅ NATIVE SPLASH SCREEN CONFIGURATION
+# Displays your logo in FREE FORM (no shape) centered on white background for 4 seconds
 flutter_native_splash:
-  color: "#ffffff"
-  image: assets/icons/app_icon.png  # ✅ CHANGED: Now uses app icon centered and large
-  android: true
-  ios: false  # ✅ CHANGED: Disabled iOS for now as requested
-  web: false
-  fullscreen: true
+  color: "#ffffff"                      # White background color
+  image: assets/icons/app_icon.png      # Your logo displayed in free form, centered
+  android: true                          # Enable for Android
+  ios: false                             # Disabled for iOS as requested
+  web: false                             # No web splash
+  fullscreen: true                       # Fullscreen splash
   android_12:
-    color: "#ffffff"
-    image: assets/icons/app_icon.png  # ✅ CHANGED: Same for Android 12+
-# ✅ App Launcher Icon Configuration - NO CHANGES
+    color: "#ffffff"                     # Android 12+ background
+    image: assets/icons/app_icon.png     # Same logo for Android 12+
+
+# ✅ APP LAUNCHER ICON CONFIGURATION
+# This sets the app icon that appears on the device home screen
 flutter_launcher_icons:
   android: true
   ios: true
