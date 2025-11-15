@@ -119,7 +119,7 @@ class _AppInitializerState extends State<AppInitializer> {
     try {
       debugPrint('Starting app bootstrap...');
       
-      // ✅ CHANGED: Extended delay to 4 seconds for splash screen duration
+      // ✅ Extended delay to 4 seconds for splash screen duration
       await Future.delayed(const Duration(milliseconds: 7000));
 
       // Check if Supabase is available
@@ -167,34 +167,23 @@ class _AppInitializerState extends State<AppInitializer> {
   Widget build(BuildContext context) {
     return Consumer<AppStateNotifier>(
       builder: (_, n, __) => Scaffold(
-        backgroundColor: const Color(0xFFF0F0F0),
+        backgroundColor: const Color(0xFFFAFAFA),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo while loading
-              Container(
-                width: 80,
-                height: 80,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF4285F4),
-                  shape: BoxShape.circle,
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(40),
-                  child: Image.asset(
-                    'assets/images/company_logo.png',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const Center(
-                      child: Text(
-                        'K',
-                        style: TextStyle(
-                          fontSize: 36,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+              // ✅ CHANGED: Uses app_icon.png in FREE FORM (no circle, no shape)
+              Image.asset(
+                'assets/icons/app_icon.png',
+                width: 120,
+                height: 120,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => const Text(
+                  'K',
+                  style: TextStyle(
+                    fontSize: 72,
+                    color: Color(0xFF4285F4),
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
@@ -202,17 +191,18 @@ class _AppInitializerState extends State<AppInitializer> {
               const Text(
                 'Khilonjiya.com',
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 28,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF4285F4), // Updated to primary blue color
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 48),
               const CircularProgressIndicator(
                 strokeWidth: 3,
                 valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4285F4)),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Text(
                 _getLoadingText(n.state),
                 style: const TextStyle(
