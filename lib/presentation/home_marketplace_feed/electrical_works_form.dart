@@ -65,7 +65,7 @@ class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Service Description Card
-              _buildServiceDescriptionCard(),
+              _buildServiceDescriptionBanner(),
               SizedBox(height: 4.w),
 
               // Personal Information Section
@@ -103,50 +103,73 @@ class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
     );
   }
 
-  Widget _buildServiceDescriptionCard() {
+  Widget _buildServiceDescriptionBanner() {
     return Container(
-      padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFE3F2FD), Color(0xFF90CAF9)],
-        ),
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.electrical_services, size: 6.w, color: Colors.blue[700]),
-              SizedBox(width: 3.w),
-              Text(
-                'Electrical Works Services',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue[700],
-                ),
-              ),
-            ],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
-          SizedBox(height: 2.w),
-          Text(
-            'Professional electrical installation and maintenance services:',
-            style: TextStyle(fontSize: 12.sp),
-          ),
-          SizedBox(height: 2.w),
-          ...[
-            '• Complete home/office wiring',
-            '• Switch board installation',
-            '• Fan & light installation', 
-            '• AC point installation',
-            '• MCB & earthing work',
-            '• Electrical maintenance & repair',
-          ].map((service) => Padding(
-            padding: EdgeInsets.only(left: 3.w, bottom: 1.w),
-            child: Text(service, style: TextStyle(fontSize: 11.sp)),
-          )).toList(),
         ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.asset(
+          'assets/images/electricalbanner.jpg',
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            // Fallback to gradient container if image not found
+            return Container(
+              padding: EdgeInsets.all(4.w),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFE3F2FD), Color(0xFF90CAF9)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.electrical_services, size: 6.w, color: Colors.blue[700]),
+                      SizedBox(width: 3.w),
+                      Text(
+                        'Electrical Works Services',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 2.w),
+                  Text(
+                    'Professional electrical installation and maintenance services:',
+                    style: TextStyle(fontSize: 12.sp),
+                  ),
+                  SizedBox(height: 2.w),
+                  ...[
+                    '• Complete home/office wiring',
+                    '• Switch board installation',
+                    '• Fan & light installation', 
+                    '• AC point installation',
+                    '• MCB & earthing work',
+                    '• Electrical maintenance & repair',
+                  ].map((service) => Padding(
+                    padding: EdgeInsets.only(left: 3.w, bottom: 1.w),
+                    child: Text(service, style: TextStyle(fontSize: 11.sp)),
+                  )).toList(),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
