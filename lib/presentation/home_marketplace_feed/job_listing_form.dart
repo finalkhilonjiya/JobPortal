@@ -90,7 +90,7 @@ class _JobListingFormState extends State<JobListingForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildWelcomeCard(),
+              _buildWelcomeBanner(),
               SizedBox(height: 4.w),
               
               _buildSectionHeader('Company Information'),
@@ -126,38 +126,61 @@ class _JobListingFormState extends State<JobListingForm> {
     );
   }
 
-  Widget _buildWelcomeCard() {
+  Widget _buildWelcomeBanner() {
     return Container(
-      padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-        ),
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.post_add, size: 6.w, color: Colors.white),
-              SizedBox(width: 3.w),
-              Text(
-                'Job Listing Form',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 2.w),
-          Text(
-            'Post your job opening and find the right candidates. Fill out all details to attract qualified applicants.',
-            style: TextStyle(fontSize: 12.sp, color: Colors.white70),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
         ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.asset(
+          'assets/images/listjobsform.jpg',
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            // Fallback to gradient container if image not found
+            return Container(
+              padding: EdgeInsets.all(4.w),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.post_add, size: 6.w, color: Colors.white),
+                      SizedBox(width: 3.w),
+                      Text(
+                        'Job Listing Form',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 2.w),
+                  Text(
+                    'Post your job opening and find the right candidates. Fill out all details to attract qualified applicants.',
+                    style: TextStyle(fontSize: 12.sp, color: Colors.white70),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -550,7 +573,8 @@ class _JobListingFormState extends State<JobListingForm> {
       ),
     );
   }
-void _showErrorDialog(String message) {
+
+  void _showErrorDialog(String message) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
