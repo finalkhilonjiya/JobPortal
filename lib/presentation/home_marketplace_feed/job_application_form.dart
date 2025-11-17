@@ -135,7 +135,7 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildWelcomeCard(),
+              _buildWelcomeBanner(),
               SizedBox(height: 4.w),
               
               _buildSectionHeader('Personal Information'),
@@ -167,38 +167,61 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
     );
   }
 
-  Widget _buildWelcomeCard() {
+  Widget _buildWelcomeBanner() {
     return Container(
-      padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-        ),
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.work, size: 6.w, color: Colors.white),
-              SizedBox(width: 3.w),
-              Text(
-                'Job Application Form',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 2.w),
-          Text(
-            'Fill out this comprehensive form to apply for multiple job positions. You can select multiple job categories.',
-            style: TextStyle(fontSize: 12.sp, color: Colors.white70),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
         ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.asset(
+          'assets/images/applyforjobsform.jpg',
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            // Fallback to gradient container if image not found
+            return Container(
+              padding: EdgeInsets.all(4.w),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.work, size: 6.w, color: Colors.white),
+                      SizedBox(width: 3.w),
+                      Text(
+                        'Job Application Form',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 2.w),
+                  Text(
+                    'Fill out this comprehensive form to apply for multiple job positions. You can select multiple job categories.',
+                    style: TextStyle(fontSize: 12.sp, color: Colors.white70),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -721,4 +744,4 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
     _additionalInfoController.dispose();
     super.dispose();
   }
-} 
+}
