@@ -66,7 +66,7 @@ class _AssamTypeFormState extends State<AssamTypeForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildServiceDescriptionCard(),
+              _buildServiceDescriptionBanner(),
               SizedBox(height: 4.w),
 
               _buildSectionHeader('Personal Information'),
@@ -98,52 +98,75 @@ class _AssamTypeFormState extends State<AssamTypeForm> {
     );
   }
 
-  Widget _buildServiceDescriptionCard() {
+  Widget _buildServiceDescriptionBanner() {
     return Container(
-      padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFFFF3E0), Color(0xFFFFCC02)],
-        ),
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.home, size: 6.w, color: Colors.orange[800]),
-              SizedBox(width: 3.w),
-              Expanded(
-                child: Text(
-                  'Traditional Assam Type House',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange[800],
-                  ),
-                ),
-              ),
-            ],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
-          SizedBox(height: 2.w),
-          Text(
-            'Authentic Assamese architecture with modern comfort:',
-            style: TextStyle(fontSize: 12.sp),
-          ),
-          SizedBox(height: 2.w),
-          ...[
-            '• Traditional wooden structure',
-            '• Raised foundation with pillars',
-            '• Sloped tin or tile roofing',
-            '• Spacious verandas (dol)',
-            '• Natural ventilation design',
-            '• Modern amenities integration',
-          ].map((service) => Padding(
-            padding: EdgeInsets.only(left: 3.w, bottom: 1.w),
-            child: Text(service, style: TextStyle(fontSize: 11.sp)),
-          )).toList(),
         ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.asset(
+          'assets/images/assamtypebanner.jpg',
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            // Fallback to gradient container if image not found
+            return Container(
+              padding: EdgeInsets.all(4.w),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFFFF3E0), Color(0xFFFFCC02)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.home, size: 6.w, color: Colors.orange[800]),
+                      SizedBox(width: 3.w),
+                      Expanded(
+                        child: Text(
+                          'Traditional Assam Type House',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange[800],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 2.w),
+                  Text(
+                    'Authentic Assamese architecture with modern comfort:',
+                    style: TextStyle(fontSize: 12.sp),
+                  ),
+                  SizedBox(height: 2.w),
+                  ...[
+                    '• Traditional wooden structure',
+                    '• Raised foundation with pillars',
+                    '• Sloped tin or tile roofing',
+                    '• Spacious verandas (dol)',
+                    '• Natural ventilation design',
+                    '• Modern amenities integration',
+                  ].map((service) => Padding(
+                    padding: EdgeInsets.only(left: 3.w, bottom: 1.w),
+                    child: Text(service, style: TextStyle(fontSize: 11.sp)),
+                  )).toList(),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
