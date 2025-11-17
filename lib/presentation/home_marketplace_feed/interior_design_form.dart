@@ -73,7 +73,7 @@ class _InteriorDesignFormState extends State<InteriorDesignForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildServiceDescriptionCard(),
+              _buildServiceDescriptionBanner(),
               SizedBox(height: 4.w),
 
               _buildSectionHeader('Personal Information'),
@@ -109,52 +109,75 @@ class _InteriorDesignFormState extends State<InteriorDesignForm> {
     );
   }
 
-  Widget _buildServiceDescriptionCard() {
+  Widget _buildServiceDescriptionBanner() {
     return Container(
-      padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFFCE4EC), Color(0xFFF48FB1)],
-        ),
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.design_services, size: 6.w, color: Colors.pink[700]),
-              SizedBox(width: 3.w),
-              Expanded(
-                child: Text(
-                  'Custom Interior Design Solutions',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.pink[700],
-                  ),
-                ),
-              ),
-            ],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
-          SizedBox(height: 2.w),
-          Text(
-            'Transform your space with professional interior design:',
-            style: TextStyle(fontSize: 12.sp),
-          ),
-          SizedBox(height: 2.w),
-          ...[
-            '• Complete space planning & design',
-            '• Custom furniture & decor',
-            '• Lighting design & consultation',
-            '• Color schemes & material selection',
-            '• 3D visualization & renderings',
-            '• Project management & implementation',
-          ].map((service) => Padding(
-            padding: EdgeInsets.only(left: 3.w, bottom: 1.w),
-            child: Text(service, style: TextStyle(fontSize: 11.sp)),
-          )).toList(),
         ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.asset(
+          'assets/images/interior.jpg',
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            // Fallback to gradient container if image not found
+            return Container(
+              padding: EdgeInsets.all(4.w),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFFCE4EC), Color(0xFFF48FB1)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.design_services, size: 6.w, color: Colors.pink[700]),
+                      SizedBox(width: 3.w),
+                      Expanded(
+                        child: Text(
+                          'Custom Interior Design Solutions',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.pink[700],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 2.w),
+                  Text(
+                    'Transform your space with professional interior design:',
+                    style: TextStyle(fontSize: 12.sp),
+                  ),
+                  SizedBox(height: 2.w),
+                  ...[
+                    '• Complete space planning & design',
+                    '• Custom furniture & decor',
+                    '• Lighting design & consultation',
+                    '• Color schemes & material selection',
+                    '• 3D visualization & renderings',
+                    '• Project management & implementation',
+                  ].map((service) => Padding(
+                    padding: EdgeInsets.only(left: 3.w, bottom: 1.w),
+                    child: Text(service, style: TextStyle(fontSize: 11.sp)),
+                  )).toList(),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
