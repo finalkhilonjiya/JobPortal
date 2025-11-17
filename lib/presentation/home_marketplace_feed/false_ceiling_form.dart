@@ -66,7 +66,7 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildServiceDescriptionCard(),
+              _buildServiceDescriptionBanner(),
               SizedBox(height: 4.w),
 
               _buildSectionHeader('Personal Information'),
@@ -98,52 +98,75 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
     );
   }
 
-  Widget _buildServiceDescriptionCard() {
+  Widget _buildServiceDescriptionBanner() {
     return Container(
-      padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFF3E5F5), Color(0xFFCE93D8)],
-        ),
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.architecture, size: 6.w, color: Colors.purple[700]),
-              SizedBox(width: 3.w),
-              Expanded(
-                child: Text(
-                  'False Ceiling Services',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.purple[700],
-                  ),
-                ),
-              ),
-            ],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
-          SizedBox(height: 2.w),
-          Text(
-            'Professional false ceiling installation & design:',
-            style: TextStyle(fontSize: 12.sp),
-          ),
-          SizedBox(height: 2.w),
-          ...[
-            '• POP, Gypsum, PVC ceiling work',
-            '• Custom lighting integration',
-            '• AC duct concealment',
-            '• Decorative designs & patterns',
-            '• Fan mounting & electrical work',
-            '• Maintenance & repair services',
-          ].map((service) => Padding(
-            padding: EdgeInsets.only(left: 3.w, bottom: 1.w),
-            child: Text(service, style: TextStyle(fontSize: 11.sp)),
-          )).toList(),
         ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.asset(
+          'assets/images/falsebanner.jpg',
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            // Fallback to gradient container if image not found
+            return Container(
+              padding: EdgeInsets.all(4.w),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFF3E5F5), Color(0xFFCE93D8)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.architecture, size: 6.w, color: Colors.purple[700]),
+                      SizedBox(width: 3.w),
+                      Expanded(
+                        child: Text(
+                          'False Ceiling Services',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.purple[700],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 2.w),
+                  Text(
+                    'Professional false ceiling installation & design:',
+                    style: TextStyle(fontSize: 12.sp),
+                  ),
+                  SizedBox(height: 2.w),
+                  ...[
+                    '• POP, Gypsum, PVC ceiling work',
+                    '• Custom lighting integration',
+                    '• AC duct concealment',
+                    '• Decorative designs & patterns',
+                    '• Fan mounting & electrical work',
+                    '• Maintenance & repair services',
+                  ].map((service) => Padding(
+                    padding: EdgeInsets.only(left: 3.w, bottom: 1.w),
+                    child: Text(service, style: TextStyle(fontSize: 11.sp)),
+                  )).toList(),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
