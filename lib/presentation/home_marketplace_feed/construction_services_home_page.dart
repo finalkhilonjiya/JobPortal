@@ -235,38 +235,61 @@ class _ConstructionServicesHomePageState extends State<ConstructionServicesHomeP
     return Container(
       margin: EdgeInsets.fromLTRB(4.w, 0, 4.w, 6.w),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-        ),
         borderRadius: BorderRadius.circular(20),
-      ),
-      padding: EdgeInsets.all(6.w),
-      child: Column(
-        children: [
-          Text(
-            'Khilonjiya Construction Services',
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              height: 1.2,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: 3.w),
-          Text(
-            'Professional construction services for your dream home - Quality work with local expertise',
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: Colors.white,
-              fontStyle: FontStyle.italic,
-              height: 1.4,
-            ),
-            textAlign: TextAlign.center,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
         ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Image.asset(
+          'assets/images/constructionbanner.jpg',
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            // Fallback to gradient container if image not found
+            return Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              padding: EdgeInsets.all(6.w),
+              child: Column(
+                children: [
+                  Text(
+                    'Khilonjiya Construction Services',
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      height: 1.2,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 3.w),
+                  Text(
+                    'Professional construction services for your dream home - Quality work with local expertise',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Colors.white,
+                      fontStyle: FontStyle.italic,
+                      height: 1.4,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
