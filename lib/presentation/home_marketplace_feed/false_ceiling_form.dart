@@ -99,22 +99,24 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
   }
 
   Widget _buildServiceDescriptionBanner() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
+  return Container(
+    width: double.infinity, // Maintains full width alignment
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 10,
+          offset: Offset(0, 4),
+        ),
+      ],
+    ),
+    child: AspectRatio(
+      aspectRatio: 1200 / 800, // Exact ratio of your image (1200 x 800) = 3:2
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Image.asset(
           'assets/images/falsebanner.jpg',
-          width: double.infinity,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
             // Fallback to gradient container if image not found
@@ -168,8 +170,9 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
           },
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSectionHeader(String title) {
     return Padding(
