@@ -106,54 +106,80 @@ class _PlumbingFormState extends State<PlumbingForm> {
   }
 
   Widget _buildServiceDescriptionCard() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFFFF8E1), Color(0xFFFFCC02)],
+  return Container(
+    width: double.infinity, // Maintains full width alignment
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 10,
+          offset: Offset(0, 4),
         ),
+      ],
+    ),
+    child: AspectRatio(
+      aspectRatio: 1280 / 859, // Exact ratio of your image (1280 x 859)
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.plumbing, size: 6.w, color: Colors.orange[800]),
-              SizedBox(width: 3.w),
-              Expanded(
-                child: Text(
-                  'Complete Plumbing Solutions',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange[800],
-                  ),
+        child: Image.asset(
+          'assets/images/plumbingbanner.jpg',
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            // Fallback to gradient container if image not found
+            return Container(
+              padding: EdgeInsets.all(4.w),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFFFF8E1), Color(0xFFFFCC02)],
                 ),
+                borderRadius: BorderRadius.circular(12),
               ),
-            ],
-          ),
-          SizedBox(height: 2.w),
-          Text(
-            'Professional plumbing installation & repair services:',
-            style: TextStyle(fontSize: 12.sp),
-          ),
-          SizedBox(height: 2.w),
-          ...[
-            '• Water supply line installation',
-            '• Bathroom & kitchen plumbing',
-            '• Sewerage & drainage work',
-            '• Water heater installation',
-            '• Leak detection & repair',
-            '• Pipe fitting & maintenance',
-          ].map((service) => Padding(
-            padding: EdgeInsets.only(left: 3.w, bottom: 1.w),
-            child: Text(service, style: TextStyle(fontSize: 11.sp)),
-          )).toList(),
-        ],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.plumbing, size: 6.w, color: Colors.orange[800]),
+                      SizedBox(width: 3.w),
+                      Expanded(
+                        child: Text(
+                          'Complete Plumbing Solutions',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange[800],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 2.w),
+                  Text(
+                    'Professional plumbing installation & repair services:',
+                    style: TextStyle(fontSize: 12.sp),
+                  ),
+                  SizedBox(height: 2.w),
+                  ...[
+                    '• Water supply line installation',
+                    '• Bathroom & kitchen plumbing',
+                    '• Sewerage & drainage work',
+                    '• Water heater installation',
+                    '• Leak detection & repair',
+                    '• Pipe fitting & maintenance',
+                  ].map((service) => Padding(
+                    padding: EdgeInsets.only(left: 3.w, bottom: 1.w),
+                    child: Text(service, style: TextStyle(fontSize: 11.sp)),
+                  )).toList(),
+                ],
+              ),
+            );
+          },
+        ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSectionHeader(String title) {
     return Padding(
