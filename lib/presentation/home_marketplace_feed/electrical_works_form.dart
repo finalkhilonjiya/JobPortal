@@ -104,22 +104,24 @@ class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
   }
 
   Widget _buildServiceDescriptionBanner() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
+  return Container(
+    width: double.infinity, // Maintains full width alignment
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 10,
+          offset: Offset(0, 4),
+        ),
+      ],
+    ),
+    child: AspectRatio(
+      aspectRatio: 1280 / 1063, // Exact ratio of your image (1280 x 1063)
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Image.asset(
           'assets/images/electricalbanner.jpg',
-          width: double.infinity,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
             // Fallback to gradient container if image not found
@@ -171,8 +173,9 @@ class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
           },
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSectionHeader(String title) {
     return Padding(
