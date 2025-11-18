@@ -168,22 +168,24 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
   }
 
   Widget _buildWelcomeBanner() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
+  return Container(
+    width: double.infinity, // Maintains full width alignment
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 10,
+          offset: Offset(0, 4),
+        ),
+      ],
+    ),
+    child: AspectRatio(
+      aspectRatio: 1280 / 557, // Exact ratio of your image (1280 x 557)
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Image.asset(
           'assets/images/applyforjobsform.jpg',
-          width: double.infinity,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
             // Fallback to gradient container if image not found
@@ -223,9 +225,9 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
           },
         ),
       ),
-    );
-  }
-
+    ),
+  );
+}
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: EdgeInsets.only(bottom: 3.w),
