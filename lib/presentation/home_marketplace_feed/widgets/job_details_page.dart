@@ -64,7 +64,10 @@ class JobDetailsPage extends StatelessWidget {
               ),
               IconButton(
                 icon: Icon(Icons.share, color: Colors.white),
-                onPressed: () => _shareJob(),
+                onPressed: () {
+                  // Share functionality
+                  print('Share job: $jobTitle');
+                },
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
@@ -85,7 +88,6 @@ class JobDetailsPage extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            // Company Logo
                             Container(
                               width: 16.w,
                               height: 16.w,
@@ -100,10 +102,28 @@ class JobDetailsPage extends StatelessWidget {
                                         companyLogo,
                                         fit: BoxFit.cover,
                                         errorBuilder: (context, error, stackTrace) =>
-                                            _buildDefaultLogo(companyName),
+                                            Center(
+                                              child: Text(
+                                                companyName.isNotEmpty ? companyName[0].toUpperCase() : 'C',
+                                                style: TextStyle(
+                                                  fontSize: 18.sp,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF2563EB),
+                                                ),
+                                              ),
+                                            ),
                                       ),
                                     )
-                                  : _buildDefaultLogo(companyName),
+                                  : Center(
+                                      child: Text(
+                                        companyName.isNotEmpty ? companyName[0].toUpperCase() : 'C',
+                                        style: TextStyle(
+                                          fontSize: 18.sp,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF2563EB),
+                                        ),
+                                      ),
+                                    ),
                             ),
                             SizedBox(width: 3.w),
                             Expanded(
@@ -146,7 +166,7 @@ class JobDetailsPage extends StatelessWidget {
             ),
           ),
 
-          // Job Title & Badges
+          // Job Title & Info
           SliverToBoxAdapter(
             child: Container(
               color: Colors.white,
@@ -164,6 +184,14 @@ class JobDetailsPage extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 2.h),
+                  Text(
+                    'Posted ${_formatPostedDate(postedDate)}',
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
                   Wrap(
                     spacing: 2.w,
                     runSpacing: 1.h,
@@ -173,28 +201,9 @@ class JobDetailsPage extends StatelessWidget {
                       if (isUrgent)
                         _buildBadge('Urgent Hiring', Icons.flash_on, Colors.red.shade700),
                       if (workMode.isNotEmpty)
-                        _buildBadge(workMode, _getWorkModeIcon(workMode),
-                            _getWorkModeColor(workMode)),
+                        _buildBadge(workMode, Icons.work_outline, Colors.blue.shade700),
                       if (jobType.isNotEmpty)
-                        _buildBadge(jobType, Icons.work_outline, Colors.blue.shade700),
-                    ],
-                  ),
-                  SizedBox(height: 2.h),
-                  Row(
-                    children: [
-                      Icon(Icons.access_time, size: 4.w, color: Colors.grey.shade600),
-                      SizedBox(width: 1.w),
-                      Text(
-                        'Posted ${_formatPostedDate(postedDate)}',
-                        style: TextStyle(
-                          fontSize: 10.sp,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      Spacer(),
-                      _buildStatChip(Icons.visibility_outlined, viewsCount),
-                      SizedBox(width: 3.w),
-                      _buildStatChip(Icons.people_outline, applicationsCount),
+                        _buildBadge(jobType, Icons.work_outline, Colors.green.shade700),
                     ],
                   ),
                 ],
@@ -202,99 +211,7 @@ class JobDetailsPage extends StatelessWidget {
             ),
           ),
 
-          SizedBox(height: 1.h).toBoxAdapter(),
-
-          // Key Details
-          SliverToBoxAdapter(
-            child: Container(
-              color: Colors.white,
-              padding: EdgeInsets.all(4.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Job Overview',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  SizedBox(height: 2.h),
-                  _buildDetailRow(
-                    Icons.currency_rupee,
-                    'Salary',
-                    _formatSalary(salaryMin, salaryMax),
-                    Colors.green.shade700,
-                  ),
-                  _buildDetailRow(
-                    Icons.work_history_outlined,
-                    'Experience',
-                    experience,
-                    Colors.orange.shade700,
-                  ),
-                  _buildDetailRow(
-                    Icons.school_outlined,
-                    'Education',
-                    education,
-                    Colors.purple.shade700,
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          SizedBox(height: 1.h).toBoxAdapter(),
-
-          // Skills Required
-          if (skillsRequired != null && skillsRequired is List && skillsRequired.isNotEmpty)
-            SliverToBoxAdapter(
-              child: Container(
-                color: Colors.white,
-                padding: EdgeInsets.all(4.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Skills Required',
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Wrap(
-                      spacing: 2.w,
-                      runSpacing: 1.h,
-                      children: (skillsRequired as List).map((skill) {
-                        return Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 3.w, vertical: 1.h),
-                          decoration: BoxDecoration(
-                            color: Color(0xFF2563EB).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                                color: Color(0xFF2563EB).withOpacity(0.3)),
-                          ),
-                          child: Text(
-                            skill.toString(),
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF2563EB),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-          if (skillsRequired != null && skillsRequired is List && skillsRequired.isNotEmpty)
-            SizedBox(height: 1.h).toBoxAdapter(),
+          SliverToBoxAdapter(child: SizedBox(height: 1.h)),
 
           // Job Description
           SliverToBoxAdapter(
@@ -328,7 +245,7 @@ class JobDetailsPage extends StatelessWidget {
 
           // Requirements
           if (requirements.isNotEmpty) ...[
-            SizedBox(height: 1.h).toBoxAdapter(),
+            SliverToBoxAdapter(child: SizedBox(height: 1.h)),
             SliverToBoxAdapter(
               child: Container(
                 color: Colors.white,
@@ -361,7 +278,7 @@ class JobDetailsPage extends StatelessWidget {
 
           // Benefits
           if (benefits.isNotEmpty) ...[
-            SizedBox(height: 1.h).toBoxAdapter(),
+            SliverToBoxAdapter(child: SizedBox(height: 1.h)),
             SliverToBoxAdapter(
               child: Container(
                 color: Colors.white,
@@ -410,7 +327,19 @@ class JobDetailsPage extends StatelessWidget {
           ],
         ),
         child: ElevatedButton(
-          onPressed: () => _applyToJob(context, applyUrl, contactEmail, contactPhone),
+          onPressed: () {
+            if (applyUrl != null && applyUrl.isNotEmpty) {
+              _launchURL(applyUrl);
+            } else if (contactEmail != null && contactEmail.isNotEmpty) {
+              _launchEmail(contactEmail);
+            } else if (contactPhone != null && contactPhone.isNotEmpty) {
+              _launchPhone(contactPhone);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('No application method available')),
+              );
+            }
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: Color(0xFF2563EB),
             padding: EdgeInsets.symmetric(vertical: 2.h),
@@ -426,19 +355,6 @@ class JobDetailsPage extends StatelessWidget {
               color: Colors.white,
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDefaultLogo(String companyName) {
-    return Center(
-      child: Text(
-        companyName.isNotEmpty ? companyName[0].toUpperCase() : 'C',
-        style: TextStyle(
-          fontSize: 18.sp,
-          fontWeight: FontWeight.bold,
-          color: Color(0xFF2563EB),
         ),
       ),
     );
@@ -470,108 +386,48 @@ class JobDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildStatChip(IconData icon, int count) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 3.5.w, color: Colors.grey.shade600),
-        SizedBox(width: 1.w),
-        Text(
-          count > 999 ? '${(count / 1000).toStringAsFixed(1)}k' : count.toString(),
-          style: TextStyle(
-            fontSize: 9.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.shade700,
-          ),
-        ),
-      ],
-    );
-  }
+  String _formatPostedDate(String? dateStr) {
+    if (dateStr == null) return 'recently';
+    try {
+      final date = DateTime.parse(dateStr);
+      final now = DateTime.now();
+      final difference = now.difference(date);
 
-  Widget _buildDetailRow(IconData icon, String label, String value, Color color) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 2.h),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(2.w),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 5.w, color: color),
-          ),
-          SizedBox(width: 3.w),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10.sp,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              SizedBox(height: 0.5.h),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  IconData _getWorkModeIcon(String workMode) {
-    switch (workMode.toLowerCase()) {
-      case 'remote':
-        return Icons.home_outlined;
-      case 'on-site':
-        return Icons.business_outlined;
-      case 'hybrid':
-        return Icons.location_city_outlined;
-      default:
-        return Icons.work_outline;
-    }
-  }
-
-  Color _getWorkModeColor(String workMode) {
-    switch (workMode.toLowerCase()) {
-      case 'remote':
-        return Colors.purple.shade700;
-      case 'on-site':
-        return Colors.teal.shade700;
-      case 'hybrid':
-        return Colors.indigo.shade700;
-      default:
-        return Colors.grey.shade700;
-    }
-  }
-
-  String _formatSalary(int? min, int? max) {
-    if (min == null && max == null) return 'Not Disclosed';
-
-    String formatAmount(int amount) {
-      if (amount >= 100000) {
-        return '₹${(amount / 100000).toStringAsFixed(1)}L';
-      } else if (amount >= 1000) {
-        return '₹${(amount / 1000).toStringAsFixed(0)}K';
+      if (difference.inDays == 0) {
+        if (difference.inHours == 0) {
+          return '${difference.inMinutes}m ago';
+        }
+        return '${difference.inHours}h ago';
+      } else if (difference.inDays == 1) {
+        return 'yesterday';
+      } else if (difference.inDays < 7) {
+        return '${difference.inDays}d ago';
+      } else {
+        return DateFormat('dd MMM yyyy').format(date);
       }
-      return '₹$amount';
-    }
-
-    if (min != null && max != null) {
-      return '${formatAmount(min)} - ${formatAmount(max)} /year';
-    } else if (min != null) {
-      return '${formatAmount(min)}+ /year';
-    } else {
-      return 'Up to ${formatAmount(max!)} /year';
+    } catch (e) {
+      return 'recently';
     }
   }
 
+  Future<void> _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _launchEmail(String email) async {
+    final Uri uri = Uri.parse('mailto:$email');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  Future<void> _launchPhone(String phone) async {
+    final Uri uri = Uri.parse('tel:$phone');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+}
