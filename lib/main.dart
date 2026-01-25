@@ -144,7 +144,7 @@ class _AppInitializerState extends State<AppInitializer> {
         if (sessionValid) {
           debugPrint('Session valid, navigating to home');
           notifier.setState(AppState.authenticated);
-          NavigationService.pushReplacementNamed(AppRoutes.homeMarketplaceFeed);
+          NavigationService.pushReplacementNamed(AppRoutes.homeJobsFeed);
         } else {
           debugPrint('Session invalid, going to login');
           notifier.setState(AppState.unauthenticated);
