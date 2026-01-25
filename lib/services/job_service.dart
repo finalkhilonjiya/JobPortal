@@ -74,19 +74,13 @@ class JobService {
         query = query.overlaps('skills_required', skills);
       }
 
+      // Apply pagination BEFORE sorting
+      final paginatedQuery = query.range(offset, offset + limit - 1);
+
       // Sorting
-      if (sortBy == 'Newest') {
-        query = query.order('created_at', ascending: false);
-      } else if (sortBy == 'Salary (High-Low)') {
-        query = query.order('salary_max', ascending: false);
-      } else if (sortBy == 'Salary (Low-High)') {
-        query = query.order('salary_min', ascending: true);
-      }
+      final sortedQuery = _applySorting(paginatedQuery, sortBy);
 
-      // Pagination
-      query = query.range(offset, offset + limit - 1);
-
-      final response = await query;
+      final response = await sortedQuery;
       List<Map<String, dynamic>> jobs = List<Map<String, dynamic>>.from(response);
 
       // Calculate distance if user location is provided
@@ -116,6 +110,18 @@ class JobService {
     }
   }
 
+  // Helper method to apply sorting
+  dynamic _applySorting(dynamic query, String? sortBy) {
+    if (sortBy == 'Newest') {
+      return query.order('created_at', ascending: false);
+    } else if (sortBy == 'Salary (High-Low)') {
+      return query.order('salary_max', ascending: false);
+    } else if (sortBy == 'Salary (Low-High)') {
+      return query.order('salary_min', ascending: true);
+    }
+    return query;
+  }
+
   // ============================================
   // FETCH PREMIUM/FEATURED JOBS
   // ============================================
@@ -131,8 +137,8 @@ class JobService {
           .select('*')
           .eq('status', 'active')
           .eq('is_premium', true)
-          .order('created_at', ascending: false)
-          .limit(limit);
+          .limit(limit)
+          .order('created_at', ascending: false);
 
       if (categoryId != null && categoryId != 'All') {
         query = query.eq('job_category', categoryId);
@@ -316,8 +322,8 @@ class JobService {
         'application_status': 'applied',
       });
 
-      // Increment application count
-      await _supabase.rpc('increment_application_count', params: {'job_id': jobId});
+      // Increment application count (if you have this RPC function)
+      // await _supabase.rpc('increment_application_count', params: {'job_id': jobId});
     } catch (e) {
       print('Error applying to job: $e');
       rethrow;
@@ -449,8 +455,8 @@ class JobService {
       var query = _supabase
           .from('skills_master')
           .select('skill_name')
-          .order('usage_count', ascending: false)
-          .limit(50);
+          .limit(50)
+          .order('usage_count', ascending: false);
 
       if (searchQuery != null && searchQuery.isNotEmpty) {
         query = query.ilike('skill_name', '%$searchQuery%');
@@ -482,18 +488,18 @@ class JobService {
   // ============================================
   Future<Map<String, dynamic>> getJobStats() async {
     try {
-      final totalJobs = await _supabase
+      final jobsResponse = await _supabase
           .from('job_listings')
-          .select('id', const FetchOptions(count: CountOption.exact))
+          .select('id')
           .eq('status', 'active');
-
-      final totalCompanies = await _supabase
+      
+      final companiesResponse = await _supabase
           .from('companies')
-          .select('id', const FetchOptions(count: CountOption.exact));
+          .select('id');
 
       return {
-        'total_jobs': totalJobs.count ?? 0,
-        'total_companies': totalCompanies.count ?? 0,
+        'total_jobs': (jobsResponse as List).length,
+        'total_companies': (companiesResponse as List).length,
       };
     } catch (e) {
       print('Error fetching job stats: $e');
