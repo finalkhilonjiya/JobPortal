@@ -43,5 +43,5 @@ export '../presentation/listing_detail/listing_detail.dart';
 // export '../presentation/create_listing/create_listing.dart';
 export '../presentation/chat_messaging/chat_messaging.dart';
 export '../presentation/search_and_filters/search_and_filters.dart';
-export '../presentation/registration_screen/registration_registration.dart';
+export '../presentation/registration_screen/registration_screen.dart';
 export '../presentation/configuration_setup/configuration_setup.dart';
