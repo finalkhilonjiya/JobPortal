@@ -225,7 +225,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
 
   void _navigateToHome() {
     if (mounted) {
-      Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceFeed);
+      Navigator.pushReplacementNamed(context, AppRoutes.homeJobsFeed);
     }
   }
 
