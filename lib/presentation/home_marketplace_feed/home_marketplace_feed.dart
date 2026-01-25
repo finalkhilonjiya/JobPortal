@@ -1,48 +1,37 @@
-// File: lib/presentation/home_marketplace_feed/home_marketplace_feed.dart
+// File: lib/presentation/home_marketplace_feed/home_jobs_feed.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import './widgets/top_bar_widget.dart';
 import './widgets/search_bar_full_width.dart';
 import './widgets/three_option_section.dart';
-import './widgets/premium_section.dart';
-import './widgets/square_product_card.dart';
-import './widgets/listing_details_fullscreen.dart';
+import './widgets/job_card_widget.dart';
+import './widgets/premium_jobs_section.dart';
 import '../login_screen/mobile_login_screen.dart';
 import './widgets/shimmer_widgets.dart';
 import './widgets/marketplace_helpers.dart';
-import './widgets/advanced_filter_sheet.dart';
-import './widgets/create_listing_page.dart';
+import './widgets/job_filter_sheet.dart';
+import './widgets/job_details_page.dart';
 import './widgets/profile_page.dart';
 import './widgets/bottom_nav_bar_widget.dart';
 import './search_page.dart';
-import '../../services/listing_service.dart';
+import '../../services/job_service.dart';
 import './construction_services_home_page.dart';
-import './jobs_portal_home_page.dart';
 import 'dart:async';
 import './premium_package_page.dart';
-import 'widgets/categories_section.dart';
-import 'widgets/category_data.dart';
+import 'widgets/job_categories_section.dart';
 import '../login_screen/mobile_auth_service.dart';
 import '../../core/app_export.dart';
 
-class HomeMarketplaceFeed extends StatefulWidget {
-  const HomeMarketplaceFeed({Key? key}) : super(key: key);
+class HomeJobsFeed extends StatefulWidget {
+  const HomeJobsFeed({Key? key}) : super(key: key);
 
   @override
-  State<HomeMarketplaceFeed> createState() => _HomeMarketplaceFeedState();
+  State<HomeJobsFeed> createState() => _HomeJobsFeedState();
 }
 
-class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsBindingObserver {
-  final ListingService _listingService = ListingService();
+class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver {
+  final JobService _jobService = JobService();
   final MobileAuthService _authService = MobileAuthService();
-
-  // Hardcoded category mapping - matches database UUIDs exactly
-  static const Map<String, String> CATEGORY_UUID_MAPPING = {
-    'Room for Rent': 'a384cc43-d522-406b-8749-bb3bab919bc8',
-    'PG Accommodation': 'a0d49db8-dce7-438c-a820-0bc83c173cc8',
-    'Homestays': '7d16862e-5613-4ff8-afed-68ea27585f1c',
-    'Properties for Sale': '58a66e7b-0460-428b-8a05-2c2fdc52858e',
-  };
 
   // Auth related state
   bool _isCheckingAuth = true;
@@ -54,11 +43,11 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
   bool _isLoadingFeed = true;
   bool _isLoadingMore = false;
   List<Map<String, dynamic>> _categories = [];
-  List<Map<String, dynamic>> _listings = [];
-  List<Map<String, dynamic>> _premiumListings = [];
-  String _selectedCategory = 'All';
+  List<Map<String, dynamic>> _jobs = [];
+  List<Map<String, dynamic>> _premiumJobs = [];
+  String _selectedCategory = 'All Jobs';
   String _selectedCategoryId = 'All';
-  Set<String> _favoriteIds = {};
+  Set<String> _savedJobIds = {};
   String _currentLocation = 'Detecting location...';
 
   // User coordinates for distance-based sorting
@@ -68,9 +57,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
 
   final ScrollController _scrollController = ScrollController();
 
-  // Category mapping
-  Map<String, String> _categoryMapping = {};
-
   // Pagination
   int _currentOffset = 0;
   final int _pageSize = 20;
@@ -79,9 +65,12 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
 
   // Filter states
   String _priceRange = 'All';
-  String _selectedSubcategory = 'All';
-  String _sortBy = 'Distance';
+  String _sortBy = 'Newest';
   double _maxDistance = 50.0;
+  String? _selectedJobType;
+  String? _selectedWorkMode;
+  int? _minSalary;
+  int? _maxSalary;
 
   @override
   void initState() {
@@ -194,18 +183,18 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
       });
 
       debugPrint('Location updated: $locationName (Lat: $latitude, Lng: $longitude)');
-      _fetchFilteredListings();
+      _fetchFilteredJobs();
     }
   }
 
   void _onScroll() {
     if (_scrollController.position.pixels >= 
         _scrollController.position.maxScrollExtent - 200) {
-      _loadMoreListings();
+      _loadMoreJobs();
     }
   }
 
-  Future<void> _loadMoreListings() async {
+  Future<void> _loadMoreJobs() async {
     if (!_isLoadingMore && !_isLoadingFeed && _hasMoreData && _isAuthenticatedUser) {
       setState(() => _isLoadingMore = true);
 
@@ -219,31 +208,32 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
           }
         }
 
-        String? categoryIdForApi = _getCategoryIdForApi(_selectedCategoryId);
-
-        final newListings = await _listingService.fetchListings(
-          categoryId: categoryIdForApi,
+        final newJobs = await _jobService.fetchJobs(
+          categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
           sortBy: _sortBy,
           offset: _currentOffset + _pageSize,
           limit: _pageSize,
           userLatitude: _userLatitude,
           userLongitude: _userLongitude,
+          jobType: _selectedJobType,
+          workMode: _selectedWorkMode,
+          minSalary: _minSalary,
+          maxSalary: _maxSalary,
         );
 
         if (mounted) {
           setState(() {
-            if (newListings.isEmpty) {
-              _currentOffset = 0;
-              _fetchListingsOnly();
+            if (newJobs.isEmpty) {
+              _hasMoreData = false;
             } else {
-              _listings.addAll(newListings);
+              _jobs.addAll(newJobs);
               _currentOffset += _pageSize;
             }
             _isLoadingMore = false;
           });
         }
       } catch (e) {
-        debugPrint('Error loading more listings: $e');
+        debugPrint('Error loading more jobs: $e');
         if (mounted) {
           setState(() => _isLoadingMore = false);
         }
@@ -255,52 +245,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
     }
   }
 
-  Future<void> _fetchListingsOnly() async {
-    if (!_isAuthenticatedUser) return;
-
-    try {
-      if (!_authService.isSupabaseAuthenticated) {
-        final refreshed = await _authService.refreshSession();
-        if (!refreshed) {
-          _redirectToLogin();
-          return;
-        }
-      }
-
-      String? categoryIdForApi = _getCategoryIdForApi(_selectedCategoryId);
-
-      final listings = await _listingService.fetchListings(
-        categoryId: categoryIdForApi,
-        sortBy: _sortBy,
-        offset: 0,
-        limit: _pageSize,
-        userLatitude: _userLatitude,
-        userLongitude: _userLongitude,
-      );
-
-      if (listings.isNotEmpty && mounted) {
-        setState(() {
-          _listings.addAll(listings);
-        });
-      }
-    } catch (e) {
-      debugPrint('Error fetching listings: $e');
-      if (e.toString().contains('auth') || e.toString().contains('401')) {
-        _verifyAuthState();
-      }
-    }
-  }
-
-  String? _getCategoryIdForApi(String selectedCategoryId) {
-    if (selectedCategoryId == 'All') return null;
-
-    if (CATEGORY_UUID_MAPPING.containsValue(selectedCategoryId)) {
-      return selectedCategoryId;
-    }
-
-    return CATEGORY_UUID_MAPPING[selectedCategoryId];
-  }
-
   Future<void> _fetchData() async {
     if (!_isAuthenticatedUser) return;
 
@@ -308,7 +252,7 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
       _isLoadingPremium = true;
       _isLoadingFeed = true;
       _currentOffset = 0;
-      _listings = [];
+      _jobs = [];
       _hasInitialLoadError = false;
     });
 
@@ -325,100 +269,70 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
 
       debugPrint('Fetching data for authenticated user: $_currentUserId');
 
-      List<Map<String, dynamic>> databaseCategories = [];
-      Map<String, String> categoryMapping = {};
-
+      // Fetch categories
+      List<Map<String, dynamic>> categories = [];
       try {
-        databaseCategories = await _listingService.getCategories();
-        debugPrint('Fetched ${databaseCategories.length} categories from API');
-
-        categoryMapping = Map<String, String>.from(CATEGORY_UUID_MAPPING);
-
-        for (var entry in CATEGORY_UUID_MAPPING.entries) {
-          final dbCategory = databaseCategories.firstWhere(
-            (cat) => cat['id'] == entry.value,
-            orElse: () => {},
-          );
-
-          if (dbCategory.isNotEmpty) {
-            debugPrint('✓ Verified: "${entry.key}" → ${entry.value} (DB: ${dbCategory['name']})');
-          } else {
-            debugPrint('⚠ Warning: "${entry.key}" UUID ${entry.value} not found in database');
-          }
-        }
+        categories = await _jobService.getJobCategories();
+        debugPrint('Fetched ${categories.length} job categories');
       } catch (e) {
-        debugPrint('Error fetching categories from API: $e');
-        categoryMapping = Map<String, String>.from(CATEGORY_UUID_MAPPING);
+        debugPrint('Error fetching categories: $e');
       }
 
-      final List<Map<String, dynamic>> processedCategories = _buildCategoryList(categoryMapping);
-
-      Set<String> favorites = {};
+      // Fetch saved jobs
+      Set<String> savedJobs = {};
       try {
-        favorites = await _listingService.getUserFavorites();
-        debugPrint('Fetched ${favorites.length} user favorites');
+        savedJobs = await _jobService.getUserSavedJobs();
+        debugPrint('Fetched ${savedJobs.length} saved jobs');
       } catch (e) {
-        debugPrint('Error fetching favorites: $e');
-        if (e.toString().contains('auth') || e.toString().contains('401')) {
-          _verifyAuthState();
-          return;
-        }
+        debugPrint('Error fetching saved jobs: $e');
       }
 
+      // Determine sort method
       String sortMethod = _sortBy;
       if (_locationDetected && _userLatitude != null && _userLongitude != null) {
         sortMethod = 'Distance';
-        debugPrint('Using distance sorting with user location');
       } else {
         sortMethod = 'Newest';
-        debugPrint('Location not available, using newest sorting');
       }
 
-      List<Map<String, dynamic>> listings = [];
+      // Fetch jobs
+      List<Map<String, dynamic>> jobs = [];
       try {
-        listings = await _listingService.fetchListings(
+        jobs = await _jobService.fetchJobs(
           sortBy: sortMethod,
           offset: 0,
           limit: _pageSize,
           userLatitude: _userLatitude,
           userLongitude: _userLongitude,
         );
-        debugPrint('Fetched ${listings.length} listings with sort: $sortMethod');
+        debugPrint('Fetched ${jobs.length} jobs');
       } catch (e) {
-        debugPrint('Error fetching listings: $e');
-        if (e.toString().contains('auth') || e.toString().contains('401')) {
-          _verifyAuthState();
-          return;
-        }
+        debugPrint('Error fetching jobs: $e');
       }
 
-      List<Map<String, dynamic>> premiumListings = [];
+      // Fetch premium jobs
+      List<Map<String, dynamic>> premiumJobs = [];
       try {
-        premiumListings = await _listingService.fetchPremiumListings(
+        premiumJobs = await _jobService.fetchPremiumJobs(
           limit: 10,
           userLatitude: _userLatitude,
           userLongitude: _userLongitude,
         );
-        debugPrint('Fetched ${premiumListings.length} premium listings');
+        debugPrint('Fetched ${premiumJobs.length} premium jobs');
       } catch (e) {
-        debugPrint('Error fetching premium listings: $e');
-        if (e.toString().contains('auth') || e.toString().contains('401')) {
-          _verifyAuthState();
-          return;
-        }
+        debugPrint('Error fetching premium jobs: $e');
       }
 
       if (mounted) {
         setState(() {
-          _categories = processedCategories;
-          _categoryMapping = categoryMapping;
-          _favoriteIds = favorites;
-          _listings = listings;
-          _premiumListings = premiumListings;
+          _categories = categories;
+          _savedJobIds = savedJobs;
+          _jobs = jobs;
+          _premiumJobs = premiumJobs;
           _isLoadingPremium = false;
           _isLoadingFeed = false;
 
-          if (listings.isEmpty && premiumListings.isEmpty && databaseCategories.isEmpty) {
+          if (jobs.isEmpty && premiumJobs.isEmpty && categories.isEmpty) {
             _hasInitialLoadError = true;
           }
         });
@@ -427,10 +341,6 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
       debugPrint('Unexpected error in _fetchData: $e');
       if (mounted) {
         setState(() {
-          _categories = _buildCategoryList(Map<String, String>.from(CATEGORY_UUID_MAPPING));
-          _categoryMapping = Map<String, String>.from(CATEGORY_UUID_MAPPING);
-          _listings = [];
-          _premiumListings = [];
           _isLoadingPremium = false;
           _isLoadingFeed = false;
           _hasInitialLoadError = true;
@@ -443,62 +353,23 @@ class _HomeMarketplaceFeedState extends State<HomeMarketplaceFeed> with WidgetsB
     }
   }
 
-  List<Map<String, dynamic>> _buildCategoryList(Map<String, String> categoryMapping) {
-    final List<Map<String, dynamic>> processedCategories = [];
-
-    processedCategories.add({
-      'name': 'All',
-      'id': 'All',
-      'icon': Icons.apps_rounded,
-      'image': 'https://cdn-icons-png.flaticon.com/512/8058/8058572.png',
-    });
-
-    final rentalCategories = CategoryData.mainCategories.where(
-      (cat) => cat['name'] != 'All'
-    );
-
-    for (final cat in rentalCategories) {
-      final categoryName = cat['name'] as String;
-      final databaseId = categoryMapping[categoryName] ?? categoryName;
-
-      processedCategories.add({
-        'name': categoryName,
-        'id': databaseId,
-        'icon': cat['icon'],
-        'image': cat['image'],
-      });
-
-      debugPrint('Category "$categoryName" mapped to UUID: $databaseId');
-    }
-
-    debugPrint('Built ${processedCategories.length} categories for display');
-    return processedCategories;
-  }
-
-
-void _onCategorySelected(String name) {
-    final category = _categories.firstWhere(
-      (cat) => cat['name'] == name,
-      orElse: () => {'name': 'All', 'id': 'All', 'icon': Icons.category},
-    );
-
+  void _onCategorySelected(String categoryName) {
     setState(() {
-      _selectedCategory = name;
-      _selectedCategoryId = category['id'] as String;
-      _selectedSubcategory = 'All';
+      _selectedCategory = categoryName;
+      _selectedCategoryId = categoryName; // For job categories, name is the ID
       _currentOffset = 0;
       _hasMoreData = true;
     });
 
-    _fetchFilteredListings();
+    _fetchFilteredJobs();
   }
 
-  Future<void> _fetchFilteredListings() async {
+  Future<void> _fetchFilteredJobs() async {
     if (!_isAuthenticatedUser) return;
 
     setState(() {
       _isLoadingFeed = true;
-      _listings = [];
+      _jobs = [];
       _currentOffset = 0;
     });
 
@@ -511,49 +382,51 @@ void _onCategorySelected(String name) {
         }
       }
 
-      String? categoryIdForApi = _getCategoryIdForApi(_selectedCategoryId);
-
       String sortMethod = _sortBy;
       if (_sortBy == 'Distance' && (_userLatitude == null || _userLongitude == null)) {
         sortMethod = 'Newest';
         debugPrint('Distance sort requested but no location, falling back to Newest');
       }
 
-      final listings = await _listingService.fetchListings(
-        categoryId: categoryIdForApi,
+      final jobs = await _jobService.fetchJobs(
+        categoryId: _selectedCategoryId == 'All Jobs' ? null : _selectedCategoryId,
         sortBy: sortMethod,
         offset: 0,
         limit: _pageSize,
         userLatitude: _userLatitude,
         userLongitude: _userLongitude,
+        jobType: _selectedJobType,
+        workMode: _selectedWorkMode,
+        minSalary: _minSalary,
+        maxSalary: _maxSalary,
       );
 
-      List<Map<String, dynamic>> premiumListings = [];
+      List<Map<String, dynamic>> premiumJobs = [];
       try {
-        premiumListings = await _listingService.fetchPremiumListings(
-          categoryId: categoryIdForApi,
+        premiumJobs = await _jobService.fetchPremiumJobs(
+          categoryId: _selectedCategoryId == 'All Jobs' ? null : _selectedCategoryId,
           limit: 10,
           userLatitude: _userLatitude,
           userLongitude: _userLongitude,
         );
       } catch (e) {
-        debugPrint('Error fetching filtered premium listings: $e');
-        premiumListings = _premiumListings;
+        debugPrint('Error fetching filtered premium jobs: $e');
+        premiumJobs = _premiumJobs;
       }
 
       if (mounted) {
         setState(() {
-          _listings = listings;
-          _premiumListings = premiumListings;
+          _jobs = jobs;
+          _premiumJobs = premiumJobs;
           _currentOffset = 0;
           _isLoadingFeed = false;
         });
       }
     } catch (e) {
-      debugPrint('Error fetching filtered listings: $e');
+      debugPrint('Error fetching filtered jobs: $e');
       if (mounted) {
         setState(() {
-          _listings = [];
+          _jobs = [];
           _isLoadingFeed = false;
         });
       }
@@ -564,11 +437,11 @@ void _onCategorySelected(String name) {
     }
   }
 
-  void _toggleFavorite(String id) async {
+  void _toggleSaveJob(String jobId) async {
     if (!_isAuthenticatedUser) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Please login to add favorites'),
+          content: Text('Please login to save jobs'),
           backgroundColor: Colors.red,
         ),
       );
@@ -584,29 +457,29 @@ void _onCategorySelected(String name) {
         }
       }
 
-      final isFavorited = await _listingService.toggleFavorite(id);
+      final isSaved = await _jobService.toggleSaveJob(jobId);
 
       if (mounted) {
         setState(() {
-          if (isFavorited) {
-            _favoriteIds.add(id);
+          if (isSaved) {
+            _savedJobIds.add(jobId);
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Added to favorites'), duration: Duration(seconds: 1)),
+              SnackBar(content: Text('Job saved'), duration: Duration(seconds: 1)),
             );
           } else {
-            _favoriteIds.remove(id);
+            _savedJobIds.remove(jobId);
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Removed from favorites'), duration: Duration(seconds: 1)),
+              SnackBar(content: Text('Job removed'), duration: Duration(seconds: 1)),
             );
           }
         });
       }
     } catch (e) {
-      debugPrint('Toggle favorite error: $e');
+      debugPrint('Toggle save job error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update favorites'),
+            content: Text('Failed to update saved jobs'),
             backgroundColor: Colors.red,
           ),
         );
@@ -618,65 +491,49 @@ void _onCategorySelected(String name) {
     }
   }
 
-  List<Map<String, dynamic>> get _filteredListings {
-    return _listings;
-  }
-
-  void _openAdvancedFilter() {
+  void _openJobFilter() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => AdvancedFilterSheet(
+      builder: (context) => JobFilterSheet(
         selectedCategory: _selectedCategory,
-        priceRange: _priceRange,
-        selectedSubcategory: _selectedSubcategory,
         sortBy: _sortBy,
         maxDistance: _maxDistance,
+        selectedJobType: _selectedJobType,
+        selectedWorkMode: _selectedWorkMode,
+        minSalary: _minSalary,
+        maxSalary: _maxSalary,
         onApplyFilter: (filters) {
           setState(() {
-            _priceRange = filters['priceRange'];
-            _selectedSubcategory = filters['subcategory'];
             _sortBy = filters['sortBy'];
             _maxDistance = filters['maxDistance'];
+            _selectedJobType = filters['jobType'];
+            _selectedWorkMode = filters['workMode'];
+            _minSalary = filters['minSalary'];
+            _maxSalary = filters['maxSalary'];
           });
           Navigator.pop(context);
-          _fetchFilteredListings();
+          _fetchFilteredJobs();
         },
       ),
     );
   }
 
-  void _showListingDetails(Map<String, dynamic> listing) {
+  void _showJobDetails(Map<String, dynamic> job) {
+    // Track view
+    _jobService.trackJobView(job['id']);
+
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ListingDetailsFullscreen(
-          listing: listing,
-          isFavorite: _favoriteIds.contains(listing['id']),
-          onFavoriteToggle: () => _toggleFavorite(listing['id']),
-          onCall: () => MarketplaceHelpers.makePhoneCall(context, listing['phone']),
-          onWhatsApp: () => MarketplaceHelpers.openWhatsApp(context, listing['phone']),
+        builder: (context) => JobDetailsPage(
+          job: job,
+          isSaved: _savedJobIds.contains(job['id']),
+          onSaveToggle: () => _toggleSaveJob(job['id']),
         ),
       ),
     );
-  }
-
-  void _openCreateListing() {
-    if (!_isAuthenticatedUser) {
-      _redirectToLogin();
-      return;
-    }
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CreateListingPage(),
-        fullscreenDialog: true,
-      ),
-    ).then((_) {
-      _fetchData();
-    });
   }
 
   void _navigateToProfile() {
@@ -691,89 +548,11 @@ void _onCategorySelected(String name) {
     );
   }
 
-  void _navigateToJobs() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => JobsPortalHomePage(),
-      ),
-    );
-  }
-
   void _navigateToConstructionServices() {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ConstructionServicesHomePage(),
-      ),
-    );
-  }
-
-  Widget _buildListingWithPremium(int index) {
-    if ((index + 1) % 13 == 0 && _premiumListings.isNotEmpty) {
-      final premiumIndex = ((index + 1) ~/ 13) - 1;
-      return Column(
-        children: [
-          SquareProductCard(
-            data: _filteredListings[index - (premiumIndex + 1)],
-            isFavorite: _favoriteIds.contains(_filteredListings[index - (premiumIndex + 1)]['id']),
-            onFavoriteToggle: () => _toggleFavorite(_filteredListings[index - (premiumIndex + 1)]['id']),
-            onTap: () => _showListingDetails(_filteredListings[index - (premiumIndex + 1)]),
-            onCall: () => MarketplaceHelpers.makePhoneCall(
-              context, 
-              _filteredListings[index - (premiumIndex + 1)]['phone']
-            ),
-            onWhatsApp: () => MarketplaceHelpers.openWhatsApp(
-              context, 
-              _filteredListings[index - (premiumIndex + 1)]['phone']
-            ),
-          ),
-          Container(
-            margin: EdgeInsets.symmetric(vertical: 2.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                  child: Text(
-                    'Sponsored',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                ),
-                PremiumSection(
-                  listings: _premiumListings,
-                  onTap: _showListingDetails,
-                  favoriteIds: _favoriteIds,
-                  onFavoriteToggle: _toggleFavorite,
-                  onCall: (phone) => MarketplaceHelpers.makePhoneCall(context, phone),
-                  onWhatsApp: (phone) => MarketplaceHelpers.openWhatsApp(context, phone),
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
-    }
-
-    final actualIndex = index - ((index ~/ 13));
-    if (actualIndex >= _filteredListings.length) return SizedBox.shrink();
-
-    return SquareProductCard(
-      data: _filteredListings[actualIndex],
-      isFavorite: _favoriteIds.contains(_filteredListings[actualIndex]['id']),
-      onFavoriteToggle: () => _toggleFavorite(_filteredListings[actualIndex]['id']),
-      onTap: () => _showListingDetails(_filteredListings[actualIndex]),
-      onCall: () => MarketplaceHelpers.makePhoneCall(
-        context, 
-        _filteredListings[actualIndex]['phone']
-      ),
-      onWhatsApp: () => MarketplaceHelpers.openWhatsApp(
-        context, 
-        _filteredListings[actualIndex]['phone']
       ),
     );
   }
@@ -837,39 +616,35 @@ void _onCategorySelected(String name) {
                 ),
               ),
 
-              // NEW: Auto-Sliding Image Banner
-              SliverToBoxAdapter(child: AutoSlidingBanner()),
-
               SliverToBoxAdapter(
                 child: ThreeOptionSection(
-                  onJobsTap: _navigateToJobs,
                   onConstructionTap: _navigateToConstructionServices,
                 ),
               ),
 
-              // Premium Section - FULL WIDTH
-              if (_premiumListings.isNotEmpty)
+              // Premium Jobs Section
+              if (_premiumJobs.isNotEmpty)
                 SliverToBoxAdapter(
                   child: _isLoadingPremium
                       ? ShimmerPremiumSection()
-                      : PremiumSection(
-                          listings: _premiumListings,
-                          onTap: _showListingDetails,
-                          favoriteIds: _favoriteIds,
-                          onFavoriteToggle: _toggleFavorite,
-                          onCall: (phone) => MarketplaceHelpers.makePhoneCall(context, phone),
-                          onWhatsApp: (phone) => MarketplaceHelpers.openWhatsApp(context, phone),
+                      : PremiumJobsSection(
+                          jobs: _premiumJobs,
+                          onTap: _showJobDetails,
+                          savedJobIds: _savedJobIds,
+                          onSaveToggle: _toggleSaveJob,
                         ),
                 ),
 
+              // Categories Section
               SliverToBoxAdapter(
-                child: CategoriesSection(
-                  categories: _categories.map((cat) => cat.cast<String, Object>()).toList(),
+                child: JobCategoriesSection(
+                  categories: _categories,
                   selected: _selectedCategory,
                   onSelect: _onCategorySelected,
                 ),
               ),
 
+              // Filter Header
               SliverToBoxAdapter(
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
@@ -877,14 +652,14 @@ void _onCategorySelected(String name) {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        _selectedCategory == 'All' ? 'All Listings' : _selectedCategory,
+                        _selectedCategory == 'All Jobs' ? 'All Jobs' : _selectedCategory,
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       InkWell(
-                        onTap: _openAdvancedFilter,
+                        onTap: _openJobFilter,
                         child: Container(
                           padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
                           decoration: BoxDecoration(
@@ -915,7 +690,8 @@ void _onCategorySelected(String name) {
                 ),
               ),
 
-              if (_hasInitialLoadError && _listings.isEmpty)
+              // Jobs List
+              if (_hasInitialLoadError && _jobs.isEmpty)
                 SliverToBoxAdapter(
                   child: Container(
                     height: 50.h,
@@ -926,7 +702,7 @@ void _onCategorySelected(String name) {
                           Icon(Icons.wifi_off, size: 15.w, color: Colors.grey),
                           SizedBox(height: 2.h),
                           Text(
-                            'Unable to load listings',
+                            'Unable to load jobs',
                             style: TextStyle(fontSize: 12.sp, color: Colors.grey[700]),
                           ),
                           SizedBox(height: 2.h),
@@ -942,19 +718,23 @@ void _onCategorySelected(String name) {
                     ),
                   ),
                 )
-              else if (_isLoadingFeed && _filteredListings.isEmpty)
+              else if (_isLoadingFeed && _jobs.isEmpty)
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
-                    (_, __) => ShimmerProductCard(),
+                    (_, __) => ShimmerJobCard(),
                     childCount: 6,
                   ),
                 )
               else
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
-                    (_, index) => _buildListingWithPremium(index),
-                    childCount: _filteredListings.length + 
-                               (_filteredListings.length ~/ 12),
+                    (_, index) => JobCardWidget(
+                      job: _jobs[index],
+                      isSaved: _savedJobIds.contains(_jobs[index]['id']),
+                      onSaveToggle: () => _toggleSaveJob(_jobs[index]['id']),
+                      onTap: () => _showJobDetails(_jobs[index]),
+                    ),
+                    childCount: _jobs.length,
                   ),
                 ),
 
@@ -977,7 +757,6 @@ void _onCategorySelected(String name) {
       ),
       bottomNavigationBar: BottomNavBarWidget(
         currentIndex: _currentIndex,
-        hasMessageNotification: true,
         onTabSelected: (index) {
           setState(() => _currentIndex = index);
           if (index == 1) {
@@ -994,184 +773,6 @@ void _onCategorySelected(String name) {
             _navigateToProfile();
           }
         },
-        onFabPressed: _openCreateListing,
-      ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingActionButton(
-            onPressed: _openCreateListing,
-            backgroundColor: Color(0xFF2563EB),
-            child: Icon(Icons.add, color: Colors.white),
-            heroTag: 'sell_fab',
-          ),
-        ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-    );
-  }
-}
-
-// ==================== NEW AUTO-SLIDING BANNER WIDGET ====================
-class AutoSlidingBanner extends StatefulWidget {
-  const AutoSlidingBanner({Key? key}) : super(key: key);
-
-  @override
-  State<AutoSlidingBanner> createState() => _AutoSlidingBannerState();
-}
-
-class _AutoSlidingBannerState extends State<AutoSlidingBanner> {
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
-  Timer? _timer;
-
-  final List<String> _bannerImages = [
-    'assets/images/slide1.jpg',
-    'assets/images/slide2.jpg',
-    'assets/images/slide3.jpg',
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _startAutoSlide();
-  }
-
-  void _startAutoSlide() {
-    _timer = Timer.periodic(Duration(seconds: 4), (timer) {
-      if (_currentPage < _bannerImages.length - 1) {
-        _currentPage++;
-      } else {
-        _currentPage = 0;
-      }
-
-      if (_pageController.hasClients) {
-        _pageController.animateToPage(
-          _currentPage,
-          duration: Duration(milliseconds: 600),
-          curve: Curves.easeInOut,
-        );
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-      height: 23.h, // ← Updated to 20.h for rectangular shape
-      child: Stack(
-        children: [
-          PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-              });
-            },
-            itemCount: _bannerImages.length,
-            itemBuilder: (context, index) {
-              return Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12), // ← FIXED
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                clipBehavior: Clip.antiAlias, // ← Added for rounded corners
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.asset(
-                      _bannerImages[index],
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey[300],
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.image_not_supported,
-                                  size: 15.w,
-                                  color: Colors.grey[600],
-                                ),
-                                SizedBox(height: 1.h),
-                                Text(
-                                  'Image not found',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 10.sp,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.3),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-
-          Positioned(
-            bottom: 2.h,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                _bannerImages.length,
-                (index) => AnimatedContainer(
-                  duration: Duration(milliseconds: 300),
-                  margin: EdgeInsets.symmetric(horizontal: 1.w),
-                  height: 1.h,
-                  width: _currentPage == index ? 6.w : 2.w,
-                  decoration: BoxDecoration(
-                    color: _currentPage == index
-                        ? Colors.white
-                        : Colors.white.withOpacity(0.4),
-                    borderRadius: BorderRadius.circular(1.h),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
