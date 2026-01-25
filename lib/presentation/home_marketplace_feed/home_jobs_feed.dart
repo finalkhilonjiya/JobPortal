@@ -756,8 +756,9 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
         ),
       ),
       bottomNavigationBar: BottomNavBarWidget(
-        currentIndex: _currentIndex,
-        onTabSelected: (index) {
+  currentIndex: _currentIndex,
+  hasMessageNotification: false,
+  onTabSelected: (index) {
           setState(() => _currentIndex = index);
           if (index == 1) {
             Navigator.push(
