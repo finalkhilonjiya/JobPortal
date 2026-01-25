@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 // Updated import for mobile OTP login
-import '../presentation/login_screen/mobile_login_screen.dart'; // CHANGED: Updated to mobile login
-import '../presentation/home_marketplace_feed/home_marketplace_feed.dart';
+import '../presentation/login_screen/mobile_login_screen.dart';
+import '../presentation/home_marketplace_feed/home_jobs_feed.dart'; // ← CHANGED
 import '../presentation/search_and_filters/search_and_filters.dart';
 import '../presentation/registration_screen/registration_screen.dart';
 import '../presentation/listing_detail/listing_detail.dart';
@@ -22,8 +22,8 @@ class AppRoutes {
   static const String emailVerificationScreen = '/email-verification-screen';
   static const String phoneVerificationScreen = '/phone-verification-screen';
 
-  // Marketplace Routes
-  static const String homeMarketplaceFeed = '/home-marketplace-feed';
+  // Jobs Routes (RENAMED from Marketplace)
+  static const String homeJobsFeed = '/home-jobs-feed'; // ← CHANGED
   static const String categoriesScreen = '/categories-screen';
   static const String searchAndFilters = '/search-and-filters';
   static const String listingDetail = '/listing-detail';
@@ -104,15 +104,16 @@ class AppRoutes {
   static const String notFoundScreen = '/not-found-screen';
 
   static Map<String, WidgetBuilder> routes = {
-    // Core App Routes - Updated to use MobileLoginScreen
-    initial: (context) => const MobileLoginScreen(), // CHANGED: Updated to MobileLoginScreen
-    
-    // Authentication Routes - Updated to use MobileLoginScreen
-    loginScreen: (context) => const MobileLoginScreen(), // CHANGED: Updated to MobileLoginScreen
+    // Core App Routes
+    initial: (context) => const MobileLoginScreen(),
+
+    // Authentication Routes
+    loginScreen: (context) => const MobileLoginScreen(),
     registrationScreen: (context) => const RegistrationScreen(),
 
-    // Marketplace Routes
-    homeMarketplaceFeed: (context) => const HomeMarketplaceFeed(),
+    // Jobs Routes (CHANGED)
+    homeJobsFeed: (context) => const HomeJobsFeed(), // ← CHANGED
+
     searchAndFilters: (context) => const SearchAndFilters(),
     listingDetail: (context) => const ListingDetail(),
 
@@ -162,9 +163,9 @@ class AppRoutes {
     await pushAndClearStack(context, loginScreen);
   }
 
-  /// Navigate to home screen and clear stack
+  /// Navigate to home screen and clear stack (CHANGED)
   static Future<void> navigateToHome(BuildContext context) async {
-    await pushAndClearStack(context, homeMarketplaceFeed);
+    await pushAndClearStack(context, homeJobsFeed); // ← CHANGED
   }
 
   /// Handle unknown routes
@@ -177,14 +178,14 @@ class AppRoutes {
           builder: (context) => const ListingDetail(),
           settings: settings,
         );
-      
+
       case chatMessaging:
         final args = settings.arguments as Map<String, dynamic>?;
         return MaterialPageRoute(
           builder: (context) => const ChatMessaging(),
           settings: settings,
         );
-      
+
       default:
         return null;
     }
