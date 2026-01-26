@@ -565,4 +565,313 @@ class JobService {
       return {'total_jobs': 0, 'total_companies': 0};
     }
   }
+ // ============================================
+  // GET RECOMMENDED JOBS (PROFILE-BASED)
+  // ============================================
+  Future<List<Map<String, dynamic>>> getRecommendedJobs({
+    int limit = 43,
+    int offset = 0,
+  }) async {
+    await _ensureAuthenticated();
+
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return [];
+
+      // Get user profile for matching
+      final profile = await _supabase
+          .from('user_profiles')
+          .select('skills, preferred_job_types, preferred_locations, expected_salary_min, total_experience_years, current_city')
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (profile == null) {
+        return await fetchJobs(limit: limit, offset: offset);
+      }
+
+      // Get jobs matching user profile
+      var query = _supabase
+          .from('job_listings')
+          .select('*')
+          .eq('status', 'active');
+
+      // Filter by preferred locations if available
+      if (profile['preferred_locations'] != null && 
+          (profile['preferred_locations'] as List).isNotEmpty) {
+        final locations = (profile['preferred_locations'] as List).join(',');
+        query = query.in_('district', profile['preferred_locations']);
+      }
+
+      final response = await query
+          .order('created_at', ascending: false)
+          .range(offset, offset + limit - 1);
+
+      var jobs = List<Map<String, dynamic>>.from(response);
+
+      // Calculate match score for each job
+      jobs = jobs.map((job) {
+        final matchScore = _calculateMatchScore(job, profile);
+        return {...job, 'match_score': matchScore};
+      }).toList();
+
+      // Sort by match score
+      jobs.sort((a, b) => (b['match_score'] as int).compareTo(a['match_score'] as int));
+
+      return jobs;
+    } catch (e) {
+      debugPrint('Error getting recommended jobs: $e');
+      return [];
+    }
+  }
+
+  // ============================================
+  // GET JOBS BASED ON RECENT ACTIVITY
+  // ============================================
+  Future<List<Map<String, dynamic>>> getJobsBasedOnActivity({
+    int limit = 75,
+  }) async {
+    await _ensureAuthenticated();
+
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return [];
+
+      // Get user's recent viewed/applied jobs
+      final recentJobs = await _supabase
+          .from('job_views')
+          .select('job_id, job_listings(job_category, district, skills_required)')
+          .eq('user_id', userId)
+          .order('viewed_at', ascending: false)
+          .limit(10);
+
+      if (recentJobs.isEmpty) {
+        return await getRecommendedJobs(limit: limit);
+      }
+
+      // Extract categories and locations from recent activity
+      final categories = <String>{};
+      final locations = <String>{};
+      final skills = <String>{};
+
+      for (var item in List<Map<String, dynamic>>.from(recentJobs)) {
+        final job = item['job_listings'] as Map<String, dynamic>?;
+        if (job != null) {
+          if (job['job_category'] != null) categories.add(job['job_category']);
+          if (job['district'] != null) locations.add(job['district']);
+          if (job['skills_required'] != null) {
+            skills.addAll((job['skills_required'] as List).cast<String>());
+          }
+        }
+      }
+
+      // Find similar jobs
+      var query = _supabase
+          .from('job_listings')
+          .select('*')
+          .eq('status', 'active');
+
+      if (categories.isNotEmpty) {
+        query = query.in_('job_category', categories.toList());
+      }
+
+      final response = await query
+          .order('created_at', ascending: false)
+          .limit(limit);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      debugPrint('Error getting jobs based on activity: $e');
+      return [];
+    }
+  }
+
+  // ============================================
+  // CALCULATE PROFILE COMPLETION
+  // ============================================
+  Future<int> calculateProfileCompletion() async {
+    await _ensureAuthenticated();
+
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return 0;
+
+      final profile = await _supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+
+      int completedFields = 0;
+      int totalFields = 20;
+
+      // Basic info (5 fields)
+      if (profile['full_name'] != null && profile['full_name'].toString().isNotEmpty) completedFields++;
+      if (profile['email'] != null && profile['email'].toString().isNotEmpty) completedFields++;
+      if (profile['mobile_number'] != null && profile['mobile_number'].toString().isNotEmpty) completedFields++;
+      if (profile['current_city'] != null && profile['current_city'].toString().isNotEmpty) completedFields++;
+      if (profile['avatar_url'] != null && profile['avatar_url'].toString().isNotEmpty) completedFields++;
+
+      // Work info (5 fields)
+      if (profile['current_job_title'] != null && profile['current_job_title'].toString().isNotEmpty) completedFields++;
+      if (profile['current_company'] != null && profile['current_company'].toString().isNotEmpty) completedFields++;
+      if (profile['total_experience_years'] != null && profile['total_experience_years'] > 0) completedFields++;
+      if (profile['resume_url'] != null && profile['resume_url'].toString().isNotEmpty) completedFields++;
+      if (profile['resume_headline'] != null && profile['resume_headline'].toString().isNotEmpty) completedFields++;
+
+      // Skills and preferences (5 fields)
+      if (profile['skills'] != null && (profile['skills'] as List).isNotEmpty) completedFields++;
+      if (profile['highest_education'] != null && profile['highest_education'].toString().isNotEmpty) completedFields++;
+      if (profile['preferred_job_types'] != null && (profile['preferred_job_types'] as List).isNotEmpty) completedFields++;
+      if (profile['preferred_locations'] != null && (profile['preferred_locations'] as List).isNotEmpty) completedFields++;
+      if (profile['expected_salary_min'] != null) completedFields++;
+
+      // Additional info (5 fields)
+      if (profile['bio'] != null && profile['bio'].toString().isNotEmpty) completedFields++;
+      if (profile['notice_period_days'] != null) completedFields++;
+      if (profile['is_open_to_work'] != null) completedFields++;
+      
+      // Check for education records
+      final education = await _supabase
+          .from('user_education')
+          .select('id')
+          .eq('user_id', userId)
+          .limit(1);
+      if (education.isNotEmpty) completedFields++;
+
+      // Check for experience records
+      final experience = await _supabase
+          .from('user_experience')
+          .select('id')
+          .eq('user_id', userId)
+          .limit(1);
+      if (experience.isNotEmpty) completedFields++;
+
+      final percentage = ((completedFields / totalFields) * 100).round();
+
+      // Update profile completion percentage
+      await _supabase
+          .from('user_profiles')
+          .update({'profile_completion_percentage': percentage})
+          .eq('id', userId);
+
+      return percentage;
+    } catch (e) {
+      debugPrint('Error calculating profile completion: $e');
+      return 0;
+    }
+  }
+
+  // ============================================
+  // CALCULATE MATCH SCORE
+  // ============================================
+  int _calculateMatchScore(Map<String, dynamic> job, Map<String, dynamic> profile) {
+    int score = 0;
+
+    // Skills match (40 points max)
+    final jobSkills = (job['skills_required'] as List?)?.cast<String>() ?? [];
+    final userSkills = (profile['skills'] as List?)?.cast<String>() ?? [];
+    if (jobSkills.isNotEmpty && userSkills.isNotEmpty) {
+      final matchingSkills = jobSkills.where((s) => 
+        userSkills.any((us) => us.toLowerCase() == s.toLowerCase())
+      ).length;
+      score += ((matchingSkills / jobSkills.length) * 40).round();
+    }
+
+    // Job type match (20 points)
+    final jobType = job['job_type'] as String?;
+    final preferredTypes = (profile['preferred_job_types'] as List?)?.cast<String>() ?? [];
+    if (jobType != null && preferredTypes.contains(jobType)) {
+      score += 20;
+    }
+
+    // Location match (20 points)
+    final jobLocation = job['district'] as String?;
+    final preferredLocations = (profile['preferred_locations'] as List?)?.cast<String>() ?? [];
+    final currentCity = profile['current_city'] as String?;
+    if (jobLocation != null) {
+      if (preferredLocations.contains(jobLocation)) {
+        score += 20;
+      } else if (currentCity != null && jobLocation.toLowerCase().contains(currentCity.toLowerCase())) {
+        score += 15;
+      }
+    }
+
+    // Salary match (20 points)
+    final salaryMin = job['salary_min'] as int?;
+    final expectedMin = profile['expected_salary_min'] as int?;
+    if (salaryMin != null && expectedMin != null) {
+      if (salaryMin >= expectedMin) {
+        score += 20;
+      } else if (salaryMin >= (expectedMin * 0.8)) {
+        score += 10;
+      }
+    }
+
+    return score.clamp(0, 100);
+  }
+
+  // ============================================
+  // TRACK JOB ACTIVITY
+  // ============================================
+  Future<void> trackJobActivity(String jobId, String activityType) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      await _supabase.from('user_job_activity').insert({
+        'user_id': userId,
+        'job_id': jobId,
+        'activity_type': activityType,
+        'activity_date': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('Error tracking job activity: $e');
+    }
+  }
+
+  // ============================================
+  // GET USER PROFILE COMPLETION DATA
+  // ============================================
+  Future<Map<String, dynamic>> getProfileCompletionData() async {
+    await _ensureAuthenticated();
+
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return {'percentage': 0, 'missing_fields': []};
+
+      final profile = await _supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+
+      final missingFields = <String>[];
+
+      if (profile['full_name'] == null || profile['full_name'].toString().isEmpty) {
+        missingFields.add('Full Name');
+      }
+      if (profile['current_job_title'] == null || profile['current_job_title'].toString().isEmpty) {
+        missingFields.add('Current Job Title');
+      }
+      if (profile['resume_url'] == null || profile['resume_url'].toString().isEmpty) {
+        missingFields.add('Resume');
+      }
+      if (profile['skills'] == null || (profile['skills'] as List).isEmpty) {
+        missingFields.add('Skills');
+      }
+      if (profile['preferred_locations'] == null || (profile['preferred_locations'] as List).isEmpty) {
+        missingFields.add('Preferred Locations');
+      }
+
+      final percentage = await calculateProfileCompletion();
+
+      return {
+        'percentage': percentage,
+        'missing_fields': missingFields,
+      };
+    } catch (e) {
+      debugPrint('Error getting profile completion data: $e');
+      return {'percentage': 0, 'missing_fields': []};
+    }
+  }
 }
