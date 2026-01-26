@@ -5,20 +5,18 @@ class BottomNavBarWidget extends StatelessWidget {
   final int currentIndex;
   final bool hasMessageNotification;
   final Function(int) onTabSelected;
-  final VoidCallback onFabPressed;
 
   const BottomNavBarWidget({
     Key? key,
     required this.currentIndex,
     required this.hasMessageNotification,
     required this.onTabSelected,
-    required this.onFabPressed,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 9.5.h, // Increased slightly to prevent overflow
+      height: 9.5.h,
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
@@ -29,17 +27,14 @@ class BottomNavBarWidget extends StatelessWidget {
         ],
       ),
       child: BottomAppBar(
-        shape: CircularNotchedRectangle(),
-        notchMargin: 8,
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 2.w),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(Icons.home, 'Home', 0),
               _buildNavItem(Icons.search, 'Search', 1),
-              SizedBox(width: 12.w), // Space for FAB
-              _buildNavItem(Icons.star_outline, 'Package', 3),
+              _buildNavItem(Icons.star_outline, 'Package', 2),
               _buildNavItem(Icons.person_outline, 'Profile', 4),
             ],
           ),
@@ -63,7 +58,7 @@ class BottomNavBarWidget extends StatelessWidget {
                 Icon(
                   icon,
                   color: isSelected ? Color(0xFF2563EB) : Colors.grey,
-                  size: 5.5.w, // Slightly reduced to fit better
+                  size: 5.5.w,
                 ),
                 if (index == 2 && hasMessageNotification)
                   Positioned(
@@ -84,7 +79,7 @@ class BottomNavBarWidget extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: 8.5.sp, // Slightly reduced font size
+                fontSize: 8.5.sp,
                 color: isSelected ? Color(0xFF2563EB) : Colors.grey,
               ),
               overflow: TextOverflow.ellipsis,
