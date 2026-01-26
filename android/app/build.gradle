@@ -81,11 +81,8 @@ android {
     }
 
     packaging {
-        pickFirst {
-            path '**/libc++_shared.so'
-            path '**/libjsc.so'
-            path '**/libflutter.so'
-            path '**/libapp.so'
+        jniLibs {
+            pickFirsts += ['**/libc++_shared.so', '**/libjsc.so', '**/libflutter.so', '**/libapp.so']
         }
         resources {
             excludes += [
