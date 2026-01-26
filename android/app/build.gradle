@@ -47,10 +47,10 @@ android {
         targetSdkVersion 34
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
-        
+
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        
+
     }
 
     buildTypes {
@@ -62,7 +62,7 @@ android {
             // Add proguard rules for better performance
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
-        
+
         debug {
             debuggable true
             minifyEnabled false
@@ -79,30 +79,32 @@ android {
             universalApk true
         }
     }
-    
-    packagingOptions {
-        pickFirst '**/libc++_shared.so'
-        pickFirst '**/libjsc.so'
-        pickFirst '**/libflutter.so'
-        pickFirst '**/libapp.so'
-        exclude 'META-INF/DEPENDENCIES'
-        exclude 'META-INF/LICENSE'
-        exclude 'META-INF/LICENSE.txt'
-        exclude 'META-INF/license.txt'
-        exclude 'META-INF/NOTICE'
-        exclude 'META-INF/NOTICE.txt'
-        exclude 'META-INF/notice.txt'
-        exclude 'META-INF/ASL2.0'
-        exclude 'META-INF/*.kotlin_module'
+
+    packaging {
+        pickFirst {
+            path '**/libc++_shared.so'
+            path '**/libjsc.so'
+            path '**/libflutter.so'
+            path '**/libapp.so'
+        }
+        resources {
+            excludes += [
+                'META-INF/DEPENDENCIES',
+                'META-INF/LICENSE',
+                'META-INF/LICENSE.txt',
+                'META-INF/license.txt',
+                'META-INF/NOTICE',
+                'META-INF/NOTICE.txt',
+                'META-INF/notice.txt',
+                'META-INF/ASL2.0',
+                'META-INF/*.kotlin_module'
+            ]
+        }
     }
-    
-    lintOptions {
+
+    lint {
         disable 'InvalidPackage'
         checkReleaseBuilds false
-    }
-    dexOptions  {
-        javaMaxHeapSize "3g"
-        preDexLibraries = false
     }
 }
 
@@ -114,11 +116,11 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0"
     implementation 'androidx.multidex:multidex:2.0.1'
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
-    
+
     // Add performance monitoring
     implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
-    
+
     // Add memory optimization
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
     implementation 'androidx.lifecycle:lifecycle-process:2.7.0'
