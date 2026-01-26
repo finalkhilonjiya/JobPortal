@@ -1,31 +1,35 @@
 plugins {
     id "com.android.application"
-    id "kotlin-android"
+    id "org.jetbrains.kotlin.android"
     id "dev.flutter.flutter-gradle-plugin"
 }
 
 def localProperties = new Properties()
-def localPropertiesFile = rootProject.file('local.properties')
+def localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
-    localPropertiesFile.withReader('UTF-8') { reader ->
+    localPropertiesFile.withReader("UTF-8") { reader ->
         localProperties.load(reader)
     }
 }
 
-def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
-if (flutterVersionCode == null) {
-    flutterVersionCode = '1'
-}
-
-def flutterVersionName = localProperties.getProperty('flutter.versionName')
-if (flutterVersionName == null) {
-    flutterVersionName = '1.0'
-}
+def flutterVersionCode = localProperties.getProperty("flutter.versionCode") ?: "1"
+def flutterVersionName = localProperties.getProperty("flutter.versionName") ?: "1.0"
 
 android {
     namespace "com.khilonjiya.marketplace"
     compileSdk 36
     ndkVersion "26.1.10909125"
+
+    defaultConfig {
+        applicationId "com.khilonjiya.marketplace"
+        minSdk 23
+        targetSdk 34
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+
+        multiDexEnabled true
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -34,23 +38,11 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = '17'
+        jvmTarget = "17"
     }
 
     sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
-    }
-
-    defaultConfig {
-        applicationId "com.khilonjiya.marketplace"
-        minSdkVersion 23
-        targetSdkVersion 34
-        versionCode flutterVersionCode.toInteger()
-        versionName flutterVersionName
-
-        multiDexEnabled true
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-
+        main.java.srcDirs += "src/main/kotlin"
     }
 
     buildTypes {
@@ -59,66 +51,55 @@ android {
             minifyEnabled true
             shrinkResources true
             debuggable false
-            // Add proguard rules for better performance
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile(
+                "proguard-android-optimize.txt"
+            ), "proguard-rules.pro"
         }
 
         debug {
             debuggable true
             minifyEnabled false
             shrinkResources false
-            // Add debug optimizations
-            jniDebuggable true
         }
     }
+
     splits {
         abi {
             enable true
             reset()
-            include 'armeabi-v7a', 'arm64-v8a', 'x86_64'
+            include "armeabi-v7a", "arm64-v8a", "x86_64"
             universalApk true
         }
     }
 
     packaging {
-        jniLibs {
-            pickFirsts += ['**/libc++_shared.so', '**/libjsc.so', '**/libflutter.so', '**/libapp.so']
-        }
         resources {
             excludes += [
-                'META-INF/DEPENDENCIES',
-                'META-INF/LICENSE',
-                'META-INF/LICENSE.txt',
-                'META-INF/license.txt',
-                'META-INF/NOTICE',
-                'META-INF/NOTICE.txt',
-                'META-INF/notice.txt',
-                'META-INF/ASL2.0',
-                'META-INF/*.kotlin_module'
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE",
+                "META-INF/LICENSE.txt",
+                "META-INF/NOTICE",
+                "META-INF/NOTICE.txt",
+                "META-INF/ASL2.0",
+                "META-INF/*.kotlin_module"
             ]
         }
     }
 
     lint {
-        disable 'InvalidPackage'
         checkReleaseBuilds false
+        disable "InvalidPackage"
     }
 }
 
 flutter {
-    source '../..'
+    source "../.."
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0"
-    implementation 'androidx.multidex:multidex:2.0.1'
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
+    implementation "androidx.multidex:multidex:2.0.1"
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"
 
-    // Add performance monitoring
-    implementation 'androidx.core:core-ktx:1.12.0'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-
-    // Add memory optimization
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
-    implementation 'androidx.lifecycle:lifecycle-process:2.7.0'
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.8.4"
+    implementation "androidx.lifecycle:lifecycle-process:2.8.4"
 }
