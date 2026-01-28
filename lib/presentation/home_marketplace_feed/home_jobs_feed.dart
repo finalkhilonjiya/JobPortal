@@ -8,7 +8,6 @@ import './widgets/job_card_widget.dart';
 import './widgets/premium_jobs_section.dart';
 import '../login_screen/mobile_login_screen.dart';
 import './widgets/shimmer_widgets.dart';
-import './widgets/marketplace_helpers.dart';
 import './widgets/job_filter_sheet.dart';
 import './widgets/job_details_page.dart';
 import './widgets/profile_page.dart';
@@ -20,7 +19,6 @@ import 'dart:async';
 import './premium_package_page.dart';
 import 'widgets/job_categories_section.dart';
 import '../login_screen/mobile_auth_service.dart';
-import '../../core/app_export.dart';
 
 class HomeJobsFeed extends StatefulWidget {
   const HomeJobsFeed({Key? key}) : super(key: key);
@@ -29,9 +27,12 @@ class HomeJobsFeed extends StatefulWidget {
   State<HomeJobsFeed> createState() => _HomeJobsFeedState();
 }
 
-class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver {
+class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   final JobService _jobService = JobService();
   final MobileAuthService _authService = MobileAuthService();
+
+  // Tab Controller
+  late TabController _tabController;
 
   // Auth related state
   bool _isCheckingAuth = true;
@@ -40,17 +41,25 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
 
   int _currentIndex = 0;
   bool _isLoadingPremium = true;
-  bool _isLoadingFeed = true;
+  bool _isLoadingProfileJobs = true;
+  bool _isLoadingActivityJobs = false;
   bool _isLoadingMore = false;
+  
   List<Map<String, dynamic>> _categories = [];
-  List<Map<String, dynamic>> _jobs = [];
+  List<Map<String, dynamic>> _profileJobs = [];
+  List<Map<String, dynamic>> _activityJobs = [];
   List<Map<String, dynamic>> _premiumJobs = [];
+  
   String _selectedCategory = 'All Jobs';
   String _selectedCategoryId = 'All';
   Set<String> _savedJobIds = {};
   String _currentLocation = 'Detecting location...';
 
-  // User coordinates for distance-based sorting
+  // Profile completion
+  int _profileCompletion = 0;
+  List<String> _missingFields = [];
+
+  // User coordinates
   double? _userLatitude;
   double? _userLongitude;
   bool _locationDetected = false;
@@ -64,7 +73,6 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
   bool _hasInitialLoadError = false;
 
   // Filter states
-  String _priceRange = 'All';
   String _sortBy = 'Newest';
   double _maxDistance = 50.0;
   String? _selectedJobType;
@@ -75,6 +83,9 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_onTabChanged);
+    
     WidgetsBinding.instance.addObserver(this);
     _scrollController.addListener(_onScroll);
 
@@ -93,9 +104,17 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (_tabController.index == 1 && _activityJobs.isEmpty && !_isLoadingActivityJobs) {
+      _loadActivityJobs();
+    }
   }
 
   @override
@@ -107,16 +126,12 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
   }
 
   Future<void> _initializeWithAuth() async {
-    setState(() {
-      _isCheckingAuth = true;
-    });
+    setState(() => _isCheckingAuth = true);
 
     try {
       await _authService.initialize();
       final isAuthenticated = _authService.isAuthenticated;
       final userId = _authService.userId;
-
-      debugPrint('Auth Check - Authenticated: $isAuthenticated, User ID: $userId');
 
       if (isAuthenticated && userId != null) {
         setState(() {
@@ -127,14 +142,12 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
 
         final sessionValid = await _authService.refreshSession();
         if (!sessionValid) {
-          debugPrint('Session refresh failed, redirecting to login');
           _redirectToLogin();
           return;
         }
 
         await _fetchData();
       } else {
-        debugPrint('User not authenticated, redirecting to login');
         _redirectToLogin();
       }
     } catch (e) {
@@ -145,14 +158,12 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
 
   Future<void> _verifyAuthState() async {
     if (!_authService.isAuthenticated) {
-      debugPrint('Auth verification failed, redirecting to login');
       _redirectToLogin();
       return;
     }
 
     final sessionValid = await _authService.refreshSession();
     if (!sessionValid) {
-      debugPrint('Session verification failed, redirecting to login');
       _redirectToLogin();
     }
   }
@@ -160,9 +171,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
   void _redirectToLogin() {
     if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (context) => MobileLoginScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => MobileLoginScreen()),
         (route) => false,
       );
     }
@@ -174,33 +183,27 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
         _userLatitude = latitude;
         _userLongitude = longitude;
         _currentLocation = locationName;
-
         if (!_locationDetected) {
           _locationDetected = true;
           _sortBy = 'Distance';
-          debugPrint('Location detected, switching default sort to Distance');
         }
       });
-
-      debugPrint('Location updated: $locationName (Lat: $latitude, Lng: $longitude)');
-      _fetchFilteredJobs();
+      _loadProfileJobs();
     }
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= 
-        _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
       _loadMoreJobs();
     }
   }
 
   Future<void> _loadMoreJobs() async {
-    if (!_isLoadingMore && !_isLoadingFeed && _hasMoreData && _isAuthenticatedUser) {
+    if (!_isLoadingMore && !_isLoadingProfileJobs && _hasMoreData && _isAuthenticatedUser) {
       setState(() => _isLoadingMore = true);
 
       try {
         if (!_authService.isSupabaseAuthenticated) {
-          debugPrint('Not authenticated for API call, refreshing session');
           final refreshed = await _authService.refreshSession();
           if (!refreshed) {
             _redirectToLogin();
@@ -208,36 +211,35 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
           }
         }
 
-        final newJobs = await _jobService.fetchJobs(
-          categoryId: _selectedCategoryId == 'All' ? null : _selectedCategoryId,
-          sortBy: _sortBy,
-          offset: _currentOffset + _pageSize,
-          limit: _pageSize,
-          userLatitude: _userLatitude,
-          userLongitude: _userLongitude,
-          jobType: _selectedJobType,
-          workMode: _selectedWorkMode,
-          minSalary: _minSalary,
-          maxSalary: _maxSalary,
-        );
+        final currentJobs = _tabController.index == 0 ? _profileJobs : _activityJobs;
+        
+        List<Map<String, dynamic>> newJobs;
+        if (_tabController.index == 0) {
+          newJobs = await _jobService.getRecommendedJobs(
+            limit: _pageSize,
+            offset: currentJobs.length,
+          );
+        } else {
+          newJobs = await _jobService.getJobsBasedOnActivity(limit: _pageSize);
+        }
 
         if (mounted) {
           setState(() {
             if (newJobs.isEmpty) {
               _hasMoreData = false;
             } else {
-              _jobs.addAll(newJobs);
-              _currentOffset += _pageSize;
+              if (_tabController.index == 0) {
+                _profileJobs.addAll(newJobs);
+              } else {
+                _activityJobs.addAll(newJobs);
+              }
             }
             _isLoadingMore = false;
           });
         }
       } catch (e) {
         debugPrint('Error loading more jobs: $e');
-        if (mounted) {
-          setState(() => _isLoadingMore = false);
-        }
-
+        if (mounted) setState(() => _isLoadingMore = false);
         if (e.toString().contains('auth') || e.toString().contains('401')) {
           _verifyAuthState();
         }
@@ -250,30 +252,38 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
 
     setState(() {
       _isLoadingPremium = true;
-      _isLoadingFeed = true;
+      _isLoadingProfileJobs = true;
       _currentOffset = 0;
-      _jobs = [];
+      _profileJobs = [];
       _hasInitialLoadError = false;
     });
 
     try {
       if (!_authService.isSupabaseAuthenticated) {
-        debugPrint('Supabase not authenticated, attempting refresh');
         final refreshed = await _authService.refreshSession();
         if (!refreshed) {
-          debugPrint('Session refresh failed during data fetch');
           _redirectToLogin();
           return;
         }
       }
 
-      debugPrint('Fetching data for authenticated user: $_currentUserId');
+      // Fetch profile completion
+      try {
+        final completionData = await _jobService.getProfileCompletionData();
+        if (mounted) {
+          setState(() {
+            _profileCompletion = completionData['percentage'] ?? 0;
+            _missingFields = List<String>.from(completionData['missing_fields'] ?? []);
+          });
+        }
+      } catch (e) {
+        debugPrint('Error fetching profile completion: $e');
+      }
 
       // Fetch categories
       List<Map<String, dynamic>> categories = [];
       try {
         categories = await _jobService.getJobCategories();
-        debugPrint('Fetched ${categories.length} job categories');
       } catch (e) {
         debugPrint('Error fetching categories: $e');
       }
@@ -282,33 +292,12 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
       Set<String> savedJobs = {};
       try {
         savedJobs = await _jobService.getUserSavedJobs();
-        debugPrint('Fetched ${savedJobs.length} saved jobs');
       } catch (e) {
         debugPrint('Error fetching saved jobs: $e');
       }
 
-      // Determine sort method
-      String sortMethod = _sortBy;
-      if (_locationDetected && _userLatitude != null && _userLongitude != null) {
-        sortMethod = 'Distance';
-      } else {
-        sortMethod = 'Newest';
-      }
-
-      // Fetch jobs
-      List<Map<String, dynamic>> jobs = [];
-      try {
-        jobs = await _jobService.fetchJobs(
-          sortBy: sortMethod,
-          offset: 0,
-          limit: _pageSize,
-          userLatitude: _userLatitude,
-          userLongitude: _userLongitude,
-        );
-        debugPrint('Fetched ${jobs.length} jobs');
-      } catch (e) {
-        debugPrint('Error fetching jobs: $e');
-      }
+      // Fetch recommended jobs
+      await _loadProfileJobs();
 
       // Fetch premium jobs
       List<Map<String, dynamic>> premiumJobs = [];
@@ -318,7 +307,6 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
           userLatitude: _userLatitude,
           userLongitude: _userLongitude,
         );
-        debugPrint('Fetched ${premiumJobs.length} premium jobs');
       } catch (e) {
         debugPrint('Error fetching premium jobs: $e');
       }
@@ -327,12 +315,9 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
         setState(() {
           _categories = categories;
           _savedJobIds = savedJobs;
-          _jobs = jobs;
           _premiumJobs = premiumJobs;
           _isLoadingPremium = false;
-          _isLoadingFeed = false;
-
-          if (jobs.isEmpty && premiumJobs.isEmpty && categories.isEmpty) {
+          if (_profileJobs.isEmpty && premiumJobs.isEmpty && categories.isEmpty) {
             _hasInitialLoadError = true;
           }
         });
@@ -342,108 +327,70 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
       if (mounted) {
         setState(() {
           _isLoadingPremium = false;
-          _isLoadingFeed = false;
+          _isLoadingProfileJobs = false;
           _hasInitialLoadError = true;
         });
       }
-
       if (e.toString().contains('auth') || e.toString().contains('401')) {
         _verifyAuthState();
       }
+    }
+  }
+
+  Future<void> _loadProfileJobs() async {
+    if (_isLoadingProfileJobs) return;
+    
+    setState(() => _isLoadingProfileJobs = true);
+    
+    try {
+      final jobs = await _jobService.getRecommendedJobs(limit: 43);
+      
+      if (mounted) {
+        setState(() {
+          _profileJobs = jobs;
+          _isLoadingProfileJobs = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading profile jobs: $e');
+      if (mounted) setState(() => _isLoadingProfileJobs = false);
+    }
+  }
+
+  Future<void> _loadActivityJobs() async {
+    if (_isLoadingActivityJobs) return;
+    
+    setState(() => _isLoadingActivityJobs = true);
+    
+    try {
+      final jobs = await _jobService.getJobsBasedOnActivity(limit: 75);
+      
+      if (mounted) {
+        setState(() {
+          _activityJobs = jobs;
+          _isLoadingActivityJobs = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading activity jobs: $e');
+      if (mounted) setState(() => _isLoadingActivityJobs = false);
     }
   }
 
   void _onCategorySelected(String categoryName) {
     setState(() {
       _selectedCategory = categoryName;
-      _selectedCategoryId = categoryName; // For job categories, name is the ID
+      _selectedCategoryId = categoryName;
       _currentOffset = 0;
       _hasMoreData = true;
     });
-
-    _fetchFilteredJobs();
-  }
-
-  Future<void> _fetchFilteredJobs() async {
-    if (!_isAuthenticatedUser) return;
-
-    setState(() {
-      _isLoadingFeed = true;
-      _jobs = [];
-      _currentOffset = 0;
-    });
-
-    try {
-      if (!_authService.isSupabaseAuthenticated) {
-        final refreshed = await _authService.refreshSession();
-        if (!refreshed) {
-          _redirectToLogin();
-          return;
-        }
-      }
-
-      String sortMethod = _sortBy;
-      if (_sortBy == 'Distance' && (_userLatitude == null || _userLongitude == null)) {
-        sortMethod = 'Newest';
-        debugPrint('Distance sort requested but no location, falling back to Newest');
-      }
-
-      final jobs = await _jobService.fetchJobs(
-        categoryId: _selectedCategoryId == 'All Jobs' ? null : _selectedCategoryId,
-        sortBy: sortMethod,
-        offset: 0,
-        limit: _pageSize,
-        userLatitude: _userLatitude,
-        userLongitude: _userLongitude,
-        jobType: _selectedJobType,
-        workMode: _selectedWorkMode,
-        minSalary: _minSalary,
-        maxSalary: _maxSalary,
-      );
-
-      List<Map<String, dynamic>> premiumJobs = [];
-      try {
-        premiumJobs = await _jobService.fetchPremiumJobs(
-          categoryId: _selectedCategoryId == 'All Jobs' ? null : _selectedCategoryId,
-          limit: 10,
-          userLatitude: _userLatitude,
-          userLongitude: _userLongitude,
-        );
-      } catch (e) {
-        debugPrint('Error fetching filtered premium jobs: $e');
-        premiumJobs = _premiumJobs;
-      }
-
-      if (mounted) {
-        setState(() {
-          _jobs = jobs;
-          _premiumJobs = premiumJobs;
-          _currentOffset = 0;
-          _isLoadingFeed = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error fetching filtered jobs: $e');
-      if (mounted) {
-        setState(() {
-          _jobs = [];
-          _isLoadingFeed = false;
-        });
-      }
-
-      if (e.toString().contains('auth') || e.toString().contains('401')) {
-        _verifyAuthState();
-      }
-    }
+    _loadProfileJobs();
   }
 
   void _toggleSaveJob(String jobId) async {
     if (!_isAuthenticatedUser) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please login to save jobs'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Please login to save jobs'), backgroundColor: Colors.red),
       );
       return;
     }
@@ -463,14 +410,8 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
         setState(() {
           if (isSaved) {
             _savedJobIds.add(jobId);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Job saved'), duration: Duration(seconds: 1)),
-            );
           } else {
             _savedJobIds.remove(jobId);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Job removed'), duration: Duration(seconds: 1)),
-            );
           }
         });
       }
@@ -478,13 +419,9 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
       debugPrint('Toggle save job error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update saved jobs'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Failed to update saved jobs'), backgroundColor: Colors.red),
         );
       }
-
       if (e.toString().contains('auth') || e.toString().contains('401')) {
         _verifyAuthState();
       }
@@ -514,15 +451,15 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
             _maxSalary = filters['maxSalary'];
           });
           Navigator.pop(context);
-          _fetchFilteredJobs();
+          _loadProfileJobs();
         },
       ),
     );
   }
 
   void _showJobDetails(Map<String, dynamic> job) {
-    // Track view
     _jobService.trackJobView(job['id']);
+    _jobService.trackJobActivity(job['id'], 'viewed');
 
     Navigator.push(
       context,
@@ -551,8 +488,87 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
   void _navigateToConstructionServices() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => ConstructionServicesHomePage(),
+      MaterialPageRoute(builder: (context) => ConstructionServicesHomePage()),
+    );
+  }
+
+  Widget _buildProfileCompletionBanner() {
+    return InkWell(
+      onTap: _navigateToProfile,
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+        padding: EdgeInsets.all(3.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Color(0xFF2563EB).withOpacity(0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Progress Circle
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 11.w,
+                  height: 11.w,
+                  child: CircularProgressIndicator(
+                    value: _profileCompletion / 100,
+                    backgroundColor: Colors.grey.shade200,
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
+                    strokeWidth: 3,
+                  ),
+                ),
+                Text(
+                  '$_profileCompletion%',
+                  style: TextStyle(
+                    color: Color(0xFF2563EB),
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(width: 3.w),
+            // Text Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'What are you missing out?',
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 0.3.h),
+                  Text(
+                    _missingFields.isNotEmpty
+                        ? '${_missingFields.take(2).join(", ")}'
+                        : 'Daily job recommendations for you',
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 9.5.sp,
+                      height: 1.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, color: Colors.grey.shade400, size: 4.w),
+          ],
+        ),
       ),
     );
   }
@@ -570,16 +586,16 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
               SizedBox(height: 2.h),
               Text(
                 'Verifying authentication...',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: Colors.grey[700],
-                ),
+                style: TextStyle(fontSize: 11.sp, color: Colors.grey[700]),
               ),
             ],
           ),
         ),
       );
     }
+
+    final currentJobs = _tabController.index == 0 ? _profileJobs : _activityJobs;
+    final isCurrentTabLoading = _tabController.index == 0 ? _isLoadingProfileJobs : _isLoadingActivityJobs;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -608,9 +624,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => SearchPage(),
-                      ),
+                      MaterialPageRoute(builder: (context) => SearchPage()),
                     );
                   },
                 ),
@@ -644,54 +658,65 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
                 ),
               ),
 
-              // Filter Header
-              SliverToBoxAdapter(
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _selectedCategory == 'All Jobs' ? 'All Jobs' : _selectedCategory,
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
+              // Profile Completion Banner
+              if (_profileCompletion < 100)
+                SliverToBoxAdapter(child: _buildProfileCompletionBanner()),
+
+              // Tabs Header
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _SliverTabBarDelegate(
+                  Container(
+                    color: Colors.white,
+                    child: TabBar(
+                      controller: _tabController,
+                      labelColor: Color(0xFF2563EB),
+                      unselectedLabelColor: Colors.grey.shade600,
+                      indicatorColor: Color(0xFF2563EB),
+                      indicatorWeight: 2.5,
+                      labelStyle: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w600,
                       ),
-                      InkWell(
-                        onTap: _openJobFilter,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Color(0xFF2563EB)),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                      unselectedLabelStyle: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      tabs: [
+                        Tab(
                           child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.filter_list,
-                                color: Color(0xFF2563EB),
-                                size: 4.5.w,
-                              ),
+                              Text('Profile'),
                               SizedBox(width: 1.w),
                               Text(
-                                'Filter',
-                                style: TextStyle(
-                                  color: Color(0xFF2563EB),
-                                  fontSize: 11.sp,
-                                ),
+                                '(${_profileJobs.length})',
+                                style: TextStyle(fontSize: 9.sp),
                               ),
                             ],
                           ),
                         ),
-                      ),
-                    ],
+                        Tab(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text('Recent activity'),
+                              SizedBox(width: 1.w),
+                              Text(
+                                '(${_activityJobs.length})',
+                                style: TextStyle(fontSize: 9.sp),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
 
               // Jobs List
-              if (_hasInitialLoadError && _jobs.isEmpty)
+              if (_hasInitialLoadError && currentJobs.isEmpty)
                 SliverToBoxAdapter(
                   child: Container(
                     height: 50.h,
@@ -703,12 +728,12 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
                           SizedBox(height: 2.h),
                           Text(
                             'Unable to load jobs',
-                            style: TextStyle(fontSize: 12.sp, color: Colors.grey[700]),
+                            style: TextStyle(fontSize: 11.sp, color: Colors.grey[700]),
                           ),
                           SizedBox(height: 2.h),
                           ElevatedButton(
                             onPressed: _fetchData,
-                            child: Text('Retry'),
+                            child: Text('Retry', style: TextStyle(fontSize: 10.sp)),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Color(0xFF2563EB),
                             ),
@@ -718,23 +743,47 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
                     ),
                   ),
                 )
-              else if (_isLoadingFeed && _jobs.isEmpty)
+              else if (isCurrentTabLoading && currentJobs.isEmpty)
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (_, __) => ShimmerJobCard(),
                     childCount: 6,
                   ),
                 )
+              else if (currentJobs.isEmpty)
+                SliverToBoxAdapter(
+                  child: Container(
+                    height: 40.h,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.work_off, size: 15.w, color: Colors.grey),
+                          SizedBox(height: 2.h),
+                          Text(
+                            'No jobs found',
+                            style: TextStyle(fontSize: 11.sp, color: Colors.grey[700]),
+                          ),
+                          SizedBox(height: 1.h),
+                          Text(
+                            'Try adjusting your preferences',
+                            style: TextStyle(fontSize: 9.sp, color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
               else
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (_, index) => JobCardWidget(
-                      job: _jobs[index],
-                      isSaved: _savedJobIds.contains(_jobs[index]['id']),
-                      onSaveToggle: () => _toggleSaveJob(_jobs[index]['id']),
-                      onTap: () => _showJobDetails(_jobs[index]),
+                      job: currentJobs[index],
+                      isSaved: _savedJobIds.contains(currentJobs[index]['id']),
+                      onSaveToggle: () => _toggleSaveJob(currentJobs[index]['id']),
+                      onTap: () => _showJobDetails(currentJobs[index]),
                     ),
-                    childCount: _jobs.length,
+                    childCount: currentJobs.length,
                   ),
                 ),
 
@@ -743,9 +792,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
                   child: Container(
                     padding: EdgeInsets.all(2.h),
                     child: Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF2563EB),
-                      ),
+                      child: CircularProgressIndicator(color: Color(0xFF2563EB)),
                     ),
                   ),
                 ),
@@ -756,25 +803,48 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> with WidgetsBindingObserver
         ),
       ),
       bottomNavigationBar: BottomNavBarWidget(
-  currentIndex: _currentIndex,
-  hasMessageNotification: true,
-  onTabSelected: (index) {
-    setState(() => _currentIndex = index);
-    if (index == 1) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => SearchPage()),
-      );
-    } else if (index == 2) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => PremiumPackagePage()),
-      );
-    } else if (index == 4) {
-      _navigateToProfile();
-    }
-  },
-),
+        currentIndex: _currentIndex,
+        hasMessageNotification: true,
+        onTabSelected: (index) {
+          setState(() => _currentIndex = index);
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SearchPage()),
+            );
+          } else if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => PremiumPackagePage()),
+            );
+          } else if (index == 4) {
+            _navigateToProfile();
+          }
+        },
+      ),
     );
+  }
+}
+
+// Custom SliverPersistentHeaderDelegate for TabBar
+class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
+  final Widget tabBar;
+
+  _SliverTabBarDelegate(this.tabBar);
+
+  @override
+  double get minExtent => 48;
+
+  @override
+  double get maxExtent => 48;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return tabBar;
+  }
+
+  @override
+  bool shouldRebuild(_SliverTabBarDelegate oldDelegate) {
+    return false;
   }
 }
