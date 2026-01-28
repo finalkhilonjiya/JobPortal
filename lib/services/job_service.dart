@@ -36,9 +36,6 @@ class JobService {
     return degree * math.pi / 180;
   }
 
-  // ============================================
-  // FETCH REGULAR JOBS
-  // ============================================
   Future<List<Map<String, dynamic>>> fetchJobs({
     String? categoryId,
     String? sortBy = 'Newest',
@@ -64,12 +61,10 @@ class JobService {
           .select('*')
           .eq('status', 'active');
 
-      // Category Filter
       if (categoryId != null && categoryId != 'All' && categoryId != 'All Jobs') {
         query = query.eq('job_category', categoryId);
       }
 
-      // Search Query Filter
       if (searchQuery != null && searchQuery.isNotEmpty) {
         query = query.or(
           'job_title.ilike.%$searchQuery%,'
@@ -78,12 +73,10 @@ class JobService {
         );
       }
 
-      // Location Filter
       if (location != null && location.isNotEmpty) {
         query = query.ilike('district', '%$location%');
       }
 
-      // Salary Filter
       if (minSalary != null) {
         query = query.gte('salary_min', minSalary);
       }
@@ -91,17 +84,14 @@ class JobService {
         query = query.lte('salary_max', maxSalary);
       }
 
-      // Job Type Filter
       if (jobType != null && jobType != 'All') {
         query = query.eq('job_type', jobType);
       }
 
-      // Work Mode Filter
       if (workMode != null && workMode != 'All') {
         query = query.eq('work_mode', workMode);
       }
 
-      // Apply sorting BEFORE range
       final List<Map<String, dynamic>> response;
       if (sortBy == 'Salary (High-Low)') {
         response = await query.order('salary_max', ascending: false).range(offset, offset + limit - 1);
@@ -110,13 +100,11 @@ class JobService {
       } else if (sortBy == 'Oldest') {
         response = await query.order('created_at', ascending: true).range(offset, offset + limit - 1);
       } else {
-        // Default: Newest
         response = await query.order('created_at', ascending: false).range(offset, offset + limit - 1);
       }
 
       var jobs = List<Map<String, dynamic>>.from(response);
 
-      // Calculate distance if user location is provided
       if (userLatitude != null && userLongitude != null) {
         jobs = jobs.map((job) {
           if (job['latitude'] != null && job['longitude'] != null) {
@@ -132,7 +120,6 @@ class JobService {
           return job;
         }).toList();
 
-        // Sort by distance if requested
         if (sortBy == 'Distance') {
           jobs.sort((a, b) {
             final distA = a['distance'] ?? 999999.0;
@@ -155,9 +142,6 @@ class JobService {
     }
   }
 
-  // ============================================
-  // FETCH PREMIUM JOBS
-  // ============================================
   Future<List<Map<String, dynamic>>> fetchPremiumJobs({
     String? categoryId,
     int limit = 10,
@@ -183,7 +167,6 @@ class JobService {
 
       var jobs = List<Map<String, dynamic>>.from(response);
 
-      // Calculate distance if user location provided
       if (userLatitude != null && userLongitude != null) {
         jobs = jobs.map((job) {
           if (job['latitude'] != null && job['longitude'] != null) {
@@ -217,9 +200,6 @@ class JobService {
     }
   }
 
-  // ============================================
-  // GET JOB CATEGORIES
-  // ============================================
   Future<List<Map<String, dynamic>>> getJobCategories() async {
     try {
       final response = await _supabase
@@ -235,9 +215,6 @@ class JobService {
     }
   }
 
-  // ============================================
-  // GET SAVED JOBS
-  // ============================================
   Future<Set<String>> getUserSavedJobs() async {
     await _ensureAuthenticated();
     
@@ -263,9 +240,6 @@ class JobService {
     }
   }
 
-  // ============================================
-  // TOGGLE SAVE JOB
-  // ============================================
   Future<bool> toggleSaveJob(String jobId) async {
     await _ensureAuthenticated();
     
@@ -308,9 +282,6 @@ class JobService {
     }
   }
 
-  // ============================================
-  // TRACK JOB VIEW
-  // ============================================
   Future<void> trackJobView(String jobId, {int? viewDurationSeconds}) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
@@ -327,9 +298,6 @@ class JobService {
     }
   }
 
-  // ============================================
-  // GET RECENTLY VIEWED JOBS
-  // ============================================
   Future<List<Map<String, dynamic>>> getRecentlyViewedJobs({int limit = 10}) async {
     await _ensureAuthenticated();
     
@@ -353,9 +321,6 @@ class JobService {
     }
   }
 
-  // ============================================
-  // APPLY TO JOB
-  // ============================================
   Future<void> applyToJob({
     required String jobId,
     required String applicationId,
@@ -366,7 +331,6 @@ class JobService {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) throw Exception('User not authenticated');
 
-      // Check if already applied
       final existingApplication = await _supabase
           .from('job_applications_listings')
           .select('id')
@@ -378,7 +342,6 @@ class JobService {
         throw Exception('You have already applied to this job');
       }
 
-      // Create application record
       await _supabase.from('job_applications_listings').insert({
         'application_id': applicationId,
         'listing_id': jobId,
@@ -391,9 +354,6 @@ class JobService {
     }
   }
 
-  // ============================================
-  // GET USER'S APPLIED JOBS
-  // ============================================
   Future<List<Map<String, dynamic>>> getUserAppliedJobs() async {
     await _ensureAuthenticated();
     
@@ -401,7 +361,6 @@ class JobService {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return [];
 
-      // First get user's application ID
       final applicationResponse = await _supabase
           .from('job_applications')
           .select('id')
@@ -412,7 +371,6 @@ class JobService {
 
       final applicationId = applicationResponse['id'];
 
-      // Get applied jobs
       final response = await _supabase
           .from('job_applications_listings')
           .select('*, job_listings(*)')
@@ -426,21 +384,16 @@ class JobService {
     }
   }
 
-  // ============================================
-  // GET SIMILAR JOBS
-  // ============================================
   Future<List<Map<String, dynamic>>> getSimilarJobs(String jobId, {int limit = 5}) async {
     await _ensureAuthenticated();
     
     try {
-      // Get current job details
       final currentJob = await _supabase
           .from('job_listings')
           .select('job_category, district')
           .eq('id', jobId)
           .single();
 
-      // Fetch similar jobs (same category or location)
       final response = await _supabase
           .from('job_listings')
           .select('*')
@@ -456,9 +409,6 @@ class JobService {
     }
   }
 
-  // ============================================
-  // GET COMPANIES
-  // ============================================
   Future<List<Map<String, dynamic>>> getCompanies({int limit = 50}) async {
     try {
       final response = await _supabase
@@ -474,9 +424,6 @@ class JobService {
     }
   }
 
-  // ============================================
-  // GET COMPANY JOBS
-  // ============================================
   Future<List<Map<String, dynamic>>> getCompanyJobs(String companyName) async {
     await _ensureAuthenticated();
     
@@ -495,9 +442,6 @@ class JobService {
     }
   }
 
-  // ============================================
-  // SEARCH JOBS
-  // ============================================
   Future<List<Map<String, dynamic>>> searchJobs(String query, {int limit = 20}) async {
     await _ensureAuthenticated();
     
@@ -516,9 +460,6 @@ class JobService {
     }
   }
 
-  // ============================================
-  // GET SKILLS
-  // ============================================
   Future<List<String>> getSkills({String? searchQuery}) async {
     try {
       var query = _supabase
@@ -542,9 +483,6 @@ class JobService {
     }
   }
 
-  // ============================================
-  // GET JOB STATS
-  // ============================================
   Future<Map<String, dynamic>> getJobStats() async {
     try {
       final jobsResponse = await _supabase
@@ -565,9 +503,7 @@ class JobService {
       return {'total_jobs': 0, 'total_companies': 0};
     }
   }
- // ============================================
-  // GET RECOMMENDED JOBS (PROFILE-BASED)
-  // ============================================
+
   Future<List<Map<String, dynamic>>> getRecommendedJobs({
     int limit = 43,
     int offset = 0,
@@ -578,7 +514,6 @@ class JobService {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return [];
 
-      // Get user profile for matching
       final profile = await _supabase
           .from('user_profiles')
           .select('skills, preferred_job_types, preferred_locations, expected_salary_min, total_experience_years, current_city')
@@ -589,17 +524,14 @@ class JobService {
         return await fetchJobs(limit: limit, offset: offset);
       }
 
-      // Get jobs matching user profile
       var query = _supabase
           .from('job_listings')
           .select('*')
           .eq('status', 'active');
 
-      // Filter by preferred locations if available
       if (profile['preferred_locations'] != null && 
           (profile['preferred_locations'] as List).isNotEmpty) {
-        final locations = (profile['preferred_locations'] as List).join(',');
-        query = query.in_('district', profile['preferred_locations']);
+        query = query.inFilter('district', profile['preferred_locations']);
       }
 
       final response = await query
@@ -608,13 +540,11 @@ class JobService {
 
       var jobs = List<Map<String, dynamic>>.from(response);
 
-      // Calculate match score for each job
       jobs = jobs.map((job) {
         final matchScore = _calculateMatchScore(job, profile);
         return {...job, 'match_score': matchScore};
       }).toList();
 
-      // Sort by match score
       jobs.sort((a, b) => (b['match_score'] as int).compareTo(a['match_score'] as int));
 
       return jobs;
@@ -624,9 +554,6 @@ class JobService {
     }
   }
 
-  // ============================================
-  // GET JOBS BASED ON RECENT ACTIVITY
-  // ============================================
   Future<List<Map<String, dynamic>>> getJobsBasedOnActivity({
     int limit = 75,
   }) async {
@@ -636,7 +563,6 @@ class JobService {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return [];
 
-      // Get user's recent viewed/applied jobs
       final recentJobs = await _supabase
           .from('job_views')
           .select('job_id, job_listings(job_category, district, skills_required)')
@@ -648,7 +574,6 @@ class JobService {
         return await getRecommendedJobs(limit: limit);
       }
 
-      // Extract categories and locations from recent activity
       final categories = <String>{};
       final locations = <String>{};
       final skills = <String>{};
@@ -664,14 +589,13 @@ class JobService {
         }
       }
 
-      // Find similar jobs
       var query = _supabase
           .from('job_listings')
           .select('*')
           .eq('status', 'active');
 
       if (categories.isNotEmpty) {
-        query = query.in_('job_category', categories.toList());
+        query = query.inFilter('job_category', categories.toList());
       }
 
       final response = await query
@@ -685,9 +609,6 @@ class JobService {
     }
   }
 
-  // ============================================
-  // CALCULATE PROFILE COMPLETION
-  // ============================================
   Future<int> calculateProfileCompletion() async {
     await _ensureAuthenticated();
 
@@ -704,33 +625,28 @@ class JobService {
       int completedFields = 0;
       int totalFields = 20;
 
-      // Basic info (5 fields)
       if (profile['full_name'] != null && profile['full_name'].toString().isNotEmpty) completedFields++;
       if (profile['email'] != null && profile['email'].toString().isNotEmpty) completedFields++;
       if (profile['mobile_number'] != null && profile['mobile_number'].toString().isNotEmpty) completedFields++;
       if (profile['current_city'] != null && profile['current_city'].toString().isNotEmpty) completedFields++;
       if (profile['avatar_url'] != null && profile['avatar_url'].toString().isNotEmpty) completedFields++;
 
-      // Work info (5 fields)
       if (profile['current_job_title'] != null && profile['current_job_title'].toString().isNotEmpty) completedFields++;
       if (profile['current_company'] != null && profile['current_company'].toString().isNotEmpty) completedFields++;
       if (profile['total_experience_years'] != null && profile['total_experience_years'] > 0) completedFields++;
       if (profile['resume_url'] != null && profile['resume_url'].toString().isNotEmpty) completedFields++;
       if (profile['resume_headline'] != null && profile['resume_headline'].toString().isNotEmpty) completedFields++;
 
-      // Skills and preferences (5 fields)
       if (profile['skills'] != null && (profile['skills'] as List).isNotEmpty) completedFields++;
       if (profile['highest_education'] != null && profile['highest_education'].toString().isNotEmpty) completedFields++;
       if (profile['preferred_job_types'] != null && (profile['preferred_job_types'] as List).isNotEmpty) completedFields++;
       if (profile['preferred_locations'] != null && (profile['preferred_locations'] as List).isNotEmpty) completedFields++;
       if (profile['expected_salary_min'] != null) completedFields++;
 
-      // Additional info (5 fields)
       if (profile['bio'] != null && profile['bio'].toString().isNotEmpty) completedFields++;
       if (profile['notice_period_days'] != null) completedFields++;
       if (profile['is_open_to_work'] != null) completedFields++;
       
-      // Check for education records
       final education = await _supabase
           .from('user_education')
           .select('id')
@@ -738,7 +654,6 @@ class JobService {
           .limit(1);
       if (education.isNotEmpty) completedFields++;
 
-      // Check for experience records
       final experience = await _supabase
           .from('user_experience')
           .select('id')
@@ -748,7 +663,6 @@ class JobService {
 
       final percentage = ((completedFields / totalFields) * 100).round();
 
-      // Update profile completion percentage
       await _supabase
           .from('user_profiles')
           .update({'profile_completion_percentage': percentage})
@@ -761,13 +675,9 @@ class JobService {
     }
   }
 
-  // ============================================
-  // CALCULATE MATCH SCORE
-  // ============================================
   int _calculateMatchScore(Map<String, dynamic> job, Map<String, dynamic> profile) {
     int score = 0;
 
-    // Skills match (40 points max)
     final jobSkills = (job['skills_required'] as List?)?.cast<String>() ?? [];
     final userSkills = (profile['skills'] as List?)?.cast<String>() ?? [];
     if (jobSkills.isNotEmpty && userSkills.isNotEmpty) {
@@ -777,14 +687,12 @@ class JobService {
       score += ((matchingSkills / jobSkills.length) * 40).round();
     }
 
-    // Job type match (20 points)
     final jobType = job['job_type'] as String?;
     final preferredTypes = (profile['preferred_job_types'] as List?)?.cast<String>() ?? [];
     if (jobType != null && preferredTypes.contains(jobType)) {
       score += 20;
     }
 
-    // Location match (20 points)
     final jobLocation = job['district'] as String?;
     final preferredLocations = (profile['preferred_locations'] as List?)?.cast<String>() ?? [];
     final currentCity = profile['current_city'] as String?;
@@ -796,7 +704,6 @@ class JobService {
       }
     }
 
-    // Salary match (20 points)
     final salaryMin = job['salary_min'] as int?;
     final expectedMin = profile['expected_salary_min'] as int?;
     if (salaryMin != null && expectedMin != null) {
@@ -810,9 +717,6 @@ class JobService {
     return score.clamp(0, 100);
   }
 
-  // ============================================
-  // TRACK JOB ACTIVITY
-  // ============================================
   Future<void> trackJobActivity(String jobId, String activityType) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
@@ -829,9 +733,6 @@ class JobService {
     }
   }
 
-  // ============================================
-  // GET USER PROFILE COMPLETION DATA
-  // ============================================
   Future<Map<String, dynamic>> getProfileCompletionData() async {
     await _ensureAuthenticated();
 
