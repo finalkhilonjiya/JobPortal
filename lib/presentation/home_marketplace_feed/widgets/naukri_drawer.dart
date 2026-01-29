@@ -4,6 +4,8 @@ import '../../login_screen/mobile_login_screen.dart';
 import '../profile_page.dart';
 import '../premium_package_page.dart';
 import '../search_page.dart';
+import '../profile_page.dart';
+
 
 class NaukriDrawer extends StatelessWidget {
   final String userName;
