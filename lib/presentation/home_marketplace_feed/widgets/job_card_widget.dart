@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import 'package:intl/intl.dart';
 import 'dart:math';
 
 class JobCardWidget extends StatelessWidget {
@@ -31,29 +30,22 @@ class JobCardWidget extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
+        margin: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.6.h),
         padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 2.h),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            colors: [
-              Colors.blue.withOpacity(0.03),
-              Colors.white,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         child: Stack(
           children: [
-            /// MAIN CONTENT
+            /// CONTENT
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -69,7 +61,7 @@ class JobCardWidget extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
 
-                SizedBox(height: 0.6.h),
+                SizedBox(height: 0.5.h),
 
                 /// COMPANY
                 Text(
@@ -86,10 +78,10 @@ class JobCardWidget extends StatelessWidget {
                 _iconText(
                   icon: Icons.location_on_outlined,
                   text: location,
-                  color: Colors.blueGrey,
+                  iconColor: Colors.blueGrey,
                 ),
 
-                SizedBox(height: 0.6.h),
+                SizedBox(height: 0.5.h),
 
                 /// EXPERIENCE
                 _iconText(
@@ -97,15 +89,15 @@ class JobCardWidget extends StatelessWidget {
                   text: experience.isNotEmpty
                       ? experience
                       : 'Experience not specified',
-                  color: Colors.deepPurple,
+                  iconColor: Colors.deepPurple,
                 ),
 
                 if (salaryMin != null || salaryMax != null) ...[
-                  SizedBox(height: 0.6.h),
+                  SizedBox(height: 0.5.h),
                   _iconText(
                     icon: Icons.currency_rupee,
                     text: _formatSalary(salaryMin, salaryMax),
-                    color: Colors.green.shade700,
+                    iconColor: Colors.green.shade700,
                   ),
                 ],
 
@@ -122,7 +114,7 @@ class JobCardWidget extends StatelessWidget {
                   ),
                 ],
 
-                SizedBox(height: 1.4.h),
+                SizedBox(height: 1.2.h),
 
                 /// FOOTER
                 Row(
@@ -152,7 +144,7 @@ class JobCardWidget extends StatelessWidget {
               ],
             ),
 
-            /// COMPANY LOGO (TOP RIGHT – SUBTLE)
+            /// COMPANY LOGO (SUBTLE, TOP-RIGHT)
             Positioned(
               top: 0,
               right: 0,
@@ -164,16 +156,14 @@ class JobCardWidget extends StatelessWidget {
     );
   }
 
-  /// ---------------- HELPERS ----------------
-
   Widget _iconText({
     required IconData icon,
     required String text,
-    required Color color,
+    required Color iconColor,
   }) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: color),
+        Icon(icon, size: 16, color: iconColor),
         SizedBox(width: 2.w),
         Expanded(
           child: Text(
@@ -207,8 +197,7 @@ class JobCardWidget extends StatelessWidget {
   }
 }
 
-/// ---------------- LOGO ----------------
-
+/// COMPANY LOGO PLACEHOLDER
 class _CompanyLogo extends StatelessWidget {
   final String company;
 
@@ -223,17 +212,17 @@ class _CompanyLogo extends StatelessWidget {
         Random(company.hashCode).nextInt(Colors.primaries.length)];
 
     return Container(
-      width: 36,
-      height: 36,
+      width: 34,
+      height: 34,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       alignment: Alignment.center,
       child: Text(
         letter,
         style: TextStyle(
-          fontSize: 14.sp,
+          fontSize: 13.sp,
           fontWeight: FontWeight.bold,
           color: color,
         ),
