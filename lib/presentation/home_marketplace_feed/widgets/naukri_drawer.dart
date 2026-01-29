@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+
 import '../../login_screen/mobile_login_screen.dart';
 import 'profile_page.dart';
 import '../premium_package_page.dart';
 import '../search_page.dart';
-
 
 class NaukriDrawer extends StatelessWidget {
   final String userName;
@@ -23,14 +23,18 @@ class NaukriDrawer extends StatelessWidget {
     return Drawer(
       child: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             /// HEADER
             Padding(
-              padding: EdgeInsets.all(4.w),
+              padding: EdgeInsets.fromLTRB(4.w, 3.h, 3.w, 2.h),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _profileCircle(),
-                  SizedBox(width: 3.w),
+                  _ProfileCompletionCircle(
+                    completion: profileCompletion,
+                  ),
+                  SizedBox(width: 4.w),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,11 +42,12 @@ class NaukriDrawer extends StatelessWidget {
                         Text(
                           userName.isEmpty ? 'Your Profile' : userName,
                           style: TextStyle(
-                            fontSize: 12.sp,
+                            fontSize: 13.sp,
                             fontWeight: FontWeight.w600,
+                            color: Colors.black87,
                           ),
                         ),
-                        SizedBox(height: 0.5.h),
+                        SizedBox(height: 0.6.h),
                         InkWell(
                           onTap: () {
                             Navigator.pop(context);
@@ -52,10 +57,12 @@ class NaukriDrawer extends StatelessWidget {
                             );
                           },
                           child: Text(
-                            'Complete profile',
+                            profileCompletion < 100
+                                ? 'Complete your profile'
+                                : 'View profile',
                             style: TextStyle(
-                              fontSize: 10.sp,
-                              color: Colors.blue,
+                              fontSize: 10.5.sp,
+                              color: Colors.blue.shade600,
                             ),
                           ),
                         ),
@@ -63,17 +70,18 @@ class NaukriDrawer extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.close),
+                    icon: const Icon(Icons.close),
                     onPressed: onClose,
                   ),
                 ],
               ),
             ),
 
-            /// UPGRADE
+            /// UPGRADE CARD
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 4.w),
               child: InkWell(
+                borderRadius: BorderRadius.circular(10),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
@@ -82,21 +90,40 @@ class NaukriDrawer extends StatelessWidget {
                   );
                 },
                 child: Container(
-                  padding: EdgeInsets.all(3.w),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 4.w,
+                    vertical: 1.6.h,
+                  ),
                   decoration: BoxDecoration(
-                    color: Colors.amber.shade50,
-                    borderRadius: BorderRadius.circular(8),
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.amber.shade100,
+                        Colors.amber.shade50,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.workspace_premium, color: Colors.amber),
+                      Icon(
+                        Icons.workspace_premium,
+                        color: Colors.amber.shade800,
+                        size: 22,
+                      ),
                       SizedBox(width: 3.w),
-                      Text(
-                        'Upgrade to Pro',
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w600,
+                      Expanded(
+                        child: Text(
+                          'Upgrade to Pro',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 14,
+                        color: Colors.grey.shade600,
                       ),
                     ],
                   ),
@@ -104,14 +131,14 @@ class NaukriDrawer extends StatelessWidget {
               ),
             ),
 
-            SizedBox(height: 2.h),
+            SizedBox(height: 3.h),
 
-            /// MENU
+            /// MENU SECTION
             Expanded(
               child: ListView(
+                padding: EdgeInsets.zero,
                 children: [
-                  _menuItem(
-                    context,
+                  _DrawerItem(
                     icon: Icons.search,
                     label: 'Search jobs',
                     onTap: () {
@@ -122,46 +149,47 @@ class NaukriDrawer extends StatelessWidget {
                       );
                     },
                   ),
-                  _menuItem(
-                    context,
+                  _DrawerItem(
                     icon: Icons.work_outline,
                     label: 'Recommended jobs',
                     onTap: onClose,
                   ),
-                  _menuItem(
-                    context,
+                  _DrawerItem(
                     icon: Icons.bookmark_border,
                     label: 'Saved jobs',
                     onTap: () {},
                   ),
-                  _menuItem(
-                    context,
-                    icon: Icons.bar_chart,
+                  _DrawerItem(
+                    icon: Icons.bar_chart_outlined,
                     label: 'Profile performance',
                     onTap: () {},
                   ),
-                  Divider(),
-                  _menuItem(
-                    context,
-                    icon: Icons.settings,
+
+                  _Divider(),
+
+                  _DrawerItem(
+                    icon: Icons.settings_outlined,
                     label: 'Settings',
                     onTap: () {},
                   ),
-                  _menuItem(
-                    context,
+                  _DrawerItem(
                     icon: Icons.help_outline,
                     label: 'Help',
                     onTap: () {},
                   ),
-                  Divider(),
-                  _menuItem(
-                    context,
+
+                  _Divider(),
+
+                  _DrawerItem(
                     icon: Icons.logout,
                     label: 'Logout',
+                    iconColor: Colors.redAccent,
                     onTap: () {
                       Navigator.pushAndRemoveUntil(
                         context,
-                        MaterialPageRoute(builder: (_) => MobileLoginScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => MobileLoginScreen(),
+                        ),
                         (_) => false,
                       );
                     },
@@ -174,40 +202,83 @@ class NaukriDrawer extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _profileCircle() {
+/// ===================== COMPONENTS =====================
+
+class _ProfileCompletionCircle extends StatelessWidget {
+  final int completion;
+
+  const _ProfileCompletionCircle({required this.completion});
+
+  @override
+  Widget build(BuildContext context) {
     return Stack(
       alignment: Alignment.center,
       children: [
         SizedBox(
-          width: 14.w,
-          height: 14.w,
+          width: 46,
+          height: 46,
           child: CircularProgressIndicator(
-            value: profileCompletion / 100,
+            value: completion / 100,
             strokeWidth: 3,
+            color: Colors.blue,
+            backgroundColor: Colors.grey.shade300,
           ),
         ),
         Text(
-          '$profileCompletion%',
-          style: TextStyle(fontSize: 9.sp, fontWeight: FontWeight.bold),
+          '$completion%',
+          style: TextStyle(
+            fontSize: 10.sp,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );
   }
+}
 
-  Widget _menuItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
+class _DrawerItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? iconColor;
+
+  const _DrawerItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.iconColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, size: 6.w),
+      leading: Icon(
+        icon,
+        size: 20,
+        color: iconColor ?? Colors.grey.shade800,
+      ),
       title: Text(
         label,
-        style: TextStyle(fontSize: 11.sp),
+        style: TextStyle(
+          fontSize: 11.5.sp,
+          color: Colors.black87,
+        ),
       ),
       onTap: onTap,
+      horizontalTitleGap: 2.w,
+      dense: true,
+    );
+  }
+}
+
+class _Divider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 1.h),
+      child: Divider(height: 1, color: Colors.grey.shade300),
     );
   }
 }
