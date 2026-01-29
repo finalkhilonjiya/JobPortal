@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+
 import './widgets/top_bar_widget.dart';
 import './widgets/job_card_widget.dart';
 import './widgets/shimmer_widgets.dart';
 import './widgets/job_details_page.dart';
 import './widgets/naukri_drawer.dart';
+import './widgets/profile_page.dart';
+
 import '../login_screen/mobile_login_screen.dart';
 import '../login_screen/mobile_auth_service.dart';
+
 import '../../services/job_service.dart';
+
 import './search_page.dart';
 import './premium_package_page.dart';
-import './widgets/profile_page.dart';
 
 class HomeJobsFeed extends StatefulWidget {
   const HomeJobsFeed({Key? key}) : super(key: key);
@@ -127,7 +131,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed>
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
 
-      /// DRAWER
+      /// DRAWER (correctly attached)
       drawer: NaukriDrawer(
         userName: '',
         profileCompletion: _profileCompletion,
@@ -137,20 +141,26 @@ class _HomeJobsFeedState extends State<HomeJobsFeed>
       body: SafeArea(
         child: Column(
           children: [
-            /// TOP BAR
-            TopBarWidget(
-              currentLocation: _currentLocation,
-              onMenuTap: () => Scaffold.of(context).openDrawer(),
-              onSearchTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => SearchPage()),
+            /// TOP BAR — FIXED WITH BUILDER
+            Builder(
+              builder: (scaffoldContext) {
+                return TopBarWidget(
+                  currentLocation: _currentLocation,
+                  onMenuTap: () {
+                    Scaffold.of(scaffoldContext).openDrawer();
+                  },
+                  onSearchTap: () {
+                    Navigator.push(
+                      scaffoldContext,
+                      MaterialPageRoute(builder: (_) => SearchPage()),
+                    );
+                  },
+                  onLocationDetected: _onLocationDetected,
                 );
               },
-              onLocationDetected: _onLocationDetected,
             ),
 
-            /// TABS
+            /// TABS (Naukri-style simple tabs)
             Container(
               color: Colors.white,
               child: TabBar(
@@ -173,12 +183,13 @@ class _HomeJobsFeedState extends State<HomeJobsFeed>
               ),
             ),
 
-            /// JOB LIST
+            /// JOB LIST (flat, Naukri-style)
             Expanded(
               child: _isLoadingProfile
                   ? ListView.builder(
                       itemCount: 6,
-                      itemBuilder: (_, __) => const ShimmerJobCard(),
+                      itemBuilder: (_, __) =>
+                          const ShimmerJobCard(),
                     )
                   : ListView.builder(
                       itemCount:
