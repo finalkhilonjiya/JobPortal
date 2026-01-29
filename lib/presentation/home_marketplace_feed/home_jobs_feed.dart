@@ -6,7 +6,6 @@ import './widgets/job_card_widget.dart';
 import './widgets/shimmer_widgets.dart';
 import './widgets/job_details_page.dart';
 import './widgets/naukri_drawer.dart';
-import './widgets/profile_page.dart';
 
 import '../login_screen/mobile_login_screen.dart';
 import '../login_screen/mobile_auth_service.dart';
@@ -14,208 +13,202 @@ import '../login_screen/mobile_auth_service.dart';
 import '../../services/job_service.dart';
 
 import './search_page.dart';
-import './premium_package_page.dart';
 
 class HomeJobsFeed extends StatefulWidget {
-const HomeJobsFeed({Key? key}) : super(key: key);
+  const HomeJobsFeed({Key? key}) : super(key: key);
 
-@override
-State<HomeJobsFeed> createState() => _HomeJobsFeedState();
+  @override
+  State<HomeJobsFeed> createState() => _HomeJobsFeedState();
 }
 
 class _HomeJobsFeedState extends State<HomeJobsFeed>
-with SingleTickerProviderStateMixin {
-final JobService _jobService = JobService();
-final MobileAuthService _authService = MobileAuthService();
+    with SingleTickerProviderStateMixin {
+  final JobService _jobService = JobService();
+  final MobileAuthService _authService = MobileAuthService();
 
-late TabController _tabController;
+  late TabController _tabController;
 
-bool _isCheckingAuth = true;
-bool _isAuthenticated = false;
+  bool _isCheckingAuth = true;
 
-String _currentLocation = 'Detecting...';
-int _profileCompletion = 0;
+  String _currentLocation = 'Detecting...';
+  int _profileCompletion = 0;
 
-List<Map<String, dynamic>> _profileJobs = [];
-List<Map<String, dynamic>> _activityJobs = [];
-List<Map<String, dynamic>> _premiumJobs = [];
-Set<String> _savedJobIds = {};
+  List<Map<String, dynamic>> _profileJobs = [];
+  List<Map<String, dynamic>> _activityJobs = [];
+  List<Map<String, dynamic>> _premiumJobs = [];
+  Set<String> _savedJobIds = {};
 
-bool _isLoadingProfile = true;
-bool _isLoadingActivity = false;
+  bool _isLoadingProfile = true;
+  bool _isLoadingActivity = false;
 
-@override
-void initState() {
-super.initState();
-_tabController = TabController(length: 2, vsync: this);
-_initialize();
-}
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _initialize();
+  }
 
-Future<void> _initialize() async {
-try {
-await _authService.initialize();
-if (!_authService.isAuthenticated) {
-_redirectToLogin();
-return;
-}
+  Future<void> _initialize() async {
+    try {
+      await _authService.initialize();
+      if (!_authService.isAuthenticated) {
+        _redirectToLogin();
+        return;
+      }
 
-_isAuthenticated = true;  
-  await _authService.refreshSession();  
+      await _authService.refreshSession();
+      await _loadInitialData();
+    } catch (_) {
+      _redirectToLogin();
+    }
+  }
 
-  await _loadInitialData();  
-} catch (_) {  
-  _redirectToLogin();  
-}
+  Future<void> _loadInitialData() async {
+    setState(() => _isCheckingAuth = false);
 
-}
+    _profileCompletion =
+        await _jobService.calculateProfileCompletion();
 
-Future<void> _loadInitialData() async {
-setState(() => _isCheckingAuth = false);
+    _savedJobIds = await _jobService.getUserSavedJobs();
 
-_profileCompletion =  
-    await _jobService.calculateProfileCompletion();  
+    _premiumJobs = await _jobService.fetchPremiumJobs(limit: 5);
 
-_savedJobIds = await _jobService.getUserSavedJobs();  
+    _profileJobs = await _jobService.getRecommendedJobs();
 
-_premiumJobs = await _jobService.fetchPremiumJobs(limit: 5);  
+    setState(() => _isLoadingProfile = false);
+  }
 
-_profileJobs = await _jobService.getRecommendedJobs();  
+  /// ✅ CORRECT + USED
+  void _redirectToLogin() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => MobileLoginScreen()),
+      (_) => false,
+    );
+  }
 
-setState(() => _isLoadingProfile = false);
+  void _onLocationDetected(
+      double lat, double lng, String locationName) {
+    setState(() => _currentLocation = locationName);
+  }
 
-}
+  void _toggleSaveJob(String jobId) async {
+    final isSaved = await _jobService.toggleSaveJob(jobId);
+    setState(() {
+      isSaved ? _savedJobIds.add(jobId) : _savedJobIds.remove(jobId);
+    });
+  }
 
-void redirectToLogin() {
-Navigator.pushAndRemoveUntil(
-context,
-MaterialPageRoute(builder: () => MobileLoginScreen()),
-(_) => false,
-);
-}
+  void _openJobDetails(Map<String, dynamic> job) {
+    _jobService.trackJobView(job['id']); // ✅ fixed
 
-void _onLocationDetected(
-double lat, double lng, String locationName) {
-setState(() => _currentLocation = locationName);
-}
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => JobDetailsPage(
+          job: job,
+          isSaved: _savedJobIds.contains(job['id']),
+          onSaveToggle: () => _toggleSaveJob(job['id']),
+        ),
+      ),
+    );
+  }
 
-void _toggleSaveJob(String jobId) async {
-final isSaved = await _jobService.toggleSaveJob(jobId);
-setState(() {
-isSaved ? _savedJobIds.add(jobId) : _savedJobIds.remove(jobId);
-});
-}
+  @override
+  Widget build(BuildContext context) {
+    if (_isCheckingAuth) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
-void _openJobDetails(Map<String, dynamic> job) {
-jobService.trackJobView(job['id']);
-Navigator.push(
-context,
-MaterialPageRoute(
-builder: () => JobDetailsPage(
-job: job,
-isSaved: _savedJobIds.contains(job['id']),
-onSaveToggle: () => _toggleSaveJob(job['id']),
-),
-),
-);
-}
+    final jobs =
+        _tabController.index == 0 ? _profileJobs : _activityJobs;
 
-@override
-Widget build(BuildContext context) {
-if (_isCheckingAuth) {
-return const Scaffold(
-body: Center(child: CircularProgressIndicator()),
-);
-}
+    return Scaffold(
+      backgroundColor: Colors.grey.shade50,
 
-final jobs =  
-    _tabController.index == 0 ? _profileJobs : _activityJobs;  
+      drawer: NaukriDrawer(
+        userName: '',
+        profileCompletion: _profileCompletion,
+        onClose: () => Navigator.pop(context),
+      ),
 
-return Scaffold(  
-  backgroundColor: Colors.grey.shade50,  
+      body: SafeArea(
+        child: Column(
+          children: [
+            /// TOP BAR (drawer-safe)
+            Builder(
+              builder: (scaffoldContext) {
+                return TopBarWidget(
+                  currentLocation: _currentLocation,
+                  onMenuTap: () =>
+                      Scaffold.of(scaffoldContext).openDrawer(),
+                  onSearchTap: () {
+                    Navigator.push(
+                      scaffoldContext,
+                      MaterialPageRoute(
+                          builder: (_) => SearchPage()),
+                    );
+                  },
+                  onLocationDetected: _onLocationDetected,
+                );
+              },
+            ),
 
-  /// DRAWER (correctly attached)  
-  drawer: NaukriDrawer(  
-    userName: '',  
-    profileCompletion: _profileCompletion,  
-    onClose: () => Navigator.pop(context),  
-  ),  
+            /// TABS
+            Container(
+              color: Colors.white,
+              child: TabBar(
+                controller: _tabController,
+                labelColor: Colors.blue,
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: Colors.blue,
+                tabs: const [
+                  Tab(text: 'Profile'),
+                  Tab(text: 'Recent activity'),
+                ],
+                onTap: (i) async {
+                  if (i == 1 && _activityJobs.isEmpty) {
+                    setState(() => _isLoadingActivity = true);
+                    _activityJobs =
+                        await _jobService.getJobsBasedOnActivity();
+                    setState(() => _isLoadingActivity = false);
+                  }
+                },
+              ),
+            ),
 
-  body: SafeArea(  
-    child: Column(  
-      children: [  
-        /// TOP BAR — FIXED WITH BUILDER  
-        Builder(  
-          builder: (scaffoldContext) {  
-            return TopBarWidget(  
-              currentLocation: _currentLocation,  
-              onMenuTap: () {  
-                Scaffold.of(scaffoldContext).openDrawer();  
-              },  
-              onSearchTap: () {  
-                Navigator.push(  
-                  scaffoldContext,  
-                  MaterialPageRoute(builder: (_) => SearchPage()),  
-                );  
-              },  
-              onLocationDetected: _onLocationDetected,  
-            );  
-          },  
-        ),  
+            /// JOB LIST
+            Expanded(
+              child: _isLoadingProfile
+                  ? ListView.builder(
+                      itemCount: 6,
+                      itemBuilder: (_, __) =>
+                          const ShimmerJobCard(),
+                    )
+                  : ListView.builder(
+                      itemCount:
+                          _premiumJobs.length + jobs.length,
+                      itemBuilder: (_, index) {
+                        final job = index < _premiumJobs.length
+                            ? _premiumJobs[index]
+                            : jobs[index - _premiumJobs.length];
 
-        /// TABS (Naukri-style simple tabs)  
-        Container(  
-          color: Colors.white,  
-          child: TabBar(  
-            controller: _tabController,  
-            labelColor: Colors.blue,  
-            unselectedLabelColor: Colors.grey,  
-            indicatorColor: Colors.blue,  
-            tabs: const [  
-              Tab(text: 'Profile'),  
-              Tab(text: 'Recent activity'),  
-            ],  
-            onTap: (i) async {  
-              if (i == 1 && _activityJobs.isEmpty) {  
-                setState(() => _isLoadingActivity = true);  
-                _activityJobs =  
-                    await _jobService.getJobsBasedOnActivity();  
-                setState(() => _isLoadingActivity = false);  
-              }  
-            },  
-          ),  
-        ),  
-
-        /// JOB LIST (flat, Naukri-style)  
-        Expanded(  
-          child: _isLoadingProfile  
-              ? ListView.builder(  
-                  itemCount: 6,  
-                  itemBuilder: (_, __) =>  
-                      const ShimmerJobCard(),  
-                )  
-              : ListView.builder(  
-                  itemCount:  
-                      _premiumJobs.length + jobs.length,  
-                  itemBuilder: (_, index) {  
-                    final job = index < _premiumJobs.length  
-                        ? _premiumJobs[index]  
-                        : jobs[index - _premiumJobs.length];  
-
-                    return JobCardWidget(  
-                      job: job,  
-                      isSaved:  
-                          _savedJobIds.contains(job['id']),  
-                      onSaveToggle: () =>  
-                          _toggleSaveJob(job['id']),  
-                      onTap: () => _openJobDetails(job),  
-                    );  
-                  },  
-                ),  
-        ),  
-      ],  
-    ),  
-  ),  
-);
-
-}
+                        return JobCardWidget(
+                          job: job,
+                          isSaved:
+                              _savedJobIds.contains(job['id']),
+                          onSaveToggle: () =>
+                              _toggleSaveJob(job['id']),
+                          onTap: () => _openJobDetails(job),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
