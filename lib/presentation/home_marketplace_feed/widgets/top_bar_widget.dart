@@ -7,10 +7,14 @@ import 'package:geocoding/geocoding.dart';
 class TopBarWidget extends StatefulWidget {
   final String currentLocation;
   final Function(double latitude, double longitude, String locationName)? onLocationDetected;
+  final VoidCallback onMenuTap;
+  final VoidCallback onSearchTap;
 
   const TopBarWidget({
     Key? key,
     required this.currentLocation,
+    required this.onMenuTap,
+    required this.onSearchTap,
     this.onLocationDetected,
   }) : super(key: key);
 
@@ -20,9 +24,9 @@ class TopBarWidget extends StatefulWidget {
 
 class _TopBarWidgetState extends State<TopBarWidget> {
   String _currentLocation = 'Detecting...';
-  bool _isDetectingLocation = false;
-  double? _latitude;
-  double? _longitude;
+  bool _isDetecting = false;
+  double? _lat;
+  double? _lng;
 
   @override
   void initState() {
@@ -31,169 +35,99 @@ class _TopBarWidgetState extends State<TopBarWidget> {
   }
 
   Future<void> _detectLocation() async {
-    if (_isDetectingLocation) return;
+    if (_isDetecting) return;
 
-    setState(() {
-      _isDetectingLocation = true;
-      _currentLocation = 'Detecting...';
-    });
+    setState(() => _isDetecting = true);
 
     try {
-      // Check permission
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          setState(() {
-            _currentLocation = 'Location denied';
-            _isDetectingLocation = false;
-          });
-          return;
-        }
       }
 
-      if (permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
         setState(() {
           _currentLocation = 'Location disabled';
-          _isDetectingLocation = false;
+          _isDetecting = false;
         });
         return;
       }
 
-      // Get current position
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
+      final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.medium);
+      _lat = position.latitude;
+      _lng = position.longitude;
 
-      // Store coordinates
-      _latitude = position.latitude;
-      _longitude = position.longitude;
+      final placemarks = await placemarkFromCoordinates(_lat!, _lng!);
+      final place = placemarks.first;
 
-      // Get place name from coordinates
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
+      final locationName =
+          place.locality ?? place.subAdministrativeArea ?? place.administrativeArea ?? 'Your location';
 
-      if (placemarks.isNotEmpty) {
-        Placemark place = placemarks[0];
-        final locationName = '${place.locality ?? place.subAdministrativeArea ?? 'Unknown'}, ${place.administrativeArea ?? ''}';
-        
-        setState(() {
-          _currentLocation = locationName;
-          _isDetectingLocation = false;
-        });
+      setState(() {
+        _currentLocation = locationName;
+        _isDetecting = false;
+      });
 
-        // Notify parent widget with coordinates and location name
-        if (widget.onLocationDetected != null && _latitude != null && _longitude != null) {
-          widget.onLocationDetected!(_latitude!, _longitude!, locationName);
-        }
-
-        debugPrint('Location detected: $locationName (Lat: $_latitude, Lng: $_longitude)');
-      }
-    } catch (e) {
+      widget.onLocationDetected?.call(_lat!, _lng!, locationName);
+    } catch (_) {
       setState(() {
         _currentLocation = 'Location unavailable';
-        _isDetectingLocation = false;
+        _isDetecting = false;
       });
-      debugPrint('Location detection error: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
       color: Colors.white,
+      padding: EdgeInsets.fromLTRB(3.w, 1.2.h, 3.w, 1.2.h),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Logo and Title
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                height: 8.w,
-                width: 8.w,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
-                    'assets/images/company_logo.png',
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2563EB),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'K',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14.sp,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              SizedBox(width: 2.w),
-              Text(
-                'khilonjiya.com',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2563EB),
-                ),
-              ),
-            ],
+          /// HAMBURGER
+          InkWell(
+            onTap: widget.onMenuTap,
+            child: Icon(Icons.menu, size: 6.w, color: Colors.black87),
           ),
 
-          SizedBox(width: 2.w),
+          SizedBox(width: 3.w),
 
-          // Location
+          /// SEARCH BAR
           Expanded(
             child: InkWell(
-              onTap: _detectLocation,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.location_on,
-                    color: Color(0xFF2563EB),
-                    size: 5.w,
-                  ),
-                  SizedBox(width: 1.w),
-                  Flexible(
-                    child: Text(
-                      _currentLocation,
-                      style: TextStyle(fontSize: 11.sp),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  ),
-                  SizedBox(width: 1.w),
-                  if (_isDetectingLocation)
-                    SizedBox(
-                      width: 4.w,
-                      height: 4.w,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Color(0xFF2563EB),
+              onTap: widget.onSearchTap,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.2.h),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.search, size: 5.w, color: Colors.grey.shade600),
+                    SizedBox(width: 2.w),
+                    Expanded(
+                      child: Text(
+                        "Search in '$_currentLocation'",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: Colors.grey.shade700,
+                        ),
                       ),
-                    )
-                  else
-                    Icon(
-                      Icons.arrow_drop_down,
-                      color: Colors.grey,
-                      size: 5.w,
                     ),
-                ],
+                    if (_isDetecting)
+                      SizedBox(
+                        width: 4.w,
+                        height: 4.w,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.grey,
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
