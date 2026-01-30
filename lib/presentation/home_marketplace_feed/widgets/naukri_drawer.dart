@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../login_screen/mobile_login_screen.dart';
-import 'profile_page.dart';
+import '../../login_screen/mobile_auth_service.dart';
+
+import '../profile_page.dart';
 import '../premium_package_page.dart';
 import '../search_page.dart';
 import '../my_applications_page.dart';
@@ -16,25 +18,32 @@ class NaukriDrawer extends StatelessWidget {
   final int profileCompletion;
   final VoidCallback onClose;
 
+  /// 🔑 Role flag
+  final bool isCompanyUser;
+
   const NaukriDrawer({
     Key? key,
     required this.userName,
     required this.profileCompletion,
     required this.onClose,
+    this.isCompanyUser = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final safeCompletion =
+        profileCompletion.clamp(0, 100); // safety
+
     return Drawer(
       child: SafeArea(
         child: Column(
           children: [
-            /// HEADER
+            /// ================= HEADER =================
             Padding(
               padding: EdgeInsets.fromLTRB(4.w, 3.h, 3.w, 2.h),
               child: Row(
                 children: [
-                  _ProfileCompletionCircle(completion: profileCompletion),
+                  _ProfileCompletionCircle(completion: safeCompletion),
                   SizedBox(width: 4.w),
                   Expanded(
                     child: Column(
@@ -54,12 +63,12 @@ class NaukriDrawer extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const ProfilePage(),
+                                builder: (_) => ProfilePage(),
                               ),
                             );
                           },
                           child: Text(
-                            profileCompletion < 100
+                            safeCompletion < 100
                                 ? 'Complete your profile'
                                 : 'View profile',
                             style: TextStyle(
@@ -79,130 +88,120 @@ class NaukriDrawer extends StatelessWidget {
               ),
             ),
 
-            /// UPGRADE
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4.w),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(10),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const PremiumPackagePage(),
+            /// ================= UPGRADE (APPLICANT ONLY) =================
+            if (!isCompanyUser)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4.w),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PremiumPackagePage(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 4.w, vertical: 1.6.h),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.amber.shade100,
+                          Colors.amber.shade50,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                  );
-                },
-                child: Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.6.h),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.amber.shade100,
-                        Colors.amber.shade50,
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.workspace_premium,
-                          color: Colors.amber.shade800),
-                      SizedBox(width: 3.w),
-                      Expanded(
-                        child: Text(
-                          'Upgrade to Pro',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w600,
+                    child: Row(
+                      children: [
+                        Icon(Icons.workspace_premium,
+                            color: Colors.amber.shade800),
+                        SizedBox(width: 3.w),
+                        Expanded(
+                          child: Text(
+                            'Upgrade to Pro',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
-                      Icon(Icons.arrow_forward_ios,
-                          size: 14, color: Colors.grey),
-                    ],
+                        Icon(Icons.arrow_forward_ios,
+                            size: 14, color: Colors.grey),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
 
             SizedBox(height: 3.h),
 
-            /// MENU
+            /// ================= MENU =================
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
-                children: [
-                  _item(
-                    context,
-                    Icons.search,
-                    'Search jobs',
-                    () => _go(context, const SearchPage()),
-                  ),
-                  _item(
-                    context,
-                    Icons.work_outline,
-                    'Recommended jobs',
-                    onClose,
-                  ),
-                  _item(
-                    context,
-                    Icons.assignment_turned_in_outlined,
-                    'My applications',
-                    () => _go(context, const MyApplicationsPage()),
-                  ),
-                  _item(
-                    context,
-                    Icons.bookmark_border,
-                    'Saved jobs',
-                    () => _go(context, const SavedJobsPage()),
-                  ),
-                  _item(
-                    context,
-                    Icons.bar_chart_outlined,
-                    'Profile performance',
-                    () => _go(context, const ProfilePerformancePage()),
-                  ),
-
-                  _divider(),
-
-                  _item(
-                    context,
-                    Icons.settings_outlined,
-                    'Settings',
-                    () => _go(context, const SettingsPage()),
-                  ),
-                  _item(
-                    context,
-                    Icons.help_outline,
-                    'Help',
-                    () => _go(context, const HelpPage()),
-                  ),
-
-                  _divider(),
-
-                  _item(
-                    context,
-                    Icons.logout,
-                    'Logout',
-                    () {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const MobileLoginScreen(),
-                        ),
-                        (_) => false,
-                      );
-                    },
-                    iconColor: Colors.redAccent,
-                  ),
-                ],
+                children: isCompanyUser
+                    ? _companyMenu(context)
+                    : _applicantMenu(context),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  /// ================= APPLICANT MENU =================
+  List<Widget> _applicantMenu(BuildContext context) => [
+        _item(context, Icons.search, 'Search jobs',
+            () => _go(context, SearchPage())),
+        _item(context, Icons.work_outline, 'Recommended jobs', onClose),
+        _item(context, Icons.assignment_turned_in_outlined, 'My applications',
+            () => _go(context, MyApplicationsPage())),
+        _item(context, Icons.bookmark_border, 'Saved jobs',
+            () => _go(context, SavedJobsPage())),
+        _item(context, Icons.bar_chart_outlined, 'Profile performance',
+            () => _go(context, ProfilePerformancePage())),
+        _divider(),
+        _item(context, Icons.settings_outlined, 'Settings',
+            () => _go(context, SettingsPage())),
+        _item(context, Icons.help_outline, 'Help',
+            () => _go(context, HelpPage())),
+        _divider(),
+        _logoutItem(context),
+      ];
+
+  /// ================= COMPANY MENU =================
+  List<Widget> _companyMenu(BuildContext context) => [
+        _item(context, Icons.dashboard_outlined, 'Dashboard', onClose),
+        _item(context, Icons.assignment_ind_outlined, 'Applications received',
+            onClose),
+        _divider(),
+        _item(context, Icons.settings_outlined, 'Settings',
+            () => _go(context, SettingsPage())),
+        _item(context, Icons.help_outline, 'Help',
+            () => _go(context, HelpPage())),
+        _divider(),
+        _logoutItem(context),
+      ];
+
+  Widget _logoutItem(BuildContext context) {
+    return _item(
+      context,
+      Icons.logout,
+      'Logout',
+      () async {
+        await MobileAuthService().logout();
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => MobileLoginScreen()),
+          (_) => false,
+        );
+      },
+      iconColor: Colors.redAccent,
     );
   }
 
@@ -216,10 +215,7 @@ class NaukriDrawer extends StatelessWidget {
     return ListTile(
       dense: true,
       leading: Icon(icon, size: 20, color: iconColor ?? Colors.grey.shade800),
-      title: Text(
-        label,
-        style: TextStyle(fontSize: 11.5.sp),
-      ),
+      title: Text(label, style: TextStyle(fontSize: 11.5.sp)),
       onTap: () {
         Navigator.pop(context);
         onTap();
@@ -237,10 +233,11 @@ class NaukriDrawer extends StatelessWidget {
   }
 }
 
-/// =================== COMPONENT ===================
+/// ================= PROFILE COMPLETION =================
 
 class _ProfileCompletionCircle extends StatelessWidget {
   final int completion;
+
   const _ProfileCompletionCircle({required this.completion});
 
   @override
@@ -255,6 +252,7 @@ class _ProfileCompletionCircle extends StatelessWidget {
             value: completion / 100,
             strokeWidth: 3,
             backgroundColor: Colors.grey.shade300,
+            color: Colors.blue,
           ),
         ),
         Text(
