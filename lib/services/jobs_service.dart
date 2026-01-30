@@ -4,9 +4,7 @@ import 'dart:io';
 class JobsService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  /// ===============================
-  /// APPLY FOR A JOB (SAFE & ATOMIC)
-  /// ===============================
+  /// APPLY FOR JOB (SAFE + DUPLICATE CHECK)
   Future<void> applyForJob({
     required String jobId,
     required Map<String, dynamic> applicationData,
@@ -15,12 +13,12 @@ class JobsService {
   }) async {
     final user = _supabase.auth.currentUser;
     if (user == null) {
-      throw Exception('User not authenticated');
+      throw Exception('User not logged in');
     }
 
     final userId = user.id;
 
-    /// 1️⃣ CHECK: Already applied?
+    /// 1️⃣ Check duplicate apply
     final existing = await _supabase
         .from('job_applications_listings')
         .select('id')
@@ -32,28 +30,26 @@ class JobsService {
       throw Exception('You have already applied for this job');
     }
 
-    /// 2️⃣ Upload files (if any)
+    /// 2️⃣ Upload resume
     String? resumeUrl;
-    String? photoUrl;
-
     if (resumeFile != null) {
       final path =
           'resumes/$userId/${DateTime.now().millisecondsSinceEpoch}_${applicationData['resume_file_name']}';
-
       await _supabase.storage.from('job-files').upload(path, resumeFile);
       resumeUrl = _supabase.storage.from('job-files').getPublicUrl(path);
     }
 
+    /// 3️⃣ Upload photo
+    String? photoUrl;
     if (photoFile != null) {
       final path =
           'photos/$userId/${DateTime.now().millisecondsSinceEpoch}_${applicationData['photo_file_name']}';
-
       await _supabase.storage.from('job-files').upload(path, photoFile);
       photoUrl = _supabase.storage.from('job-files').getPublicUrl(path);
     }
 
-    /// 3️⃣ Insert into job_applications
-    final applicationInsert = await _supabase
+    /// 4️⃣ Insert application
+    final application = await _supabase
         .from('job_applications')
         .insert({
           ...applicationData,
@@ -65,23 +61,21 @@ class JobsService {
         .select()
         .single();
 
-    final applicationId = applicationInsert['id'];
-
-    /// 4️⃣ Link application to job
+    /// 5️⃣ Link application to job
     await _supabase.from('job_applications_listings').insert({
-      'application_id': applicationId,
+      'application_id': application['id'],
       'listing_id': jobId,
       'user_id': userId,
       'application_status': 'applied',
     });
 
-    /// 5️⃣ Increment job application count
-    await _supabase.rpc(
-      'increment_job_application_count',
-      params: {'job_id': jobId},
-    );
+    /// 6️⃣ Increment application count
+    await _supabase
+        .from('job_listings')
+        .update({'applications_count': application['applications_count'] + 1})
+        .eq('id', jobId);
 
-    /// 6️⃣ Track activity
+    /// 7️⃣ Track activity
     await _supabase.from('user_job_activity').insert({
       'user_id': userId,
       'job_id': jobId,
