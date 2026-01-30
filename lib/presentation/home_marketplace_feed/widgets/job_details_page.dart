@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
-import '../../job_application_form.dart';
+import '../job_application_form.dart';
 import '../../../services/job_service.dart';
 
 class JobDetailsPage extends StatefulWidget {
