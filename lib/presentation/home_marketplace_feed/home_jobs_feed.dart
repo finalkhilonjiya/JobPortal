@@ -26,9 +26,10 @@ class _HomeJobsFeedState extends State<HomeJobsFeed>
   final JobService _jobService = JobService();
   final MobileAuthService _authService = MobileAuthService();
 
-  late TabController _tabController;
+  late final TabController _tabController;
 
   bool _isCheckingAuth = true;
+  bool _isDisposed = false;
 
   String _currentLocation = 'Detecting...';
   int _profileCompletion = 0;
@@ -48,9 +49,17 @@ class _HomeJobsFeedState extends State<HomeJobsFeed>
     _initialize();
   }
 
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _tabController.dispose();
+    super.dispose();
+  }
+
   Future<void> _initialize() async {
     try {
       await _authService.initialize();
+
       if (!_authService.isAuthenticated) {
         _redirectToLogin();
         return;
@@ -64,43 +73,56 @@ class _HomeJobsFeedState extends State<HomeJobsFeed>
   }
 
   Future<void> _loadInitialData() async {
+    if (_isDisposed) return;
+
     setState(() => _isCheckingAuth = false);
 
-    _profileCompletion =
-        await _jobService.calculateProfileCompletion();
+    try {
+      _profileCompletion =
+          await _jobService.calculateProfileCompletion();
 
-    _savedJobIds = await _jobService.getUserSavedJobs();
+      _savedJobIds = await _jobService.getUserSavedJobs();
 
-    _premiumJobs = await _jobService.fetchPremiumJobs(limit: 5);
+      _premiumJobs = await _jobService.fetchPremiumJobs(limit: 5);
 
-    _profileJobs = await _jobService.getRecommendedJobs();
-
-    setState(() => _isLoadingProfile = false);
+      _profileJobs = await _jobService.getRecommendedJobs();
+    } finally {
+      if (!_isDisposed) {
+        setState(() => _isLoadingProfile = false);
+      }
+    }
   }
 
-  /// ✅ CORRECT + USED
   void _redirectToLogin() {
+    if (_isDisposed) return;
+
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => MobileLoginScreen()),
+      MaterialPageRoute(builder: (_) => const MobileLoginScreen()),
       (_) => false,
     );
   }
 
   void _onLocationDetected(
-      double lat, double lng, String locationName) {
+    double lat,
+    double lng,
+    String locationName,
+  ) {
+    if (_isDisposed) return;
     setState(() => _currentLocation = locationName);
   }
 
-  void _toggleSaveJob(String jobId) async {
+  Future<void> _toggleSaveJob(String jobId) async {
     final isSaved = await _jobService.toggleSaveJob(jobId);
+    if (_isDisposed) return;
+
     setState(() {
       isSaved ? _savedJobIds.add(jobId) : _savedJobIds.remove(jobId);
     });
   }
 
   void _openJobDetails(Map<String, dynamic> job) {
-    _jobService.trackJobView(job['id']); // ✅ fixed
+    _jobService.trackJobView(job['id']);
 
     Navigator.push(
       context,
@@ -137,7 +159,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed>
       body: SafeArea(
         child: Column(
           children: [
-            /// TOP BAR (drawer-safe)
+            /// TOP BAR
             Builder(
               builder: (scaffoldContext) {
                 return TopBarWidget(
@@ -148,7 +170,8 @@ class _HomeJobsFeedState extends State<HomeJobsFeed>
                     Navigator.push(
                       scaffoldContext,
                       MaterialPageRoute(
-                          builder: (_) => SearchPage()),
+                        builder: (_) => const SearchPage(),
+                      ),
                     );
                   },
                   onLocationDetected: _onLocationDetected,
@@ -168,12 +191,14 @@ class _HomeJobsFeedState extends State<HomeJobsFeed>
                   Tab(text: 'Profile'),
                   Tab(text: 'Recent activity'),
                 ],
-                onTap: (i) async {
-                  if (i == 1 && _activityJobs.isEmpty) {
+                onTap: (index) async {
+                  if (index == 1 && _activityJobs.isEmpty) {
                     setState(() => _isLoadingActivity = true);
                     _activityJobs =
                         await _jobService.getJobsBasedOnActivity();
-                    setState(() => _isLoadingActivity = false);
+                    if (!_isDisposed) {
+                      setState(() => _isLoadingActivity = false);
+                    }
                   }
                 },
               ),
