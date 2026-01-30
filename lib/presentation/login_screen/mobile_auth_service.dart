@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/auth/user_role.dart';
 
 /// Handles Supabase initialization
 class SupabaseService {
@@ -433,6 +434,22 @@ class MobileAuthService {
       debugPrint('Keep alive refresh failed: $e');
     }
   }
+
+Future<UserRole> getUserRole() async {
+  final user = SupabaseService().client.auth.currentUser;
+  if (user == null) {
+    return UserRole.jobSeeker;
+  }
+
+  final res = await SupabaseService().client
+      .from('user_profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+
+  return parseUserRole(res?['role']);
+}
+
   Future<bool> ensureValidSession() async {
     debugPrint('=== ENSURING VALID SESSION ===');
     
