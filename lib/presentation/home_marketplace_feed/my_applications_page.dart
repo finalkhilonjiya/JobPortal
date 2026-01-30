@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import '../../services/candidate_applications_service.dart';
+import '../../services/job_service.dart';
 
 class MyApplicationsPage extends StatefulWidget {
   const MyApplicationsPage({Key? key}) : super(key: key);
@@ -10,9 +10,9 @@ class MyApplicationsPage extends StatefulWidget {
 }
 
 class _MyApplicationsPageState extends State<MyApplicationsPage> {
-  final _service = CandidateApplicationsService();
+  final JobService _jobService = JobService();
   bool _loading = true;
-  List<Map<String, dynamic>> _apps = [];
+  List<Map<String, dynamic>> _applications = [];
 
   @override
   void initState() {
@@ -21,107 +21,83 @@ class _MyApplicationsPageState extends State<MyApplicationsPage> {
   }
 
   Future<void> _load() async {
-    final data = await _service.getMyApplications();
-    setState(() {
-      _apps = data;
-      _loading = false;
-    });
+    _applications = await _jobService.getMyApplications();
+    setState(() => _loading = false);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Applications'),
-        backgroundColor: const Color(0xFF2563EB),
-      ),
+      appBar: _appBar('My applications'),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              padding: EdgeInsets.all(4.w),
-              itemCount: _apps.length,
-              itemBuilder: (_, i) => _card(_apps[i]),
-            ),
+          : _applications.isEmpty
+              ? _empty('You haven’t applied to any jobs yet')
+              : ListView.builder(
+                  itemCount: _applications.length,
+                  itemBuilder: (_, i) {
+                    final a = _applications[i];
+                    return _card(
+                      a['job_title'],
+                      a['company_name'],
+                      a['application_status'],
+                      a['applied_at'],
+                    );
+                  },
+                ),
     );
   }
 
-  Widget _card(Map<String, dynamic> app) {
+  Widget _card(String title, String company, String status, String date) {
     return Container(
-      margin: EdgeInsets.only(bottom: 3.w),
+      margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundImage: app['company_logo_url'] != null
-                ? NetworkImage(app['company_logo_url'])
-                : null,
-            child: app['company_logo_url'] == null
-                ? Text(app['company_name'][0])
-                : null,
-          ),
-          SizedBox(width: 3.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  app['job_title'],
+          Text(title,
+              style:
+                  TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600)),
+          SizedBox(height: 0.5.h),
+          Text(company, style: TextStyle(fontSize: 11.sp)),
+          SizedBox(height: 1.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(status.toUpperCase(),
                   style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  '${app['company_name']} • ${app['district']}',
-                  style: TextStyle(fontSize: 10.sp, color: Colors.grey),
-                ),
-                SizedBox(height: 1.h),
-                _timeline(app['application_status']),
-              ],
-            ),
+                      fontSize: 9.5.sp,
+                      color: _statusColor(status))),
+              Text(date, style: TextStyle(fontSize: 9.5.sp)),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _timeline(String status) {
-    final steps = ['applied', 'shortlisted', 'interviewed', 'selected'];
-    final rejected = status == 'rejected';
-
-    return Row(
-      children: steps.map((s) {
-        final active = steps.indexOf(s) <= steps.indexOf(status);
-        final color = rejected
-            ? Colors.red
-            : active
-                ? Colors.green
-                : Colors.grey.shade300;
-
-        return Expanded(
-          child: Column(
-            children: [
-              Container(
-                height: 4,
-                color: color,
-              ),
-              SizedBox(height: 0.5.h),
-              Text(
-                s.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 7.sp,
-                  color: color,
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
+  Color _statusColor(String s) {
+    switch (s) {
+      case 'shortlisted':
+        return Colors.green;
+      case 'rejected':
+        return Colors.red;
+      default:
+        return Colors.orange;
+    }
   }
+
+  AppBar _appBar(String t) => AppBar(
+        title: Text(t),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 1,
+      );
+
+  Widget _empty(String text) =>
+      Center(child: Text(text, style: TextStyle(fontSize: 12.sp)));
 }
