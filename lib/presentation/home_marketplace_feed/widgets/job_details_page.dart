@@ -234,20 +234,22 @@ class _JobDetailsPageState extends State<JobDetailsPage>
         child: SizedBox(
           height: 7.h,
           child: ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
-            child: Text(
-              'Apply now',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
-              ),
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => JobApplicationForm(jobId: job['id']),
+      ),
+    );
+  },
+  style: ElevatedButton.styleFrom(
+    backgroundColor: const Color(0xFF2563EB),
+    minimumSize: const Size(double.infinity, 44),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+  ),
+  child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.w600)),
+)
+
             ),
           ),
         ),
