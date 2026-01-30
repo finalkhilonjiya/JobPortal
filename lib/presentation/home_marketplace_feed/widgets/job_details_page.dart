@@ -1,9 +1,8 @@
-// File: lib/presentation/home_marketplace_feed/widgets/job_details_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
+
+import '../../job_application_form.dart';
 
 class JobDetailsPage extends StatefulWidget {
   final Map<String, dynamic> job;
@@ -23,7 +22,7 @@ class JobDetailsPage extends StatefulWidget {
 
 class _JobDetailsPageState extends State<JobDetailsPage>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+  late final TabController _tabController;
 
   @override
   void initState() {
@@ -32,26 +31,34 @@ class _JobDetailsPageState extends State<JobDetailsPage>
   }
 
   @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final job = widget.job;
 
-    final jobTitle = job['job_title'] ?? '';
-    final company = job['company_name'] ?? '';
-    final location = job['district'] ?? '';
-    final experience = job['experience_required'] ?? '';
+    final jobTitle = job['job_title'] ?? 'Job';
+    final company = job['company_name'] ?? 'Company';
+    final location = job['district'] ?? 'Location';
+    final experience = job['experience_required'] ?? 'Not specified';
     final salaryMin = job['salary_min'];
     final salaryMax = job['salary_max'];
     final description = job['job_description'] ?? '';
-    final skills = (job['skills_required'] as List?)?.join(', ') ?? '';
     final createdAt = job['created_at'];
     final companyDesc = job['company_description'] ?? '';
+
+    final skillsList = job['skills_required'];
+    final skills = skillsList is List ? skillsList.join(', ') : '';
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
 
       body: CustomScrollView(
         slivers: [
-          /// COLLAPSING HEADER
+          /// APP BAR + TABS
           SliverAppBar(
             pinned: true,
             elevation: 1,
@@ -69,14 +76,6 @@ class _JobDetailsPageState extends State<JobDetailsPage>
                   color: Colors.black,
                 ),
                 onPressed: widget.onSaveToggle,
-              ),
-              IconButton(
-                icon: const Icon(Icons.share, color: Colors.black),
-                onPressed: () {
-                  Share.share(
-                    '$jobTitle at $company\nLocation: $location',
-                  );
-                },
               ),
             ],
             bottom: TabBar(
@@ -108,7 +107,7 @@ class _JobDetailsPageState extends State<JobDetailsPage>
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    SizedBox(height: 0.6.h),
+                    SizedBox(height: 0.5.h),
                     Text(
                       company,
                       style: TextStyle(
@@ -120,10 +119,13 @@ class _JobDetailsPageState extends State<JobDetailsPage>
 
                     _iconText(Icons.location_on_outlined, location),
                     _iconText(Icons.work_outline, experience),
-                    _iconText(Icons.currency_rupee, _salary(salaryMin, salaryMax)),
+                    _iconText(
+                      Icons.currency_rupee,
+                      _salary(salaryMin, salaryMax),
+                    ),
 
                     if (skills.isNotEmpty) ...[
-                      SizedBox(height: 1.2.h),
+                      SizedBox(height: 1.h),
                       Text(
                         skills,
                         style: TextStyle(
@@ -162,22 +164,7 @@ class _JobDetailsPageState extends State<JobDetailsPage>
                       ),
                     ),
 
-                    /// -------- SIMILAR JOBS --------
-                    SizedBox(height: 3.h),
-                    Text(
-                      'Similar jobs',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 1.h),
-
-                    _similarJob('Desktop Support Engineer', 'Aforeserve'),
-                    _similarJob('System Administrator', 'TechNova'),
-                    _similarJob('IT Support Executive', 'Infratech'),
-
-                    SizedBox(height: 12.h),
+                    SizedBox(height: 10.h),
                   ],
                 ),
 
@@ -199,26 +186,18 @@ class _JobDetailsPageState extends State<JobDetailsPage>
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            companyDesc.isNotEmpty
-                                ? companyDesc
-                                : 'Company description not available.',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              height: 1.6,
-                              color: Colors.grey.shade800,
-                            ),
-                          ),
-                          SizedBox(height: 2.h),
-                          _labelValue('Company Name', company),
-                          _labelValue('Location', location),
-                        ],
+                      child: Text(
+                        companyDesc.isNotEmpty
+                            ? companyDesc
+                            : 'Company description not available.',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          height: 1.6,
+                          color: Colors.grey.shade800,
+                        ),
                       ),
                     ),
-                    SizedBox(height: 12.h),
+                    SizedBox(height: 10.h),
                   ],
                 ),
               ],
@@ -227,29 +206,33 @@ class _JobDetailsPageState extends State<JobDetailsPage>
         ],
       ),
 
-      /// APPLY BUTTON (NAUKRI SIZE)
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 3.h),
-        color: Colors.white,
-        child: SizedBox(
-          height: 7.h,
-          child: ElevatedButton(
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => JobApplicationForm(jobId: job['id']),
-      ),
-    );
-  },
-  style: ElevatedButton.styleFrom(
-    backgroundColor: const Color(0xFF2563EB),
-    minimumSize: const Size(double.infinity, 44),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-  ),
-  child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.w600)),
-)
-
+      /// APPLY BUTTON (NAUKRI-STYLE)
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: EdgeInsets.fromLTRB(4.w, 1.5.h, 4.w, 2.h),
+          color: Colors.white,
+          child: SizedBox(
+            height: 44,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        JobApplicationForm(jobId: job['id']),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2563EB),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+              child: const Text(
+                'Apply',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
             ),
           ),
         ),
@@ -258,6 +241,7 @@ class _JobDetailsPageState extends State<JobDetailsPage>
   }
 
   /// ================= HELPERS =================
+
   Widget _iconText(IconData icon, String text) {
     return Padding(
       padding: EdgeInsets.only(bottom: 0.6.h),
@@ -276,66 +260,9 @@ class _JobDetailsPageState extends State<JobDetailsPage>
     );
   }
 
-  Widget _labelValue(String label, String value) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 1.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 30.w,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 11.sp,
-                color: Colors.grey.shade600,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(fontSize: 11.sp),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _similarJob(String title, String company) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 1.4.h),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.grey.shade300),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12.5.sp,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(height: 0.3.h),
-          Text(
-            company,
-            style: TextStyle(
-              fontSize: 11.sp,
-              color: Colors.grey.shade700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   String _salary(int? min, int? max) {
-    String f(int v) => '${(v / 100000).toStringAsFixed(1)} Lacs PA';
+    String f(int v) =>
+        '${(v / 100000).toStringAsFixed(1)} Lacs PA';
     if (min != null && max != null) return '${f(min)} - ${f(max)}';
     if (min != null) return f(min);
     return 'Not disclosed';
@@ -346,6 +273,6 @@ class _JobDetailsPageState extends State<JobDetailsPage>
     final d = DateTime.tryParse(date);
     if (d == null) return 'Recently';
     final days = DateTime.now().difference(d).inDays;
-    return days == 0 ? 'Today' : '${days}d ago';
+    return days == 0 ? 'Today' : '$days days ago';
   }
 }
