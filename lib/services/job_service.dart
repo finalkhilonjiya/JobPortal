@@ -8,317 +8,154 @@ class JobService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final MobileAuthService _authService = MobileAuthService();
 
+  /* ===================== AUTH ===================== */
+
   Future<void> _ensureAuthenticated() async {
-    final sessionValid = await _authService.ensureValidSession();
-    if (!sessionValid) {
-      throw Exception('Authentication required. Please login again.');
-    }
-    final currentUser = _supabase.auth.currentUser;
-    final currentSession = _supabase.auth.currentSession;
-    if (currentUser == null || currentSession == null) {
-      throw Exception('Authentication required. Please login again.');
+    final ok = await _authService.ensureValidSession();
+    if (!ok ||
+        _supabase.auth.currentUser == null ||
+        _supabase.auth.currentSession == null) {
+      throw Exception('Authentication required');
     }
   }
 
-  double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-    const double earthRadius = 6371;
-    double dLat = _toRadians(lat2 - lat1);
-    double dLon = _toRadians(lon2 - lon1);
-    double a = 
-      math.sin(dLat / 2) * math.sin(dLat / 2) +
-      math.cos(_toRadians(lat1)) * math.cos(_toRadians(lat2)) *
-      math.sin(dLon / 2) * math.sin(dLon / 2);
-    double c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
-    return earthRadius * c;
+  /* ===================== DISTANCE ===================== */
+
+  double _toRad(double d) => d * math.pi / 180;
+
+  double _distance(double lat1, double lon1, double lat2, double lon2) {
+    const r = 6371;
+    final dLat = _toRad(lat2 - lat1);
+    final dLon = _toRad(lon2 - lon1);
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(_toRad(lat1)) *
+            math.cos(_toRad(lat2)) *
+            math.sin(dLon / 2) *
+            math.sin(dLon / 2);
+    return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
   }
 
-  double _toRadians(double degree) {
-    return degree * math.pi / 180;
-  }
+  /* ===================== JOB FETCH ===================== */
 
   Future<List<Map<String, dynamic>>> fetchJobs({
-    String? categoryId,
-    String? sortBy = 'Newest',
-    int offset = 0,
     int limit = 20,
-    double? userLatitude,
-    double? userLongitude,
-    String? searchQuery,
-    String? location,
-    int? minSalary,
-    int? maxSalary,
-    String? jobType,
-    String? workMode,
-    int? minExperience,
-    int? maxExperience,
-    List<String>? skills,
+    int offset = 0,
   }) async {
     await _ensureAuthenticated();
 
-    try {
-      var query = _supabase
-          .from('job_listings')
-          .select('*')
-          .eq('status', 'active');
+    final res = await _supabase
+        .from('job_listings')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', ascending: false)
+        .range(offset, offset + limit - 1);
 
-      if (categoryId != null && categoryId != 'All' && categoryId != 'All Jobs') {
-        query = query.eq('job_category', categoryId);
-      }
-
-      if (searchQuery != null && searchQuery.isNotEmpty) {
-        query = query.or(
-          'job_title.ilike.%$searchQuery%,'
-          'company_name.ilike.%$searchQuery%,'
-          'job_description.ilike.%$searchQuery%'
-        );
-      }
-
-      if (location != null && location.isNotEmpty) {
-        query = query.ilike('district', '%$location%');
-      }
-
-      if (minSalary != null) {
-        query = query.gte('salary_min', minSalary);
-      }
-      if (maxSalary != null) {
-        query = query.lte('salary_max', maxSalary);
-      }
-
-      if (jobType != null && jobType != 'All') {
-        query = query.eq('job_type', jobType);
-      }
-
-      if (workMode != null && workMode != 'All') {
-        query = query.eq('work_mode', workMode);
-      }
-
-      final List<Map<String, dynamic>> response;
-      if (sortBy == 'Salary (High-Low)') {
-        response = await query.order('salary_max', ascending: false).range(offset, offset + limit - 1);
-      } else if (sortBy == 'Salary (Low-High)') {
-        response = await query.order('salary_min', ascending: true).range(offset, offset + limit - 1);
-      } else if (sortBy == 'Oldest') {
-        response = await query.order('created_at', ascending: true).range(offset, offset + limit - 1);
-      } else {
-        response = await query.order('created_at', ascending: false).range(offset, offset + limit - 1);
-      }
-
-      var jobs = List<Map<String, dynamic>>.from(response);
-
-      if (userLatitude != null && userLongitude != null) {
-        jobs = jobs.map((job) {
-          if (job['latitude'] != null && job['longitude'] != null) {
-            job['distance'] = _calculateDistance(
-              userLatitude,
-              userLongitude,
-              double.parse(job['latitude'].toString()),
-              double.parse(job['longitude'].toString()),
-            );
-          } else {
-            job['distance'] = 999999.0;
-          }
-          return job;
-        }).toList();
-
-        if (sortBy == 'Distance') {
-          jobs.sort((a, b) {
-            final distA = a['distance'] ?? 999999.0;
-            final distB = b['distance'] ?? 999999.0;
-            return distA.compareTo(distB);
-          });
-        }
-      }
-
-      return jobs;
-    } catch (e) {
-      debugPrint('Error fetching jobs: $e');
-      if (e.toString().contains('JWT') || 
-          e.toString().contains('auth') || 
-          e.toString().contains('401') ||
-          e.toString().contains('403')) {
-        throw Exception('Authentication expired. Please login again.');
-      }
-      return [];
-    }
+    return List<Map<String, dynamic>>.from(res);
   }
 
-  Future<List<Map<String, dynamic>>> fetchPremiumJobs({
-    String? categoryId,
-    int limit = 10,
-    double? userLatitude,
-    double? userLongitude,
-  }) async {
+  Future<List<Map<String, dynamic>>> fetchPremiumJobs({int limit = 5}) async {
     await _ensureAuthenticated();
 
-    try {
-      var query = _supabase
-          .from('job_listings')
-          .select('*')
-          .eq('status', 'active')
-          .eq('is_premium', true);
+    final res = await _supabase
+        .from('job_listings')
+        .select('*')
+        .eq('status', 'active')
+        .eq('is_premium', true)
+        .order('created_at', ascending: false)
+        .limit(limit);
 
-      if (categoryId != null && categoryId != 'All' && categoryId != 'All Jobs') {
-        query = query.eq('job_category', categoryId);
-      }
-
-      final response = await query
-          .order('created_at', ascending: false)
-          .limit(limit);
-
-      var jobs = List<Map<String, dynamic>>.from(response);
-
-      if (userLatitude != null && userLongitude != null) {
-        jobs = jobs.map((job) {
-          if (job['latitude'] != null && job['longitude'] != null) {
-            job['distance'] = _calculateDistance(
-              userLatitude,
-              userLongitude,
-              double.parse(job['latitude'].toString()),
-              double.parse(job['longitude'].toString()),
-            );
-          }
-          return job;
-        }).toList();
-
-        jobs.sort((a, b) {
-          final distA = a['distance'] ?? 999999.0;
-          final distB = b['distance'] ?? 999999.0;
-          return distA.compareTo(distB);
-        });
-      }
-
-      return jobs;
-    } catch (e) {
-      debugPrint('Error fetching premium jobs: $e');
-      if (e.toString().contains('JWT') || 
-          e.toString().contains('auth') || 
-          e.toString().contains('401') ||
-          e.toString().contains('403')) {
-        throw Exception('Authentication expired. Please login again.');
-      }
-      return [];
-    }
+    return List<Map<String, dynamic>>.from(res);
   }
 
-  Future<List<Map<String, dynamic>>> getJobCategories() async {
-    try {
-      final response = await _supabase
-          .from('job_categories_master')
-          .select('*')
-          .eq('is_active', true)
-          .order('category_name', ascending: true);
+  /* ===================== SAVED JOBS ===================== */
 
-      return List<Map<String, dynamic>>.from(response);
-    } catch (e) {
-      debugPrint('Error fetching job categories: $e');
-      return [];
-    }
-  }
-
+  /// ✅ USED BY HOME FEED (IDs)
   Future<Set<String>> getUserSavedJobs() async {
     await _ensureAuthenticated();
-    
-    try {
-      final user = _supabase.auth.currentUser!;
-      final response = await _supabase
-          .from('saved_jobs')
-          .select('job_id')
-          .eq('user_id', user.id);
-      
-      return Set<String>.from(
-        List<Map<String, dynamic>>.from(response).map((item) => item['job_id'].toString())
-      );
-    } catch (e) {
-      debugPrint('Error fetching saved jobs: $e');
-      if (e.toString().contains('JWT') || 
-          e.toString().contains('auth') || 
-          e.toString().contains('401') ||
-          e.toString().contains('403')) {
-        throw Exception('Authentication expired. Please login again.');
-      }
-      return {};
-    }
+
+    final uid = _supabase.auth.currentUser!.id;
+
+    final res = await _supabase
+        .from('saved_jobs')
+        .select('job_id')
+        .eq('user_id', uid);
+
+    return res.map<String>((e) => e['job_id'].toString()).toSet();
+  }
+
+  /// ✅ REQUIRED BY SavedJobsPage (FULL JOB OBJECTS)
+  Future<List<Map<String, dynamic>>> getSavedJobs() async {
+    await _ensureAuthenticated();
+
+    final uid = _supabase.auth.currentUser!.id;
+
+    final res = await _supabase
+        .from('saved_jobs')
+        .select('job_listings(*)')
+        .eq('user_id', uid)
+        .order('saved_at', ascending: false);
+
+    return res
+        .map<Map<String, dynamic>>(
+            (e) => e['job_listings'] as Map<String, dynamic>)
+        .toList();
   }
 
   Future<bool> toggleSaveJob(String jobId) async {
     await _ensureAuthenticated();
-    
-    try {
-      final user = _supabase.auth.currentUser!;
-      
-      final existing = await _supabase
+
+    final uid = _supabase.auth.currentUser!.id;
+
+    final existing = await _supabase
+        .from('saved_jobs')
+        .select('id')
+        .eq('user_id', uid)
+        .eq('job_id', jobId)
+        .maybeSingle();
+
+    if (existing != null) {
+      await _supabase
           .from('saved_jobs')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('job_id', jobId)
-          .maybeSingle();
-
-      if (existing != null) {
-        await _supabase
-            .from('saved_jobs')
-            .delete()
-            .eq('user_id', user.id)
-            .eq('job_id', jobId);
-        return false;
-      } else {
-        await _supabase
-            .from('saved_jobs')
-            .insert({
-              'user_id': user.id,
-              'job_id': jobId,
-              'saved_at': DateTime.now().toIso8601String(),
-            });
-        return true;
-      }
-    } catch (e) {
-      debugPrint('Error toggling saved job: $e');
-      if (e.toString().contains('JWT') || 
-          e.toString().contains('auth') || 
-          e.toString().contains('401') ||
-          e.toString().contains('403')) {
-        throw Exception('Authentication expired. Please login again.');
-      }
-      rethrow;
+          .delete()
+          .eq('user_id', uid)
+          .eq('job_id', jobId);
+      return false;
     }
+
+    await _supabase.from('saved_jobs').insert({
+      'user_id': uid,
+      'job_id': jobId,
+    });
+    return true;
   }
 
-  Future<void> trackJobView(String jobId, {int? viewDurationSeconds}) async {
-    try {
-      final userId = _supabase.auth.currentUser?.id;
+  /* ===================== APPLICATIONS ===================== */
 
-      await _supabase.from('job_views').upsert({
-        'user_id': userId,
-        'job_id': jobId,
-        'viewed_at': DateTime.now().toIso8601String(),
-        'view_duration_seconds': viewDurationSeconds,
-        'device_type': 'mobile',
-      }, onConflict: 'user_id,job_id');
-    } catch (e) {
-      debugPrint('Error tracking job view: $e');
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> getRecentlyViewedJobs({int limit = 10}) async {
+  /// ✅ REQUIRED BY MyApplicationsPage
+  Future<List<Map<String, dynamic>>> getMyApplications() async {
     await _ensureAuthenticated();
-    
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return [];
 
-      final response = await _supabase
-          .from('job_views')
-          .select('job_id, viewed_at, job_listings(*)')
-          .eq('user_id', userId)
-          .order('viewed_at', ascending: false)
-          .limit(limit);
+    final uid = _supabase.auth.currentUser!.id;
 
-      return List<Map<String, dynamic>>.from(response)
-          .map((item) => item['job_listings'] as Map<String, dynamic>)
-          .toList();
-    } catch (e) {
-      debugPrint('Error fetching recently viewed jobs: $e');
-      return [];
-    }
+    final app = await _supabase
+        .from('job_applications')
+        .select('id')
+        .eq('user_id', uid)
+        .maybeSingle();
+
+    if (app == null) return [];
+
+    final res = await _supabase
+        .from('job_applications_listings')
+        .select('*, job_listings(*)')
+        .eq('application_id', app['id'])
+        .order('applied_at', ascending: false);
+
+    return res
+        .map<Map<String, dynamic>>(
+            (e) => e['job_listings'] as Map<String, dynamic>)
+        .toList();
   }
 
   Future<void> applyToJob({
@@ -326,453 +163,79 @@ class JobService {
     required String applicationId,
   }) async {
     await _ensureAuthenticated();
-    
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) throw Exception('User not authenticated');
 
-      final existingApplication = await _supabase
-          .from('job_applications_listings')
-          .select('id')
-          .eq('application_id', applicationId)
-          .eq('listing_id', jobId)
-          .maybeSingle();
+    final exists = await _supabase
+        .from('job_applications_listings')
+        .select('id')
+        .eq('listing_id', jobId)
+        .eq('application_id', applicationId)
+        .maybeSingle();
 
-      if (existingApplication != null) {
-        throw Exception('You have already applied to this job');
-      }
-
-      await _supabase.from('job_applications_listings').insert({
-        'application_id': applicationId,
-        'listing_id': jobId,
-        'applied_at': DateTime.now().toIso8601String(),
-        'application_status': 'applied',
-      });
-    } catch (e) {
-      debugPrint('Error applying to job: $e');
-      rethrow;
+    if (exists != null) {
+      throw Exception('Already applied');
     }
+
+    await _supabase.from('job_applications_listings').insert({
+      'listing_id': jobId,
+      'application_id': applicationId,
+    });
   }
 
-  Future<List<Map<String, dynamic>>> getUserAppliedJobs() async {
-    await _ensureAuthenticated();
-    
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return [];
+  /* ===================== ACTIVITY ===================== */
 
-      final applicationResponse = await _supabase
-          .from('job_applications')
-          .select('id')
-          .eq('user_id', userId)
-          .maybeSingle();
+  Future<void> trackJobView(String jobId) async {
+    final uid = _supabase.auth.currentUser?.id;
+    if (uid == null) return;
 
-      if (applicationResponse == null) return [];
-
-      final applicationId = applicationResponse['id'];
-
-      final response = await _supabase
-          .from('job_applications_listings')
-          .select('*, job_listings(*)')
-          .eq('application_id', applicationId)
-          .order('applied_at', ascending: false);
-
-      return List<Map<String, dynamic>>.from(response);
-    } catch (e) {
-      debugPrint('Error fetching applied jobs: $e');
-      return [];
-    }
+    await _supabase.from('job_views').upsert({
+      'user_id': uid,
+      'job_id': jobId,
+      'viewed_at': DateTime.now().toIso8601String(),
+    }, onConflict: 'user_id,job_id');
   }
 
-  Future<List<Map<String, dynamic>>> getSimilarJobs(String jobId, {int limit = 5}) async {
-    await _ensureAuthenticated();
-    
-    try {
-      final currentJob = await _supabase
-          .from('job_listings')
-          .select('job_category, district')
-          .eq('id', jobId)
-          .single();
-
-      final response = await _supabase
-          .from('job_listings')
-          .select('*')
-          .eq('status', 'active')
-          .neq('id', jobId)
-          .or('job_category.eq.${currentJob['job_category']},district.eq.${currentJob['district']}')
-          .limit(limit);
-
-      return List<Map<String, dynamic>>.from(response);
-    } catch (e) {
-      debugPrint('Error fetching similar jobs: $e');
-      return [];
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> getCompanies({int limit = 50}) async {
-    try {
-      final response = await _supabase
-          .from('companies')
-          .select('*')
-          .order('total_jobs', ascending: false)
-          .limit(limit);
-
-      return List<Map<String, dynamic>>.from(response);
-    } catch (e) {
-      debugPrint('Error fetching companies: $e');
-      return [];
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> getCompanyJobs(String companyName) async {
-    await _ensureAuthenticated();
-    
-    try {
-      final response = await _supabase
-          .from('job_listings')
-          .select('*')
-          .eq('status', 'active')
-          .ilike('company_name', companyName)
-          .order('created_at', ascending: false);
-
-      return List<Map<String, dynamic>>.from(response);
-    } catch (e) {
-      debugPrint('Error fetching company jobs: $e');
-      return [];
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> searchJobs(String query, {int limit = 20}) async {
-    await _ensureAuthenticated();
-    
-    try {
-      final response = await _supabase
-          .from('job_listings')
-          .select('job_title, company_name, district')
-          .eq('status', 'active')
-          .or('job_title.ilike.%$query%,company_name.ilike.%$query%')
-          .limit(limit);
-
-      return List<Map<String, dynamic>>.from(response);
-    } catch (e) {
-      debugPrint('Error searching jobs: $e');
-      return [];
-    }
-  }
-
-  Future<List<String>> getSkills({String? searchQuery}) async {
-    try {
-      var query = _supabase
-          .from('skills_master')
-          .select('skill_name');
-
-      if (searchQuery != null && searchQuery.isNotEmpty) {
-        query = query.ilike('skill_name', '%$searchQuery%');
-      }
-
-      final response = await query
-          .order('usage_count', ascending: false)
-          .limit(50);
-
-      return List<Map<String, dynamic>>.from(response)
-          .map((item) => item['skill_name'].toString())
-          .toList();
-    } catch (e) {
-      debugPrint('Error fetching skills: $e');
-      return [];
-    }
-  }
-
-  Future<Map<String, dynamic>> getJobStats() async {
-    try {
-      final jobsResponse = await _supabase
-          .from('job_listings')
-          .select('id')
-          .eq('status', 'active');
-      
-      final companiesResponse = await _supabase
-          .from('companies')
-          .select('id');
-
-      return {
-        'total_jobs': (jobsResponse as List).length,
-        'total_companies': (companiesResponse as List).length,
-      };
-    } catch (e) {
-      debugPrint('Error fetching job stats: $e');
-      return {'total_jobs': 0, 'total_companies': 0};
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> getRecommendedJobs({
-    int limit = 43,
-    int offset = 0,
-  }) async {
+  Future<List<Map<String, dynamic>>> getJobsBasedOnActivity() async {
     await _ensureAuthenticated();
 
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return [];
+    final uid = _supabase.auth.currentUser!.id;
 
-      final profile = await _supabase
-          .from('user_profiles')
-          .select('skills, preferred_job_types, preferred_locations, expected_salary_min, total_experience_years, current_city')
-          .eq('id', userId)
-          .maybeSingle();
+    final res = await _supabase
+        .from('job_views')
+        .select('job_listings(*)')
+        .eq('user_id', uid)
+        .order('viewed_at', ascending: false)
+        .limit(20);
 
-      if (profile == null) {
-        return await fetchJobs(limit: limit, offset: offset);
-      }
-
-      var query = _supabase
-          .from('job_listings')
-          .select('*')
-          .eq('status', 'active');
-
-      if (profile['preferred_locations'] != null && 
-          (profile['preferred_locations'] as List).isNotEmpty) {
-        query = query.inFilter('district', profile['preferred_locations']);
-      }
-
-      final response = await query
-          .order('created_at', ascending: false)
-          .range(offset, offset + limit - 1);
-
-      var jobs = List<Map<String, dynamic>>.from(response);
-
-      jobs = jobs.map((job) {
-        final matchScore = _calculateMatchScore(job, profile);
-        return {...job, 'match_score': matchScore};
-      }).toList();
-
-      jobs.sort((a, b) => (b['match_score'] as int).compareTo(a['match_score'] as int));
-
-      return jobs;
-    } catch (e) {
-      debugPrint('Error getting recommended jobs: $e');
-      return [];
-    }
+    return res
+        .map<Map<String, dynamic>>(
+            (e) => e['job_listings'] as Map<String, dynamic>)
+        .toList();
   }
 
-  Future<List<Map<String, dynamic>>> getJobsBasedOnActivity({
-    int limit = 75,
-  }) async {
-    await _ensureAuthenticated();
-
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return [];
-
-      final recentJobs = await _supabase
-          .from('job_views')
-          .select('job_id, job_listings(job_category, district, skills_required)')
-          .eq('user_id', userId)
-          .order('viewed_at', ascending: false)
-          .limit(10);
-
-      if (recentJobs.isEmpty) {
-        return await getRecommendedJobs(limit: limit);
-      }
-
-      final categories = <String>{};
-      final locations = <String>{};
-      final skills = <String>{};
-
-      for (var item in List<Map<String, dynamic>>.from(recentJobs)) {
-        final job = item['job_listings'] as Map<String, dynamic>?;
-        if (job != null) {
-          if (job['job_category'] != null) categories.add(job['job_category']);
-          if (job['district'] != null) locations.add(job['district']);
-          if (job['skills_required'] != null) {
-            skills.addAll((job['skills_required'] as List).cast<String>());
-          }
-        }
-      }
-
-      var query = _supabase
-          .from('job_listings')
-          .select('*')
-          .eq('status', 'active');
-
-      if (categories.isNotEmpty) {
-        query = query.inFilter('job_category', categories.toList());
-      }
-
-      final response = await query
-          .order('created_at', ascending: false)
-          .limit(limit);
-
-      return List<Map<String, dynamic>>.from(response);
-    } catch (e) {
-      debugPrint('Error getting jobs based on activity: $e');
-      return [];
-    }
-  }
+  /* ===================== PROFILE ===================== */
 
   Future<int> calculateProfileCompletion() async {
     await _ensureAuthenticated();
 
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return 0;
+    final uid = _supabase.auth.currentUser!.id;
 
-      final profile = await _supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
+    final profile = await _supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', uid)
+        .single();
 
-      int completedFields = 0;
-      int totalFields = 20;
+    int filled = 0;
+    const total = 10;
 
-      if (profile['full_name'] != null && profile['full_name'].toString().isNotEmpty) completedFields++;
-      if (profile['email'] != null && profile['email'].toString().isNotEmpty) completedFields++;
-      if (profile['mobile_number'] != null && profile['mobile_number'].toString().isNotEmpty) completedFields++;
-      if (profile['current_city'] != null && profile['current_city'].toString().isNotEmpty) completedFields++;
-      if (profile['avatar_url'] != null && profile['avatar_url'].toString().isNotEmpty) completedFields++;
+    if ((profile['full_name'] ?? '').toString().isNotEmpty) filled++;
+    if ((profile['mobile_number'] ?? '').toString().isNotEmpty) filled++;
+    if ((profile['current_city'] ?? '').toString().isNotEmpty) filled++;
+    if ((profile['skills'] as List?)?.isNotEmpty == true) filled++;
+    if ((profile['resume_url'] ?? '').toString().isNotEmpty) filled++;
+    if ((profile['highest_education'] ?? '').toString().isNotEmpty) filled++;
+    if (profile['total_experience_years'] != null) filled++;
 
-      if (profile['current_job_title'] != null && profile['current_job_title'].toString().isNotEmpty) completedFields++;
-      if (profile['current_company'] != null && profile['current_company'].toString().isNotEmpty) completedFields++;
-      if (profile['total_experience_years'] != null && profile['total_experience_years'] > 0) completedFields++;
-      if (profile['resume_url'] != null && profile['resume_url'].toString().isNotEmpty) completedFields++;
-      if (profile['resume_headline'] != null && profile['resume_headline'].toString().isNotEmpty) completedFields++;
-
-      if (profile['skills'] != null && (profile['skills'] as List).isNotEmpty) completedFields++;
-      if (profile['highest_education'] != null && profile['highest_education'].toString().isNotEmpty) completedFields++;
-      if (profile['preferred_job_types'] != null && (profile['preferred_job_types'] as List).isNotEmpty) completedFields++;
-      if (profile['preferred_locations'] != null && (profile['preferred_locations'] as List).isNotEmpty) completedFields++;
-      if (profile['expected_salary_min'] != null) completedFields++;
-
-      if (profile['bio'] != null && profile['bio'].toString().isNotEmpty) completedFields++;
-      if (profile['notice_period_days'] != null) completedFields++;
-      if (profile['is_open_to_work'] != null) completedFields++;
-      
-      final education = await _supabase
-          .from('user_education')
-          .select('id')
-          .eq('user_id', userId)
-          .limit(1);
-      if (education.isNotEmpty) completedFields++;
-
-      final experience = await _supabase
-          .from('user_experience')
-          .select('id')
-          .eq('user_id', userId)
-          .limit(1);
-      if (experience.isNotEmpty) completedFields++;
-
-      final percentage = ((completedFields / totalFields) * 100).round();
-
-      await _supabase
-          .from('user_profiles')
-          .update({'profile_completion_percentage': percentage})
-          .eq('id', userId);
-
-      return percentage;
-    } catch (e) {
-      debugPrint('Error calculating profile completion: $e');
-      return 0;
-    }
-  }
-
-  int _calculateMatchScore(Map<String, dynamic> job, Map<String, dynamic> profile) {
-    int score = 0;
-
-    final jobSkills = (job['skills_required'] as List?)?.cast<String>() ?? [];
-    final userSkills = (profile['skills'] as List?)?.cast<String>() ?? [];
-    if (jobSkills.isNotEmpty && userSkills.isNotEmpty) {
-      final matchingSkills = jobSkills.where((s) => 
-        userSkills.any((us) => us.toLowerCase() == s.toLowerCase())
-      ).length;
-      score += ((matchingSkills / jobSkills.length) * 40).round();
-    }
-
-    final jobType = job['job_type'] as String?;
-    final preferredTypes = (profile['preferred_job_types'] as List?)?.cast<String>() ?? [];
-    if (jobType != null && preferredTypes.contains(jobType)) {
-      score += 20;
-    }
-
-    final jobLocation = job['district'] as String?;
-    final preferredLocations = (profile['preferred_locations'] as List?)?.cast<String>() ?? [];
-    final currentCity = profile['current_city'] as String?;
-    if (jobLocation != null) {
-      if (preferredLocations.contains(jobLocation)) {
-        score += 20;
-      } else if (currentCity != null && jobLocation.toLowerCase().contains(currentCity.toLowerCase())) {
-        score += 15;
-      }
-    }
-
-    final salaryMin = job['salary_min'] as int?;
-    final expectedMin = profile['expected_salary_min'] as int?;
-    if (salaryMin != null && expectedMin != null) {
-      if (salaryMin >= expectedMin) {
-        score += 20;
-      } else if (salaryMin >= (expectedMin * 0.8)) {
-        score += 10;
-      }
-    }
-
-    return score.clamp(0, 100);
-  }
-
-  Future<void> trackJobActivity(String jobId, String activityType) async {
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
-
-      await _supabase.from('user_job_activity').insert({
-        'user_id': userId,
-        'job_id': jobId,
-        'activity_type': activityType,
-        'activity_date': DateTime.now().toIso8601String(),
-      });
-    } catch (e) {
-      debugPrint('Error tracking job activity: $e');
-    }
-  }
-
-  Future<Map<String, dynamic>> getProfileCompletionData() async {
-    await _ensureAuthenticated();
-
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return {'percentage': 0, 'missing_fields': []};
-
-      final profile = await _supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
-
-      final missingFields = <String>[];
-
-      if (profile['full_name'] == null || profile['full_name'].toString().isEmpty) {
-        missingFields.add('Full Name');
-      }
-      if (profile['current_job_title'] == null || profile['current_job_title'].toString().isEmpty) {
-        missingFields.add('Current Job Title');
-      }
-      if (profile['resume_url'] == null || profile['resume_url'].toString().isEmpty) {
-        missingFields.add('Resume');
-      }
-      if (profile['skills'] == null || (profile['skills'] as List).isEmpty) {
-        missingFields.add('Skills');
-      }
-      if (profile['preferred_locations'] == null || (profile['preferred_locations'] as List).isEmpty) {
-        missingFields.add('Preferred Locations');
-      }
-
-      final percentage = await calculateProfileCompletion();
-
-      return {
-        'percentage': percentage,
-        'missing_fields': missingFields,
-      };
-    } catch (e) {
-      debugPrint('Error getting profile completion data: $e');
-      return {'percentage': 0, 'missing_fields': []};
-    }
+    return ((filled / total) * 100).round();
   }
 }
