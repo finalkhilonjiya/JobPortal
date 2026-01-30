@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+
 import '../../job_application_form.dart';
 import '../../../services/job_service.dart';
 
@@ -37,12 +38,12 @@ class _JobDetailsPageState extends State<JobDetailsPage>
 
   Future<void> _checkAppliedStatus() async {
     try {
-      final appliedJobs = await _jobService.getMyApplications();
+      final appliedJobs = await _jobService.getUserAppliedJobs();
       final jobId = widget.job['id'];
 
-      _isApplied = appliedJobs.any(
-        (e) => e['listing_id'] == jobId,
-      );
+      _isApplied = appliedJobs.any((e) {
+        return e['listing_id'] == jobId;
+      });
     } catch (_) {
       _isApplied = false;
     }
@@ -70,6 +71,7 @@ class _JobDetailsPageState extends State<JobDetailsPage>
     final salaryMax = job['salary_max'];
     final description = job['job_description'] ?? '';
     final companyDesc = job['company_description'] ?? '';
+
     final skillsList = job['skills_required'];
     final skills = skillsList is List ? skillsList.join(', ') : '';
 
@@ -153,7 +155,7 @@ class _JobDetailsPageState extends State<JobDetailsPage>
                     ],
 
                     SizedBox(height: 2.h),
-                    Divider(),
+                    const Divider(),
 
                     Text(
                       'Job description',
