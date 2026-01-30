@@ -50,7 +50,8 @@ class JobService {
       score += ((match / jobSkills.length) * 40).round();
     }
 
-    if ((profile['preferred_job_types'] as List?)?.contains(job['job_type']) ==
+    if ((profile['preferred_job_types'] as List?)
+            ?.contains(job['job_type']) ==
         true) {
       score += 20;
     }
@@ -92,8 +93,93 @@ class JobService {
         .select('*')
         .eq('status', 'active')
         .eq('is_premium', true)
+        .order('created_at', ascending: false)
         .limit(limit);
     return List<Map<String, dynamic>>.from(res);
+  }
+
+  /* ================= REQUIRED BY HOME ================= */
+
+  /// ✅ USED IN HomeJobsFeed
+  Future<List<Map<String, dynamic>>> getRecommendedJobs({
+    int limit = 40,
+  }) async {
+    await _ensureAuthenticated();
+    final userId = _supabase.auth.currentUser!.id;
+
+    final profile = await _supabase
+        .from('user_profiles')
+        .select(
+            'skills, preferred_job_types, preferred_locations, expected_salary_min')
+        .eq('id', userId)
+        .maybeSingle();
+
+    if (profile == null) {
+      return fetchJobs(limit: limit);
+    }
+
+    final res = await _supabase
+        .from('job_listings')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', ascending: false)
+        .limit(limit);
+
+    final jobs = List<Map<String, dynamic>>.from(res)
+        .map((j) => {
+              ...j,
+              'match_score': _calculateMatchScore(j, profile),
+            })
+        .toList();
+
+    jobs.sort((a, b) =>
+        (b['match_score'] as int).compareTo(a['match_score'] as int));
+
+    return jobs;
+  }
+
+  /// ✅ USED IN HomeJobsFeed
+  Future<List<Map<String, dynamic>>> getJobsBasedOnActivity({
+    int limit = 50,
+  }) async {
+    await _ensureAuthenticated();
+    final userId = _supabase.auth.currentUser!.id;
+
+    final views = await _supabase
+        .from('job_views')
+        .select('job_id')
+        .eq('user_id', userId)
+        .order('viewed_at', ascending: false)
+        .limit(10);
+
+    if (views.isEmpty) {
+      return getRecommendedJobs(limit: limit);
+    }
+
+    final jobIds =
+        views.map<String>((e) => e['job_id'].toString()).toList();
+
+    final res = await _supabase
+        .from('job_listings')
+        .select('*')
+        .inFilter('id', jobIds);
+
+    return List<Map<String, dynamic>>.from(res);
+  }
+
+  /// ✅ USED IN HomeJobsFeed + JobDetailsPage
+  Future<void> trackJobView(String jobId) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      await _supabase.from('job_views').upsert({
+        'user_id': userId,
+        'job_id': jobId,
+        'viewed_at': DateTime.now().toIso8601String(),
+        'device_type': 'mobile',
+      }, onConflict: 'user_id,job_id');
+    } catch (e) {
+      debugPrint('trackJobView error: $e');
+    }
   }
 
   /* ================= SAVED JOBS ================= */
@@ -108,7 +194,6 @@ class JobService {
     return res.map<String>((e) => e['job_id'].toString()).toSet();
   }
 
-  /// 🔧 REQUIRED BY SavedJobsPage
   Future<List<Map<String, dynamic>>> getSavedJobs() async {
     await _ensureAuthenticated();
     final userId = _supabase.auth.currentUser!.id;
@@ -154,8 +239,10 @@ class JobService {
 
   /* ================= APPLY JOB ================= */
 
-  Future<void> applyToJob(
-      {required String jobId, required String applicationId}) async {
+  Future<void> applyToJob({
+    required String jobId,
+    required String applicationId,
+  }) async {
     await _ensureAuthenticated();
 
     final exists = await _supabase
@@ -177,7 +264,6 @@ class JobService {
     });
   }
 
-  /// 🔧 REQUIRED BY MyApplicationsPage
   Future<List<Map<String, dynamic>>> getMyApplications() async {
     return getUserAppliedJobs();
   }
