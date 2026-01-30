@@ -5,6 +5,11 @@ import '../../login_screen/mobile_login_screen.dart';
 import 'profile_page.dart';
 import '../premium_package_page.dart';
 import '../search_page.dart';
+import '../my_applications_page.dart';
+import '../saved_jobs_page.dart';
+import '../profile_performance_page.dart';
+import '../settings_page.dart';
+import '../help_page.dart';
 
 class NaukriDrawer extends StatelessWidget {
   final String userName;
@@ -23,17 +28,13 @@ class NaukriDrawer extends StatelessWidget {
     return Drawer(
       child: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             /// HEADER
             Padding(
               padding: EdgeInsets.fromLTRB(4.w, 3.h, 3.w, 2.h),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ProfileCompletionCircle(
-                    completion: profileCompletion,
-                  ),
+                  _ProfileCompletionCircle(completion: profileCompletion),
                   SizedBox(width: 4.w),
                   Expanded(
                     child: Column(
@@ -44,7 +45,6 @@ class NaukriDrawer extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black87,
                           ),
                         ),
                         SizedBox(height: 0.6.h),
@@ -53,7 +53,9 @@ class NaukriDrawer extends StatelessWidget {
                             Navigator.pop(context);
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => ProfilePage()),
+                              MaterialPageRoute(
+                                builder: (_) => const ProfilePage(),
+                              ),
                             );
                           },
                           child: Text(
@@ -77,7 +79,7 @@ class NaukriDrawer extends StatelessWidget {
               ),
             ),
 
-            /// UPGRADE CARD
+            /// UPGRADE
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 4.w),
               child: InkWell(
@@ -86,14 +88,14 @@ class NaukriDrawer extends StatelessWidget {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => PremiumPackagePage()),
+                    MaterialPageRoute(
+                      builder: (_) => const PremiumPackagePage(),
+                    ),
                   );
                 },
                 child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 4.w,
-                    vertical: 1.6.h,
-                  ),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.6.h),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -105,11 +107,8 @@ class NaukriDrawer extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.workspace_premium,
-                        color: Colors.amber.shade800,
-                        size: 22,
-                      ),
+                      Icon(Icons.workspace_premium,
+                          color: Colors.amber.shade800),
                       SizedBox(width: 3.w),
                       Expanded(
                         child: Text(
@@ -120,11 +119,8 @@ class NaukriDrawer extends StatelessWidget {
                           ),
                         ),
                       ),
-                      Icon(
-                        Icons.arrow_forward_ios,
-                        size: 14,
-                        color: Colors.grey.shade600,
-                      ),
+                      Icon(Icons.arrow_forward_ios,
+                          size: 14, color: Colors.grey),
                     ],
                   ),
                 ),
@@ -133,66 +129,73 @@ class NaukriDrawer extends StatelessWidget {
 
             SizedBox(height: 3.h),
 
-            /// MENU SECTION
+            /// MENU
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  _DrawerItem(
-                    icon: Icons.search,
-                    label: 'Search jobs',
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => SearchPage()),
-                      );
-                    },
+                  _item(
+                    context,
+                    Icons.search,
+                    'Search jobs',
+                    () => _go(context, const SearchPage()),
                   ),
-                  _DrawerItem(
-                    icon: Icons.work_outline,
-                    label: 'Recommended jobs',
-                    onTap: onClose,
+                  _item(
+                    context,
+                    Icons.work_outline,
+                    'Recommended jobs',
+                    onClose,
                   ),
-                  _DrawerItem(
-                    icon: Icons.bookmark_border,
-                    label: 'Saved jobs',
-                    onTap: () {},
+                  _item(
+                    context,
+                    Icons.assignment_turned_in_outlined,
+                    'My applications',
+                    () => _go(context, const MyApplicationsPage()),
                   ),
-                  _DrawerItem(
-                    icon: Icons.bar_chart_outlined,
-                    label: 'Profile performance',
-                    onTap: () {},
+                  _item(
+                    context,
+                    Icons.bookmark_border,
+                    'Saved jobs',
+                    () => _go(context, const SavedJobsPage()),
                   ),
-
-                  _Divider(),
-
-                  _DrawerItem(
-                    icon: Icons.settings_outlined,
-                    label: 'Settings',
-                    onTap: () {},
-                  ),
-                  _DrawerItem(
-                    icon: Icons.help_outline,
-                    label: 'Help',
-                    onTap: () {},
+                  _item(
+                    context,
+                    Icons.bar_chart_outlined,
+                    'Profile performance',
+                    () => _go(context, const ProfilePerformancePage()),
                   ),
 
-                  _Divider(),
+                  _divider(),
 
-                  _DrawerItem(
-                    icon: Icons.logout,
-                    label: 'Logout',
-                    iconColor: Colors.redAccent,
-                    onTap: () {
+                  _item(
+                    context,
+                    Icons.settings_outlined,
+                    'Settings',
+                    () => _go(context, const SettingsPage()),
+                  ),
+                  _item(
+                    context,
+                    Icons.help_outline,
+                    'Help',
+                    () => _go(context, const HelpPage()),
+                  ),
+
+                  _divider(),
+
+                  _item(
+                    context,
+                    Icons.logout,
+                    'Logout',
+                    () {
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => MobileLoginScreen(),
+                          builder: (_) => const MobileLoginScreen(),
                         ),
                         (_) => false,
                       );
                     },
+                    iconColor: Colors.redAccent,
                   ),
                 ],
               ),
@@ -202,13 +205,42 @@ class NaukriDrawer extends StatelessWidget {
       ),
     );
   }
+
+  Widget _item(
+    BuildContext context,
+    IconData icon,
+    String label,
+    VoidCallback onTap, {
+    Color? iconColor,
+  }) {
+    return ListTile(
+      dense: true,
+      leading: Icon(icon, size: 20, color: iconColor ?? Colors.grey.shade800),
+      title: Text(
+        label,
+        style: TextStyle(fontSize: 11.5.sp),
+      ),
+      onTap: () {
+        Navigator.pop(context);
+        onTap();
+      },
+    );
+  }
+
+  Widget _divider() => Padding(
+        padding: EdgeInsets.symmetric(vertical: 1.h),
+        child: Divider(color: Colors.grey.shade300),
+      );
+
+  void _go(BuildContext context, Widget page) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+  }
 }
 
-/// ===================== COMPONENTS =====================
+/// =================== COMPONENT ===================
 
 class _ProfileCompletionCircle extends StatelessWidget {
   final int completion;
-
   const _ProfileCompletionCircle({required this.completion});
 
   @override
@@ -222,63 +254,14 @@ class _ProfileCompletionCircle extends StatelessWidget {
           child: CircularProgressIndicator(
             value: completion / 100,
             strokeWidth: 3,
-            color: Colors.blue,
             backgroundColor: Colors.grey.shade300,
           ),
         ),
         Text(
           '$completion%',
-          style: TextStyle(
-            fontSize: 10.sp,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w600),
         ),
       ],
-    );
-  }
-}
-
-class _DrawerItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Color? iconColor;
-
-  const _DrawerItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.iconColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(
-        icon,
-        size: 20,
-        color: iconColor ?? Colors.grey.shade800,
-      ),
-      title: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11.5.sp,
-          color: Colors.black87,
-        ),
-      ),
-      onTap: onTap,
-      horizontalTitleGap: 2.w,
-      dense: true,
-    );
-  }
-}
-
-class _Divider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 1.h),
-      child: Divider(height: 1, color: Colors.grey.shade300),
     );
   }
 }
