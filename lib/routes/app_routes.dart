@@ -10,6 +10,8 @@ import '../presentation/user_profile/user_profile.dart';
 import '../presentation/chat_messaging/chat_messaging.dart';
 import '../presentation/favorites_and_saved_items/favorites_and_saved_items.dart';
 import '../presentation/configuration_setup/configuration_setup.dart';
+import '../routes/home_router.dart';
+
 
 class AppRoutes {
   // Core App Routes
@@ -112,7 +114,8 @@ class AppRoutes {
     registrationScreen: (context) => const RegistrationScreen(),
 
     // Jobs Routes (CHANGED)
-    homeJobsFeed: (context) => const HomeJobsFeed(), // ← CHANGED
+    homeJobsFeed: (context) => const HomeRouter(),
+
 
     searchAndFilters: (context) => const SearchAndFilters(),
     listingDetail: (context) => const ListingDetail(),
