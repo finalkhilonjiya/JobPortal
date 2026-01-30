@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import 'package:intl/intl.dart';
-
 import '../../job_application_form.dart';
+import '../../../services/job_service.dart';
 
 class JobDetailsPage extends StatefulWidget {
   final Map<String, dynamic> job;
@@ -23,11 +22,34 @@ class JobDetailsPage extends StatefulWidget {
 class _JobDetailsPageState extends State<JobDetailsPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  final JobService _jobService = JobService();
+
+  bool _isApplied = false;
+  bool _checkingStatus = true;
+  bool _loadingApply = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _checkAppliedStatus();
+  }
+
+  Future<void> _checkAppliedStatus() async {
+    try {
+      final appliedJobs = await _jobService.getMyApplications();
+      final jobId = widget.job['id'];
+
+      _isApplied = appliedJobs.any(
+        (e) => e['listing_id'] == jobId,
+      );
+    } catch (_) {
+      _isApplied = false;
+    }
+
+    if (mounted) {
+      setState(() => _checkingStatus = false);
+    }
   }
 
   @override
@@ -47,9 +69,7 @@ class _JobDetailsPageState extends State<JobDetailsPage>
     final salaryMin = job['salary_min'];
     final salaryMax = job['salary_max'];
     final description = job['job_description'] ?? '';
-    final createdAt = job['created_at'];
     final companyDesc = job['company_description'] ?? '';
-
     final skillsList = job['skills_required'];
     final skills = skillsList is List ? skillsList.join(', ') : '';
 
@@ -58,7 +78,6 @@ class _JobDetailsPageState extends State<JobDetailsPage>
 
       body: CustomScrollView(
         slivers: [
-          /// APP BAR + TABS
           SliverAppBar(
             pinned: true,
             elevation: 1,
@@ -83,7 +102,6 @@ class _JobDetailsPageState extends State<JobDetailsPage>
               labelColor: Colors.blue,
               unselectedLabelColor: Colors.grey,
               indicatorColor: Colors.blue,
-              indicatorWeight: 3,
               tabs: const [
                 Tab(text: 'Job Details'),
                 Tab(text: 'About Company'),
@@ -91,12 +109,11 @@ class _JobDetailsPageState extends State<JobDetailsPage>
             ),
           ),
 
-          /// TAB CONTENT
           SliverFillRemaining(
             child: TabBarView(
               controller: _tabController,
               children: [
-                /// ================= JOB DETAILS =================
+                /// JOB DETAILS
                 ListView(
                   padding: EdgeInsets.all(4.w),
                   children: [
@@ -151,24 +168,14 @@ class _JobDetailsPageState extends State<JobDetailsPage>
                       style: TextStyle(
                         fontSize: 12.sp,
                         height: 1.6,
-                        color: Colors.grey.shade800,
                       ),
                     ),
 
-                    SizedBox(height: 2.h),
-                    Text(
-                      _posted(createdAt),
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-
-                    SizedBox(height: 10.h),
+                    SizedBox(height: 12.h),
                   ],
                 ),
 
-                /// ================= ABOUT COMPANY =================
+                /// ABOUT COMPANY
                 ListView(
                   padding: EdgeInsets.all(4.w),
                   children: [
@@ -190,14 +197,10 @@ class _JobDetailsPageState extends State<JobDetailsPage>
                         companyDesc.isNotEmpty
                             ? companyDesc
                             : 'Company description not available.',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          height: 1.6,
-                          color: Colors.grey.shade800,
-                        ),
+                        style: TextStyle(fontSize: 12.sp),
                       ),
                     ),
-                    SizedBox(height: 10.h),
+                    SizedBox(height: 12.h),
                   ],
                 ),
               ],
@@ -206,41 +209,59 @@ class _JobDetailsPageState extends State<JobDetailsPage>
         ],
       ),
 
-      /// APPLY BUTTON (NAUKRI-STYLE)
+      /// APPLY BUTTON
       bottomNavigationBar: SafeArea(
         child: Container(
           padding: EdgeInsets.fromLTRB(4.w, 1.5.h, 4.w, 2.h),
           color: Colors.white,
           child: SizedBox(
             height: 44,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        JobApplicationForm(jobId: job['id']),
+            child: _checkingStatus
+                ? const SizedBox.shrink()
+                : ElevatedButton(
+                    onPressed: _isApplied || _loadingApply
+                        ? null
+                        : () async {
+                            setState(() => _loadingApply = true);
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    JobApplicationForm(jobId: job['id']),
+                              ),
+                            );
+                            await _checkAppliedStatus();
+                            setState(() => _loadingApply = false);
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _isApplied
+                          ? Colors.grey.shade400
+                          : const Color(0xFF2563EB),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                    child: _loadingApply
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            _isApplied ? 'Applied' : 'Apply',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
-                ),
-              ),
-              child: const Text(
-                'Apply',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
           ),
         ),
       ),
     );
   }
-
-  /// ================= HELPERS =================
 
   Widget _iconText(IconData icon, String text) {
     return Padding(
@@ -250,10 +271,7 @@ class _JobDetailsPageState extends State<JobDetailsPage>
           Icon(icon, size: 18, color: Colors.grey),
           SizedBox(width: 2.w),
           Expanded(
-            child: Text(
-              text,
-              style: TextStyle(fontSize: 11.5.sp),
-            ),
+            child: Text(text, style: TextStyle(fontSize: 11.5.sp)),
           ),
         ],
       ),
@@ -261,18 +279,9 @@ class _JobDetailsPageState extends State<JobDetailsPage>
   }
 
   String _salary(int? min, int? max) {
-    String f(int v) =>
-        '${(v / 100000).toStringAsFixed(1)} Lacs PA';
+    String f(int v) => '${(v / 100000).toStringAsFixed(1)} Lacs PA';
     if (min != null && max != null) return '${f(min)} - ${f(max)}';
     if (min != null) return f(min);
     return 'Not disclosed';
-  }
-
-  String _posted(String? date) {
-    if (date == null) return 'Recently';
-    final d = DateTime.tryParse(date);
-    if (d == null) return 'Recently';
-    final days = DateTime.now().difference(d).inDays;
-    return days == 0 ? 'Today' : '$days days ago';
   }
 }
