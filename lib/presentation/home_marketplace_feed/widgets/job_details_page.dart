@@ -1,9 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-
-import '../job_application_form.dart';
 import '../../../services/job_service.dart';
+import '../job_application_form.dart';
 
 class JobDetailsPage extends StatefulWidget {
   final Map<String, dynamic> job;
@@ -27,7 +26,8 @@ class _JobDetailsPageState extends State<JobDetailsPage>
   final JobService _jobService = JobService();
 
   bool _isApplied = false;
-  bool _checkingStatus = true;
+  bool _checking = true;
+  bool _loadingApply = false;
 
   @override
   void initState() {
@@ -39,137 +39,208 @@ class _JobDetailsPageState extends State<JobDetailsPage>
   Future<void> _checkApplied() async {
     try {
       final apps = await _jobService.getUserAppliedJobs();
-      _isApplied = apps.any(
-        (e) => e['listing_id'] == widget.job['id'],
-      );
+      _isApplied =
+          apps.any((e) => e['listing_id'] == widget.job['id']);
     } catch (_) {}
-    if (mounted) setState(() => _checkingStatus = false);
+    if (mounted) setState(() => _checking = false);
   }
 
   @override
   Widget build(BuildContext context) {
     final job = widget.job;
 
+    final title = job['job_title'] ?? '';
+    final company = job['company_name'] ?? '';
+    final postedAgo = job['created_at'] ?? '';
+    final location = job['district'] ?? '';
+    final experience = job['experience_required'] ?? '';
+    final salaryMin = job['salary_min'];
+    final salaryMax = job['salary_max'];
+    final vacancies = job['vacancies'];
+    final duration = job['duration'];
+    final startInfo = job['start_info'];
+    final description = job['job_description'] ?? '';
+    final companyDesc = job['company_description'] ?? '';
+    final mustSkills = job['skills_required'];
+    final goodSkills = job['good_to_have_skills'];
+
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
 
-      /// ================= BODY =================
-      body: SafeArea(
-        child: Column(
-          children: [
-            _header(context),
-            _tabs(),
-            Expanded(child: _tabViews()),
-          ],
-        ),
-      ),
-
-      /// ================= APPLY BUTTON =================
+      /// APPLY BUTTON (FIXED)
       bottomNavigationBar: SafeArea(
         child: Container(
-          padding: EdgeInsets.fromLTRB(4.w, 1.2.h, 4.w, 2.h),
+          padding: EdgeInsets.all(4.w),
           color: Colors.white,
           child: SizedBox(
-            height: 50,
-            child: ElevatedButton(
-              onPressed: _checkingStatus || _isApplied
-                  ? null
-                  : () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              JobApplicationForm(jobId: job['id']),
-                        ),
-                      );
-                      _checkApplied();
-                    },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(26),
-                ),
-              ),
-              child: Text(
-                _isApplied ? 'Applied' : 'Apply now',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
-              ),
-            ),
+            height: 48,
+            child: _checking
+                ? const SizedBox()
+                : ElevatedButton(
+                    onPressed: _isApplied || _loadingApply
+                        ? null
+                        : () async {
+                            setState(() => _loadingApply = true);
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    JobApplicationForm(jobId: job['id']),
+                              ),
+                            );
+                            await _checkApplied();
+                            setState(() => _loadingApply = false);
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _isApplied
+                          ? Colors.grey.shade400
+                          : const Color(0xFF2563EB),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: Text(
+                      _isApplied ? 'Applied' : 'Apply now',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
           ),
         ),
       ),
-    );
-  }
 
-  /// ================= HEADER =================
-  Widget _header(BuildContext context) {
-    final job = widget.job;
-    final logoLetter =
-        (job['company_name'] ?? 'C').toString()[0].toUpperCase();
-
-    final color = Colors.primaries[
-        Random(job['company_name'].hashCode).nextInt(Colors.primaries.length)];
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 1.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
+      body: CustomScrollView(
+        slivers: [
+          /// APP BAR + TABS
+          SliverAppBar(
+            pinned: true,
+            backgroundColor: Colors.white,
+            elevation: 1,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              onPressed: () => Navigator.pop(context),
+            ),
+            actions: [
+              IconButton(
+                icon: Icon(
+                  widget.isSaved
+                      ? Icons.bookmark
+                      : Icons.bookmark_border,
+                  color: Colors.black,
+                ),
+                onPressed: widget.onSaveToggle,
+              ),
+            ],
+            bottom: TabBar(
+              controller: _tabController,
+              labelColor: Colors.black,
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: Colors.orange,
+              tabs: const [
+                Tab(text: 'Details'),
+                Tab(text: 'About Company'),
+              ],
+            ),
           ),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(left: 2.w),
-              child: Column(
+
+          /// HEADER ABOVE TABS
+          SliverToBoxAdapter(
+            child: Container(
+              color: Colors.white,
+              padding: EdgeInsets.fromLTRB(4.w, 3.h, 4.w, 2.h),
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    job['job_title'] ?? '',
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  SizedBox(height: 0.4.h),
-                  Text(
-                    job['company_name'] ?? '',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                  SizedBox(height: 0.4.h),
-                  Text(
-                    'Posted ${_posted(job['created_at'])}',
-                    style: TextStyle(
-                      fontSize: 10.5.sp,
-                      color: Colors.grey.shade500,
+                  _LogoBox(company: company),
+                  SizedBox(width: 4.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(height: 0.6.h),
+                        Text(
+                          company,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        SizedBox(height: 0.6.h),
+                        Text(
+                          'Posted ${_ago(postedAgo)}',
+                          style: TextStyle(
+                            fontSize: 10.5.sp,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              logoLetter,
-              style: TextStyle(
-                fontSize: 22.sp,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
+
+          /// TAB CONTENT
+          SliverFillRemaining(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                /// DETAILS TAB
+                ListView(
+                  padding: EdgeInsets.all(4.w),
+                  children: [
+                    _InfoCard(children: [
+                      if (duration != null)
+                        _iconRow(Icons.schedule, duration),
+                      if (startInfo != null)
+                        _iconRow(Icons.calendar_today, startInfo),
+                      if (vacancies != null)
+                        _iconRow(Icons.people, '$vacancies vacancies'),
+                      _iconRow(Icons.location_on, location),
+                      _iconRow(
+                        Icons.currency_rupee,
+                        _salary(salaryMin, salaryMax),
+                      ),
+                      if (mustSkills != null)
+                        _skillsBlock(
+                            'Must have skills', mustSkills),
+                      if (goodSkills != null)
+                        _skillsBlock(
+                            'Good to have skills', goodSkills),
+                    ]),
+                    SizedBox(height: 2.h),
+                    _SectionTitle('Description'),
+                    _TextCard(description),
+                    SizedBox(height: 2.h),
+                    _MetaCard(job),
+                    SizedBox(height: 10.h),
+                  ],
+                ),
+
+                /// ABOUT COMPANY TAB
+                ListView(
+                  padding: EdgeInsets.all(4.w),
+                  children: [
+                    _SectionTitle('About company'),
+                    _TextCard(
+                      companyDesc.isNotEmpty
+                          ? companyDesc
+                          : 'Company details not available.',
+                    ),
+                    SizedBox(height: 10.h),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
@@ -177,95 +248,9 @@ class _JobDetailsPageState extends State<JobDetailsPage>
     );
   }
 
-  /// ================= TABS =================
-  Widget _tabs() {
-    return Material(
-      color: Colors.white,
-      child: TabBar(
-        controller: _tabController,
-        indicatorColor: Colors.orange,
-        labelColor: Colors.black,
-        unselectedLabelColor: Colors.grey,
-        tabs: const [
-          Tab(text: 'Details'),
-          Tab(text: 'About Company'),
-        ],
-      ),
-    );
-  }
+  /// ---------- UI HELPERS ----------
 
-  /// ================= TAB VIEWS =================
-  Widget _tabViews() {
-    return TabBarView(
-      controller: _tabController,
-      children: [
-        _detailsTab(),
-        _aboutCompanyTab(),
-      ],
-    );
-  }
-
-  /// ================= DETAILS TAB =================
-  Widget _detailsTab() {
-    final job = widget.job;
-
-    return ListView(
-      padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 12.h),
-      children: [
-        _infoCard([
-          _infoRow(Icons.access_time, '${job['experience_required'] ?? '—'}'),
-          _infoRow(Icons.people, '${job['vacancies'] ?? '—'} vacancies'),
-          _infoRow(Icons.location_on, job['district'] ?? ''),
-          _infoRow(
-            Icons.currency_rupee,
-            _salary(job['salary_min'], job['salary_max']),
-          ),
-        ]),
-
-        SizedBox(height: 2.h),
-
-        _sectionCard(
-          title: 'Must have skills',
-          content: (job['skills_required'] as List?)?.join(', ') ?? '—',
-        ),
-
-        SizedBox(height: 2.h),
-
-        _sectionCard(
-          title: 'Description',
-          content: job['job_description'] ?? '',
-        ),
-      ],
-    );
-  }
-
-  /// ================= ABOUT COMPANY =================
-  Widget _aboutCompanyTab() {
-    return ListView(
-      padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 12.h),
-      children: [
-        _sectionCard(
-          title: 'About company',
-          content: widget.job['company_description'] ??
-              'Company description not available.',
-        ),
-      ],
-    );
-  }
-
-  /// ================= UI HELPERS =================
-  Widget _infoCard(List<Widget> children) {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(children: children),
-    );
-  }
-
-  Widget _infoRow(IconData icon, String text) {
+  Widget _iconRow(IconData icon, String text) {
     return Padding(
       padding: EdgeInsets.only(bottom: 1.h),
       child: Row(
@@ -283,29 +268,99 @@ class _JobDetailsPageState extends State<JobDetailsPage>
     );
   }
 
-  Widget _sectionCard({required String title, required String content}) {
+  Widget _skillsBlock(String title, dynamic list) {
+    final skills =
+        list is List ? list.join(', ') : list.toString();
+    return Padding(
+      padding: EdgeInsets.only(top: 1.5.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 11.sp,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          SizedBox(height: 0.4.h),
+          Text(
+            skills,
+            style: TextStyle(fontSize: 12.sp),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _SectionTitle(String text) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 1.h),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 14.sp,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _TextCard(String text) {
     return Container(
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
       ),
+      child: Text(
+        text,
+        style: TextStyle(fontSize: 12.sp, height: 1.6),
+      ),
+    );
+  }
+
+  Widget _InfoCard({required List<Widget> children}) {
+    return Container(
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _MetaCard(Map<String, dynamic> job) {
+    return _InfoCard(children: [
+      _metaRow('Industry type', job['industry']),
+      _metaRow('Department', job['department']),
+      _metaRow('Role', job['role']),
+      _metaRow('Employment type', job['employment_type']),
+      _metaRow('Education', job['education']),
+    ]);
+  }
+
+  Widget _metaRow(String label, dynamic value) {
+    if (value == null || value.toString().isEmpty) {
+      return const SizedBox();
+    }
+    return Padding(
+      padding: EdgeInsets.only(bottom: 1.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title,
-            style:
-                TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
-          ),
-          SizedBox(height: 1.h),
-          Text(
-            content,
+            label,
             style: TextStyle(
-              fontSize: 12.sp,
-              height: 1.6,
-              color: Colors.grey.shade800,
+              fontSize: 10.5.sp,
+              color: Colors.grey.shade600,
             ),
+          ),
+          SizedBox(height: 0.2.h),
+          Text(
+            value.toString(),
+            style: TextStyle(fontSize: 12.sp),
           ),
         ],
       ),
@@ -313,17 +368,51 @@ class _JobDetailsPageState extends State<JobDetailsPage>
   }
 
   String _salary(int? min, int? max) {
-    String f(int v) => '${(v / 100000).toStringAsFixed(1)} Lacs PA';
+    String f(int v) =>
+        '${(v / 100000).toStringAsFixed(1)} Lacs PA';
     if (min != null && max != null) return '${f(min)} - ${f(max)}';
     if (min != null) return f(min);
     return 'Not disclosed';
   }
 
-  String _posted(String? date) {
-    if (date == null) return 'recently';
+  String _ago(String? date) {
+    if (date == null) return '';
     final d = DateTime.tryParse(date);
-    if (d == null) return 'recently';
+    if (d == null) return '';
     final days = DateTime.now().difference(d).inDays;
-    return days == 0 ? 'today' : '$days d ago';
+    return days == 0 ? 'Today' : '$days d ago';
+  }
+}
+
+/// LOGO PLACEHOLDER
+class _LogoBox extends StatelessWidget {
+  final String company;
+
+  const _LogoBox({required this.company});
+
+  @override
+  Widget build(BuildContext context) {
+    final letter =
+        company.isNotEmpty ? company[0].toUpperCase() : 'C';
+    final color = Colors.primaries[
+        Random(company.hashCode).nextInt(Colors.primaries.length)];
+
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        letter,
+        style: TextStyle(
+          fontSize: 24.sp,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+      ),
+    );
   }
 }
