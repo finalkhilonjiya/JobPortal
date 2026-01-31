@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
@@ -17,155 +18,152 @@ class JobCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = job['job_title'] ?? '';
+    final jobTitle = job['job_title'] ?? '';
     final company = job['company_name'] ?? '';
     final location = job['district'] ?? '';
-    final experience = job['experience_required'] ?? '0 Yrs';
+    final experience = job['experience_required'] ?? '';
     final salaryMin = job['salary_min'];
     final salaryMax = job['salary_max'];
     final skills = (job['skills_required'] as List?)?.join(', ') ?? '';
-
-    final vacancies = job['vacancies'];
-    final isWalkIn = job['is_walk_in'] == true;
-    final rating = job['company_rating'];
-    final reviews = job['company_reviews'];
     final createdAt = job['created_at'];
+
+    // Optional / conditional
+    final vacancies = job['vacancies']; // int?
+    final jobType = job['job_type']; // internship / fulltime / etc
+    final walkIn = job['walk_in'] == true;
 
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 0.8.h),
+        margin: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
         padding: EdgeInsets.all(4.w),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: Colors.grey.shade200),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// TOP ROW
+            /// ───────── HEADER ─────────
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// TITLE + COMPANY
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        title,
+                        jobTitle,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13.5.sp,
+                          fontSize: 14.5.sp,
                           fontWeight: FontWeight.w600,
+                          color: Colors.black87,
                         ),
                       ),
-                      SizedBox(height: 0.4.h),
+                      SizedBox(height: 0.6.h),
                       Text(
                         company,
                         style: TextStyle(
-                          fontSize: 11.5.sp,
+                          fontSize: 12.sp,
                           color: Colors.grey.shade700,
                         ),
                       ),
-
-                      /// RATING
-                      if (rating != null) ...[
-                        SizedBox(height: 0.5.h),
-                        Row(
-                          children: [
-                            const Icon(Icons.star,
-                                size: 14, color: Colors.orange),
-                            SizedBox(width: 1.w),
-                            Text(
-                              '$rating',
-                              style: TextStyle(
-                                fontSize: 10.5.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            if (reviews != null)
-                              Text(
-                                ' ($reviews Reviews)',
-                                style: TextStyle(
-                                  fontSize: 10.sp,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
                     ],
                   ),
                 ),
 
-                /// LOGO (BIGGER)
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    company.isNotEmpty ? company[0].toUpperCase() : 'C',
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blueGrey,
-                    ),
-                  ),
-                ),
+                /// LOGO
+                _CompanyLogo(company: company),
               ],
             ),
 
-            SizedBox(height: 1.2.h),
+            SizedBox(height: 1.4.h),
 
-            /// META INFO
-            _row(Icons.location_on_outlined, location),
-            _row(Icons.work_outline, experience),
-            _row(Icons.currency_rupee, _salary(salaryMin, salaryMax)),
-
-            if (skills.isNotEmpty) ...[
+            /// ───────── META INFO ─────────
+            _iconRow(
+              Icons.location_on_outlined,
+              location,
+              Colors.blueGrey,
+            ),
+            SizedBox(height: 0.6.h),
+            _iconRow(
+              Icons.work_outline,
+              experience.isNotEmpty ? experience : 'Experience not specified',
+              Colors.indigo,
+            ),
+            if (salaryMin != null || salaryMax != null) ...[
               SizedBox(height: 0.6.h),
+              _iconRow(
+                Icons.currency_rupee,
+                _formatSalary(salaryMin, salaryMax),
+                Colors.green.shade700,
+              ),
+            ],
+
+            /// ───────── SKILLS ─────────
+            if (skills.isNotEmpty) ...[
+              SizedBox(height: 1.h),
               Text(
                 skills,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 10.5.sp,
+                  fontSize: 10.8.sp,
                   color: Colors.grey.shade600,
                 ),
               ),
             ],
 
-            SizedBox(height: 1.2.h),
+            SizedBox(height: 1.4.h),
 
-            /// TAGS ROW
-            Row(
+            /// ───────── TAGS ─────────
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
               children: [
+                if (jobType == 'internship')
+                  _tag(
+                    'Internship',
+                    bg: Colors.orange.shade50,
+                    fg: Colors.orange.shade700,
+                  ),
                 if (vacancies != null)
-                  _tag('$vacancies vacancies'),
-                if (isWalkIn) _tag('Walk in'),
-                const Spacer(),
+                  _tag(
+                    '$vacancies vacancies',
+                    bg: Colors.blue.shade50,
+                    fg: Colors.blue.shade700,
+                  ),
+                if (walkIn)
+                  _tag(
+                    'Walk-in',
+                    bg: Colors.green.shade50,
+                    fg: Colors.green.shade700,
+                  ),
+              ],
+            ),
+
+            SizedBox(height: 1.4.h),
+
+            /// ───────── FOOTER ─────────
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
                 Text(
-                  _posted(createdAt),
+                  _formatDate(createdAt),
                   style: TextStyle(
                     fontSize: 10.sp,
                     color: Colors.grey.shade500,
                   ),
                 ),
-                SizedBox(width: 3.w),
                 InkWell(
                   onTap: onSaveToggle,
                   child: Icon(
-                    isSaved
-                        ? Icons.bookmark
-                        : Icons.bookmark_border,
-                    size: 18,
+                    isSaved ? Icons.bookmark : Icons.bookmark_border,
+                    size: 20,
                     color:
                         isSaved ? Colors.blue : Colors.grey.shade600,
                   ),
@@ -178,56 +176,92 @@ class JobCardWidget extends StatelessWidget {
     );
   }
 
-  Widget _row(IconData icon, String text) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 0.4.h),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: Colors.grey.shade600),
-          SizedBox(width: 2.w),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(fontSize: 11.sp),
+  /// ───────── HELPERS ─────────
+
+  Widget _iconRow(IconData icon, String text, Color color) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: color),
+        SizedBox(width: 2.w),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 11.5.sp,
+              color: Colors.grey.shade800,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _tag(String text) {
+  Widget _tag(String text, {required Color bg, required Color fg}) {
     return Container(
-      margin: EdgeInsets.only(right: 2.w),
-      padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.4.h),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(6),
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
         text,
         style: TextStyle(
           fontSize: 10.sp,
-          color: Colors.blue.shade700,
+          color: fg,
           fontWeight: FontWeight.w500,
         ),
       ),
     );
   }
 
-  String _salary(int? min, int? max) {
+  String _formatSalary(int? min, int? max) {
     String f(int v) =>
-        '${(v / 100000).toStringAsFixed(1)} Lacs PA';
+        v >= 100000 ? '${(v / 100000).toStringAsFixed(1)} Lacs PA' : '₹$v';
     if (min != null && max != null) return '${f(min)} - ${f(max)}';
     if (min != null) return f(min);
+    if (max != null) return f(max);
     return 'Not disclosed';
   }
 
-  String _posted(String? dateStr) {
+  String _formatDate(String? dateStr) {
     if (dateStr == null) return 'Recently';
     final d = DateTime.tryParse(dateStr);
     if (d == null) return 'Recently';
-    final days = DateTime.now().difference(d).inDays;
-    return days == 0 ? 'Today' : '${days}d ago';
+    final diff = DateTime.now().difference(d).inDays;
+    return diff == 0 ? 'Today' : '${diff}d ago';
+  }
+}
+
+/// ───────── LOGO PLACEHOLDER ─────────
+class _CompanyLogo extends StatelessWidget {
+  final String company;
+  const _CompanyLogo({required this.company});
+
+  @override
+  Widget build(BuildContext context) {
+    final letter =
+        company.isNotEmpty ? company[0].toUpperCase() : 'C';
+
+    final color = Colors.primaries[
+        Random(company.hashCode).nextInt(Colors.primaries.length)];
+
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        letter,
+        style: TextStyle(
+          fontSize: 16.sp,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+      ),
+    );
   }
 }
