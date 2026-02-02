@@ -39,9 +39,8 @@ class _JobDetailsPageState extends State<JobDetailsPage>
   Future<void> _checkApplied() async {
     try {
       final apps = await _jobService.getUserAppliedJobs();
-      _isApplied = apps.any(
-        (e) => e['listing_id'] == widget.job['id'],
-      );
+      _isApplied =
+          apps.any((e) => e['listing_id'] == widget.job['id']);
     } catch (_) {}
     setState(() => _checking = false);
   }
@@ -62,13 +61,13 @@ class _JobDetailsPageState extends State<JobDetailsPage>
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
 
-      /// APPLY BUTTON (FIXED)
+      /// APPLY BUTTON — FIXED HEIGHT, NO CLIP
       bottomNavigationBar: SafeArea(
         child: Container(
-          padding: EdgeInsets.all(3.w),
+          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.2.h),
           color: Colors.white,
           child: SizedBox(
-            height: 48,
+            height: 40, // 🔧 HALF SIZE
             child: ElevatedButton(
               onPressed: _checking || _isApplied
                   ? null
@@ -86,14 +85,16 @@ class _JobDetailsPageState extends State<JobDetailsPage>
                 backgroundColor:
                     _isApplied ? Colors.grey : const Color(0xFF2563EB),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28),
+                  borderRadius: BorderRadius.circular(22),
                 ),
+                padding: EdgeInsets.zero, // 🔧 prevents text clipping
               ),
-              child: Text(
-                _isApplied ? 'Applied' : 'Apply now',
-                style: const TextStyle(
+              child: const Text(
+                'Apply now',
+                style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: 16,
+                  fontSize: 14,
+                  height: 1.2, // 🔧 fixes vertical cut
                 ),
               ),
             ),
@@ -101,14 +102,13 @@ class _JobDetailsPageState extends State<JobDetailsPage>
         ),
       ),
 
-      body: NestedScrollView(
-        headerSliverBuilder: (_, __) => [
+      body: Column(
+        children: [
           /// APP BAR
-          SliverAppBar(
+          AppBar(
             backgroundColor: Colors.white,
             elevation: 0.5,
-            pinned: true,
-            leading: BackButton(color: Colors.black),
+            leading: const BackButton(color: Colors.black),
             actions: [
               IconButton(
                 icon: Icon(
@@ -122,120 +122,114 @@ class _JobDetailsPageState extends State<JobDetailsPage>
             ],
           ),
 
-          /// JOB HEADER (LOGO + TITLE)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 2.h),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _CompanyLogo(company: company),
-                  SizedBox(width: 4.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 20.sp,
-                            fontWeight: FontWeight.w700,
-                          ),
+          /// 🔒 FIXED JOB HEADER (NO SCROLL)
+          Container(
+            color: Colors.white,
+            padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 2.h),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _CompanyLogo(company: company),
+                SizedBox(width: 4.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w700,
                         ),
-                        SizedBox(height: 0.6.h),
-                        Text(
-                          company,
-                          style: TextStyle(
-                            fontSize: 12.5.sp,
-                            color: Colors.grey.shade700,
-                          ),
+                      ),
+                      SizedBox(height: 0.6.h),
+                      Text(
+                        company,
+                        style: TextStyle(
+                          fontSize: 12.5.sp,
+                          color: Colors.grey.shade700,
                         ),
-                        SizedBox(height: 0.4.h),
-                        Text(
-                          _postedAgo(postedAt),
-                          style: TextStyle(
-                            fontSize: 10.5.sp,
-                            color: Colors.grey.shade500,
-                          ),
+                      ),
+                      SizedBox(height: 0.4.h),
+                      Text(
+                        _postedAgo(postedAt),
+                        style: TextStyle(
+                          fontSize: 10.5.sp,
+                          color: Colors.grey.shade500,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
 
-          /// TABS (BELOW HEADER — AS YOU ASKED)
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _TabHeader(
-              TabBar(
-                controller: _tabController,
-                indicatorColor: Colors.orange,
-                labelColor: Colors.black,
-                unselectedLabelColor: Colors.grey,
-                tabs: const [
-                  Tab(text: 'Details'),
-                  Tab(text: 'About Company'),
-                ],
-              ),
+          /// FIXED TABS (UNDER HEADER)
+          Container(
+            color: Colors.white,
+            child: TabBar(
+              controller: _tabController,
+              indicatorColor: Colors.orange,
+              labelColor: Colors.black,
+              unselectedLabelColor: Colors.grey,
+              tabs: const [
+                Tab(text: 'Details'),
+                Tab(text: 'About Company'),
+              ],
+            ),
+          ),
+
+          /// SCROLLING CONTENT ONLY
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                /// DETAILS TAB
+                ListView(
+                  padding: EdgeInsets.all(4.w),
+                  children: [
+                    _infoCard(children: [
+                      _row(Icons.location_on, location),
+                      _row(
+                        Icons.currency_rupee,
+                        _salary(salaryMin, salaryMax),
+                      ),
+                    ]),
+                    SizedBox(height: 2.h),
+                    _section('Description', description),
+                    if (skills.isNotEmpty) ...[
+                      SizedBox(height: 2.h),
+                      _section(
+                        'Must have skills',
+                        skills.join(', '),
+                      ),
+                    ],
+                    SizedBox(height: 8.h),
+                  ],
+                ),
+
+                /// ABOUT COMPANY TAB
+                ListView(
+                  padding: EdgeInsets.all(4.w),
+                  children: [
+                    _section(
+                      'About company',
+                      job['company_description'] ??
+                          'Company information not available.',
+                    ),
+                    SizedBox(height: 8.h),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
-
-        /// TAB CONTENT
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            /// DETAILS TAB
-            ListView(
-              padding: EdgeInsets.all(4.w),
-              children: [
-                _infoCard(
-                  children: [
-                    _row(Icons.location_on, location),
-                    _row(
-                      Icons.currency_rupee,
-                      _salary(salaryMin, salaryMax),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 2.h),
-                _section(
-                  'Description',
-                  description,
-                ),
-                if (skills.isNotEmpty) ...[
-                  SizedBox(height: 2.h),
-                  _section(
-                    'Must have skills',
-                    skills.join(', '),
-                  ),
-                ],
-                SizedBox(height: 10.h),
-              ],
-            ),
-
-            /// ABOUT COMPANY TAB
-            ListView(
-              padding: EdgeInsets.all(4.w),
-              children: [
-                _section(
-                  'About company',
-                  job['company_description'] ??
-                      'Company information not available.',
-                ),
-                SizedBox(height: 10.h),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }
 
-  /// ---------------- UI HELPERS ----------------
+  /// ---------------- HELPERS ----------------
 
   Widget _infoCard({required List<Widget> children}) {
     return Container(
@@ -244,9 +238,7 @@ class _JobDetailsPageState extends State<JobDetailsPage>
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
       ),
-      child: Column(
-        children: children,
-      ),
+      child: Column(children: children),
     );
   }
 
@@ -312,30 +304,6 @@ class _JobDetailsPageState extends State<JobDetailsPage>
     final days = DateTime.now().difference(d).inDays;
     return 'Posted $days d ago';
   }
-}
-
-/// TAB HEADER
-class _TabHeader extends SliverPersistentHeaderDelegate {
-  final TabBar tabBar;
-  _TabHeader(this.tabBar);
-
-  @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: Colors.white,
-      child: tabBar,
-    );
-  }
-
-  @override
-  double get maxExtent => tabBar.preferredSize.height;
-
-  @override
-  double get minExtent => tabBar.preferredSize.height;
-
-  @override
-  bool shouldRebuild(_) => false;
 }
 
 /// COMPANY LOGO
