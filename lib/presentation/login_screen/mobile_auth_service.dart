@@ -1,11 +1,9 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/auth/user_role.dart';
 
-/// ============================================================
-/// SUPABASE SERVICE (SINGLE SOURCE OF TRUTH)
-/// ============================================================
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
   factory SupabaseService() => _instance;
@@ -14,47 +12,28 @@ class SupabaseService {
   SupabaseClient get client => Supabase.instance.client;
 }
 
-/// ============================================================
-/// MOBILE AUTH SERVICE – FINAL / PRODUCTION
-/// ============================================================
 class MobileAuthService {
   static final MobileAuthService _instance = MobileAuthService._internal();
   factory MobileAuthService() => _instance;
   MobileAuthService._internal();
 
-  static const _sessionKey = 'supabase_session';
-  static const _userKey = 'user_data';
   static const _roleKey = 'selected_user_role';
 
   Session? _session;
   User? _currentUser;
 
   /// ------------------------------------------------------------
-  /// INITIALIZE + RESTORE SESSION
+  /// INIT (Supabase already persists session internally)
   /// ------------------------------------------------------------
   Future<void> initialize() async {
-    final prefs = await SharedPreferences.getInstance();
-    final sessionJson = prefs.getString(_sessionKey);
-
-    if (sessionJson == null) return;
-
-    try {
-      final sessionMap = jsonDecode(sessionJson);
-
-      final response = await SupabaseService()
-          .client
-          .auth
-          .recoverSession(jsonEncode(sessionMap));
-
-      _session = response.session;
-      _currentUser = response.user;
-    } catch (_) {
-      await logout();
-    }
+    // Supabase Flutter already persists session.
+    // We only refresh local cache.
+    _session = SupabaseService().client.auth.currentSession;
+    _currentUser = SupabaseService().client.auth.currentUser;
   }
 
   /// ------------------------------------------------------------
-  /// EDGE FUNCTION – SEND OTP
+  /// SEND OTP
   /// ------------------------------------------------------------
   Future<void> sendOtp(String mobile) async {
     final res = await SupabaseService().client.functions.invoke(
@@ -65,21 +44,15 @@ class MobileAuthService {
       },
     );
 
-    if (res.data == null || res.data['success'] != true) {
-      throw MobileAuthException('Failed to send OTP');
+    final data = res.data;
+    if (data == null || data['success'] != true) {
+      throw MobileAuthException(data?['error'] ?? 'Failed to send OTP');
     }
   }
 
   /// ------------------------------------------------------------
-  /// EDGE FUNCTION – VERIFY OTP
-  ///
-  /// IMPORTANT:
-  /// Our edge function returns:
-  /// {
-  ///   success: true,
-  ///   session: { access_token, refresh_token, expires_in, token_type, user }
-  ///   user: {...profile...}
-  /// }
+  /// VERIFY OTP (server returns exchange_code)
+  /// client exchanges it for REAL session
   /// ------------------------------------------------------------
   Future<void> verifyOtp({
     required String mobile,
@@ -92,101 +65,65 @@ class MobileAuthService {
         'action': 'verify-otp',
         'mobile_number': '+91$mobile',
         'otp': otp,
-        'role': role == UserRole.employer ? 'employer' : 'jobSeeker',
+        'role': role.name,
       },
     );
 
-    if (res.data == null || res.data['success'] != true) {
-      throw MobileAuthException(res.data?['error'] ?? 'Invalid OTP');
+    final data = res.data;
+    if (data == null || data['success'] != true) {
+      throw MobileAuthException(data?['error'] ?? 'Invalid OTP');
     }
 
-    final sessionData = res.data['session'];
-    final userData = res.data['user'];
-
-    if (sessionData == null) {
-      throw MobileAuthException('Session missing from Edge Function');
+    final exchangeCode = data['exchange_code']?.toString();
+    if (exchangeCode == null || exchangeCode.isEmpty) {
+      throw MobileAuthException('No session code returned');
     }
 
-    await _storeSession(sessionData, userData);
-    await _storeRole(role);
-
-    /// IMPORTANT:
-    /// Edge function already saves role in user_profiles.role.
-    /// This is just extra safety.
-    await _syncUserProfileRole(role);
-  }
-
-  /// ------------------------------------------------------------
-  /// SESSION STORAGE (REAL SUPABASE SESSION MAP)
-  /// ------------------------------------------------------------
-  Future<void> _storeSession(
-    Map<String, dynamic> session,
-    Map<String, dynamic>? user,
-  ) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    await prefs.setString(_sessionKey, jsonEncode(session));
-    if (user != null) {
-      await prefs.setString(_userKey, jsonEncode(user));
-    }
-
+    // 🔥 THIS CREATES THE REAL SESSION (correct way)
     final response = await SupabaseService()
         .client
         .auth
-        .recoverSession(jsonEncode(session));
+        .exchangeCodeForSession(exchangeCode);
 
     _session = response.session;
     _currentUser = response.user;
+
+    if (_session == null || _currentUser == null) {
+      throw MobileAuthException('Failed to create session');
+    }
+
+    // store role locally too (fast routing)
+    await _storeRole(role);
   }
 
   /// ------------------------------------------------------------
-  /// ROLE STORAGE + SYNC
+  /// ROLE STORAGE
   /// ------------------------------------------------------------
   Future<void> _storeRole(UserRole role) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_roleKey, role.name);
   }
 
-  Future<void> _syncUserProfileRole(UserRole role) async {
-    final user = SupabaseService().client.auth.currentUser;
-    if (user == null) return;
-
-    await SupabaseService().client.from('user_profiles').upsert({
-      'id': user.id,
-      'role': role.name,
-      'updated_at': DateTime.now().toIso8601String(),
-    });
-  }
-
   /// ------------------------------------------------------------
-  /// SESSION HELPERS (REQUIRED BY YOUR APP)
+  /// AUTH HELPERS
   /// ------------------------------------------------------------
   bool get isAuthenticated =>
       SupabaseService().client.auth.currentUser != null;
+
+  User? get currentUser => SupabaseService().client.auth.currentUser;
+  String? get userId => SupabaseService().client.auth.currentUser?.id;
 
   Future<bool> refreshSession() async {
     try {
       final response = await SupabaseService().client.auth.refreshSession();
       _session = response.session;
       _currentUser = response.user;
-
-      return _session != null;
+      return _session != null && _currentUser != null;
     } catch (_) {
       return false;
     }
   }
 
-  Future<bool> ensureValidSession() async {
-    if (!isAuthenticated) return false;
-    return refreshSession();
-  }
-
-  User? get currentUser => _currentUser;
-  String? get userId => _currentUser?.id;
-
-  /// ------------------------------------------------------------
-  /// ROLE FETCH (used by HomeRouter)
-  /// ------------------------------------------------------------
   Future<UserRole> getUserRole() async {
     final user = SupabaseService().client.auth.currentUser;
     if (user == null) return UserRole.jobSeeker;
@@ -206,7 +143,8 @@ class MobileAuthService {
   /// ------------------------------------------------------------
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await prefs.remove(_roleKey);
+
     await SupabaseService().client.auth.signOut();
     _session = null;
     _currentUser = null;
@@ -220,10 +158,10 @@ class MobileAuthService {
   }
 }
 
-/// ============================================================
-/// EXCEPTION
-/// ============================================================
 class MobileAuthException implements Exception {
   final String message;
   MobileAuthException(this.message);
+
+  @override
+  String toString() => message;
 }
