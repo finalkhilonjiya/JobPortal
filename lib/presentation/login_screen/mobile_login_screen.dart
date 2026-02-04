@@ -22,7 +22,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   final List<FocusNode> _otpFocusNodes =
       List.generate(6, (_) => FocusNode());
 
-  final MobileAuthService _authService = MobileAuthService();
+  final _authService = MobileAuthService();
 
   UserRole _selectedRole = UserRole.jobSeeker;
 
@@ -43,7 +43,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   void initState() {
     super.initState();
     _fadeController =
-        AnimationController(vsync: this, duration: const Duration(milliseconds: 500))
+        AnimationController(vsync: this, duration: const Duration(milliseconds: 400))
           ..forward();
 
     _mobileController.addListener(_validateMobile);
@@ -79,6 +79,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     });
   }
 
+  /// ---------------- SEND OTP ----------------
   Future<void> _sendOtp() async {
     if (!_isMobileValid || _isLoading) return;
 
@@ -88,6 +89,13 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     });
 
     try {
+      // save role BEFORE OTP verification
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        'selected_user_role',
+        _selectedRole == UserRole.employer ? 'employer' : 'jobSeeker',
+      );
+
       await _authService.sendOtp(_mobileController.text);
 
       setState(() {
@@ -101,7 +109,9 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _error = e is MobileAuthException ? e.message : 'Failed to send OTP';
+        _error = e is MobileAuthException
+            ? e.message
+            : 'Failed to send OTP';
       });
     }
   }
@@ -124,6 +134,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     });
   }
 
+  /// ---------------- VERIFY OTP ----------------
   Future<void> _verifyOtp() async {
     final otp = _otpControllers.map((e) => e.text).join();
     if (otp.length != 6) {
@@ -134,19 +145,13 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     setState(() => _isLoading = true);
 
     try {
-      await _authService.verifyOtp(
-        _mobileController.text,
-        otp,
-        role: _selectedRole, // ✅ critical fix
-      );
-
+      await _authService.verifyOtp(_mobileController.text, otp);
       _navigateToHome();
     } catch (e) {
       setState(() {
         _isLoading = false;
         _error = e is MobileAuthException ? e.message : 'Invalid OTP';
       });
-
       for (final c in _otpControllers) {
         c.clear();
       }
@@ -170,7 +175,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
             child: Column(
               children: [
                 const SizedBox(height: 60),
-
                 const Text(
                   'Khilonjiya',
                   style: TextStyle(
@@ -179,19 +183,11 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                     color: Color(0xFF2563EB),
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'India’s local job platform',
-                  style: TextStyle(color: Colors.grey),
-                ),
-
                 const SizedBox(height: 48),
-
                 Expanded(
                   child: _step == 1 ? _buildMobileStep() : _buildOtpStep(),
                 ),
-
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 const Text(
                   '© Khilonjiya India Pvt. Ltd.',
                   style: TextStyle(fontSize: 12, color: Colors.grey),
@@ -205,21 +201,16 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     );
   }
 
-  /* ---------------- STEP 1 ---------------- */
-
+  /// ---------------- STEP 1 ----------------
   Widget _buildMobileStep() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _roleSelector(),
         const SizedBox(height: 24),
-
-        const Text(
-          'Mobile number',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
+        const Text('Mobile number',
+            style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
-
         TextField(
           controller: _mobileController,
           keyboardType: TextInputType.phone,
@@ -235,54 +226,33 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
             ),
           ),
         ),
-
         if (_error != null) ...[
           const SizedBox(height: 12),
           Text(_error!, style: const TextStyle(color: Colors.red)),
         ],
-
         const SizedBox(height: 28),
-
         SizedBox(
           width: double.infinity,
           height: 48,
           child: ElevatedButton(
             onPressed: _isMobileValid && !_isLoading ? _sendOtp : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
             child: _isLoading
                 ? const CircularProgressIndicator(color: Colors.white)
-                : const Text(
-                    'Send OTP',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
+                : const Text('Send OTP'),
           ),
         ),
       ],
     );
   }
 
-  /* ---------------- STEP 2 ---------------- */
-
+  /// ---------------- STEP 2 ----------------
   Widget _buildOtpStep() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Enter OTP',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          '+91 ${_mobileController.text}',
-          style: const TextStyle(color: Colors.grey),
-        ),
+        const Text('Enter OTP',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
         const SizedBox(height: 24),
-
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(6, (i) {
@@ -307,34 +277,21 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
             );
           }),
         ),
-
         if (_error != null) ...[
           const SizedBox(height: 12),
           Text(_error!, style: const TextStyle(color: Colors.red)),
         ],
-
-        const SizedBox(height: 24),
-
-        TextButton(
-          onPressed: _canResend && _resendAttempts < 3 ? _sendOtp : null,
-          child: Text(
-            _canResend ? 'Resend OTP' : 'Resend in $_resendTimer s',
-          ),
-        ),
       ],
     );
   }
 
-  /* ---------------- ROLE SELECTOR ---------------- */
-
+  /// ---------------- ROLE SELECTOR ----------------
   Widget _roleSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Continue as',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
+        const Text('Continue as',
+            style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         Row(
           children: [
