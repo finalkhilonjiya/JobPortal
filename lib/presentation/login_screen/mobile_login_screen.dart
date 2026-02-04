@@ -22,7 +22,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   final List<FocusNode> _otpFocusNodes =
       List.generate(6, (_) => FocusNode());
 
-  final _authService = MobileAuthService();
+  final MobileAuthService _authService = MobileAuthService();
 
   UserRole _selectedRole = UserRole.jobSeeker;
 
@@ -35,7 +35,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   int _resendAttempts = 0;
 
   String? _error;
-
   Timer? _timer;
 
   late final AnimationController _fadeController;
@@ -102,9 +101,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _error = e is MobileAuthException
-            ? e.message
-            : 'Failed to send OTP';
+        _error = e is MobileAuthException ? e.message : 'Failed to send OTP';
       });
     }
   }
@@ -137,16 +134,22 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     setState(() => _isLoading = true);
 
     try {
-      await _authService.verifyOtp(_mobileController.text, otp);
+      await _authService.verifyOtp(
+        _mobileController.text,
+        otp,
+        role: _selectedRole, // ✅ critical fix
+      );
 
-      // 🔒 role already selected → later stored in user_profiles
       _navigateToHome();
     } catch (e) {
       setState(() {
         _isLoading = false;
         _error = e is MobileAuthException ? e.message : 'Invalid OTP';
       });
-      _otpControllers.forEach((c) => c.clear());
+
+      for (final c in _otpControllers) {
+        c.clear();
+      }
       _otpFocusNodes.first.requestFocus();
     }
   }
@@ -168,7 +171,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
               children: [
                 const SizedBox(height: 60),
 
-                /// LOGO
                 const Text(
                   'Khilonjiya',
                   style: TextStyle(
@@ -177,7 +179,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                     color: Color(0xFF2563EB),
                   ),
                 ),
-
                 const SizedBox(height: 8),
                 const Text(
                   'India’s local job platform',
@@ -204,7 +205,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     );
   }
 
-  /// ---------------- STEP 1 ----------------
+  /* ---------------- STEP 1 ---------------- */
 
   Widget _buildMobileStep() {
     return Column(
@@ -265,7 +266,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     );
   }
 
-  /// ---------------- STEP 2 ----------------
+  /* ---------------- STEP 2 ---------------- */
 
   Widget _buildOtpStep() {
     return Column(
@@ -317,16 +318,14 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
         TextButton(
           onPressed: _canResend && _resendAttempts < 3 ? _sendOtp : null,
           child: Text(
-            _canResend
-                ? 'Resend OTP'
-                : 'Resend in $_resendTimer s',
+            _canResend ? 'Resend OTP' : 'Resend in $_resendTimer s',
           ),
         ),
       ],
     );
   }
 
-  /// ---------------- ROLE SELECTOR ----------------
+  /* ---------------- ROLE SELECTOR ---------------- */
 
   Widget _roleSelector() {
     return Column(
