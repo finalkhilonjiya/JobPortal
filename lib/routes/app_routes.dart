@@ -1,143 +1,124 @@
 import 'package:flutter/material.dart';
 
-// Auth
+// AUTH
+import '../presentation/auth/choose_account_type_screen.dart';
 import '../presentation/login_screen/mobile_login_screen.dart';
 import '../presentation/registration_screen/registration_screen.dart';
 
-// Core app
+// HOME / ROUTING
 import '../routes/home_router.dart';
 
-// Jobs
+// JOB SEEKER
 import '../presentation/home_marketplace_feed/home_jobs_feed.dart';
-import '../presentation/listing_detail/listing_detail.dart';
 import '../presentation/search_and_filters/search_and_filters.dart';
-
-// User
-import '../presentation/user_profile/user_profile.dart';
+import '../presentation/listing_detail/listing_detail.dart';
 import '../presentation/favorites_and_saved_items/favorites_and_saved_items.dart';
 
-// Communication
-import '../presentation/chat_messaging/chat_messaging.dart';
+// EMPLOYER
+import '../presentation/company/dashboard/company_dashboard.dart';
 
-// Setup / config
+// PROFILE / CHAT / CONFIG
+import '../presentation/user_profile/user_profile.dart';
+import '../presentation/chat_messaging/chat_messaging.dart';
 import '../presentation/configuration_setup/configuration_setup.dart';
 
 class AppRoutes {
-  // =====================
-  // CORE
-  // =====================
+  /// =========================
+  /// CORE
+  /// =========================
   static const String initial = '/';
 
-  // =====================
-  // AUTH
-  // =====================
-  static const String login = '/login';
-  static const String register = '/register';
+  /// =========================
+  /// AUTH
+  /// =========================
+  static const String chooseAccountType = '/choose-account-type';
+  static const String loginScreen = '/login';
+  static const String registrationScreen = '/register';
 
-  // =====================
-  // HOME / JOBS
-  // =====================
+  /// =========================
+  /// HOME
+  /// =========================
   static const String home = '/home';
-  static const String jobsFeed = '/jobs-feed';
-  static const String jobDetail = '/job-detail';
-  static const String search = '/search';
 
-  // =====================
-  // USER
-  // =====================
-  static const String profile = '/profile';
-  static const String savedJobs = '/saved-jobs';
+  /// =========================
+  /// JOB SEEKER
+  /// =========================
+  static const String homeJobsFeed = '/home-jobs-feed';
+  static const String searchAndFilters = '/search';
+  static const String listingDetail = '/listing-detail';
+  static const String favoritesAndSavedItems = '/favorites';
 
-  // =====================
-  // COMMUNICATION
-  // =====================
-  static const String chat = '/chat';
+  /// =========================
+  /// EMPLOYER
+  /// =========================
+  static const String companyDashboard = '/company-dashboard';
 
-  // =====================
-  // SETUP
-  // =====================
+  /// =========================
+  /// PROFILE / CHAT / SETTINGS
+  /// =========================
+  static const String userProfile = '/user-profile';
+  static const String chatMessaging = '/chat';
   static const String configurationSetup = '/configuration-setup';
 
-  // =====================
-  // ROUTE MAP
-  // =====================
+  /// =========================
+  /// ROUTE MAP
+  /// =========================
   static final Map<String, WidgetBuilder> routes = {
-    // Core
-    initial: (_) => const MobileLoginScreen(),
+    /// ENTRY POINT
+    initial: (context) => const ChooseAccountTypeScreen(),
 
-    // Auth
-    login: (_) => const MobileLoginScreen(),
-    register: (_) => const RegistrationScreen(),
+    /// AUTH
+    chooseAccountType: (context) => const ChooseAccountTypeScreen(),
+    loginScreen: (context) => const MobileLoginScreen(),
+    registrationScreen: (context) => const RegistrationScreen(),
 
-    // Home / jobs
-    home: (_) => const HomeRouter(),
-    jobsFeed: (_) => const HomeJobsFeed(),
-    jobDetail: (_) => const ListingDetail(),
-    search: (_) => const SearchAndFilters(),
+    /// ROLE BASED HOME
+    home: (context) => const HomeRouter(),
 
-    // User
-    profile: (_) => const UserProfile(),
-    savedJobs: (_) => const FavoritesAndSavedItems(),
+    /// JOB SEEKER
+    homeJobsFeed: (context) => const HomeJobsFeed(),
+    searchAndFilters: (context) => const SearchAndFilters(),
+    listingDetail: (context) => const ListingDetail(),
+    favoritesAndSavedItems: (context) => const FavoritesAndSavedItems(),
 
-    // Communication
-    chat: (_) => const ChatMessaging(),
+    /// EMPLOYER
+    companyDashboard: (context) => const CompanyDashboard(),
 
-    // Setup
-    configurationSetup: (_) => const ConfigurationSetup(),
+    /// PROFILE / CHAT / SETTINGS
+    userProfile: (context) => const UserProfile(),
+    chatMessaging: (context) => const ChatMessaging(),
+    configurationSetup: (context) => const ConfigurationSetup(),
   };
 
-  // =====================
-  // NAV HELPERS
-  // =====================
-  static Future<void> pushAndClear(BuildContext context, String route) async {
+  /// =========================
+  /// HELPERS
+  /// =========================
+
+  static Future<void> pushAndClearStack(
+    BuildContext context,
+    String routeName,
+  ) async {
     await Navigator.of(context).pushNamedAndRemoveUntil(
-      route,
+      routeName,
       (_) => false,
     );
   }
 
-  static Future<void> push(
-    BuildContext context,
-    String route, {
-    Object? arguments,
-  }) async {
-    await Navigator.of(context).pushNamed(route, arguments: arguments);
+  static Future<void> navigateToHome(BuildContext context) async {
+    await pushAndClearStack(context, home);
   }
 
-  static Future<void> replace(
-    BuildContext context,
-    String route, {
-    Object? arguments,
-  }) async {
-    await Navigator.of(context)
-        .pushReplacementNamed(route, arguments: arguments);
-  }
-
-  static void pop(BuildContext context, [Object? result]) {
-    Navigator.of(context).pop(result);
-  }
-
-  // =====================
-  // COMMON FLOWS
-  // =====================
-  static Future<void> goToLogin(BuildContext context) async {
-    await pushAndClear(context, login);
-  }
-
-  static Future<void> goToHome(BuildContext context) async {
-    await pushAndClear(context, home);
-  }
-
-  // =====================
-  // UNKNOWN ROUTE
-  // =====================
-  static Route<dynamic> unknown(RouteSettings settings) {
+  static Route<dynamic> onUnknownRoute(RouteSettings settings) {
     return MaterialPageRoute(
-      settings: settings,
       builder: (_) => Scaffold(
-        appBar: AppBar(
-          title: const Text('Page not found'),
-        ),
+        appBar: AppBar(title: const Text('Page Not Found')),
         body: Center(
           child: Text(
-            'No route defined for ${settings
+            'No route defined for ${settings.name}',
+            style: const TextStyle(fontSize: 16),
+          ),
+        ),
+      ),
+    );
+  }
+}
