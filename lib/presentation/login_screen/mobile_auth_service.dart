@@ -110,16 +110,36 @@ class MobileAuthService {
     await prefs.setString(_userKey, jsonEncode(data['user']));
   }
 
+  Future<bool> refreshSession() async {
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session == null) return false;
+
+    try {
+      await Supabase.instance.client.auth.refreshSession(session.refreshToken);
+      return true;
+    } catch (_) {
+      await logout();
+      return false;
+    }
+  }
+
+  Future<bool> ensureValidSession() async {
+    return Supabase.instance.client.auth.currentUser != null;
+  }
+
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     await Supabase.instance.client.auth.signOut();
   }
 
-  /* ---------------- HELPERS ---------------- */
+  /* ---------------- GETTERS ---------------- */
 
   bool get isAuthenticated =>
       Supabase.instance.client.auth.currentUser != null;
+
+  Map<String, dynamic>? get currentUser => _currentUser;
+  String? get userId => _currentUser?['id'];
 
   Future<UserRole> getUserRole() async {
     final user = Supabase.instance.client.auth.currentUser;
@@ -141,8 +161,6 @@ class MobileAuthService {
 
   String _deviceId() => 'flutter_${DateTime.now().millisecondsSinceEpoch}';
 }
-
-/* ---------------- ERR ---------------- */
 
 class MobileAuthException implements Exception {
   final String message;
