@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+
 import './packages_page.dart';
 import './my_listings_page.dart';
+
 import '../../login_screen/mobile_auth_service.dart';
 import '../../../services/listing_service.dart';
-import '../../login_screen/mobile_login_screen.dart';
+
+import '../../role_selection/role_selection_screen.dart';
 
 class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
+
   @override
   State<ProfilePage> createState() => _ProfilePageState();
 }
@@ -17,6 +22,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   bool _isLoading = true;
   Map<String, dynamic>? _userProfile;
+
   String _userName = 'User';
   String _userEmail = '';
   String _userPhone = '';
@@ -31,103 +37,99 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() => _isLoading = true);
 
     try {
-      // Get current user data from auth service
       final currentUser = _authService.currentUser;
       final userId = _authService.userId;
 
-      if (currentUser != null && userId != null) {
-        // Fetch full profile from database
-        final profile = await _listingService.getUserProfile(userId);
-
-        setState(() {
-          _userProfile = profile;
-          _userName = profile['full_name'] ??
-              currentUser['full_name'] ??
-              'User';
-          _userEmail = profile['email'] ??
-              currentUser['email'] ??
-              '';
-          _userPhone = profile['mobile_number'] ??
-              currentUser['mobile_number'] ??
-              '';
-          _isLoading = false;
-        });
-      } else {
-        // Fallback if no user data
+      if (currentUser == null || userId == null) {
         setState(() {
           _userName = 'User';
           _userEmail = '';
           _userPhone = '';
           _isLoading = false;
         });
+        return;
       }
+
+      // Fetch profile from DB
+      final profile = await _listingService.getUserProfile(userId);
+
+      // Supabase User fields (SAFE)
+      final meta = currentUser.userMetadata ?? {};
+
+      setState(() {
+        _userProfile = profile;
+
+        _userName =
+            profile['full_name']?.toString() ??
+            meta['full_name']?.toString() ??
+            meta['name']?.toString() ??
+            'User';
+
+        _userEmail =
+            profile['email']?.toString() ??
+            currentUser.email?.toString() ??
+            '';
+
+        _userPhone =
+            profile['mobile_number']?.toString() ??
+            meta['mobile_number']?.toString() ??
+            '';
+        _isLoading = false;
+      });
     } catch (e) {
       debugPrint('Error loading user profile: $e');
+
+      if (!mounted) return;
+
       setState(() => _isLoading = false);
 
-      // If auth error, redirect to login
+      // If auth issue → force logout + go role selection
       if (e.toString().contains('auth') || e.toString().contains('401')) {
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-              builder: (context) => MobileLoginScreen(),
-            ),
-            (route) => false,
-          );
-        }
+        await _authService.logout();
+
+        if (!mounted) return;
+
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
+          (_) => false,
+        );
       }
     }
   }
 
   Future<void> _handleLogout() async {
     try {
-      debugPrint('🚪 Starting logout process...');
-
-      // Clear session using auth service
       await _authService.logout();
+    } catch (_) {}
 
-      debugPrint('✅ Session cleared, navigating to login...');
+    if (!mounted) return;
 
-      // Navigate to login and clear navigation stack
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => MobileLoginScreen(),
-          ),
-          (route) => false,
-        );
-      }
-    } catch (e) {
-      debugPrint('❌ Logout error: $e');
-      // Force navigation even if logout fails
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => MobileLoginScreen(),
-          ),
-          (route) => false,
-        );
-      }
-    }
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
+      (_) => false,
+    );
   }
 
   void _showLogoutConfirmation() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Logout'),
-        content: Text('Are you sure you want to logout?'),
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               _handleLogout();
             },
-            child: Text('Logout', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'Logout',
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -139,19 +141,17 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Color(0xFF2563EB),
+        backgroundColor: const Color(0xFF2563EB),
         elevation: 0,
-        title: Text('Profile', style: TextStyle(color: Colors.white)),
+        title: const Text('Profile', style: TextStyle(color: Colors.white)),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFF2563EB),
-              ),
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF2563EB)),
             )
           : SingleChildScrollView(
               child: Column(
@@ -159,7 +159,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   // Profile Header
                   Container(
                     width: double.infinity,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Color(0xFF2563EB),
                       borderRadius: BorderRadius.only(
                         bottomLeft: Radius.circular(30),
@@ -174,23 +174,34 @@ class _ProfilePageState extends State<ProfilePage> {
                             CircleAvatar(
                               radius: 50,
                               backgroundColor: Colors.white,
-                              backgroundImage: _userProfile?['avatar_url'] != null
-                                  ? NetworkImage(_userProfile!['avatar_url'])
-                                  : null,
+                              backgroundImage:
+                                  _userProfile?['avatar_url'] != null
+                                      ? NetworkImage(
+                                          _userProfile!['avatar_url'],
+                                        )
+                                      : null,
                               child: _userProfile?['avatar_url'] == null
-                                  ? Icon(Icons.person, size: 60, color: Color(0xFF2563EB))
+                                  ? const Icon(
+                                      Icons.person,
+                                      size: 60,
+                                      color: Color(0xFF2563EB),
+                                    )
                                   : null,
                             ),
                             Positioned(
                               bottom: 0,
                               right: 0,
                               child: Container(
-                                padding: EdgeInsets.all(4),
-                                decoration: BoxDecoration(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
                                   color: Colors.white,
                                   shape: BoxShape.circle,
                                 ),
-                                child: Icon(Icons.camera_alt, color: Color(0xFF2563EB), size: 20),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  color: Color(0xFF2563EB),
+                                  size: 20,
+                                ),
                               ),
                             ),
                           ],
@@ -217,7 +228,10 @@ class _ProfilePageState extends State<ProfilePage> {
                         if (_userPhone.isNotEmpty) ...[
                           SizedBox(height: 0.5.h),
                           Container(
-                            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 4.w,
+                              vertical: 1.h,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(20),
@@ -225,7 +239,11 @@ class _ProfilePageState extends State<ProfilePage> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.phone, color: Colors.white, size: 4.w),
+                                Icon(
+                                  Icons.phone,
+                                  color: Colors.white,
+                                  size: 4.w,
+                                ),
                                 SizedBox(width: 2.w),
                                 Text(
                                   _userPhone,
@@ -253,7 +271,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => MyListingsPage()),
+                        MaterialPageRoute(
+                          builder: (_) => const MyListingsPage(),
+                        ),
                       );
                     },
                   ),
@@ -266,7 +286,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => PackagesPage()),
+                        MaterialPageRoute(
+                          builder: (_) => const PackagesPage(),
+                        ),
                       );
                     },
                   ),
@@ -277,7 +299,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     subtitle: 'App preferences',
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Settings coming soon')),
+                        const SnackBar(content: Text('Settings coming soon')),
                       );
                     },
                   ),
@@ -288,7 +310,11 @@ class _ProfilePageState extends State<ProfilePage> {
                     subtitle: 'Payment methods & history',
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Payment gateway integration coming soon')),
+                        const SnackBar(
+                          content: Text(
+                            'Payment gateway integration coming soon',
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -299,7 +325,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     subtitle: 'FAQs and contact support',
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Help & Support coming soon')),
+                        const SnackBar(
+                          content: Text('Help & Support coming soon'),
+                        ),
                       );
                     },
                   ),
@@ -347,13 +375,16 @@ class _ProfilePageState extends State<ProfilePage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: isHighlighted
-            ? Border.all(color: Color(0xFF2563EB).withOpacity(0.3), width: 2)
+            ? Border.all(
+                color: const Color(0xFF2563EB).withOpacity(0.3),
+                width: 2,
+              )
             : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 5,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -365,7 +396,7 @@ class _ProfilePageState extends State<ProfilePage> {
             color: isDestructive
                 ? Colors.red.withOpacity(0.1)
                 : isHighlighted
-                    ? Color(0xFF2563EB).withOpacity(0.1)
+                    ? const Color(0xFF2563EB).withOpacity(0.1)
                     : Colors.grey[100],
             borderRadius: BorderRadius.circular(10),
           ),
@@ -374,7 +405,7 @@ class _ProfilePageState extends State<ProfilePage> {
             color: isDestructive
                 ? Colors.red
                 : isHighlighted
-                    ? Color(0xFF2563EB)
+                    ? const Color(0xFF2563EB)
                     : Colors.grey[700],
           ),
         ),
