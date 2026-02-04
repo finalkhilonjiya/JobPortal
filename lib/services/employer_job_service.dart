@@ -1,55 +1,84 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../utils/supabase_service.dart';
 
+/// Handles all Employer Job CRUD operations
 class EmployerJobService {
-  final _supabase = Supabase.instance.client;
+  final SupabaseClient _client = SupabaseService().client;
 
-  /// Get jobs posted by employer
-  Future<List<Map<String, dynamic>>> getMyJobs() async {
-    final user = _supabase.auth.currentUser;
-    if (user == null) throw Exception('Not logged in');
+  /// CREATE A NEW JOB
+  Future<void> createJob({
+    required String jobTitle,
+    required String companyName,
+    required String location,
+    required String experience,
+    required String salaryMin,
+    required String salaryMax,
+    required String description,
+    required List<String> skills,
+  }) async {
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
 
-    final res = await _supabase
+    final response = await _client.from('job_listings').insert({
+      'job_title': jobTitle,
+      'company_name': companyName,
+      'district': location,
+      'experience_required': experience,
+      'salary_min': int.tryParse(salaryMin),
+      'salary_max': int.tryParse(salaryMax),
+      'job_description': description,
+      'skills_required': skills,
+      'employer_id': user.id,
+      'status': 'active',
+      'created_at': DateTime.now().toIso8601String(),
+    });
+
+    if (response.error != null) {
+      throw Exception(response.error!.message);
+    }
+  }
+
+  /// FETCH JOBS POSTED BY LOGGED-IN EMPLOYER
+  Future<List<Map<String, dynamic>>> fetchEmployerJobs() async {
+    final user = _client.auth.currentUser;
+    if (user == null) return [];
+
+    final res = await _client
         .from('job_listings')
-        .select()
-        .eq('user_id', user.id)
+        .select('*')
+        .eq('employer_id', user.id)
         .order('created_at', ascending: false);
 
     return List<Map<String, dynamic>>.from(res);
   }
 
-  /// Get applicants for a job
-  Future<List<Map<String, dynamic>>> getApplicants(String jobId) async {
-    final res = await _supabase
-        .from('job_applications_listings')
-        .select('''
-          id,
-          application_status,
-          applied_at,
-          job_applications (
-            id,
-            name,
-            phone,
-            email,
-            skills,
-            resume_file_url,
-            photo_file_url,
-            experience_level
-          )
-        ''')
-        .eq('listing_id', jobId)
-        .order('applied_at', ascending: false);
+  /// DELETE A JOB
+  Future<void> deleteJob(String jobId) async {
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
 
-    return List<Map<String, dynamic>>.from(res);
+    await _client
+        .from('job_listings')
+        .delete()
+        .eq('id', jobId)
+        .eq('employer_id', user.id);
   }
 
-  /// Update applicant status
-  Future<void> updateStatus({
-    required String linkId,
-    required String status,
-  }) async {
-    await _supabase
-        .from('job_applications_listings')
-        .update({'application_status': status})
-        .eq('id', linkId);
+  /// CLOSE / DEACTIVATE A JOB
+  Future<void> closeJob(String jobId) async {
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    await _client
+        .from('job_listings')
+        .update({'status': 'closed'})
+        .eq('id', jobId)
+        .eq('employer_id', user.id);
   }
 }
