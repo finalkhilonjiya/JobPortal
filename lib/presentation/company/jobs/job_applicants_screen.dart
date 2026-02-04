@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import '../../../services/employer_job_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class JobApplicantsScreen extends StatefulWidget {
   final String jobId;
-  final String jobTitle;
 
   const JobApplicantsScreen({
     Key? key,
     required this.jobId,
-    required this.jobTitle,
   }) : super(key: key);
 
   @override
@@ -17,68 +15,122 @@ class JobApplicantsScreen extends StatefulWidget {
 }
 
 class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
-  final EmployerJobService _service = EmployerJobService();
+  final SupabaseClient _client = Supabase.instance.client;
+
   bool _loading = true;
-  List<Map<String, dynamic>> _apps = [];
+  List<Map<String, dynamic>> _applicants = [];
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _loadApplicants();
   }
 
-  Future<void> _load() async {
-    _apps = await _service.fetchApplicants(widget.jobId);
-    setState(() => _loading = false);
+  Future<void> _loadApplicants() async {
+    try {
+      final res = await _client
+          .from('job_applications')
+          .select('''
+            id,
+            status,
+            created_at,
+            user_profiles (
+              id,
+              full_name,
+              mobile_number,
+              experience_years,
+              expected_salary
+            )
+          ''')
+          .eq('job_id', widget.jobId)
+          .order('created_at', ascending: false);
+
+      setState(() {
+        _applicants = List<Map<String, dynamic>>.from(res);
+        _loading = false;
+      });
+    } catch (_) {
+      setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _updateStatus(String applicationId, String status) async {
+    await _client
+        .from('job_applications')
+        .update({'status': status})
+        .eq('id', applicationId);
+
+    _loadApplicants();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: const Color(0xFFF8FAFC),
+
       appBar: AppBar(
-        title: Text(widget.jobTitle),
+        title: const Text(
+          'Applicants',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 1,
+        elevation: 0.5,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
+
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : _apps.isEmpty
-              ? const Center(child: Text('No applicants yet'))
+          : _applicants.isEmpty
+              ? _emptyState()
               : ListView.builder(
                   padding: EdgeInsets.all(4.w),
-                  itemCount: _apps.length,
-                  itemBuilder: (_, i) => _applicantCard(_apps[i]),
+                  itemCount: _applicants.length,
+                  itemBuilder: (context, index) {
+                    final app = _applicants[index];
+                    final user = app['user_profiles'];
+
+                    return _applicantCard(
+                      applicationId: app['id'],
+                      status: app['status'],
+                      name: user['full_name'] ?? 'Candidate',
+                      mobile: user['mobile_number'] ?? '',
+                      experience: user['experience_years'],
+                      salary: user['expected_salary'],
+                    );
+                  },
                 ),
     );
   }
 
-  Widget _applicantCard(Map<String, dynamic> app) {
-    final user = app['user_profiles'];
-    final name = user?['full_name'] ?? 'Candidate';
-    final phone = user?['mobile_number'] ?? '';
-    final email = user?['email'] ?? '';
-    final status = app['status'] ?? 'applied';
+  /// ---------------- UI ----------------
 
+  Widget _applicantCard({
+    required String applicationId,
+    required String status,
+    required String name,
+    required String mobile,
+    int? experience,
+    int? salary,
+  }) {
     return Container(
       margin: EdgeInsets.only(bottom: 2.h),
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// NAME + STATUS
+          /// Name + Status
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 name,
-                style: const TextStyle(
-                  fontSize: 16,
+                style: TextStyle(
+                  fontSize: 14.5.sp,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -86,67 +138,148 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
             ],
           ),
 
-          const SizedBox(height: 8),
+          SizedBox(height: 0.8.h),
 
-          if (phone.isNotEmpty)
-            _meta(Icons.phone, phone),
+          /// Mobile
+          Text(
+            mobile,
+            style: TextStyle(
+              fontSize: 11.5.sp,
+              color: Colors.grey.shade600,
+            ),
+          ),
 
-          if (email.isNotEmpty)
-            _meta(Icons.email, email),
+          SizedBox(height: 1.2.h),
 
-          const SizedBox(height: 10),
-
+          /// Experience + Salary
           Row(
             children: [
-              Text(
-                'Applied on ',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              _iconText(
+                Icons.work_outline,
+                experience != null ? '$experience yrs' : 'Fresher',
               ),
-              Text(
-                _formatDate(app['created_at']),
-                style: const TextStyle(fontSize: 12),
+              SizedBox(width: 4.w),
+              _iconText(
+                Icons.currency_rupee,
+                salary != null ? '$salary' : 'Not disclosed',
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
 
-  Widget _meta(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: Colors.blueGrey),
-          const SizedBox(width: 6),
-          Text(text, style: const TextStyle(fontSize: 13)),
+          SizedBox(height: 1.8.h),
+          const Divider(height: 1),
+          SizedBox(height: 1.2.h),
+
+          /// Actions
+          if (status == 'applied')
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () =>
+                        _updateStatus(applicationId, 'shortlisted'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                    child: const Text('Shortlist'),
+                  ),
+                ),
+                SizedBox(width: 3.w),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () =>
+                        _updateStatus(applicationId, 'rejected'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                    child: const Text('Reject'),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
   }
 
   Widget _statusChip(String status) {
+    Color bg;
+    Color fg;
+    String label;
+
+    switch (status) {
+      case 'shortlisted':
+        bg = Colors.green.shade50;
+        fg = Colors.green;
+        label = 'Shortlisted';
+        break;
+      case 'rejected':
+        bg = Colors.red.shade50;
+        fg = Colors.red;
+        label = 'Rejected';
+        break;
+      default:
+        bg = Colors.blue.shade50;
+        fg = Colors.blue;
+        label = 'Applied';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.blue.shade50,
+        color: bg,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        status.toUpperCase(),
+        label,
         style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: Colors.blue.shade700,
+          fontSize: 11.sp,
+          fontWeight: FontWeight.w600,
+          color: fg,
         ),
       ),
     );
   }
 
-  String _formatDate(String date) {
-    final d = DateTime.tryParse(date);
-    if (d == null) return '';
-    return '${d.day}/${d.month}/${d.year}';
+  Widget _iconText(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.grey.shade700),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: TextStyle(fontSize: 11.5.sp),
+        ),
+      ],
+    );
+  }
+
+  Widget _emptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.people_outline,
+              size: 64, color: Colors.grey.shade400),
+          SizedBox(height: 2.h),
+          const Text(
+            'No applicants yet',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          SizedBox(height: 1.h),
+          const Text(
+            'Candidates will appear here once they apply',
+            style: TextStyle(color: Colors.grey),
+          ),
+        ],
+      ),
+    );
   }
 }
