@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:sizer/sizer.dart';
+import '../../../services/employer_job_service.dart';
 
 class CreateJobScreen extends StatefulWidget {
   const CreateJobScreen({Key? key}) : super(key: key);
@@ -9,178 +11,127 @@ class CreateJobScreen extends StatefulWidget {
 
 class _CreateJobScreenState extends State<CreateJobScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _service = EmployerJobService();
 
-  final _titleCtrl = TextEditingController();
-  final _locationCtrl = TextEditingController();
-  final _experienceCtrl = TextEditingController();
-  final _salaryCtrl = TextEditingController();
-  final _skillsCtrl = TextEditingController();
-  final _descriptionCtrl = TextEditingController();
+  final _title = TextEditingController();
+  final _company = TextEditingController();
+  final _location = TextEditingController();
+  final _experience = TextEditingController();
+  final _salaryMin = TextEditingController();
+  final _salaryMax = TextEditingController();
+  final _skills = TextEditingController();
+  final _description = TextEditingController();
 
-  String _jobType = 'Full-time';
-
-  @override
-  void dispose() {
-    _titleCtrl.dispose();
-    _locationCtrl.dispose();
-    _experienceCtrl.dispose();
-    _salaryCtrl.dispose();
-    _skillsCtrl.dispose();
-    _descriptionCtrl.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    if (!_formKey.currentState!.validate()) return;
-
-    /// NEXT STEP:
-    /// - Save to Supabase
-    /// - Attach employer_id
-    /// - Redirect to employer job list
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Job posted (mock)')),
-    );
-
-    Navigator.pop(context);
-  }
+  bool _submitting = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        elevation: 0,
+        title: const Text('Post a Job'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
-        title: const Text(
-          'Post a Job',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
+        elevation: 1,
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _field(
-              label: 'Job Title',
-              controller: _titleCtrl,
-              hint: 'e.g. Flutter Developer',
-            ),
-            _field(
-              label: 'Location',
-              controller: _locationCtrl,
-              hint: 'e.g. Bangalore',
-            ),
-            _field(
-              label: 'Experience Required',
-              controller: _experienceCtrl,
-              hint: 'e.g. 2-4 years',
-            ),
-            _field(
-              label: 'Salary Range',
-              controller: _salaryCtrl,
-              hint: 'e.g. ₹6–10 LPA',
-            ),
-
-            const SizedBox(height: 16),
-            const Text(
-              'Job Type',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              value: _jobType,
-              items: const [
-                DropdownMenuItem(value: 'Full-time', child: Text('Full-time')),
-                DropdownMenuItem(value: 'Part-time', child: Text('Part-time')),
-                DropdownMenuItem(value: 'Internship', child: Text('Internship')),
-                DropdownMenuItem(value: 'Contract', child: Text('Contract')),
-              ],
-              onChanged: (v) => setState(() => _jobType = v!),
-              decoration: _inputDecoration(),
-            ),
-
-            const SizedBox(height: 16),
-            _field(
-              label: 'Skills',
-              controller: _skillsCtrl,
-              hint: 'Flutter, Dart, Firebase',
-            ),
-            _field(
-              label: 'Job Description',
-              controller: _descriptionCtrl,
-              maxLines: 5,
-              hint: 'Describe role & responsibilities',
-            ),
-
-            const SizedBox(height: 32),
-            SizedBox(
-              height: 52,
-              child: ElevatedButton(
-                onPressed: _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+      body: Padding(
+        padding: EdgeInsets.all(4.w),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              _field(_title, 'Job title'),
+              _field(_company, 'Company name'),
+              _field(_location, 'Location / District'),
+              _field(_experience, 'Experience required'),
+              Row(
+                children: [
+                  Expanded(
+                    child: _field(
+                      _salaryMin,
+                      'Min salary',
+                      type: TextInputType.number,
+                    ),
                   ),
-                ),
-                child: const Text(
-                  'Post Job',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                  SizedBox(width: 3.w),
+                  Expanded(
+                    child: _field(
+                      _salaryMax,
+                      'Max salary',
+                      type: TextInputType.number,
+                    ),
                   ),
+                ],
+              ),
+              _field(_skills, 'Skills (comma separated)', maxLines: 2),
+              _field(_description, 'Job description', maxLines: 4),
+
+              SizedBox(height: 4.h),
+
+              SizedBox(
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _submitting ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: _submitting
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          'Publish Job',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _field({
-    required String label,
-    required TextEditingController controller,
-    String? hint,
+  Widget _field(
+    TextEditingController c,
+    String label, {
     int maxLines = 1,
+    TextInputType type = TextInputType.text,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: controller,
-            maxLines: maxLines,
-            validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-            decoration: _inputDecoration(hint),
-          ),
-        ],
+      padding: EdgeInsets.only(bottom: 12),
+      child: TextFormField(
+        controller: c,
+        keyboardType: type,
+        maxLines: maxLines,
+        validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        ),
       ),
     );
   }
 
-  InputDecoration _inputDecoration([String? hint]) {
-    return InputDecoration(
-      hintText: hint,
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-      ),
-    );
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _submitting = true);
+
+    await _service.createJob({
+      'job_title': _title.text,
+      'company_name': _company.text,
+      'district': _location.text,
+      'experience_required': _experience.text,
+      'salary_min': int.tryParse(_salaryMin.text),
+      'salary_max': int.tryParse(_salaryMax.text),
+      'skills_required':
+          _skills.text.split(',').map((e) => e.trim()).toList(),
+      'job_description': _description.text,
+      'status': 'active',
+      'created_at': DateTime.now().toIso8601String(),
+    });
+
+    Navigator.pop(context);
   }
 }
