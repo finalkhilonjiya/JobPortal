@@ -1,79 +1,74 @@
 import 'package:flutter/material.dart';
 
-// Entry
-import '../presentation/login_screen/mobile_login_screen.dart';
+// ROLE SELECTION
+import '../presentation/role_selection/role_selection_screen.dart';
 
-// Job seeker
+// LOGIN SCREENS
+import '../presentation/login_screen/job_seeker_login_screen.dart';
+import '../presentation/login_screen/employer_login_screen.dart';
+
+// JOB SEEKER
 import '../presentation/home_marketplace_feed/home_jobs_feed.dart';
-import '../presentation/search_and_filters/search_and_filters.dart';
-import '../presentation/listing_detail/listing_detail.dart';
-import '../presentation/user_profile/user_profile.dart';
-import '../presentation/chat_messaging/chat_messaging.dart';
-import '../presentation/favorites_and_saved_items/favorites_and_saved_items.dart';
 
-// Employer
+// EMPLOYER
 import '../presentation/company/dashboard/company_dashboard.dart';
-import '../presentation/configuration_setup/configuration_setup.dart';
 
 class AppRoutes {
-  /* ---------------- CORE ---------------- */
+  /* ------------------------------------------------------------
+   ROUTE NAMES
+  ------------------------------------------------------------- */
+
+  // ENTRY
   static const String initial = '/';
 
-  /* ---------------- ENTRY ---------------- */
-  static const String login = '/login';
+  // ROLE
+  static const String roleSelection = '/role-selection';
 
-  // 🔥 BACKWARD COMPATIBILITY (DO NOT REMOVE)
-  static const String loginScreen = login;
+  // LOGIN
+  static const String jobSeekerLogin = '/job-seeker-login';
+  static const String employerLogin = '/employer-login';
 
-  /* ---------------- JOB SEEKER ---------------- */
+  // DASHBOARDS
   static const String homeJobsFeed = '/home-jobs-feed';
-  static const String searchAndFilters = '/search-and-filters';
-  static const String listingDetail = '/listing-detail';
-  static const String userProfile = '/user-profile';
-  static const String chatMessaging = '/chat-messaging';
-  static const String favorites = '/favorites';
-
-  /* ---------------- EMPLOYER ---------------- */
   static const String companyDashboard = '/company-dashboard';
-  static const String configurationSetup = '/configuration-setup';
 
-  /* ---------------- ROUTES ---------------- */
+  /* ------------------------------------------------------------
+   ROUTE MAP
+  ------------------------------------------------------------- */
+
   static final Map<String, WidgetBuilder> routes = {
-    initial: (_) => const MobileLoginScreen(),
-    login: (_) => const MobileLoginScreen(),
+    // ENTRY POINT
+    initial: (_) => const RoleSelectionScreen(),
 
-    // Job seeker
+    // ROLE
+    roleSelection: (_) => const RoleSelectionScreen(),
+
+    // LOGIN
+    jobSeekerLogin: (_) => const JobSeekerLoginScreen(),
+    employerLogin: (_) => const EmployerLoginScreen(),
+
+    // DASHBOARDS
     homeJobsFeed: (_) => const HomeJobsFeed(),
-    searchAndFilters: (_) => const SearchAndFilters(),
-    listingDetail: (_) => const ListingDetail(),
-    userProfile: (_) => const UserProfile(),
-    chatMessaging: (_) => const ChatMessaging(),
-    favorites: (_) => const FavoritesAndSavedItems(),
-
-    // Employer
-    companyDashboard: (_) => CompanyDashboard(), // ❗ NOT const
-    configurationSetup: (_) => const ConfigurationSetup(),
+    companyDashboard: (_) => const CompanyDashboard(),
   };
 
-  /* ---------------- HELPERS ---------------- */
+  /* ------------------------------------------------------------
+   HELPERS
+  ------------------------------------------------------------- */
 
-  static Future<void> push(BuildContext context, String route) async {
-    await Navigator.pushNamed(context, route);
+  static Future<void> go(
+    BuildContext context,
+    String route, {
+    bool replace = false,
+  }) async {
+    if (replace) {
+      await Navigator.pushReplacementNamed(context, route);
+    } else {
+      await Navigator.pushNamed(context, route);
+    }
   }
 
-  static Future<void> replace(BuildContext context, String route) async {
-    await Navigator.pushReplacementNamed(context, route);
-  }
-
-  static Future<void> clearAndPush(BuildContext context, String route) async {
-    await Navigator.pushNamedAndRemoveUntil(
-      context,
-      route,
-      (_) => false,
-    );
-  }
-
-  static void pop(BuildContext context) {
+  static void back(BuildContext context) {
     Navigator.pop(context);
   }
 }
