@@ -60,7 +60,7 @@ class _EmployerLoginScreenState extends State<EmployerLoginScreen> {
       }
     });
 
-    HapticFeedback.mediumImpact();
+    HapticFeedback.lightImpact();
   }
 
   void _verifyOtp() {
@@ -84,7 +84,7 @@ class _EmployerLoginScreenState extends State<EmployerLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -97,13 +97,13 @@ class _EmployerLoginScreenState extends State<EmployerLoginScreen> {
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF15803D),
+                  color: Color(0xFF16A34A),
                 ),
               ),
 
               const SizedBox(height: 12),
               const Text(
-                'Post jobs and hire faster',
+                'Hire faster. Manage candidates easily.',
                 style: TextStyle(color: Color(0xFF64748B)),
               ),
 
@@ -119,7 +119,7 @@ class _EmployerLoginScreenState extends State<EmployerLoginScreen> {
                 onChanged: (_) => _validateMobile(),
                 decoration: InputDecoration(
                   prefixText: '+91 ',
-                  labelText: 'Business Mobile Number',
+                  labelText: 'Mobile Number',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
