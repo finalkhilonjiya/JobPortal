@@ -5,7 +5,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/auth/user_role.dart';
 
-/// Handles Supabase initialization
+/// ------------------------------------------------------------
+/// SUPABASE SERVICE
+/// ------------------------------------------------------------
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
   factory SupabaseService() => _instance;
@@ -21,7 +23,9 @@ class SupabaseService {
   }
 }
 
-/// Authentication service for mobile OTP
+/// ------------------------------------------------------------
+/// MOBILE AUTH SERVICE
+/// ------------------------------------------------------------
 class MobileAuthService {
   static final MobileAuthService _instance = MobileAuthService._internal();
   factory MobileAuthService() => _instance;
@@ -34,9 +38,8 @@ class MobileAuthService {
   Map<String, dynamic>? _currentUser;
 
   /* ------------------------------------------------------------
-   INITIALIZATION
+   INITIALIZE SESSION
   ------------------------------------------------------------- */
-
   Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
     final sessionJson = prefs.getString(_sessionKey);
@@ -58,12 +61,13 @@ class MobileAuthService {
         tokenType: sessionData['token_type'],
         user: user,
       );
+
       _currentUser = userData;
 
       await SupabaseService().client.auth.recoverSession(
         jsonEncode(sessionData),
       );
-    } catch (_) {
+    } catch (e) {
       await _clearSession();
     }
   }
@@ -71,7 +75,6 @@ class MobileAuthService {
   /* ------------------------------------------------------------
    OTP FLOW
   ------------------------------------------------------------- */
-
   Future<void> sendOtp(String mobile) async {
     await SupabaseService().client.functions.invoke(
       'smart-function',
@@ -82,7 +85,11 @@ class MobileAuthService {
     );
   }
 
-  Future<AuthResponse> verifyOtp(String mobile, String otp) async {
+  Future<AuthResponse> verifyOtp(
+    String mobile,
+    String otp, {
+    required UserRole role,
+  }) async {
     final res = await SupabaseService().client.functions.invoke(
       'smart-function',
       body: {
@@ -97,7 +104,7 @@ class MobileAuthService {
     }
 
     await _storeSession(res.data);
-    await _syncUserProfileRole();
+    await _upsertUserProfile(role);
 
     return AuthResponse(
       success: true,
@@ -107,32 +114,24 @@ class MobileAuthService {
   }
 
   /* ------------------------------------------------------------
-   ROLE HANDLING (CRITICAL FIX)
+   USER ROLE PERSISTENCE (FINAL FIX)
   ------------------------------------------------------------- */
-
-  Future<void> _syncUserProfileRole() async {
-    final prefs = await SharedPreferences.getInstance();
-    final roleString = prefs.getString('selected_user_role');
-
-    final role = roleString == 'employer'
-        ? UserRole.employer
-        : UserRole.jobSeeker;
-
-    final userId = SupabaseService().client.auth.currentUser!.id;
+  Future<void> _upsertUserProfile(UserRole role) async {
+    final user = SupabaseService().client.auth.currentUser;
+    if (user == null) return;
 
     await SupabaseService().client.from('user_profiles').upsert({
-      'id': userId,
+      'id': user.id,
       'role': role.name,
       'updated_at': DateTime.now().toIso8601String(),
     });
 
-    debugPrint('User role synced: ${role.name}');
+    debugPrint('✅ User role saved: ${role.name}');
   }
 
   /* ------------------------------------------------------------
    SESSION STORAGE
   ------------------------------------------------------------- */
-
   Future<void> _storeSession(Map<String, dynamic> data) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -167,7 +166,6 @@ class MobileAuthService {
   /* ------------------------------------------------------------
    HELPERS
   ------------------------------------------------------------- */
-
   bool get isAuthenticated =>
       SupabaseService().client.auth.currentUser != null;
 
@@ -188,7 +186,6 @@ class MobileAuthService {
 /* ------------------------------------------------------------
  MODELS
 ------------------------------------------------------------- */
-
 class AuthResponse {
   final bool success;
   final Map<String, dynamic>? user;
