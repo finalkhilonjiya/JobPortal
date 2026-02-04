@@ -18,12 +18,7 @@ import '../presentation/company/dashboard/company_dashboard.dart';
 
 class AppRoutes {
   /// ------------------------------------------------------------
-  /// CORE
-  /// ------------------------------------------------------------
-  static const String initial = '/';
-
-  /// ------------------------------------------------------------
-  /// ROLE SELECTION
+  /// ROLE SELECTION (FIRST SCREEN AFTER SPLASH)
   /// ------------------------------------------------------------
   static const String roleSelection = '/role-selection';
 
@@ -34,7 +29,7 @@ class AppRoutes {
   static const String employerLogin = '/employer-login';
 
   /// ------------------------------------------------------------
-  /// MAIN ENTRY AFTER LOGIN
+  /// MAIN ENTRY AFTER LOGIN (AUTO ROUTES BY ROLE)
   /// ------------------------------------------------------------
   static const String homeJobsFeed = '/home-jobs-feed';
 
@@ -58,11 +53,6 @@ class AppRoutes {
   /// ROUTES MAP
   /// ------------------------------------------------------------
   static Map<String, WidgetBuilder> routes = {
-    /// IMPORTANT:
-    /// Your main.dart uses AppRoutes.initial as initialRoute.
-    /// So this MUST be RoleSelectionScreen.
-    initial: (_) => const RoleSelectionScreen(),
-
     /// ROLE SELECTION
     roleSelection: (_) => const RoleSelectionScreen(),
 
@@ -70,10 +60,10 @@ class AppRoutes {
     jobSeekerLogin: (_) => const JobSeekerLoginScreen(),
     employerLogin: (_) => const EmployerLoginScreen(),
 
-    /// HOME (Job Seeker + Employer role routing)
+    /// HOME ROUTER (decides dashboard/feed based on user_profiles.role)
     homeJobsFeed: (_) => const HomeRouter(),
 
-    /// EMPLOYER DASHBOARD (direct access)
+    /// EMPLOYER DASHBOARD (direct access if needed)
     companyDashboard: (_) => const CompanyDashboard(),
 
     /// EXISTING
