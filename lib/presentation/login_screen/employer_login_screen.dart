@@ -151,7 +151,7 @@ class _EmployerLoginScreenState extends State<EmployerLoginScreen>
 
       if (!mounted) return;
 
-      Navigator.pushReplacementNamed(context, AppRoutes.companyDashboard);
+      Navigator.pushReplacementNamed(context, AppRoutes.homeJobsFeed);
     } catch (e) {
       setState(() {
         _isLoading = false;
