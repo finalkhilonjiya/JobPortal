@@ -6,6 +6,9 @@ import '../presentation/login_screen/employer_login_screen.dart';
 
 import '../routes/home_router.dart';
 
+import '../presentation/home_marketplace_feed/home_jobs_feed.dart';
+import '../presentation/company/dashboard/company_dashboard.dart';
+
 import '../presentation/registration_screen/registration_screen.dart';
 import '../presentation/search_and_filters/search_and_filters.dart';
 import '../presentation/listing_detail/listing_detail.dart';
@@ -14,11 +17,14 @@ import '../presentation/chat_messaging/chat_messaging.dart';
 import '../presentation/favorites_and_saved_items/favorites_and_saved_items.dart';
 import '../presentation/configuration_setup/configuration_setup.dart';
 
-import '../presentation/company/dashboard/company_dashboard.dart';
-
 class AppRoutes {
   /// ------------------------------------------------------------
-  /// ROLE SELECTION (FIRST SCREEN AFTER SPLASH)
+  /// CORE
+  /// ------------------------------------------------------------
+  static const String initial = '/';
+
+  /// ------------------------------------------------------------
+  /// ROLE SELECTION
   /// ------------------------------------------------------------
   static const String roleSelection = '/role-selection';
 
@@ -29,14 +35,20 @@ class AppRoutes {
   static const String employerLogin = '/employer-login';
 
   /// ------------------------------------------------------------
-  /// MAIN ENTRY AFTER LOGIN (AUTO ROUTES BY ROLE)
+  /// POST LOGIN ROUTER
   /// ------------------------------------------------------------
   static const String homeJobsFeed = '/home-jobs-feed';
 
   /// ------------------------------------------------------------
-  /// EMPLOYER ROUTES
+  /// EMPLOYER
   /// ------------------------------------------------------------
   static const String companyDashboard = '/company-dashboard';
+
+  /// ------------------------------------------------------------
+  /// JOB SEEKER HOME (DIRECT)
+  /// (You already have this screen. We keep it clean.)
+  /// ------------------------------------------------------------
+  static const String jobSeekerHome = '/job-seeker-home';
 
   /// ------------------------------------------------------------
   /// OTHER EXISTING ROUTES
@@ -53,6 +65,12 @@ class AppRoutes {
   /// ROUTES MAP
   /// ------------------------------------------------------------
   static Map<String, WidgetBuilder> routes = {
+    /// IMPORTANT:
+    /// main.dart uses home: AppInitializer()
+    /// so "/" is NOT used as startup.
+    /// But we keep it correct.
+    initial: (_) => const RoleSelectionScreen(),
+
     /// ROLE SELECTION
     roleSelection: (_) => const RoleSelectionScreen(),
 
@@ -60,10 +78,13 @@ class AppRoutes {
     jobSeekerLogin: (_) => const JobSeekerLoginScreen(),
     employerLogin: (_) => const EmployerLoginScreen(),
 
-    /// HOME ROUTER (decides dashboard/feed based on user_profiles.role)
+    /// ROUTER AFTER LOGIN (checks user_profiles.role)
     homeJobsFeed: (_) => const HomeRouter(),
 
-    /// EMPLOYER DASHBOARD (direct access if needed)
+    /// DIRECT HOME (job seeker feed)
+    jobSeekerHome: (_) => const HomeJobsFeed(),
+
+    /// EMPLOYER DASHBOARD
     companyDashboard: (_) => const CompanyDashboard(),
 
     /// EXISTING
