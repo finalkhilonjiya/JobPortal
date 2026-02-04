@@ -11,74 +11,42 @@ class JobSeekerLoginScreen extends StatefulWidget {
 }
 
 class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen> {
-  final TextEditingController _mobileController = TextEditingController();
-  final List<TextEditingController> _otpControllers =
-      List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> _otpFocusNodes =
-      List.generate(6, (_) => FocusNode());
+  final mobileController = TextEditingController();
+  final otpControllers = List.generate(6, (_) => TextEditingController());
+  final otpFocus = List.generate(6, (_) => FocusNode());
 
-  bool _isMobileValid = false;
-  bool _showOtp = false;
-  int _resendSeconds = 0;
+  bool showOtp = false;
+  int resend = 0;
+  Timer? timer;
 
-  Timer? _timer;
-
-  @override
-  void dispose() {
-    _mobileController.dispose();
-    for (final c in _otpControllers) {
-      c.dispose();
-    }
-    for (final f in _otpFocusNodes) {
-      f.dispose();
-    }
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  void _validateMobile() {
-    final value = _mobileController.text.trim();
+  void sendOtp() {
     setState(() {
-      _isMobileValid = value.length == 10 && value[0] != '0';
-    });
-  }
-
-  void _sendOtp() {
-    if (!_isMobileValid) return;
-
-    setState(() {
-      _showOtp = true;
-      _resendSeconds = 30;
+      showOtp = true;
+      resend = 30;
     });
 
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (_resendSeconds == 0) {
+    timer?.cancel();
+    timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (resend == 0) {
         t.cancel();
       } else {
-        setState(() => _resendSeconds--);
+        setState(() => resend--);
       }
     });
 
     HapticFeedback.lightImpact();
   }
 
-  void _verifyOtp() {
-    final otp = _otpControllers.map((e) => e.text).join();
+  void verifyOtp() {
+    final otp = otpControllers.map((e) => e.text).join();
     if (otp != '123456') {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid OTP'),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text('Invalid OTP')),
       );
       return;
     }
 
-    Navigator.pushReplacementNamed(
-      context,
-      AppRoutes.homeJobsFeed,
-    );
+    Navigator.pushReplacementNamed(context, AppRoutes.homeJobsFeed);
   }
 
   @override
@@ -87,11 +55,10 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen> {
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              const SizedBox(height: 72),
-
+              const SizedBox(height: 80),
               const Text(
                 'Job Seeker Login',
                 style: TextStyle(
@@ -100,23 +67,15 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen> {
                   color: Color(0xFF2563EB),
                 ),
               ),
-
-              const SizedBox(height: 12),
-              const Text(
-                'Find jobs near you instantly',
-                style: TextStyle(color: Color(0xFF64748B)),
-              ),
-
-              const SizedBox(height: 48),
+              const SizedBox(height: 40),
 
               TextField(
-                controller: _mobileController,
+                controller: mobileController,
                 keyboardType: TextInputType.number,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(10),
                 ],
-                onChanged: (_) => _validateMobile(),
                 decoration: InputDecoration(
                   prefixText: '+91 ',
                   labelText: 'Mobile Number',
@@ -128,77 +87,43 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen> {
 
               const SizedBox(height: 24),
 
-              if (!_showOtp)
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: _isMobileValid ? _sendOtp : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: const Text(
-                      'Send OTP',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+              if (!showOtp)
+                ElevatedButton(
+                  onPressed: sendOtp,
+                  child: const Text('Send OTP'),
                 ),
 
-              if (_showOtp) ...[
+              if (showOtp) ...[
                 const SizedBox(height: 32),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: List.generate(6, (i) {
                     return SizedBox(
                       width: 44,
                       child: TextField(
-                        controller: _otpControllers[i],
-                        focusNode: _otpFocusNodes[i],
+                        controller: otpControllers[i],
+                        focusNode: otpFocus[i],
                         maxLength: 1,
                         textAlign: TextAlign.center,
-                        keyboardType: TextInputType.number,
                         decoration:
                             const InputDecoration(counterText: ''),
                         onChanged: (v) {
                           if (v.isNotEmpty && i < 5) {
-                            _otpFocusNodes[i + 1].requestFocus();
+                            otpFocus[i + 1].requestFocus();
                           }
-                          if (_otpControllers
-                              .every((c) => c.text.isNotEmpty)) {
-                            _verifyOtp();
+                          if (otpControllers.every((c) => c.text.isNotEmpty)) {
+                            verifyOtp();
                           }
                         },
                       ),
                     );
                   }),
                 ),
-
-                const SizedBox(height: 24),
-
-                TextButton(
-                  onPressed: _resendSeconds == 0 ? _sendOtp : null,
-                  child: Text(
-                    _resendSeconds == 0
-                        ? 'Resend OTP'
-                        : 'Resend in $_resendSeconds s',
-                  ),
-                ),
+                const SizedBox(height: 16),
+                Text(resend == 0
+                    ? 'Resend OTP'
+                    : 'Resend in $resend s'),
               ],
-
-              const Spacer(),
-
-              const Text(
-                '© Khilonjiya India Pvt. Ltd.',
-                style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-              ),
-              const SizedBox(height: 20),
             ],
           ),
         ),
