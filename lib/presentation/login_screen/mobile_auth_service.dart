@@ -1,9 +1,23 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/auth/user_role.dart';
 
+/// ============================================================
+/// SUPABASE SERVICE (SINGLE SOURCE OF TRUTH)
+/// ============================================================
+class SupabaseService {
+  static final SupabaseService _instance = SupabaseService._internal();
+  factory SupabaseService() => _instance;
+  SupabaseService._internal();
+
+  SupabaseClient get client => Supabase.instance.client;
+}
+
+/// ============================================================
+/// MOBILE AUTH SERVICE – FINAL / COMPLETE
+/// ============================================================
 class MobileAuthService {
   static final MobileAuthService _instance = MobileAuthService._internal();
   factory MobileAuthService() => _instance;
@@ -11,62 +25,65 @@ class MobileAuthService {
 
   static const _sessionKey = 'supabase_session';
   static const _userKey = 'user_data';
+  static const _roleKey = 'selected_user_role';
 
   Session? _session;
-  Map<String, dynamic>? _currentUser;
+  User? _currentUser;
 
-  /* ---------------- INIT ---------------- */
-
+  /// ------------------------------------------------------------
+  /// INITIALIZE + RESTORE SESSION
+  /// ------------------------------------------------------------
   Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
     final sessionJson = prefs.getString(_sessionKey);
-    final userJson = prefs.getString(_userKey);
 
-    if (sessionJson == null || userJson == null) return;
+    if (sessionJson == null) return;
 
     try {
-      final sessionData = jsonDecode(sessionJson);
-      final user = User.fromJson(sessionData['user']);
-      if (user == null) return;
+      final sessionMap = jsonDecode(sessionJson);
+      final response = await SupabaseService()
+          .client
+          .auth
+          .recoverSession(jsonEncode(sessionMap));
 
-      _session = Session(
-        accessToken: sessionData['access_token'],
-        refreshToken: sessionData['refresh_token'],
-        expiresIn: sessionData['expires_in'],
-        tokenType: sessionData['token_type'],
-        user: user,
-      );
-      _currentUser = jsonDecode(userJson);
-
-      await Supabase.instance.client.auth.recoverSession(
-        jsonEncode(sessionData),
-      );
-    } catch (_) {
+      _session = response.session;
+      _currentUser = response.user;
+    } catch (e) {
       await logout();
     }
   }
 
-  /* ---------------- OTP ---------------- */
-
+  /// ------------------------------------------------------------
+  /// EDGE FUNCTION – SEND OTP
+  /// ------------------------------------------------------------
   Future<void> sendOtp(String mobile) async {
-    await Supabase.instance.client.functions.invoke(
+    final res = await SupabaseService().client.functions.invoke(
       'smart-function',
       body: {
         'action': 'request-otp',
         'mobile_number': '+91$mobile',
-        'device_fingerprint': _deviceId(),
       },
     );
+
+    if (res.data == null || res.data['success'] != true) {
+      throw MobileAuthException('Failed to send OTP');
+    }
   }
 
-  Future<void> verifyOtp(String mobile, String otp) async {
-    final res = await Supabase.instance.client.functions.invoke(
+  /// ------------------------------------------------------------
+  /// EDGE FUNCTION – VERIFY OTP (123456)
+  /// ------------------------------------------------------------
+  Future<void> verifyOtp({
+    required String mobile,
+    required String otp,
+    required UserRole role,
+  }) async {
+    final res = await SupabaseService().client.functions.invoke(
       'smart-function',
       body: {
         'action': 'verify-otp',
         'mobile_number': '+91$mobile',
-        'otp': otp,
-        'device_fingerprint': _deviceId(),
+        'otp': otp, // edge function validates 123456
       },
     );
 
@@ -74,78 +91,89 @@ class MobileAuthService {
       throw MobileAuthException('Invalid OTP');
     }
 
-    await _storeSession(res.data);
-    await _syncUserRole();
+    final sessionData = res.data['session'];
+    final userData = res.data['user'];
+
+    await _storeSession(sessionData, userData);
+    await _storeRole(role);
+    await _syncUserProfileRole(role);
   }
 
-  /* ---------------- ROLE ---------------- */
-
-  Future<void> _syncUserRole() async {
+  /// ------------------------------------------------------------
+  /// SESSION STORAGE
+  /// ------------------------------------------------------------
+  Future<void> _storeSession(
+    Map<String, dynamic> session,
+    Map<String, dynamic> user,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
-    final roleStr = prefs.getString('selected_user_role') ?? 'jobSeeker';
 
-    final userId = Supabase.instance.client.auth.currentUser!.id;
+    await prefs.setString(_sessionKey, jsonEncode(session));
+    await prefs.setString(_userKey, jsonEncode(user));
 
-    await Supabase.instance.client.from('user_profiles').upsert({
-      'id': userId,
-      'role': roleStr,
+    final response = await SupabaseService()
+        .client
+        .auth
+        .recoverSession(jsonEncode(session));
+
+    _session = response.session;
+    _currentUser = response.user;
+  }
+
+  /// ------------------------------------------------------------
+  /// ROLE STORAGE + SYNC
+  /// ------------------------------------------------------------
+  Future<void> _storeRole(UserRole role) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_roleKey, role.name);
+  }
+
+  Future<void> _syncUserProfileRole(UserRole role) async {
+    final user = SupabaseService().client.auth.currentUser;
+    if (user == null) return;
+
+    await SupabaseService().client.from('user_profiles').upsert({
+      'id': user.id,
+      'role': role.name,
       'updated_at': DateTime.now().toIso8601String(),
     });
   }
 
-  /* ---------------- SESSION ---------------- */
-
-  Future<void> _storeSession(Map<String, dynamic> data) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final sessionData = {
-      'access_token': data['accessToken'],
-      'refresh_token': data['refreshToken'],
-      'expires_in': 3600,
-      'token_type': 'bearer',
-      'user': {'id': data['auth_user_id']},
-    };
-
-    await prefs.setString(_sessionKey, jsonEncode(sessionData));
-    await prefs.setString(_userKey, jsonEncode(data['user']));
-  }
+  /// ------------------------------------------------------------
+  /// SESSION HELPERS (REQUIRED BY YOUR APP)
+  /// ------------------------------------------------------------
+  bool get isAuthenticated =>
+      SupabaseService().client.auth.currentUser != null;
 
   Future<bool> refreshSession() async {
-    final session = Supabase.instance.client.auth.currentSession;
-    if (session == null) return false;
-
     try {
-      await Supabase.instance.client.auth.refreshSession(session.refreshToken);
+      final response =
+          await SupabaseService().client.auth.refreshSession();
+      _session = response.session;
+      _currentUser = response.user;
       return true;
     } catch (_) {
-      await logout();
       return false;
     }
   }
 
   Future<bool> ensureValidSession() async {
-    return Supabase.instance.client.auth.currentUser != null;
+    if (!isAuthenticated) return false;
+    return refreshSession();
   }
 
-  Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    await Supabase.instance.client.auth.signOut();
-  }
+  User? get currentUser => _currentUser;
+  String? get userId => _currentUser?.id;
 
-  /* ---------------- GETTERS ---------------- */
-
-  bool get isAuthenticated =>
-      Supabase.instance.client.auth.currentUser != null;
-
-  Map<String, dynamic>? get currentUser => _currentUser;
-  String? get userId => _currentUser?['id'];
-
+  /// ------------------------------------------------------------
+  /// ROLE FETCH
+  /// ------------------------------------------------------------
   Future<UserRole> getUserRole() async {
-    final user = Supabase.instance.client.auth.currentUser;
+    final user = SupabaseService().client.auth.currentUser;
     if (user == null) return UserRole.jobSeeker;
 
-    final res = await Supabase.instance.client
+    final res = await SupabaseService()
+        .client
         .from('user_profiles')
         .select('role')
         .eq('id', user.id)
@@ -154,14 +182,28 @@ class MobileAuthService {
     return parseUserRole(res?['role']);
   }
 
-  static bool isValidMobileNumber(String mobile) {
-    final m = mobile.replaceAll(RegExp(r'\D'), '');
-    return m.length == 10 && !m.startsWith('0');
+  /// ------------------------------------------------------------
+  /// LOGOUT
+  /// ------------------------------------------------------------
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    await SupabaseService().client.auth.signOut();
+    _session = null;
+    _currentUser = null;
   }
 
-  String _deviceId() => 'flutter_${DateTime.now().millisecondsSinceEpoch}';
+  /// ------------------------------------------------------------
+  /// VALIDATION
+  /// ------------------------------------------------------------
+  static bool isValidMobileNumber(String value) {
+    return value.length == 10 && value[0] != '0';
+  }
 }
 
+/// ============================================================
+/// EXCEPTION
+/// ============================================================
 class MobileAuthException implements Exception {
   final String message;
   MobileAuthException(this.message);
