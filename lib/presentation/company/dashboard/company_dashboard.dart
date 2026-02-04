@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import '../../../services/employer_job_service.dart';
+import '../jobs/create_job_screen.dart';
 
 class CompanyDashboard extends StatefulWidget {
   const CompanyDashboard({Key? key}) : super(key: key);
@@ -26,16 +27,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     setState(() => _loading = false);
   }
 
-  Future<void> _closeJob(String id) async {
-    await _jobService.closeJob(id);
-    _loadJobs();
-  }
-
-  Future<void> _deleteJob(String id) async {
-    await _jobService.deleteJob(id);
-    _loadJobs();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,12 +37,17 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         foregroundColor: Colors.black,
         elevation: 1,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // NEXT STEP: Job creation form
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CreateJobScreen()),
+          );
+          _loadJobs();
         },
         backgroundColor: const Color(0xFF2563EB),
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: const Text('Post Job'),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -66,17 +62,10 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   Widget _emptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.work_outline, size: 60, color: Colors.grey),
-          SizedBox(height: 12),
-          Text(
-            'No jobs posted yet',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-        ],
+    return const Center(
+      child: Text(
+        'No jobs posted yet',
+        style: TextStyle(fontSize: 16, color: Colors.grey),
       ),
     );
   }
@@ -90,12 +79,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,42 +102,18 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
           const SizedBox(height: 6),
 
-          /// COMPANY
           Text(
             job['company_name'] ?? '',
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey.shade700,
-            ),
+            style: TextStyle(color: Colors.grey.shade700),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
-          /// META
           Row(
             children: [
-              _meta(Icons.location_on_outlined, job['district']),
-              const SizedBox(width: 12),
+              _meta(Icons.location_on, job['district']),
+              const SizedBox(width: 16),
               _meta(Icons.work_outline, job['experience_required']),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-
-          /// ACTIONS
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              if (status == 'active')
-                TextButton(
-                  onPressed: () => _closeJob(job['id']),
-                  child: const Text('Close'),
-                ),
-              TextButton(
-                onPressed: () => _deleteJob(job['id']),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Delete'),
-              ),
             ],
           ),
         ],
@@ -167,23 +126,17 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       children: [
         Icon(icon, size: 16, color: Colors.blueGrey),
         const SizedBox(width: 4),
-        Text(
-          text ?? '',
-          style: const TextStyle(fontSize: 12),
-        ),
+        Text(text ?? '', style: const TextStyle(fontSize: 12)),
       ],
     );
   }
 
   Widget _statusChip(String status) {
-    final isActive = status == 'active';
-
+    final active = status == 'active';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isActive
-            ? Colors.green.withOpacity(0.1)
-            : Colors.grey.withOpacity(0.15),
+        color: active ? Colors.green.shade50 : Colors.grey.shade200,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -191,7 +144,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: isActive ? Colors.green : Colors.grey,
+          color: active ? Colors.green : Colors.grey,
         ),
       ),
     );
