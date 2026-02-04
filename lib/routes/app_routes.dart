@@ -6,9 +6,8 @@ import '../presentation/login_screen/employer_login_screen.dart';
 
 import '../routes/home_router.dart';
 
-import '../presentation/home_marketplace_feed/home_jobs_feed.dart';
-import '../presentation/search_and_filters/search_and_filters.dart';
 import '../presentation/registration_screen/registration_screen.dart';
+import '../presentation/search_and_filters/search_and_filters.dart';
 import '../presentation/listing_detail/listing_detail.dart';
 import '../presentation/user_profile/user_profile.dart';
 import '../presentation/chat_messaging/chat_messaging.dart';
@@ -45,7 +44,7 @@ class AppRoutes {
   static const String companyDashboard = '/company-dashboard';
 
   /// ------------------------------------------------------------
-  /// OTHER EXISTING ROUTES (KEEP CLEAN)
+  /// OTHER EXISTING ROUTES
   /// ------------------------------------------------------------
   static const String registrationScreen = '/registration-screen';
   static const String searchAndFilters = '/search-and-filters';
@@ -60,7 +59,8 @@ class AppRoutes {
   /// ------------------------------------------------------------
   static Map<String, WidgetBuilder> routes = {
     /// IMPORTANT:
-    /// AppInitializer will push this after splash.
+    /// Your main.dart uses AppRoutes.initial as initialRoute.
+    /// So this MUST be RoleSelectionScreen.
     initial: (_) => const RoleSelectionScreen(),
 
     /// ROLE SELECTION
@@ -70,11 +70,10 @@ class AppRoutes {
     jobSeekerLogin: (_) => const JobSeekerLoginScreen(),
     employerLogin: (_) => const EmployerLoginScreen(),
 
-    /// HOME ROUTER (decides based on role)
-    /// NOTE: you can use this later after login is stable.
+    /// HOME (Job Seeker + Employer role routing)
     homeJobsFeed: (_) => const HomeRouter(),
 
-    /// EMPLOYER
+    /// EMPLOYER DASHBOARD (direct access)
     companyDashboard: (_) => const CompanyDashboard(),
 
     /// EXISTING
