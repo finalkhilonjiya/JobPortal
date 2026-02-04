@@ -5,9 +5,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/auth/user_role.dart';
 
-/// ------------------------------------------------------------
-/// SUPABASE SERVICE
-/// ------------------------------------------------------------
+/// ---------------- SUPABASE ----------------
+
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
   factory SupabaseService() => _instance;
@@ -23,9 +22,8 @@ class SupabaseService {
   }
 }
 
-/// ------------------------------------------------------------
-/// MOBILE AUTH SERVICE
-/// ------------------------------------------------------------
+/// ---------------- AUTH SERVICE ----------------
+
 class MobileAuthService {
   static final MobileAuthService _instance = MobileAuthService._internal();
   factory MobileAuthService() => _instance;
@@ -33,13 +31,13 @@ class MobileAuthService {
 
   static const String _sessionKey = 'supabase_session';
   static const String _userKey = 'user_data';
+  static const String _roleKey = 'selected_user_role';
 
   Session? _session;
   Map<String, dynamic>? _currentUser;
 
-  /* ------------------------------------------------------------
-   INITIALIZE SESSION
-  ------------------------------------------------------------- */
+  /* ================= INITIALIZE ================= */
+
   Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
     final sessionJson = prefs.getString(_sessionKey);
@@ -68,13 +66,13 @@ class MobileAuthService {
         jsonEncode(sessionData),
       );
     } catch (e) {
+      debugPrint('Session restore failed: $e');
       await _clearSession();
     }
   }
 
-  /* ------------------------------------------------------------
-   OTP FLOW
-  ------------------------------------------------------------- */
+  /* ================= OTP ================= */
+
   Future<void> sendOtp(String mobile) async {
     await SupabaseService().client.functions.invoke(
       'smart-function',
@@ -103,8 +101,11 @@ class MobileAuthService {
       throw MobileAuthException('OTP verification failed');
     }
 
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_roleKey, role.name);
+
     await _storeSession(res.data);
-    await _upsertUserProfile(role);
+    await _syncUserProfileRole(role);
 
     return AuthResponse(
       success: true,
@@ -113,25 +114,35 @@ class MobileAuthService {
     );
   }
 
-  /* ------------------------------------------------------------
-   USER ROLE PERSISTENCE (FINAL FIX)
-  ------------------------------------------------------------- */
-  Future<void> _upsertUserProfile(UserRole role) async {
-    final user = SupabaseService().client.auth.currentUser;
-    if (user == null) return;
+  /* ================= ROLE ================= */
+
+  Future<void> _syncUserProfileRole(UserRole role) async {
+    final userId = SupabaseService().client.auth.currentUser!.id;
 
     await SupabaseService().client.from('user_profiles').upsert({
-      'id': user.id,
+      'id': userId,
       'role': role.name,
       'updated_at': DateTime.now().toIso8601String(),
     });
 
-    debugPrint('✅ User role saved: ${role.name}');
+    debugPrint('User role synced: ${role.name}');
   }
 
-  /* ------------------------------------------------------------
-   SESSION STORAGE
-  ------------------------------------------------------------- */
+  Future<UserRole> getUserRole() async {
+    final user = SupabaseService().client.auth.currentUser;
+    if (user == null) return UserRole.jobSeeker;
+
+    final res = await SupabaseService().client
+        .from('user_profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+    return parseUserRole(res?['role']);
+  }
+
+  /* ================= SESSION ================= */
+
   Future<void> _storeSession(Map<String, dynamic> data) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -157,35 +168,62 @@ class MobileAuthService {
     );
   }
 
+  Future<bool> refreshSession() async {
+    try {
+      final session = SupabaseService().client.auth.currentSession;
+      if (session?.refreshToken == null) return false;
+
+      await SupabaseService()
+          .client
+          .auth
+          .refreshSession(session!.refreshToken!);
+
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> ensureValidSession() async {
+    if (SupabaseService().client.auth.currentSession == null) {
+      return refreshSession();
+    }
+    return true;
+  }
+
+  /* ================= LOGOUT ================= */
+
+  Future<void> logout() async {
+    await _clearSession();
+  }
+
   Future<void> _clearSession() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     await SupabaseService().client.auth.signOut();
+    _session = null;
+    _currentUser = null;
   }
 
-  /* ------------------------------------------------------------
-   HELPERS
-  ------------------------------------------------------------- */
+  /* ================= GETTERS ================= */
+
   bool get isAuthenticated =>
       SupabaseService().client.auth.currentUser != null;
 
-  Future<UserRole> getUserRole() async {
-    final user = SupabaseService().client.auth.currentUser;
-    if (user == null) return UserRole.jobSeeker;
+  Map<String, dynamic>? get currentUser => _currentUser;
 
-    final res = await SupabaseService().client
-        .from('user_profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle();
+  String? get userId => SupabaseService().client.auth.currentUser?.id;
 
-    return parseUserRole(res?['role']);
+  /* ================= UTIL ================= */
+
+  static bool isValidMobileNumber(String mobile) {
+    final clean = mobile.replaceAll(RegExp(r'\D'), '');
+    return clean.length == 10 && clean[0] != '0';
   }
 }
 
-/* ------------------------------------------------------------
- MODELS
-------------------------------------------------------------- */
+/// ---------------- MODELS ----------------
+
 class AuthResponse {
   final bool success;
   final Map<String, dynamic>? user;
