@@ -18,13 +18,13 @@ class EmployerJobList extends StatelessWidget {
         actions: [
           TextButton.icon(
             onPressed: () {
-              // NEXT STEP: navigate to Create Job
-            },
-            icon: const Icon(Icons.add, size: 20),
-            label: const Text('Post Job'),
-          ),
-        ],
-      ),
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const CreateJobScreen(),
+    ),
+  );
+},
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: 3, // TEMP — will come from Supabase
