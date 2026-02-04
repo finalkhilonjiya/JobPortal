@@ -29,15 +29,15 @@ class AppRoutes {
   static const String roleSelection = '/role-selection';
 
   /// ------------------------------------------------------------
-  /// LOGIN (SEPARATE)
+  /// LOGIN (SEPARATE FLOWS)
   /// ------------------------------------------------------------
   static const String jobSeekerLogin = '/job-seeker-login';
   static const String employerLogin = '/employer-login';
 
   /// ------------------------------------------------------------
-  /// POST LOGIN ROUTER
+  /// POST LOGIN ROUTER (ROLE BASED)
   /// ------------------------------------------------------------
-  static const String homeJobsFeed = '/home-jobs-feed';
+  static const String homeJobsFeed = '/home';
 
   /// ------------------------------------------------------------
   /// EMPLOYER
@@ -45,8 +45,7 @@ class AppRoutes {
   static const String companyDashboard = '/company-dashboard';
 
   /// ------------------------------------------------------------
-  /// JOB SEEKER HOME (DIRECT)
-  /// (You already have this screen. We keep it clean.)
+  /// JOB SEEKER (DIRECT ACCESS IF EVER NEEDED)
   /// ------------------------------------------------------------
   static const String jobSeekerHome = '/job-seeker-home';
 
@@ -64,11 +63,9 @@ class AppRoutes {
   /// ------------------------------------------------------------
   /// ROUTES MAP
   /// ------------------------------------------------------------
-  static Map<String, WidgetBuilder> routes = {
-    /// IMPORTANT:
-    /// main.dart uses home: AppInitializer()
-    /// so "/" is NOT used as startup.
-    /// But we keep it correct.
+  static final Map<String, WidgetBuilder> routes = {
+    /// SAFETY ONLY
+    /// App starts from AppInitializer, not from "/"
     initial: (_) => const RoleSelectionScreen(),
 
     /// ROLE SELECTION
@@ -78,13 +75,11 @@ class AppRoutes {
     jobSeekerLogin: (_) => const JobSeekerLoginScreen(),
     employerLogin: (_) => const EmployerLoginScreen(),
 
-    /// ROUTER AFTER LOGIN (checks user_profiles.role)
+    /// ROLE-BASED HOME ROUTER
     homeJobsFeed: (_) => const HomeRouter(),
 
-    /// DIRECT HOME (job seeker feed)
+    /// DIRECT HOMES (OPTIONAL)
     jobSeekerHome: (_) => const HomeJobsFeed(),
-
-    /// EMPLOYER DASHBOARD
     companyDashboard: (_) => const CompanyDashboard(),
 
     /// EXISTING
@@ -106,7 +101,7 @@ class AppRoutes {
   ) async {
     await Navigator.of(context).pushNamedAndRemoveUntil(
       routeName,
-      (Route<dynamic> route) => false,
+      (_) => false,
     );
   }
 
@@ -115,7 +110,10 @@ class AppRoutes {
     String routeName, {
     Object? arguments,
   }) async {
-    await Navigator.of(context).pushNamed(routeName, arguments: arguments);
+    await Navigator.of(context).pushNamed(
+      routeName,
+      arguments: arguments,
+    );
   }
 
   static Future<void> pushReplacementNamed(
@@ -123,8 +121,10 @@ class AppRoutes {
     String routeName, {
     Object? arguments,
   }) async {
-    await Navigator.of(context)
-        .pushReplacementNamed(routeName, arguments: arguments);
+    await Navigator.of(context).pushReplacementNamed(
+      routeName,
+      arguments: arguments,
+    );
   }
 
   static void pop(BuildContext context, [dynamic result]) {
@@ -137,8 +137,7 @@ class AppRoutes {
 
   static T? getArguments<T>(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is T) return args;
-    return null;
+    return args is T ? args : null;
   }
 
   static String? getCurrentRouteName(BuildContext context) {
