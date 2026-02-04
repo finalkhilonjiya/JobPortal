@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
+
 import 'core/app_export.dart';
 import 'core/navigation_service.dart';
 import 'presentation/login_screen/mobile_auth_service.dart';
@@ -12,7 +13,8 @@ import 'presentation/login_screen/mobile_auth_service.dart';
 class AppConfig {
   static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
   static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
-  static bool get hasSupabase => supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
+  static bool get hasSupabase =>
+      supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
 }
 
 /* ----------  APP-STATE  ---------- */
@@ -21,6 +23,7 @@ enum AppState { initializing, offline, authenticated, unauthenticated }
 class AppStateNotifier with ChangeNotifier {
   AppState _state = AppState.initializing;
   AppState get state => _state;
+
   void setState(AppState s) {
     _state = s;
     notifyListeners();
@@ -29,35 +32,33 @@ class AppStateNotifier with ChangeNotifier {
 
 /* ----------  MAIN  ---------- */
 Future<void> main() async {
-  /* 1.  Engine ready */
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-  /* 2.  Env + Supabase (no delay) */
-  try { 
-    await dotenv.load(fileName: '.env'); 
+  /// Load env
+  try {
+    await dotenv.load(fileName: '.env');
     debugPrint('Environment loaded successfully');
   } catch (e) {
     debugPrint('Failed to load .env file: $e');
   }
-  
+
+  /// Init Supabase
   if (AppConfig.hasSupabase) {
     try {
       await Supabase.initialize(
-        url: AppConfig.supabaseUrl, 
+        url: AppConfig.supabaseUrl,
         anonKey: AppConfig.supabaseAnonKey,
       );
       debugPrint('Supabase initialized successfully');
     } catch (e) {
       debugPrint('Supabase initialization failed: $e');
-      /* offline handled below */
     }
   }
 
-  /* 3.  Run app immediately */
   runApp(const MyApp());
 
-  /* 4.  Chrome styling (non-blocking) */
+  /// UI chrome
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -71,6 +72,7 @@ Future<void> main() async {
 /* ----------  APP WIDGET  ---------- */
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
@@ -84,10 +86,15 @@ class MyApp extends StatelessWidget {
             themeMode: ThemeMode.system,
             navigatorKey: NavigationService.navigatorKey,
             debugShowCheckedModeBanner: false,
-            initialRoute: AppRoutes.initial,
+
+            /// IMPORTANT:
+            /// We ALWAYS start with splash initializer.
+            home: const AppInitializer(),
             routes: AppRoutes.routes,
+
             builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.0)),
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: const TextScaler.linear(1.0)),
               child: child!,
             ),
           ),
@@ -97,9 +104,10 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/* ----------  APP START  ---------- */
+/* ----------  APP START / SPLASH ---------- */
 class AppInitializer extends StatefulWidget {
   const AppInitializer({Key? key}) : super(key: key);
+
   @override
   State<AppInitializer> createState() => _AppInitializerState();
 }
@@ -111,55 +119,51 @@ class _AppInitializerState extends State<AppInitializer> {
   void initState() {
     super.initState();
     notifier = context.read<AppStateNotifier>();
-    /* start immediately after first frame */
     WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrap());
   }
 
   Future<void> _bootstrap() async {
     try {
       debugPrint('Starting app bootstrap...');
-      
-      // ✅ Extended delay to 4 seconds for splash screen duration
-      await Future.delayed(const Duration(milliseconds: 7000));
 
-      // Check if Supabase is available
-      if (Supabase.instance.client == null) {
-        debugPrint('Supabase not available, going offline');
+      /// Splash delay
+      await Future.delayed(const Duration(milliseconds: 1500));
+
+      /// If Supabase not ready → still allow app to continue.
+      /// We just show role selection.
+      if (!AppConfig.hasSupabase) {
+        debugPrint('Supabase missing env. Going to role selection.');
         notifier.setState(AppState.offline);
-        NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
+        NavigationService.pushReplacementNamed(AppRoutes.roleSelection);
         return;
       }
 
-      // Initialize authentication service
+      /// Initialize auth service (restores session)
       final auth = MobileAuthService();
       await auth.initialize();
-      debugPrint('MobileAuthService initialized');
 
-      // Check if user is already authenticated
+      /// If already logged in → go directly to HomeRouter
       if (auth.isAuthenticated) {
-        debugPrint('User has stored session, validating...');
+        debugPrint('User authenticated. Refreshing session...');
 
-        // Validate stored session
-        final sessionValid = await auth.refreshSession();
-        if (sessionValid) {
-          debugPrint('Session valid, navigating to home');
+        final ok = await auth.refreshSession();
+        if (ok) {
           notifier.setState(AppState.authenticated);
           NavigationService.pushReplacementNamed(AppRoutes.homeJobsFeed);
-        } else {
-          debugPrint('Session invalid, going to login');
-          notifier.setState(AppState.unauthenticated);
-          NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
+          return;
         }
-      } else {
-        debugPrint('No stored session, going to login');
-        notifier.setState(AppState.unauthenticated);
-        NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
+
+        /// session invalid
+        await auth.logout();
       }
 
+      /// Default start
+      notifier.setState(AppState.unauthenticated);
+      NavigationService.pushReplacementNamed(AppRoutes.roleSelection);
     } catch (e) {
       debugPrint('Bootstrap error: $e');
       notifier.setState(AppState.unauthenticated);
-      NavigationService.pushReplacementNamed(AppRoutes.loginScreen);
+      NavigationService.pushReplacementNamed(AppRoutes.roleSelection);
     }
   }
 
@@ -172,7 +176,6 @@ class _AppInitializerState extends State<AppInitializer> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // ✅ CHANGED: Uses app_icon.png in FREE FORM (no circle, no shape)
               Image.asset(
                 'assets/icons/app_icon.png',
                 width: 120,
@@ -182,7 +185,7 @@ class _AppInitializerState extends State<AppInitializer> {
                   'K',
                   style: TextStyle(
                     fontSize: 72,
-                    color: Color(0xFF4285F4),
+                    color: Color(0xFF2563EB),
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -200,7 +203,7 @@ class _AppInitializerState extends State<AppInitializer> {
               const SizedBox(height: 48),
               const CircularProgressIndicator(
                 strokeWidth: 3,
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4285F4)),
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
               ),
               const SizedBox(height: 20),
               Text(
@@ -223,7 +226,7 @@ class _AppInitializerState extends State<AppInitializer> {
       case AppState.initializing:
         return 'Initializing...';
       case AppState.offline:
-        return 'Connecting...';
+        return 'Starting...';
       case AppState.authenticated:
         return 'Welcome back!';
       case AppState.unauthenticated:
