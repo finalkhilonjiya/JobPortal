@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-// Login / Entry
+// Entry
 import '../presentation/login_screen/mobile_login_screen.dart';
 
-// Job seeker side
+// Job seeker
 import '../presentation/home_marketplace_feed/home_jobs_feed.dart';
 import '../presentation/search_and_filters/search_and_filters.dart';
 import '../presentation/listing_detail/listing_detail.dart';
@@ -11,7 +11,7 @@ import '../presentation/user_profile/user_profile.dart';
 import '../presentation/chat_messaging/chat_messaging.dart';
 import '../presentation/favorites_and_saved_items/favorites_and_saved_items.dart';
 
-// Employer side
+// Employer
 import '../presentation/company/dashboard/company_dashboard.dart';
 import '../presentation/configuration_setup/configuration_setup.dart';
 
@@ -21,6 +21,9 @@ class AppRoutes {
 
   /* ---------------- ENTRY ---------------- */
   static const String login = '/login';
+
+  // 🔥 BACKWARD COMPATIBILITY (DO NOT REMOVE)
+  static const String loginScreen = login;
 
   /* ---------------- JOB SEEKER ---------------- */
   static const String homeJobsFeed = '/home-jobs-feed';
@@ -34,13 +37,12 @@ class AppRoutes {
   static const String companyDashboard = '/company-dashboard';
   static const String configurationSetup = '/configuration-setup';
 
-  /* ---------------- ROUTE MAP ---------------- */
+  /* ---------------- ROUTES ---------------- */
   static final Map<String, WidgetBuilder> routes = {
-    /// Entry
     initial: (_) => const MobileLoginScreen(),
     login: (_) => const MobileLoginScreen(),
 
-    /// Job seeker
+    // Job seeker
     homeJobsFeed: (_) => const HomeJobsFeed(),
     searchAndFilters: (_) => const SearchAndFilters(),
     listingDetail: (_) => const ListingDetail(),
@@ -48,33 +50,22 @@ class AppRoutes {
     chatMessaging: (_) => const ChatMessaging(),
     favorites: (_) => const FavoritesAndSavedItems(),
 
-    /// Employer
-    companyDashboard: (_) => const CompanyDashboard(),
+    // Employer
+    companyDashboard: (_) => CompanyDashboard(), // ❗ NOT const
     configurationSetup: (_) => const ConfigurationSetup(),
   };
 
   /* ---------------- HELPERS ---------------- */
 
-  static Future<void> push(
-    BuildContext context,
-    String route, {
-    Object? args,
-  }) async {
-    await Navigator.pushNamed(context, route, arguments: args);
+  static Future<void> push(BuildContext context, String route) async {
+    await Navigator.pushNamed(context, route);
   }
 
-  static Future<void> replace(
-    BuildContext context,
-    String route, {
-    Object? args,
-  }) async {
-    await Navigator.pushReplacementNamed(context, route, arguments: args);
+  static Future<void> replace(BuildContext context, String route) async {
+    await Navigator.pushReplacementNamed(context, route);
   }
 
-  static Future<void> clearAndPush(
-    BuildContext context,
-    String route,
-  ) async {
+  static Future<void> clearAndPush(BuildContext context, String route) async {
     await Navigator.pushNamedAndRemoveUntil(
       context,
       route,
