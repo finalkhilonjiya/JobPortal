@@ -1,141 +1,171 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
-import '../../core/auth/user_role.dart';
 import '../../routes/app_routes.dart';
 
-class RoleSelectionScreen extends StatefulWidget {
+class RoleSelectionScreen extends StatelessWidget {
   const RoleSelectionScreen({Key? key}) : super(key: key);
-
-  @override
-  State<RoleSelectionScreen> createState() => _RoleSelectionScreenState();
-}
-
-class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
-  UserRole? _selectedRole;
-  bool _loading = false;
-
-  Future<void> _saveRole() async {
-    if (_selectedRole == null) return;
-
-    setState(() => _loading = true);
-
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return;
-
-    await Supabase.instance.client.from('user_profiles').upsert({
-      'id': user.id,
-      'role': _selectedRole == UserRole.employer ? 'employer' : 'jobSeeker',
-      'updated_at': DateTime.now().toIso8601String(),
-    });
-
-    // Route based on role
-    if (_selectedRole == UserRole.employer) {
-      Navigator.pushReplacementNamed(context, AppRoutes.homeJobsFeed);
-    } else {
-      Navigator.pushReplacementNamed(context, AppRoutes.homeJobsFeed);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 40),
+              const SizedBox(height: 72),
+
+              /// BRAND
               const Text(
-                'Tell us who you are',
+                'Khilonjiya',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 34,
                   fontWeight: FontWeight.w800,
+                  color: Color(0xFF2563EB),
+                  letterSpacing: -0.8,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
               const Text(
-                'This helps us personalize your experience',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                'India’s local job platform',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF64748B),
+                ),
               ),
-              const SizedBox(height: 40),
 
-              _roleCard(
-                role: UserRole.jobSeeker,
-                title: 'I am looking for a job',
-                subtitle: 'Search & apply for jobs',
+              const SizedBox(height: 72),
+
+              /// ROLE OPTIONS
+              _RoleCard(
+                title: 'Job Seeker',
+                description:
+                    'Find nearby jobs, apply instantly and track applications',
                 icon: Icons.work_outline,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                ),
+                onTap: () {
+                  Navigator.pushReplacementNamed(
+                    context,
+                    AppRoutes.jobSeekerLogin,
+                  );
+                },
               ),
-              const SizedBox(height: 16),
-              _roleCard(
-                role: UserRole.employer,
-                title: 'I want to hire',
-                subtitle: 'Post jobs & manage applicants',
+
+              const SizedBox(height: 28),
+
+              _RoleCard(
+                title: 'Employer',
+                description:
+                    'Post jobs, manage applicants and hire faster',
                 icon: Icons.business_center_outlined,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF16A34A), Color(0xFF15803D)],
+                ),
+                onTap: () {
+                  Navigator.pushReplacementNamed(
+                    context,
+                    AppRoutes.employerLogin,
+                  );
+                },
               ),
 
               const Spacer(),
 
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _selectedRole != null && !_loading ? _saveRole : null,
-                  child: _loading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          'Continue',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                        ),
+              const Text(
+                '© Khilonjiya India Pvt. Ltd.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF94A3B8),
                 ),
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _roleCard({
-    required UserRole role,
-    required String title,
-    required String subtitle,
-    required IconData icon,
-  }) {
-    final selected = _selectedRole == role;
+/// ------------------------------------------------------------
+/// ROLE CARD
+/// ------------------------------------------------------------
+class _RoleCard extends StatelessWidget {
+  final String title;
+  final String description;
+  final IconData icon;
+  final Gradient gradient;
+  final VoidCallback onTap;
 
-    return GestureDetector(
-      onTap: () => setState(() => _selectedRole = role),
+  const _RoleCard({
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.gradient,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(22),
+      onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected ? Colors.blue : Colors.grey.shade300,
-            width: 2,
-          ),
+          borderRadius: BorderRadius.circular(22),
+          gradient: gradient,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.18),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
+            ),
+          ],
         ),
         child: Row(
           children: [
-            Icon(icon, size: 36, color: selected ? Colors.blue : Colors.black54),
-            const SizedBox(width: 16),
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.18),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Icon(icon, size: 32, color: Colors.white),
+            ),
+            const SizedBox(width: 20),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 4),
-                  Text(subtitle,
-                      style: const TextStyle(color: Colors.grey)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.9),
+                      height: 1.4,
+                    ),
+                  ),
                 ],
               ),
             ),
-            if (selected)
-              const Icon(Icons.check_circle, color: Colors.blue),
+            const Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.white,
+              size: 18,
+            ),
           ],
         ),
       ),
