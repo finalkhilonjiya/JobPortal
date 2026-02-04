@@ -87,8 +87,7 @@ class MyApp extends StatelessWidget {
             navigatorKey: NavigationService.navigatorKey,
             debugShowCheckedModeBanner: false,
 
-            /// IMPORTANT:
-            /// We ALWAYS start with splash initializer.
+            /// ALWAYS start with splash initializer.
             home: const AppInitializer(),
             routes: AppRoutes.routes,
 
@@ -129,8 +128,8 @@ class _AppInitializerState extends State<AppInitializer> {
       /// Splash delay
       await Future.delayed(const Duration(milliseconds: 1500));
 
-      /// If Supabase not ready → still allow app to continue.
-      /// We just show role selection.
+      /// If Supabase env missing → allow app to continue
+      /// but still go to role selection.
       if (!AppConfig.hasSupabase) {
         debugPrint('Supabase missing env. Going to role selection.');
         notifier.setState(AppState.offline);
@@ -138,7 +137,7 @@ class _AppInitializerState extends State<AppInitializer> {
         return;
       }
 
-      /// Initialize auth service (restores session)
+      /// Restore session
       final auth = MobileAuthService();
       await auth.initialize();
 
