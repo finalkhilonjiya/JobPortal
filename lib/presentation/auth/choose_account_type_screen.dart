@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../../core/auth/user_role.dart';
 import '../../routes/app_routes.dart';
+import '../../core/auth/user_role.dart';
 
 class ChooseAccountTypeScreen extends StatelessWidget {
   const ChooseAccountTypeScreen({Key? key}) : super(key: key);
 
-  Future<void> _selectRole(BuildContext context, UserRole role) async {
+  Future<void> _selectRole(
+    BuildContext context,
+    UserRole role,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('selected_user_role', role.name);
 
-    // Go to login screen after role selection
-    Navigator.pushReplacementNamed(context, AppRoutes.loginScreen);
+    AppRoutes.pushAndClearStack(
+      context,
+      AppRoutes.loginScreen,
+    );
   }
 
   @override
@@ -21,64 +25,57 @@ class ChooseAccountTypeScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.all(24),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 60),
+              const Spacer(),
 
-              /// APP TITLE
               const Text(
-                'Welcome to Khilonjiya',
+                'Continue as',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
                 ),
               ),
-              const SizedBox(height: 8),
+
+              const SizedBox(height: 12),
+
               const Text(
-                'Choose how you want to use the platform',
+                'Choose how you want to use Khilonjiya',
                 style: TextStyle(
                   fontSize: 16,
                   color: Color(0xFF64748B),
                 ),
+                textAlign: TextAlign.center,
               ),
 
               const SizedBox(height: 48),
 
-              /// JOB SEEKER CARD
               _RoleCard(
-                title: 'I am looking for a job',
-                subtitle: 'Search jobs, apply, track applications',
+                title: 'Job Seeker',
+                subtitle: 'Find jobs, apply & track applications',
                 icon: Icons.work_outline,
                 onTap: () => _selectRole(context, UserRole.jobSeeker),
               ),
 
               const SizedBox(height: 20),
 
-              /// EMPLOYER CARD
               _RoleCard(
-                title: 'I want to hire',
-                subtitle: 'Post jobs, manage applicants',
-                icon: Icons.business_outlined,
+                title: 'Employer',
+                subtitle: 'Post jobs & manage candidates',
+                icon: Icons.business_center_outlined,
                 onTap: () => _selectRole(context, UserRole.employer),
               ),
 
               const Spacer(),
 
-              /// FOOTER
-              const Center(
-                child: Text(
-                  '© Khilonjiya India Private Limited',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF94A3B8),
-                  ),
+              const Text(
+                'You can’t change this later',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF94A3B8),
                 ),
               ),
-
-              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -103,28 +100,27 @@ class _RoleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(16),
       onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFFE5E7EB)),
-          color: Colors.white,
         ),
         child: Row(
           children: [
             Container(
-              width: 48,
-              height: 48,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
-                color: const Color(0xFF2563EB).withOpacity(0.08),
+                color: const Color(0xFF4285F4).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
-                size: 26,
-                color: const Color(0xFF2563EB),
+                color: const Color(0xFF4285F4),
+                size: 28,
               ),
             ),
             const SizedBox(width: 16),
@@ -135,27 +131,22 @@ class _RoleCard extends StatelessWidget {
                   Text(
                     title,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     subtitle,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 14,
                       color: Color(0xFF64748B),
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: Color(0xFF94A3B8),
-            ),
+            const Icon(Icons.arrow_forward_ios, size: 16),
           ],
         ),
       ),
