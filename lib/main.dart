@@ -7,12 +7,14 @@ import 'package:sizer/sizer.dart';
 
 import 'core/app_export.dart';
 import 'core/navigation_service.dart';
+import 'routes/app_routes.dart';
 import 'presentation/login_screen/mobile_auth_service.dart';
 
 /* ----------  CONFIG  ---------- */
 class AppConfig {
   static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
   static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+
   static bool get hasSupabase =>
       supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
 }
@@ -38,10 +40,7 @@ Future<void> main() async {
   /// Load env
   try {
     await dotenv.load(fileName: '.env');
-    debugPrint('Environment loaded successfully');
-  } catch (e) {
-    debugPrint('Failed to load .env file: $e');
-  }
+  } catch (_) {}
 
   /// Init Supabase
   if (AppConfig.hasSupabase) {
@@ -50,10 +49,7 @@ Future<void> main() async {
         url: AppConfig.supabaseUrl,
         anonKey: AppConfig.supabaseAnonKey,
       );
-      debugPrint('Supabase initialized successfully');
-    } catch (e) {
-      debugPrint('Supabase initialization failed: $e');
-    }
+    } catch (_) {}
   }
 
   runApp(const MyApp());
@@ -78,7 +74,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => AppStateNotifier(),
       child: Consumer<AppStateNotifier>(
-        builder: (_, notifier, __) => Sizer(
+        builder: (_, __, ___) => Sizer(
           builder: (_, __, ___) => MaterialApp(
             title: 'khilonjiya.com',
             theme: AppTheme.lightTheme,
@@ -87,7 +83,7 @@ class MyApp extends StatelessWidget {
             navigatorKey: NavigationService.navigatorKey,
             debugShowCheckedModeBanner: false,
 
-            /// ALWAYS start with splash initializer.
+            /// ALWAYS start with splash initializer
             home: const AppInitializer(),
             routes: AppRoutes.routes,
 
@@ -123,15 +119,12 @@ class _AppInitializerState extends State<AppInitializer> {
 
   Future<void> _bootstrap() async {
     try {
-      debugPrint('Starting app bootstrap...');
-
       /// Splash delay
       await Future.delayed(const Duration(milliseconds: 1500));
 
-      /// If Supabase env missing → allow app to continue
-      /// but still go to role selection.
+      /// If Supabase env missing → still continue app
+      /// and show RoleSelection.
       if (!AppConfig.hasSupabase) {
-        debugPrint('Supabase missing env. Going to role selection.');
         notifier.setState(AppState.offline);
         NavigationService.pushReplacementNamed(AppRoutes.roleSelection);
         return;
@@ -143,24 +136,22 @@ class _AppInitializerState extends State<AppInitializer> {
 
       /// If already logged in → go directly to HomeRouter
       if (auth.isAuthenticated) {
-        debugPrint('User authenticated. Refreshing session...');
-
         final ok = await auth.refreshSession();
+
         if (ok) {
           notifier.setState(AppState.authenticated);
           NavigationService.pushReplacementNamed(AppRoutes.homeJobsFeed);
           return;
         }
 
-        /// session invalid
+        /// Session invalid
         await auth.logout();
       }
 
       /// Default start
       notifier.setState(AppState.unauthenticated);
       NavigationService.pushReplacementNamed(AppRoutes.roleSelection);
-    } catch (e) {
-      debugPrint('Bootstrap error: $e');
+    } catch (_) {
       notifier.setState(AppState.unauthenticated);
       NavigationService.pushReplacementNamed(AppRoutes.roleSelection);
     }
