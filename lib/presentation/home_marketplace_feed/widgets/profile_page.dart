@@ -50,28 +50,25 @@ class _ProfilePageState extends State<ProfilePage> {
         return;
       }
 
-      // Fetch profile from DB
+      /// Fetch profile from DB
       final profile = await _listingService.getUserProfile(userId);
 
-      // Supabase User fields (SAFE)
+      /// Supabase User metadata (SAFE)
       final meta = currentUser.userMetadata ?? {};
 
       setState(() {
         _userProfile = profile;
 
-        _userName =
-            profile['full_name']?.toString() ??
+        _userName = profile['full_name']?.toString() ??
             meta['full_name']?.toString() ??
             meta['name']?.toString() ??
             'User';
 
-        _userEmail =
-            profile['email']?.toString() ??
+        _userEmail = profile['email']?.toString() ??
             currentUser.email?.toString() ??
             '';
 
-        _userPhone =
-            profile['mobile_number']?.toString() ??
+        _userPhone = profile['mobile_number']?.toString() ??
             meta['mobile_number']?.toString() ??
             '';
         _isLoading = false;
@@ -83,7 +80,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       setState(() => _isLoading = false);
 
-      // If auth issue → force logout + go role selection
+      /// If auth issue → force logout + go role selection
       if (e.toString().contains('auth') || e.toString().contains('401')) {
         await _authService.logout();
 
@@ -156,7 +153,7 @@ class _ProfilePageState extends State<ProfilePage> {
           : SingleChildScrollView(
               child: Column(
                 children: [
-                  // Profile Header
+                  /// Profile Header
                   Container(
                     width: double.infinity,
                     decoration: const BoxDecoration(
@@ -174,12 +171,10 @@ class _ProfilePageState extends State<ProfilePage> {
                             CircleAvatar(
                               radius: 50,
                               backgroundColor: Colors.white,
-                              backgroundImage:
-                                  _userProfile?['avatar_url'] != null
-                                      ? NetworkImage(
-                                          _userProfile!['avatar_url'],
-                                        )
-                                      : null,
+                              backgroundImage: _userProfile?['avatar_url'] !=
+                                      null
+                                  ? NetworkImage(_userProfile!['avatar_url'])
+                                  : null,
                               child: _userProfile?['avatar_url'] == null
                                   ? const Icon(
                                       Icons.person,
@@ -262,7 +257,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   SizedBox(height: 3.h),
 
-                  // Menu Options
+                  /// Menu Options
                   _buildMenuItem(
                     context,
                     icon: Icons.list_alt,
@@ -272,7 +267,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const MyListingsPage(),
+                          builder: (_) => MyListingsPage(), // ✅ FIXED
                         ),
                       );
                     },
@@ -287,7 +282,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const PackagesPage(),
+                          builder: (_) => PackagesPage(), // ✅ FIXED
                         ),
                       );
                     },
