@@ -83,7 +83,7 @@ class MyApp extends StatelessWidget {
             navigatorKey: NavigationService.navigatorKey,
             debugShowCheckedModeBanner: false,
 
-            /// ALWAYS start with splash initializer
+            /// ALWAYS start with initializer
             home: const AppInitializer(),
             routes: AppRoutes.routes,
 
@@ -120,35 +120,34 @@ class _AppInitializerState extends State<AppInitializer> {
   Future<void> _bootstrap() async {
     try {
       /// Splash delay
-      await Future.delayed(const Duration(milliseconds: 1500));
+      await Future.delayed(const Duration(milliseconds: 1200));
 
-      /// If Supabase env missing → still continue app
-      /// and show RoleSelection.
+      /// If Supabase env missing → continue app
       if (!AppConfig.hasSupabase) {
         notifier.setState(AppState.offline);
         NavigationService.pushReplacementNamed(AppRoutes.roleSelection);
         return;
       }
 
-      /// Restore session
+      final client = Supabase.instance.client;
+
+      /// Supabase v2 persists session automatically.
+      final session = client.auth.currentSession;
+      final user = client.auth.currentUser;
+
+      /// Also init our service (for role + helpers)
       final auth = MobileAuthService();
       await auth.initialize();
 
-      /// If already logged in → go directly to HomeRouter
-      if (auth.isAuthenticated) {
-        final ok = await auth.refreshSession();
+      if (session != null && user != null) {
+        notifier.setState(AppState.authenticated);
 
-        if (ok) {
-          notifier.setState(AppState.authenticated);
-          NavigationService.pushReplacementNamed(AppRoutes.homeJobsFeed);
-          return;
-        }
-
-        /// Session invalid
-        await auth.logout();
+        /// IMPORTANT:
+        /// Always go to HomeRouter, not directly to job feed.
+        NavigationService.pushReplacementNamed(AppRoutes.homeJobsFeed);
+        return;
       }
 
-      /// Default start
       notifier.setState(AppState.unauthenticated);
       NavigationService.pushReplacementNamed(AppRoutes.roleSelection);
     } catch (_) {
