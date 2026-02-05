@@ -21,7 +21,6 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
   final _emailCtrl = TextEditingController();
 
   final _jobTitleCtrl = TextEditingController();
-  final _jobCategoryCtrl = TextEditingController();
 
   final _jobDescriptionCtrl = TextEditingController();
   final _requirementsCtrl = TextEditingController();
@@ -41,12 +40,17 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
   final _benefitsCtrl = TextEditingController();
   final _additionalInfoCtrl = TextEditingController();
 
-  // Dropdowns (must match schema text expectations)
+  // Dropdowns (must match schema expectations)
   String _jobType = "Full-time";
   String _employmentType = "Permanent";
   String _workMode = "On-site";
   String _salaryPeriod = "Monthly";
   String _hiringUrgency = "Normal";
+
+  // Category from master table
+  bool _loadingCategories = true;
+  List<String> _categories = [];
+  String? _selectedCategory;
 
   bool _loading = false;
 
@@ -84,6 +88,12 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
+
+  @override
   void dispose() {
     _companyNameCtrl.dispose();
     _contactPersonCtrl.dispose();
@@ -91,7 +101,6 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
     _emailCtrl.dispose();
 
     _jobTitleCtrl.dispose();
-    _jobCategoryCtrl.dispose();
 
     _jobDescriptionCtrl.dispose();
     _requirementsCtrl.dispose();
@@ -115,6 +124,39 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
   }
 
   // ------------------------------------------------------------
+  // CATEGORIES
+  // ------------------------------------------------------------
+  Future<void> _loadCategories() async {
+    try {
+      final res = await _client
+          .from("job_categories_master")
+          .select("category_name")
+          .eq("is_active", true)
+          .order("category_name", ascending: true);
+
+      final items = List<Map<String, dynamic>>.from(res)
+          .map((e) => (e["category_name"] ?? "").toString())
+          .where((e) => e.trim().isNotEmpty)
+          .toList();
+
+      if (!mounted) return;
+
+      setState(() {
+        _categories = items;
+        _selectedCategory = items.isNotEmpty ? items.first : null;
+        _loadingCategories = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _categories = [];
+        _selectedCategory = null;
+        _loadingCategories = false;
+      });
+    }
+  }
+
+  // ------------------------------------------------------------
   // SUBMIT
   // ------------------------------------------------------------
   Future<void> _submit() async {
@@ -122,6 +164,11 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
 
     final ok = _formKey.currentState?.validate() ?? false;
     if (!ok) return;
+
+    if (_selectedCategory == null || _selectedCategory!.trim().isEmpty) {
+      _showError("Please select a job category");
+      return;
+    }
 
     final user = _client.auth.currentUser;
     if (user == null) {
@@ -140,6 +187,11 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
 
     if (salaryMin > salaryMax) {
       _showError("Min salary cannot be greater than max salary");
+      return;
+    }
+
+    if (openings <= 0) {
+      _showError("Openings must be at least 1");
       return;
     }
 
@@ -164,7 +216,7 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
 
         // job
         "job_title": _jobTitleCtrl.text.trim(),
-        "job_category": _jobCategoryCtrl.text.trim(),
+        "job_category": _selectedCategory!,
         "job_type": _jobType,
         "employment_type": _employmentType,
         "work_mode": _workMode,
@@ -203,7 +255,7 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
 
       if (!mounted) return;
       Navigator.pop(context, true);
-    } catch (e) {
+    } catch (_) {
       _showError("Failed to create job");
     }
 
@@ -219,6 +271,30 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
   }
 
   // ------------------------------------------------------------
+  // VALIDATORS
+  // ------------------------------------------------------------
+  String? _requiredValidator(String? v) {
+    final value = (v ?? "").trim();
+    if (value.isEmpty) return "Required";
+    return null;
+  }
+
+  String? _phoneValidator(String? v) {
+    final value = (v ?? "").trim();
+    if (value.isEmpty) return "Required";
+    if (value.length != 10) return "Enter valid 10-digit number";
+    return null;
+  }
+
+  String? _emailValidator(String? v) {
+    final value = (v ?? "").trim();
+    if (value.isEmpty) return "Required";
+    final ok = RegExp(r"^[^@\s]+@[^@\s]+\.[^@\s]+$").hasMatch(value);
+    if (!ok) return "Enter valid email";
+    return null;
+  }
+
+  // ------------------------------------------------------------
   // UI
   // ------------------------------------------------------------
   @override
@@ -228,7 +304,7 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
       appBar: AppBar(
         title: const Text(
           "Create Job",
-          style: TextStyle(fontWeight: FontWeight.w800),
+          style: TextStyle(fontWeight: FontWeight.w900),
         ),
         backgroundColor: Colors.white,
         elevation: 0.6,
@@ -246,6 +322,7 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
               _field(
                 "Phone",
                 _phoneCtrl,
+                validator: _phoneValidator,
                 keyboard: TextInputType.phone,
                 formatters: [
                   FilteringTextInputFormatter.digitsOnly,
@@ -255,17 +332,20 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
               _field(
                 "Email",
                 _emailCtrl,
+                validator: _emailValidator,
                 keyboard: TextInputType.emailAddress,
               ),
 
               _section("Job Details"),
               _field("Job Title", _jobTitleCtrl),
-              _field("Job Category", _jobCategoryCtrl, hint: "Electrician, Driver, Sales..."),
+
+              _categoryDropdown(),
 
               _dropdown("Job Type", _jobType, _jobTypes, (v) {
                 setState(() => _jobType = v);
               }),
-              _dropdown("Employment Type", _employmentType, _employmentTypes, (v) {
+              _dropdown("Employment Type", _employmentType, _employmentTypes,
+                  (v) {
                 setState(() => _employmentType = v);
               }),
               _dropdown("Work Mode", _workMode, _workModes, (v) {
@@ -286,7 +366,11 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
               _multilineField("Requirements", _requirementsCtrl),
               _field("Education Required", _educationCtrl),
               _field("Experience Required", _experienceCtrl),
-              _field("Skills (comma separated)", _skillsCtrl, hint: "Flutter, Firebase, Sales"),
+              _field(
+                "Skills (comma separated)",
+                _skillsCtrl,
+                hint: "Flutter, Firebase, Sales",
+              ),
 
               _section("Location"),
               _field("District", _districtCtrl),
@@ -297,8 +381,16 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
                 setState(() => _hiringUrgency = v);
               }),
               _field("Openings", _openingsCtrl, number: true),
-              _multilineField("Benefits (optional)", _benefitsCtrl, required: false),
-              _multilineField("Additional Info (optional)", _additionalInfoCtrl, required: false),
+              _multilineField(
+                "Benefits (optional)",
+                _benefitsCtrl,
+                required: false,
+              ),
+              _multilineField(
+                "Additional Info (optional)",
+                _additionalInfoCtrl,
+                required: false,
+              ),
 
               SizedBox(height: 4.h),
 
@@ -321,12 +413,16 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
                           height: 22,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.6,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
                       : const Text(
                           "Publish Job",
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                 ),
               ),
@@ -351,11 +447,74 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
           title,
           style: TextStyle(
             fontSize: 15.sp,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w900,
             color: const Color(0xFF0F172A),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _categoryDropdown() {
+    if (_loadingCategories) {
+      return Padding(
+        padding: EdgeInsets.only(bottom: 1.5.h),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: const Text(
+            "Loading categories...",
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF64748B),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_categories.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.only(bottom: 1.5.h),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  "No job categories found in DB",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFFEF4444),
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: _loadCategories,
+                child: const Text("Retry"),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return _dropdown(
+      "Job Category",
+      _selectedCategory!,
+      _categories,
+      (v) => setState(() => _selectedCategory = v),
     );
   }
 
@@ -366,24 +525,23 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
     String? hint,
     TextInputType? keyboard,
     List<TextInputFormatter>? formatters,
+    String? Function(String?)? validator,
   }) {
     return Padding(
       padding: EdgeInsets.only(bottom: 1.5.h),
       child: TextFormField(
         controller: controller,
-        keyboardType: keyboard ?? (number ? TextInputType.number : TextInputType.text),
+        keyboardType:
+            keyboard ?? (number ? TextInputType.number : TextInputType.text),
         inputFormatters: formatters,
-        validator: (v) {
-          final value = (v ?? "").trim();
-          if (value.isEmpty) return "Required";
-          return null;
-        },
+        validator: validator ?? _requiredValidator,
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
@@ -422,7 +580,8 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
           labelText: label,
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
@@ -476,7 +635,8 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
           labelText: label,
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
           ),
