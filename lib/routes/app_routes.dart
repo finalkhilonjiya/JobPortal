@@ -70,7 +70,6 @@ class AppRoutes {
   /// ------------------------------------------------------------
   static final Map<String, WidgetBuilder> routes = {
     /// SAFETY ONLY
-    /// App starts from AppInitializer, not from "/"
     initial: (_) => const RoleSelectionScreen(),
 
     /// ROLE SELECTION
@@ -123,7 +122,14 @@ class AppRoutes {
         );
     }
 
-    return null;
+    /// fallback
+    return MaterialPageRoute(
+      builder: (_) => Scaffold(
+        body: Center(
+          child: Text("Route not found: ${settings.name}"),
+        ),
+      ),
+    );
   }
 
   /// ------------------------------------------------------------
