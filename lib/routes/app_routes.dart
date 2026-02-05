@@ -12,9 +12,6 @@ import '../presentation/company/dashboard/company_dashboard.dart';
 import '../presentation/company/jobs/create_job_screen.dart';
 import '../presentation/company/applicants/job_applicants_screen.dart';
 
-// TODO: you will send this file next, we will create it after that
-// import '../presentation/company/jobs/edit_job_screen.dart';
-
 import '../presentation/registration_screen/registration_screen.dart';
 import '../presentation/search_and_filters/search_and_filters.dart';
 import '../presentation/listing_detail/listing_detail.dart';
@@ -51,9 +48,6 @@ class AppRoutes {
   static const String companyDashboard = '/company-dashboard';
   static const String createJob = '/create-job';
   static const String jobApplicants = '/job-applicants';
-
-  /// NEW (required by CompanyDashboard)
-  static const String editJob = '/edit-job';
 
   /// ------------------------------------------------------------
   /// JOB SEEKER (DIRECT ACCESS IF EVER NEEDED)
@@ -106,9 +100,9 @@ class AppRoutes {
   };
 
   /// ------------------------------------------------------------
-  /// onGenerateRoute (FOR ARGUMENT ROUTES)
+  /// onGenerateRoute (REQUIRED FOR ARGUMENT ROUTES)
   /// ------------------------------------------------------------
-  static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
+  static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case jobApplicants:
         final jobId = settings.arguments;
@@ -126,34 +120,16 @@ class AppRoutes {
         return MaterialPageRoute(
           builder: (_) => JobApplicantsScreen(jobId: jobId),
         );
-
-      case editJob:
-        final jobId = settings.arguments;
-
-        if (jobId == null || jobId is! String || jobId.trim().isEmpty) {
-          return MaterialPageRoute(
-            builder: (_) => const Scaffold(
-              body: Center(
-                child: Text("Job ID missing for edit job screen"),
-              ),
-            ),
-          );
-        }
-
-        /// IMPORTANT:
-        /// We will create EditJobScreen next.
-        /// For now show placeholder so app doesn't crash.
-        return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            appBar: AppBar(title: const Text("Edit Job")),
-            body: Center(
-              child: Text("Edit Job screen coming next\nJob ID: $jobId"),
-            ),
-          ),
-        );
     }
 
-    return null;
+    /// fallback
+    return MaterialPageRoute(
+      builder: (_) => Scaffold(
+        body: Center(
+          child: Text("Route not found: ${settings.name}"),
+        ),
+      ),
+    );
   }
 
   /// ------------------------------------------------------------
