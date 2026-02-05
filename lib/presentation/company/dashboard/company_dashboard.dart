@@ -31,13 +31,19 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
     try {
       final res = await _service.fetchEmployerJobs();
-      _jobs = res;
-    } catch (_) {
-      _jobs = [];
-    }
 
-    if (!mounted) return;
-    setState(() => _loading = false);
+      if (!mounted) return;
+      setState(() {
+        _jobs = res;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _jobs = [];
+        _loading = false;
+      });
+    }
   }
 
   // ------------------------------------------------------------
