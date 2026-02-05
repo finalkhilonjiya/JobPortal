@@ -7,30 +7,24 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class JobsService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  /// Your storage bucket name
   static const String _bucket = 'job-files';
-
-  /// If bucket is PRIVATE -> true
-  /// If bucket is PUBLIC -> false
   static const bool _useSignedUrls = false;
 
-  // ------------------------------------------------------------
-  // APPLY FOR JOB (FINAL FIXED VERSION)
-  // ------------------------------------------------------------
   Future<void> applyForJob({
     required String jobId,
     required Map<String, dynamic> applicationData,
     required PlatformFile resumeFile,
-    required PlatformFile photoFile,
+
+    /// Photo from image_picker
+    required Uint8List photoBytes,
+    required String photoFileName,
   }) async {
     final user = _supabase.auth.currentUser;
     if (user == null) throw Exception('User not logged in');
 
     final userId = user.id;
 
-    // ------------------------------------------------------------
     // 1) Ensure job exists and active
-    // ------------------------------------------------------------
     final job = await _supabase
         .from('job_listings')
         .select('id, applications_count, status')
@@ -44,9 +38,7 @@ class JobsService {
       throw Exception("This job is not accepting applications");
     }
 
-    // ------------------------------------------------------------
-    // 2) Duplicate apply check (REAL FINAL TRUTH)
-    // ------------------------------------------------------------
+    // 2) Duplicate apply check
     final existingBridge = await _supabase
         .from('job_applications_listings')
         .select('id')
@@ -58,22 +50,13 @@ class JobsService {
       throw Exception('You have already applied for this job');
     }
 
-    // ------------------------------------------------------------
-    // 3) Read bytes safely
-    // ------------------------------------------------------------
+    // 3) Resume bytes
     final resumeBytes = resumeFile.bytes;
-    final photoBytes = photoFile.bytes;
-
     if (resumeBytes == null) {
       throw Exception("Resume file could not be read. Please select again.");
     }
-    if (photoBytes == null) {
-      throw Exception("Photo file could not be read. Please select again.");
-    }
 
-    // ------------------------------------------------------------
     // 4) Upload resume + photo
-    // ------------------------------------------------------------
     final resumeUrl = await _uploadBytes(
       userId: userId,
       folder: 'resumes',
@@ -86,15 +69,11 @@ class JobsService {
       userId: userId,
       folder: 'photos',
       bytes: photoBytes,
-      fileName: photoFile.name,
+      fileName: photoFileName,
       contentType: 'image/jpeg',
     );
 
-    // ------------------------------------------------------------
-    // 5) Insert NEW job_applications row
-    // IMPORTANT:
-    // Your DB has NOT NULL name, so we MUST insert it.
-    // ------------------------------------------------------------
+    // 5) Insert job_applications row (name is required)
     final created = await _supabase
         .from('job_applications')
         .insert({
@@ -113,9 +92,7 @@ class JobsService {
 
     final applicationId = created['id'].toString();
 
-    // ------------------------------------------------------------
-    // 6) Insert bridge row (job_applications_listings)
-    // ------------------------------------------------------------
+    // 6) Insert bridge row
     await _supabase.from('job_applications_listings').insert({
       'application_id': applicationId,
       'listing_id': jobId,
@@ -124,34 +101,15 @@ class JobsService {
       'application_status': 'applied',
     });
 
-    // ------------------------------------------------------------
     // 7) Increment applications_count
-    // ------------------------------------------------------------
     final currentCount = _toInt(job['applications_count']);
 
     await _supabase
         .from('job_listings')
         .update({'applications_count': currentCount + 1})
         .eq('id', jobId);
-
-    // ------------------------------------------------------------
-    // 8) Track activity (optional)
-    // ------------------------------------------------------------
-    try {
-      await _supabase.from('user_job_activity').insert({
-        'user_id': userId,
-        'job_id': jobId,
-        'activity_type': 'applied',
-        'created_at': DateTime.now().toIso8601String(),
-      });
-    } catch (_) {
-      // ignore
-    }
   }
 
-  // ------------------------------------------------------------
-  // STORAGE UPLOAD
-  // ------------------------------------------------------------
   Future<String> _uploadBytes({
     required String userId,
     required String folder,
@@ -176,12 +134,10 @@ class JobsService {
           ),
         );
 
-    // Public bucket
     if (!_useSignedUrls) {
       return _supabase.storage.from(_bucket).getPublicUrl(path);
     }
 
-    // Private bucket
     final signed = await _supabase.storage.from(_bucket).createSignedUrl(
           path,
           60 * 60 * 24 * 7,
@@ -190,18 +146,16 @@ class JobsService {
     return signed;
   }
 
-  // ------------------------------------------------------------
-  // HELPERS
-  // ------------------------------------------------------------
   List<String> _skillsToList(dynamic raw) {
     if (raw == null) return [];
 
-    // if already list
     if (raw is List) {
-      return raw.map((e) => e.toString().trim()).where((e) => e.isNotEmpty).toList();
+      return raw
+          .map((e) => e.toString().trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
     }
 
-    // if string: "a, b, c"
     final text = raw.toString();
     return text
         .split(',')
