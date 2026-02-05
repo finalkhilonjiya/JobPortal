@@ -1,51 +1,188 @@
+// lib/services/employer_job_service.dart
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EmployerJobService {
   final SupabaseClient _client = Supabase.instance.client;
 
-  /// Fetch jobs posted by employer
+  // ------------------------------------------------------------
+  // JOB LISTINGS (EMPLOYER)
+  // ------------------------------------------------------------
+
   Future<List<Map<String, dynamic>>> fetchEmployerJobs() async {
     final user = _client.auth.currentUser;
     if (user == null) return [];
 
     final res = await _client
         .from('job_listings')
-        .select()
-        .eq('created_by', user.id)
+        .select(
+          'id, job_title, status, created_at, updated_at, applications_count, views_count, salary_min, salary_max, district, job_type',
+        )
+        .eq('user_id', user.id) // ✅ correct schema column
         .order('created_at', ascending: false);
 
     return List<Map<String, dynamic>>.from(res);
   }
 
-  /// Create job
+  Future<Map<String, dynamic>?> fetchJobById(String jobId) async {
+    final user = _client.auth.currentUser;
+    if (user == null) return null;
+
+    final res = await _client
+        .from('job_listings')
+        .select('*')
+        .eq('id', jobId)
+        .eq('user_id', user.id) // security: employer can only read own job
+        .maybeSingle();
+
+    if (res == null) return null;
+    return Map<String, dynamic>.from(res);
+  }
+
   Future<void> createJob(Map<String, dynamic> data) async {
     final user = _client.auth.currentUser;
-    if (user == null) return;
+    if (user == null) throw Exception("Not logged in");
 
     await _client.from('job_listings').insert({
       ...data,
-      'created_by': user.id,
+      'user_id': user.id, // ✅ correct schema column
+      'status': data['status'] ?? 'active',
+      'created_at': DateTime.now().toIso8601String(),
+      'updated_at': DateTime.now().toIso8601String(),
     });
   }
 
-  /// Fetch applicants for a job
-  Future<List<Map<String, dynamic>>> fetchApplicants(String jobId) async {
+  Future<void> updateJob({
+    required String jobId,
+    required Map<String, dynamic> updates,
+  }) async {
+    final user = _client.auth.currentUser;
+    if (user == null) throw Exception("Not logged in");
+
+    await _client
+        .from('job_listings')
+        .update({
+          ...updates,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
+        .eq('id', jobId)
+        .eq('user_id', user.id);
+  }
+
+  Future<void> setJobStatus({
+    required String jobId,
+    required String status, // active / paused / closed / expired
+  }) async {
+    final allowed = {'active', 'paused', 'closed', 'expired'};
+    if (!allowed.contains(status)) {
+      throw Exception("Invalid status");
+    }
+
+    await updateJob(jobId: jobId, updates: {'status': status});
+  }
+
+  // ------------------------------------------------------------
+  // APPLICANTS (PER JOB)
+  // ------------------------------------------------------------
+  //
+  // IMPORTANT:
+  // Applicants are linked via job_applications_listings table
+  //
+  // job_applications_listings.listing_id -> job_listings.id
+  // job_applications_listings.application_id -> job_applications.id
+  //
+  // ------------------------------------------------------------
+
+  Future<List<Map<String, dynamic>>> fetchApplicantsForJob(String jobId) async {
+    final user = _client.auth.currentUser;
+    if (user == null) return [];
+
+    // Ensure employer owns this job (prevents leaking applicants)
+    final job = await _client
+        .from('job_listings')
+        .select('id')
+        .eq('id', jobId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+    if (job == null) return [];
+
     final res = await _client
-        .from('job_applications')
+        .from('job_applications_listings')
         .select('''
           id,
-          status,
-          created_at,
-          user_profiles (
+          applied_at,
+          application_status,
+          employer_notes,
+          interview_date,
+          job_applications (
             id,
-            full_name,
-            mobile_number,
-            email
+            name,
+            phone,
+            email,
+            district,
+            address,
+            gender,
+            date_of_birth,
+            education,
+            experience_level,
+            experience_details,
+            skills,
+            expected_salary,
+            availability,
+            resume_file_url,
+            photo_file_url,
+            created_at
           )
         ''')
         .eq('listing_id', jobId)
-        .order('created_at', ascending: false);
+        .order('applied_at', ascending: false);
 
     return List<Map<String, dynamic>>.from(res);
+  }
+
+  Future<void> updateApplicantStatus({
+    required String jobApplicationListingId,
+    required String status, // applied/viewed/shortlisted/interviewed/selected/rejected
+    String? employerNotes,
+    DateTime? interviewDate,
+  }) async {
+    final allowed = {
+      'applied',
+      'viewed',
+      'shortlisted',
+      'interviewed',
+      'selected',
+      'rejected',
+    };
+
+    if (!allowed.contains(status)) {
+      throw Exception("Invalid application status");
+    }
+
+    final payload = <String, dynamic>{
+      'application_status': status,
+    };
+
+    if (employerNotes != null) {
+      payload['employer_notes'] = employerNotes.trim();
+    }
+
+    if (interviewDate != null) {
+      payload['interview_date'] = interviewDate.toIso8601String();
+    }
+
+    await _client
+        .from('job_applications_listings')
+        .update(payload)
+        .eq('id', jobApplicationListingId);
+  }
+
+  // ------------------------------------------------------------
+  // DEBUG HELPERS
+  // ------------------------------------------------------------
+
+  void logError(Object e) {
+    debugPrint("EmployerJobService error: $e");
   }
 }
