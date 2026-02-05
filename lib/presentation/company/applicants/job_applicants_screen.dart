@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class JobApplicantsScreen extends StatefulWidget {
   final String jobId;
@@ -44,6 +45,8 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               id,
               user_id,
               created_at,
+              resume_file_url,
+              photo_file_url,
 
               user_profiles (
                 id,
@@ -82,6 +85,27 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
     await _loadApplicants();
   }
 
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Could not open file")),
+      );
+    }
+  }
+
+  void _openPhotoViewer(String url) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _PhotoViewer(url: url),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -118,17 +142,35 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                     final profile = jobApp?['user_profiles']
                         as Map<String, dynamic>?;
 
+                    final resumeUrl =
+                        (jobApp?['resume_file_url'] ?? '').toString();
+                    final photoUrl =
+                        (jobApp?['photo_file_url'] ?? '').toString();
+
                     final name =
                         (profile?['full_name'] ?? 'Candidate').toString();
+
                     final phone =
                         (profile?['mobile_number'] ?? '').toString();
+
                     final email = (profile?['email'] ?? '').toString();
+
+                    final district =
+                        (profile?['district'] ?? '').toString();
+
+                    final address =
+                        (profile?['address'] ?? '').toString();
+
+                    final education =
+                        (profile?['education'] ?? '').toString();
 
                     final expYears = profile?['experience_years'];
                     final expectedSalary = profile?['expected_salary'];
 
-                    final education =
-                        (profile?['education'] ?? '').toString();
+                    final skillsRaw = profile?['skills'];
+                    final skills = skillsRaw is List
+                        ? skillsRaw.map((e) => e.toString()).toList()
+                        : <String>[];
 
                     return _applicantCard(
                       rowId: row['id'].toString(),
@@ -138,11 +180,15 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                       name: name,
                       phone: phone,
                       email: email,
+                      district: district,
+                      address: address,
                       education: education,
                       expText: expYears == null ? '' : '$expYears yrs',
-                      expectedSalaryText: expectedSalary == null
-                          ? ''
-                          : expectedSalary.toString(),
+                      expectedSalaryText:
+                          expectedSalary == null ? '' : expectedSalary.toString(),
+                      skillsText: skills.isEmpty ? '' : skills.join(', '),
+                      resumeUrl: resumeUrl,
+                      photoUrl: photoUrl,
                     );
                   },
                 ),
@@ -159,9 +205,14 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
     required String name,
     required String phone,
     required String email,
+    required String district,
+    required String address,
     required String education,
     required String expText,
     required String expectedSalaryText,
+    required String skillsText,
+    required String resumeUrl,
+    required String photoUrl,
   }) {
     final s = status.toLowerCase();
 
@@ -211,6 +262,10 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
           if (phone.isNotEmpty) _metaLine(Icons.phone_outlined, phone),
           if (email.isNotEmpty) _metaLine(Icons.email_outlined, email),
 
+          // Location
+          if (district.isNotEmpty) _metaLine(Icons.location_on_outlined, district),
+          if (address.isNotEmpty) _metaLine(Icons.home_outlined, address),
+
           SizedBox(height: 1.2.h),
 
           // Education + Experience
@@ -222,70 +277,167 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
           if (expectedSalaryText.isNotEmpty)
             _metaLine(Icons.currency_rupee, expectedSalaryText),
 
+          if (skillsText.isNotEmpty)
+            _metaLine(Icons.star_outline, skillsText),
+
+          SizedBox(height: 1.6.h),
+
+          // Resume + Photo
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: resumeUrl.trim().isEmpty
+                      ? null
+                      : () => _openUrl(resumeUrl),
+                  icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                  label: const Text(
+                    "Resume",
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 3.w),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: photoUrl.trim().isEmpty
+                      ? null
+                      : () => _openPhotoViewer(photoUrl),
+                  icon: const Icon(Icons.image_outlined, size: 18),
+                  label: const Text(
+                    "Photo",
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
           SizedBox(height: 1.8.h),
           const Divider(height: 1),
           SizedBox(height: 1.2.h),
 
           // Actions
-          if (s == 'applied')
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => _updateStatus(rowId, 'shortlisted'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF16A34A),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                    child: const Text(
-                      'Shortlist',
-                      style: TextStyle(fontWeight: FontWeight.w900),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 3.w),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _updateStatus(rowId, 'rejected'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFEF4444),
-                      side: const BorderSide(color: Color(0xFFEF4444)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                    child: const Text(
-                      'Reject',
-                      style: TextStyle(fontWeight: FontWeight.w900),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          _actions(rowId, s),
+        ],
+      ),
+    );
+  }
 
-          if (s == 'shortlisted')
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => _updateStatus(rowId, 'rejected'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFEF4444),
-                  side: const BorderSide(color: Color(0xFFEF4444)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                ),
-                child: const Text(
-                  'Reject Candidate',
-                  style: TextStyle(fontWeight: FontWeight.w900),
+  Widget _actions(String rowId, String status) {
+    // you can expand later, for now clean and useful
+
+    if (status == 'applied') {
+      return Row(
+        children: [
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () => _updateStatus(rowId, 'shortlisted'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF16A34A),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
                 ),
               ),
+              child: const Text(
+                'Shortlist',
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
             ),
+          ),
+          SizedBox(width: 3.w),
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => _updateStatus(rowId, 'rejected'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFEF4444),
+                side: const BorderSide(color: Color(0xFFEF4444)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+              ),
+              child: const Text(
+                'Reject',
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+          ),
         ],
+      );
+    }
+
+    if (status == 'shortlisted') {
+      return Row(
+        children: [
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () => _updateStatus(rowId, 'selected'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF7C3AED),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+              ),
+              child: const Text(
+                'Select',
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+          ),
+          SizedBox(width: 3.w),
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => _updateStatus(rowId, 'rejected'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFEF4444),
+                side: const BorderSide(color: Color(0xFFEF4444)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+              ),
+              child: const Text(
+                'Reject',
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: status == 'rejected'
+            ? null
+            : () => _updateStatus(rowId, 'rejected'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: const Color(0xFFEF4444),
+          side: const BorderSide(color: Color(0xFFEF4444)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+        ),
+        child: const Text(
+          'Reject Candidate',
+          style: TextStyle(fontWeight: FontWeight.w900),
+        ),
       ),
     );
   }
@@ -294,6 +446,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: 0.6.h),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 16, color: const Color(0xFF475569)),
           const SizedBox(width: 8),
@@ -399,5 +552,42 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
     if (diff.inHours < 24) return 'today';
     if (diff.inDays == 1) return '1 day ago';
     return '${diff.inDays} days ago';
+  }
+}
+
+// ------------------------------------------------------------
+// PHOTO VIEWER
+// ------------------------------------------------------------
+class _PhotoViewer extends StatelessWidget {
+  final String url;
+
+  const _PhotoViewer({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
+        title: const Text(
+          "Photo",
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          child: Image.network(
+            url,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => const Text(
+              "Could not load image",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
