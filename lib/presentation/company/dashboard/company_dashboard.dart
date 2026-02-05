@@ -1,4 +1,3 @@
-// File: lib/presentation/company/dashboard/company_dashboard.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
@@ -31,19 +30,13 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
     try {
       final res = await _service.fetchEmployerJobs();
-
-      if (!mounted) return;
-      setState(() {
-        _jobs = res;
-        _loading = false;
-      });
+      _jobs = res;
     } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _jobs = [];
-        _loading = false;
-      });
+      _jobs = [];
     }
+
+    if (!mounted) return;
+    setState(() => _loading = false);
   }
 
   // ------------------------------------------------------------
@@ -80,14 +73,8 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
 
-      // ------------------------------------------------------------
-      // DRAWER
-      // ------------------------------------------------------------
       drawer: _employerDrawer(),
 
-      // ------------------------------------------------------------
-      // APP BAR
-      // ------------------------------------------------------------
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
@@ -109,9 +96,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
       ),
 
-      // ------------------------------------------------------------
-      // BODY
-      // ------------------------------------------------------------
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -132,14 +116,10 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
               ),
             ),
 
-      // ------------------------------------------------------------
-      // CREATE JOB BUTTON (FAB)
-      // ------------------------------------------------------------
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           final res = await Navigator.pushNamed(context, AppRoutes.createJob);
 
-          // refresh only if job created
           if (res == true) {
             await _loadJobs();
           }
@@ -191,7 +171,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                 ],
               ),
             ),
-
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
@@ -227,25 +206,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                           content: Text("Open any job and click Applicants"),
                         ),
                       );
-                    },
-                  ),
-                  _drawerTile(
-                    icon: Icons.business_outlined,
-                    title: "Company Profile (Later)",
-                    onTap: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Company profile coming later"),
-                        ),
-                      );
-                    },
-                  ),
-                  _drawerTile(
-                    icon: Icons.settings_outlined,
-                    title: "Settings (Later)",
-                    onTap: () {
-                      Navigator.pop(context);
                     },
                   ),
                   const Divider(height: 1),
@@ -377,7 +337,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// TITLE + STATUS
           Row(
             children: [
               Expanded(
@@ -394,8 +353,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             ],
           ),
           SizedBox(height: 1.h),
-
-          /// META
           Text(
             'Posted ${_postedAgo(job['created_at'])} • $applicationsCount applications',
             style: const TextStyle(
@@ -405,8 +362,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             ),
           ),
           SizedBox(height: 2.h),
-
-          /// ACTIONS
           Row(
             children: [
               _actionButton(
@@ -418,7 +373,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                     AppRoutes.jobApplicants,
                     arguments: jobId,
                   );
-
                   await _loadJobs();
                 },
               ),
