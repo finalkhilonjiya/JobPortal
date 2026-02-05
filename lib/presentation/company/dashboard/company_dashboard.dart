@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../login_screen/mobile_auth_service.dart';
+import '../../../routes/app_routes.dart';
+
 class CompanyDashboard extends StatefulWidget {
   const CompanyDashboard({Key? key}) : super(key: key);
 
@@ -22,27 +25,72 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   Future<void> _loadJobs() async {
+    setState(() => _loading = true);
+
     try {
       final user = _client.auth.currentUser;
-      if (user == null) return;
+      if (user == null) {
+        setState(() {
+          _jobs = [];
+          _loading = false;
+        });
+        return;
+      }
 
       final res = await _client
           .from('job_listings')
-          .select('id, job_title, status, created_at')
-          .eq('employer_id', user.id)
+          .select('id, job_title, status, created_at, applications_count')
+          .eq('user_id', user.id) // ✅ correct column
           .order('created_at', ascending: false);
 
       _jobs = List<Map<String, dynamic>>.from(res);
-    } catch (_) {}
+    } catch (_) {
+      _jobs = [];
+    }
+
+    if (!mounted) return;
     setState(() => _loading = false);
   }
+
+  // ------------------------------------------------------------
+  // LOGOUT
+  // ------------------------------------------------------------
+  Future<void> _logout() async {
+    await MobileAuthService().logout();
+    if (!mounted) return;
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.roleSelection,
+      (_) => false,
+    );
+  }
+
+  // ------------------------------------------------------------
+  // STATS
+  // ------------------------------------------------------------
+  int get _activeJobs =>
+      _jobs.where((e) => (e['status'] ?? '') == 'active').length;
+
+  int get _closedJobs =>
+      _jobs.where((e) => (e['status'] ?? '') == 'closed').length;
+
+  int get _pausedJobs =>
+      _jobs.where((e) => (e['status'] ?? '') == 'paused').length;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
 
-      /// APP BAR
+      // ------------------------------------------------------------
+      // DRAWER
+      // ------------------------------------------------------------
+      drawer: _employerDrawer(),
+
+      // ------------------------------------------------------------
+      // APP BAR
+      // ------------------------------------------------------------
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
@@ -50,23 +98,23 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           'Employer Dashboard',
           style: TextStyle(
             color: Color(0xFF0F172A),
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_circle_outline),
-            tooltip: 'Create Job',
-            onPressed: () {
-              Navigator.pushNamed(context, '/create-job');
-            },
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh',
+            onPressed: _loadJobs,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
         ],
         iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
       ),
 
-      /// BODY
+      // ------------------------------------------------------------
+      // BODY
+      // ------------------------------------------------------------
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -82,48 +130,177 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                     _emptyState()
                   else
                     ..._jobs.map(_jobCard).toList(),
-                  SizedBox(height: 8.h),
+                  SizedBox(height: 10.h),
                 ],
               ),
             ),
 
-      /// CREATE JOB BUTTON
+      // ------------------------------------------------------------
+      // CREATE JOB BUTTON
+      // ------------------------------------------------------------
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          Navigator.pushNamed(context, '/create-job');
+          // TODO: we will create this screen next
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Create Job screen coming next")),
+          );
         },
         backgroundColor: const Color(0xFF2563EB),
         label: const Text(
           'Create Job',
-          style: TextStyle(fontWeight: FontWeight.w600),
+          style: TextStyle(fontWeight: FontWeight.w700),
         ),
         icon: const Icon(Icons.add),
       ),
     );
   }
 
-  /// ---------------- WIDGETS ----------------
+  // ------------------------------------------------------------
+  // DRAWER UI
+  // ------------------------------------------------------------
+  Widget _employerDrawer() {
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+              decoration: const BoxDecoration(
+                color: Color(0xFF0F172A),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Employer Menu",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _client.auth.currentUser?.email ?? "",
+                    style: const TextStyle(
+                      color: Color(0xFFCBD5E1),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
+            // ------------------------------------------------------------
+            // MENU ITEMS
+            // ------------------------------------------------------------
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _drawerTile(
+                    icon: Icons.work_outline,
+                    title: "My Job Listings",
+                    onTap: () {
+                      Navigator.pop(context);
+                      // You are already on dashboard.
+                      // Next we will build a dedicated listings screen.
+                    },
+                  ),
+                  _drawerTile(
+                    icon: Icons.people_outline,
+                    title: "Applicants (Coming next)",
+                    onTap: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Applicants screen coming next"),
+                        ),
+                      );
+                    },
+                  ),
+                  _drawerTile(
+                    icon: Icons.business_outlined,
+                    title: "Company Profile (Coming later)",
+                    onTap: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Company profile coming later"),
+                        ),
+                      );
+                    },
+                  ),
+                  _drawerTile(
+                    icon: Icons.settings_outlined,
+                    title: "Settings (Later)",
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  const Divider(height: 1),
+
+                  _drawerTile(
+                    icon: Icons.logout,
+                    title: "Logout",
+                    isDestructive: true,
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await _logout();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _drawerTile({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+  }) {
+    final color = isDestructive ? const Color(0xFFEF4444) : null;
+
+    return ListTile(
+      leading: Icon(icon, color: color),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
+      onTap: onTap,
+    );
+  }
+
+  // ------------------------------------------------------------
+  // DASHBOARD WIDGETS
+  // ------------------------------------------------------------
   Widget _statsHeader() {
     return Container(
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Row(
         children: [
-          _statTile('Jobs', _jobs.length.toString()),
+          _statTile('Total', _jobs.length.toString()),
           _divider(),
-          _statTile(
-            'Open',
-            _jobs.where((e) => e['status'] == 'open').length.toString(),
-          ),
+          _statTile('Active', _activeJobs.toString()),
           _divider(),
-          _statTile(
-            'Closed',
-            _jobs.where((e) => e['status'] == 'closed').length.toString(),
-          ),
+          _statTile('Paused', _pausedJobs.toString()),
+          _divider(),
+          _statTile('Closed', _closedJobs.toString()),
         ],
       ),
     );
@@ -136,17 +313,18 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           Text(
             value,
             style: TextStyle(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.w700,
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w800,
               color: const Color(0xFF0F172A),
             ),
           ),
-          SizedBox(height: 0.5.h),
+          SizedBox(height: 0.6.h),
           Text(
             title,
             style: TextStyle(
-              fontSize: 11.sp,
-              color: Colors.grey.shade600,
+              fontSize: 10.5.sp,
+              color: const Color(0xFF64748B),
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -156,34 +334,27 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
   Widget _divider() {
     return Container(
-      height: 32,
+      height: 34,
       width: 1,
-      color: Colors.grey.shade300,
+      color: const Color(0xFFE2E8F0),
     );
   }
 
   Widget _jobsHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Text(
-          'Posted Jobs',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
-          ),
-        ),
-        TextButton(
-          onPressed: _loadJobs,
-          child: const Text('Refresh'),
-        ),
-      ],
+    return const Text(
+      'Recent Job Listings',
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w800,
+        color: Color(0xFF0F172A),
+      ),
     );
   }
 
   Widget _jobCard(Map<String, dynamic> job) {
-    final status = job['status'] ?? 'open';
+    final title = (job['job_title'] ?? '').toString();
+    final status = (job['status'] ?? 'active').toString();
+    final applicationsCount = job['applications_count'] ?? 0;
 
     return Container(
       margin: EdgeInsets.only(bottom: 2.h),
@@ -191,7 +362,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,10 +372,11 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             children: [
               Expanded(
                 child: Text(
-                  job['job_title'] ?? '',
+                  title,
                   style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
                   ),
                 ),
               ),
@@ -215,10 +387,11 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
           /// META
           Text(
-            'Posted ${_postedAgo(job['created_at'])}',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
+            'Posted ${_postedAgo(job['created_at'])} • $applicationsCount applications',
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: Color(0xFF64748B),
+              fontWeight: FontWeight.w600,
             ),
           ),
           SizedBox(height: 2.h),
@@ -228,12 +401,10 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             children: [
               _actionButton(
                 icon: Icons.people_outline,
-                label: 'Applications',
+                label: 'Applicants',
                 onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/job-applicants',
-                    arguments: job['id'],
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Applicants screen next")),
                   );
                 },
               ),
@@ -242,10 +413,8 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                 icon: Icons.edit_outlined,
                 label: 'Edit',
                 onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/edit-job',
-                    arguments: job['id'],
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Edit screen next")),
                   );
                 },
               ),
@@ -257,19 +426,42 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   Widget _statusChip(String status) {
-    final isOpen = status == 'open';
+    final s = status.toLowerCase();
+
+    Color bg;
+    Color fg;
+    String label;
+
+    if (s == 'active') {
+      bg = const Color(0xFFDCFCE7);
+      fg = const Color(0xFF166534);
+      label = 'Active';
+    } else if (s == 'paused') {
+      bg = const Color(0xFFFEF9C3);
+      fg = const Color(0xFF854D0E);
+      label = 'Paused';
+    } else if (s == 'expired') {
+      bg = const Color(0xFFF1F5F9);
+      fg = const Color(0xFF475569);
+      label = 'Expired';
+    } else {
+      bg = const Color(0xFFFEE2E2);
+      fg = const Color(0xFF991B1B);
+      label = 'Closed';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isOpen ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+        color: bg,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        isOpen ? 'Open' : 'Closed',
+        label,
         style: TextStyle(
           fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: isOpen ? Colors.green : Colors.red,
+          fontWeight: FontWeight.w800,
+          color: fg,
         ),
       ),
     );
@@ -301,6 +493,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
         children: [
@@ -310,38 +503,57 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             'No jobs posted yet',
             style: TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F172A),
             ),
           ),
           SizedBox(height: 1.h),
-          Text(
+          const Text(
             'Create your first job to start receiving applications.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade600),
+            style: TextStyle(
+              color: Color(0xFF64748B),
+              fontWeight: FontWeight.w600,
+            ),
           ),
           SizedBox(height: 3.h),
-          ElevatedButton(
+          ElevatedButton.icon(
             onPressed: () {
-              Navigator.pushNamed(context, '/create-job');
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Create Job screen coming next")),
+              );
             },
+            icon: const Icon(Icons.add),
+            label: const Text(
+              'Create Job',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2563EB),
+              foregroundColor: Colors.white,
+              elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             ),
-            child: const Text('Create Job'),
           ),
         ],
       ),
     );
   }
 
-  String _postedAgo(String? date) {
+  String _postedAgo(dynamic date) {
     if (date == null) return 'recently';
-    final d = DateTime.tryParse(date);
+
+    final d = DateTime.tryParse(date.toString());
     if (d == null) return 'recently';
-    final days = DateTime.now().difference(d).inDays;
-    return days == 0 ? 'today' : '$days days ago';
+
+    final diff = DateTime.now().difference(d);
+
+    if (diff.inMinutes < 60) return 'today';
+    if (diff.inHours < 24) return 'today';
+    if (diff.inDays == 1) return '1 day ago';
+    return '${diff.inDays} days ago';
   }
 }
