@@ -2,41 +2,42 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.khilonjiya.marketplace">
 
-    <!-- ===================== PERMISSIONS ===================== -->
-
+    <!-- Required -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Network -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- Location -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
+    <!-- Camera (only if you use camera anywhere) -->
     <uses-permission android:name="android.permission.CAMERA" />
 
-    <!-- ANDROID 13+ PHOTO PICK PERMISSIONS (IMPORTANT) -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
-
-    <!-- ANDROID 12 and BELOW -->
+    <!-- Android 12 and below (for file picker fallback) -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
-    <!-- ANDROID 9 and BELOW -->
+    <!-- Android 10 and below only -->
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
+    <!-- Android 13+ permissions (THIS IS IMPORTANT FOR PHOTO PICK) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <!-- Other -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
 
-    <!-- SMS permissions for OTP auto-detection -->
+    <!-- SMS permissions (only if you really use OTP auto read) -->
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-
-    <!-- ===================== APP ===================== -->
 
     <application
         android:label="khilonjiya.com"
@@ -47,7 +48,7 @@
         android:theme="@style/LaunchTheme"
         android:usesCleartextTraffic="true">
 
-        <!-- Google-Sign-In: enable credentials API -->
+        <!-- Google Sign In -->
         <meta-data
             android:name="com.google.android.gms.auth.api.credentials.CREDENTIALS_API_ENABLED"
             android:value="true" />
@@ -60,10 +61,6 @@
             android:name="io.flutter.embedding.android.EnableImpeller"
             android:value="false" />
 
-        <meta-data
-            android:name="io.flutter.embedding.android.EnableSkia"
-            android:value="true" />
-
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -73,13 +70,12 @@
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
 
-            <!-- Launcher intent filter -->
-            <intent-filter android:autoVerify="true">
+            <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- OAuth redirect intent filter (required for Supabase Google login) -->
+            <!-- Supabase OAuth redirect -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -89,6 +85,7 @@
 
         </activity>
 
+        <!-- Needed for some file pickers -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -99,7 +96,7 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- SMS AutoFill service for OTP detection -->
+        <!-- OTP receiver (if used) -->
         <receiver
             android:name="com.jaumard.smsautofill.SmsAutoFillReceiver"
             android:exported="true">
@@ -110,12 +107,12 @@
 
     </application>
 
+    <!-- Required for url_launcher -->
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
         </intent>
-
         <intent>
             <action android:name="android.intent.action.DIAL" />
             <data android:scheme="tel" />
