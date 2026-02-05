@@ -21,7 +21,6 @@ class MobileAuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-  static const String _kAccessTokenKey = 'sb_access_token';
   static const String _kRefreshTokenKey = 'sb_refresh_token';
   static const String _kRoleKey = 'user_role';
 
@@ -48,6 +47,7 @@ class MobileAuthService {
   Future<void> initialize() async {
     _currentUser = _supabase.auth.currentUser;
     if (_currentUser != null) return;
+
     await recoverSession();
   }
 
@@ -81,7 +81,7 @@ class MobileAuthService {
   }
 
   // ------------------------------------------------------------
-  // VERIFY OTP (ROLE IS PASSED TO EDGE FUNCTION)
+  // VERIFY OTP
   // ------------------------------------------------------------
   Future<void> verifyOtp({
     required String mobile,
@@ -115,29 +115,27 @@ class MobileAuthService {
         throw MobileAuthException(data['error'] ?? 'Invalid OTP');
       }
 
-      // EDGE FUNCTION RETURNS THESE KEYS:
-      final accessToken = data['accessToken']?.toString();
-      final refreshToken = data['refreshToken']?.toString();
-
-      if (accessToken == null || accessToken.isEmpty) {
-        throw MobileAuthException('Missing access token');
+      // EDGE FUNCTION MUST RETURN THIS:
+      // data.session.refresh_token
+      final session = data['session'];
+      if (session == null) {
+        throw MobileAuthException('Server session missing');
       }
+
+      final refreshToken = session['refresh_token']?.toString();
       if (refreshToken == null || refreshToken.isEmpty) {
-        throw MobileAuthException('Missing refresh token');
+        throw MobileAuthException('Refresh token missing');
       }
 
-      // Save locally (for startup recovery)
-      await _storage.write(key: _kAccessTokenKey, value: accessToken);
+      // Save refresh token for startup recovery
       await _storage.write(key: _kRefreshTokenKey, value: refreshToken);
 
-      // Role saving: trust the role we passed (NOT random from DB)
+      // Save role locally (fast routing)
       await _storage.write(key: _kRoleKey, value: role.name);
 
-      // IMPORTANT: Set session using BOTH TOKENS
-      final authRes = await _supabase.auth.setSession(
-        accessToken,
-        refreshToken,
-      );
+      // ✅ SUPABASE V2 CORRECT WAY:
+      // Restore session using refresh token only
+      final authRes = await _supabase.auth.setSession(refreshToken);
 
       _currentUser = authRes.user ?? _supabase.auth.currentUser;
 
@@ -145,10 +143,8 @@ class MobileAuthService {
         throw MobileAuthException('Login failed (session not created)');
       }
 
-      // OPTIONAL BUT IMPORTANT:
-      // After session is valid, sync role from DB (if DB has correct role)
-      // This avoids wrong role stuck forever.
-      await _syncRoleFromDb();
+      // Sync role from DB (final source of truth)
+      await _syncRoleFromDb(fallback: role);
     } catch (e) {
       if (e is MobileAuthException) rethrow;
       throw MobileAuthException('Invalid OTP');
@@ -156,21 +152,15 @@ class MobileAuthService {
   }
 
   // ------------------------------------------------------------
-  // SESSION RECOVERY (STARTUP)
+  // SESSION RECOVERY (APP STARTUP)
   // ------------------------------------------------------------
   Future<bool> recoverSession() async {
     try {
-      final accessToken = await _storage.read(key: _kAccessTokenKey);
       final refreshToken = await _storage.read(key: _kRefreshTokenKey);
 
-      if (accessToken == null ||
-          accessToken.isEmpty ||
-          refreshToken == null ||
-          refreshToken.isEmpty) {
-        return false;
-      }
+      if (refreshToken == null || refreshToken.isEmpty) return false;
 
-      final res = await _supabase.auth.setSession(accessToken, refreshToken);
+      final res = await _supabase.auth.setSession(refreshToken);
       _currentUser = res.user ?? _supabase.auth.currentUser;
 
       if (_currentUser == null) return false;
@@ -209,7 +199,7 @@ class MobileAuthService {
   // ROLE
   // ------------------------------------------------------------
   Future<UserRole> getUserRole() async {
-    // 1) Local first (fast)
+    // 1) local first
     final local = await _storage.read(key: _kRoleKey);
     final parsedLocal = _parseRole(local);
     if (parsedLocal != null) return parsedLocal;
@@ -218,7 +208,9 @@ class MobileAuthService {
     return await _syncRoleFromDb(fallback: UserRole.jobSeeker);
   }
 
-  Future<UserRole> _syncRoleFromDb({UserRole fallback = UserRole.jobSeeker}) async {
+  Future<UserRole> _syncRoleFromDb({
+    UserRole fallback = UserRole.jobSeeker,
+  }) async {
     final uid = userId;
     if (uid == null) return fallback;
 
@@ -249,7 +241,9 @@ class MobileAuthService {
     if (v == 'jobseeker') return UserRole.jobSeeker;
     if (v == 'job_seeker') return UserRole.jobSeeker;
     if (v == 'job-seeker') return UserRole.jobSeeker;
-    if (v == 'buyer') return UserRole.jobSeeker; // legacy mapping
+
+    // legacy old DB value
+    if (v == 'buyer') return UserRole.jobSeeker;
 
     return null;
   }
@@ -264,7 +258,6 @@ class MobileAuthService {
 
     _currentUser = null;
 
-    await _storage.delete(key: _kAccessTokenKey);
     await _storage.delete(key: _kRefreshTokenKey);
     await _storage.delete(key: _kRoleKey);
   }
