@@ -9,6 +9,9 @@ import '../routes/home_router.dart';
 import '../presentation/home_marketplace_feed/home_jobs_feed.dart';
 import '../presentation/company/dashboard/company_dashboard.dart';
 
+import '../presentation/company/jobs/create_job_screen.dart';
+import '../presentation/company/applicants/job_applicants_screen.dart';
+
 import '../presentation/registration_screen/registration_screen.dart';
 import '../presentation/search_and_filters/search_and_filters.dart';
 import '../presentation/listing_detail/listing_detail.dart';
@@ -43,6 +46,8 @@ class AppRoutes {
   /// EMPLOYER
   /// ------------------------------------------------------------
   static const String companyDashboard = '/company-dashboard';
+  static const String createJob = '/create-job';
+  static const String jobApplicants = '/job-applicants';
 
   /// ------------------------------------------------------------
   /// JOB SEEKER (DIRECT ACCESS IF EVER NEEDED)
@@ -61,7 +66,7 @@ class AppRoutes {
   static const String configurationSetup = '/configuration-setup';
 
   /// ------------------------------------------------------------
-  /// ROUTES MAP
+  /// ROUTES MAP (ONLY FOR SIMPLE ROUTES)
   /// ------------------------------------------------------------
   static final Map<String, WidgetBuilder> routes = {
     /// SAFETY ONLY
@@ -82,6 +87,9 @@ class AppRoutes {
     jobSeekerHome: (_) => const HomeJobsFeed(),
     companyDashboard: (_) => const CompanyDashboard(),
 
+    /// EMPLOYER
+    createJob: (_) => const CreateJobScreen(),
+
     /// EXISTING
     registrationScreen: (_) => const RegistrationScreen(),
     searchAndFilters: (_) => const SearchAndFilters(),
@@ -91,6 +99,32 @@ class AppRoutes {
     favoritesAndSavedItems: (_) => const FavoritesAndSavedItems(),
     configurationSetup: (_) => const ConfigurationSetup(),
   };
+
+  /// ------------------------------------------------------------
+  /// onGenerateRoute (REQUIRED FOR ARGUMENT ROUTES)
+  /// ------------------------------------------------------------
+  static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
+    switch (settings.name) {
+      case jobApplicants:
+        final jobId = settings.arguments;
+
+        if (jobId == null || jobId is! String || jobId.trim().isEmpty) {
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(
+                child: Text("Job ID missing for applicants screen"),
+              ),
+            ),
+          );
+        }
+
+        return MaterialPageRoute(
+          builder: (_) => JobApplicantsScreen(jobId: jobId),
+        );
+    }
+
+    return null;
+  }
 
   /// ------------------------------------------------------------
   /// HELPERS
