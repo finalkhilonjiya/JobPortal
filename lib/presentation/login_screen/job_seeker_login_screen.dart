@@ -199,6 +199,14 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
     }
   }
 
+  void _goBackToRoleSelection() {
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.roleSelection,
+      (_) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -210,7 +218,20 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               children: [
-                const SizedBox(height: 64),
+                const SizedBox(height: 12),
+
+                /// BACK BUTTON (TO ROLE SELECTION)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    onPressed: _goBackToRoleSelection,
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                    color: const Color(0xFF0F172A),
+                    splashRadius: 22,
+                  ),
+                ),
+
+                const SizedBox(height: 26),
 
                 _header(),
 
@@ -220,7 +241,20 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
                   child: _showOtpStep ? _otpStep() : _mobileStep(),
                 ),
 
-                const SizedBox(height: 18),
+                const SizedBox(height: 10),
+
+                const Text(
+                  'Made in Assam',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF475569),
+                    letterSpacing: 0.2,
+                  ),
+                ),
+
+                const SizedBox(height: 6),
+
                 const Text(
                   '© Khilonjiya India Pvt. Ltd.',
                   style: TextStyle(
