@@ -151,8 +151,8 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
 
       if (!mounted) return;
 
-      // ✅ PRODUCTION: ALWAYS go to HomeRouter (it decides role screen)
-      Navigator.pushReplacementNamed(context, AppRoutes.homeRouter);
+      // ✅ ALWAYS GO TO ROLE BASED HOME ROUTER
+      Navigator.pushReplacementNamed(context, AppRoutes.homeJobsFeed);
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -166,7 +166,6 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
 
   void _handleOtpChange(int index, String value) {
     if (value.length > 1) {
-      // paste full otp support
       final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
       if (digits.length == 6) {
         for (int i = 0; i < 6; i++) {
@@ -213,7 +212,6 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
               children: [
                 const SizedBox(height: 64),
 
-                /// HEADER
                 _header(),
 
                 const SizedBox(height: 38),
@@ -276,7 +274,6 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
           ),
         ),
         const SizedBox(height: 10),
-
         TextField(
           controller: _mobileController,
           keyboardType: TextInputType.phone,
@@ -307,7 +304,6 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
             ),
           ),
         ),
-
         if (_error != null) ...[
           const SizedBox(height: 14),
           Text(
@@ -318,9 +314,7 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
             ),
           ),
         ],
-
         const SizedBox(height: 26),
-
         SizedBox(
           width: double.infinity,
           height: 52,
@@ -353,9 +347,7 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
                   ),
           ),
         ),
-
         const SizedBox(height: 16),
-
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
@@ -397,7 +389,6 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
           ),
         ),
         const SizedBox(height: 8),
-
         Text(
           '+91 ${_mobileController.text.trim()}',
           style: const TextStyle(
@@ -405,9 +396,7 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
             color: Color(0xFF64748B),
           ),
         ),
-
         const SizedBox(height: 22),
-
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(6, (i) {
@@ -455,7 +444,6 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
             );
           }),
         ),
-
         if (_error != null) ...[
           const SizedBox(height: 14),
           Text(
@@ -466,9 +454,7 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
             ),
           ),
         ],
-
         const SizedBox(height: 22),
-
         SizedBox(
           width: double.infinity,
           height: 52,
@@ -501,9 +487,7 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
                   ),
           ),
         ),
-
         const SizedBox(height: 12),
-
         TextButton(
           onPressed:
               (_resendSeconds == 0 && !_isLoading) ? _handleSendOtp : null,
@@ -519,9 +503,7 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
             ),
           ),
         ),
-
         const SizedBox(height: 6),
-
         TextButton(
           onPressed: _isLoading
               ? null
