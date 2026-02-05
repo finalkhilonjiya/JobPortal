@@ -166,6 +166,20 @@ class MobileAuthService {
     }
   }
 
+Future<bool> refreshSession() async {
+  try {
+    // If already authenticated, session is fine
+    if (_supabase.auth.currentUser != null) {
+      _currentUser = _supabase.auth.currentUser;
+      return true;
+    }
+
+    // Otherwise try to recover using stored refresh token
+    return await recoverSession();
+  } catch (_) {
+    return false;
+  }
+}
   // ------------------------------------------------------------
   // REQUIRED BY listing_service.dart + job_service.dart
   // ------------------------------------------------------------
