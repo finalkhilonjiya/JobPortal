@@ -2,24 +2,41 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.khilonjiya.marketplace">
 
-    <!-- Existing permissions -->
+    <!-- ===================== PERMISSIONS ===================== -->
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+
+    <!-- ANDROID 13+ PHOTO PICK PERMISSIONS (IMPORTANT) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+
+    <!-- ANDROID 12 and BELOW -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <!-- ANDROID 9 and BELOW -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
+
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
-    
+
     <!-- SMS permissions for OTP auto-detection -->
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
+    <!-- ===================== APP ===================== -->
 
     <application
         android:label="khilonjiya.com"
@@ -33,7 +50,7 @@
         <!-- Google-Sign-In: enable credentials API -->
         <meta-data
             android:name="com.google.android.gms.auth.api.credentials.CREDENTIALS_API_ENABLED"
-            android:value="true"/>
+            android:value="true" />
 
         <meta-data
             android:name="flutterEmbedding"
@@ -58,8 +75,8 @@
 
             <!-- Launcher intent filter -->
             <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
             <!-- OAuth redirect intent filter (required for Supabase Google login) -->
@@ -83,7 +100,8 @@
         </provider>
 
         <!-- SMS AutoFill service for OTP detection -->
-        <receiver android:name="com.jaumard.smsautofill.SmsAutoFillReceiver"
+        <receiver
+            android:name="com.jaumard.smsautofill.SmsAutoFillReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="com.google.android.gms.auth.api.phone.SMS_RETRIEVED" />
@@ -97,9 +115,11 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
         </intent>
+
         <intent>
             <action android:name="android.intent.action.DIAL" />
             <data android:scheme="tel" />
         </intent>
     </queries>
+
 </manifest>
