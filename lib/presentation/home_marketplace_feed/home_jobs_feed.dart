@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import './widgets/top_bar_widget.dart';
 import './widgets/job_card_widget.dart';
@@ -7,9 +8,7 @@ import './widgets/shimmer_widgets.dart';
 import './widgets/job_details_page.dart';
 import './widgets/naukri_drawer.dart';
 
-import '../login_screen/mobile_login_screen.dart';
-import '../login_screen/mobile_auth_service.dart';
-
+import '../../routes/app_routes.dart';
 import '../../services/job_service.dart';
 
 import './search_page.dart';
@@ -24,7 +23,7 @@ class HomeJobsFeed extends StatefulWidget {
 class _HomeJobsFeedState extends State<HomeJobsFeed>
     with SingleTickerProviderStateMixin {
   final JobService _jobService = JobService();
-  final MobileAuthService _authService = MobileAuthService();
+  final SupabaseClient _supabase = Supabase.instance.client;
 
   late final TabController _tabController;
 
@@ -56,19 +55,21 @@ class _HomeJobsFeedState extends State<HomeJobsFeed>
     super.dispose();
   }
 
+  // ------------------------------------------------------------
+  // INIT (NO MobileAuthService)
+  // ------------------------------------------------------------
   Future<void> _initialize() async {
     try {
-      await _authService.initialize();
+      final user = _supabase.auth.currentUser;
 
-      if (!_authService.isAuthenticated) {
-        _redirectToLogin();
+      if (user == null) {
+        _redirectToStart();
         return;
       }
 
-      await _authService.refreshSession();
       await _loadInitialData();
     } catch (_) {
-      _redirectToLogin();
+      _redirectToStart();
     }
   }
 
@@ -78,13 +79,9 @@ class _HomeJobsFeedState extends State<HomeJobsFeed>
     setState(() => _isCheckingAuth = false);
 
     try {
-      _profileCompletion =
-          await _jobService.calculateProfileCompletion();
-
+      _profileCompletion = await _jobService.calculateProfileCompletion();
       _savedJobIds = await _jobService.getUserSavedJobs();
-
       _premiumJobs = await _jobService.fetchPremiumJobs(limit: 5);
-
       _profileJobs = await _jobService.getRecommendedJobs();
     } finally {
       if (!_isDisposed) {
@@ -93,16 +90,23 @@ class _HomeJobsFeedState extends State<HomeJobsFeed>
     }
   }
 
-  void _redirectToLogin() {
+  // ------------------------------------------------------------
+  // ROUTING (ALWAYS SAME START PAGE)
+  // ------------------------------------------------------------
+  void _redirectToStart() {
     if (_isDisposed) return;
+    if (!mounted) return;
 
-    Navigator.pushAndRemoveUntil(
+    Navigator.pushNamedAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => const MobileLoginScreen()),
+      AppRoutes.roleSelection,
       (_) => false,
     );
   }
 
+  // ------------------------------------------------------------
+  // UI EVENTS
+  // ------------------------------------------------------------
   void _onLocationDetected(
     double lat,
     double lng,
@@ -122,20 +126,23 @@ class _HomeJobsFeedState extends State<HomeJobsFeed>
   }
 
   void _openJobDetails(Map<String, dynamic> job) {
-    _jobService.trackJobView(job['id']);
+    _jobService.trackJobView(job['id'].toString());
 
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => JobDetailsPage(
           job: job,
-          isSaved: _savedJobIds.contains(job['id']),
-          onSaveToggle: () => _toggleSaveJob(job['id']),
+          isSaved: _savedJobIds.contains(job['id'].toString()),
+          onSaveToggle: () => _toggleSaveJob(job['id'].toString()),
         ),
       ),
     );
   }
 
+  // ------------------------------------------------------------
+  // BUILD
+  // ------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     if (_isCheckingAuth) {
@@ -144,8 +151,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed>
       );
     }
 
-    final jobs =
-        _tabController.index == 0 ? _profileJobs : _activityJobs;
+    final jobs = _tabController.index == 0 ? _profileJobs : _activityJobs;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -164,8 +170,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed>
               builder: (scaffoldContext) {
                 return TopBarWidget(
                   currentLocation: _currentLocation,
-                  onMenuTap: () =>
-                      Scaffold.of(scaffoldContext).openDrawer(),
+                  onMenuTap: () => Scaffold.of(scaffoldContext).openDrawer(),
                   onSearchTap: () {
                     Navigator.push(
                       scaffoldContext,
@@ -194,10 +199,13 @@ class _HomeJobsFeedState extends State<HomeJobsFeed>
                 onTap: (index) async {
                   if (index == 1 && _activityJobs.isEmpty) {
                     setState(() => _isLoadingActivity = true);
-                    _activityJobs =
-                        await _jobService.getJobsBasedOnActivity();
-                    if (!_isDisposed) {
-                      setState(() => _isLoadingActivity = false);
+
+                    try {
+                      _activityJobs = await _jobService.getJobsBasedOnActivity();
+                    } finally {
+                      if (!_isDisposed) {
+                        setState(() => _isLoadingActivity = false);
+                      }
                     }
                   }
                 },
@@ -209,12 +217,10 @@ class _HomeJobsFeedState extends State<HomeJobsFeed>
               child: _isLoadingProfile
                   ? ListView.builder(
                       itemCount: 6,
-                      itemBuilder: (_, __) =>
-                          const ShimmerJobCard(),
+                      itemBuilder: (_, __) => const ShimmerJobCard(),
                     )
                   : ListView.builder(
-                      itemCount:
-                          _premiumJobs.length + jobs.length,
+                      itemCount: _premiumJobs.length + jobs.length,
                       itemBuilder: (_, index) {
                         final job = index < _premiumJobs.length
                             ? _premiumJobs[index]
@@ -222,10 +228,9 @@ class _HomeJobsFeedState extends State<HomeJobsFeed>
 
                         return JobCardWidget(
                           job: job,
-                          isSaved:
-                              _savedJobIds.contains(job['id']),
+                          isSaved: _savedJobIds.contains(job['id'].toString()),
                           onSaveToggle: () =>
-                              _toggleSaveJob(job['id']),
+                              _toggleSaveJob(job['id'].toString()),
                           onTap: () => _openJobDetails(job),
                         );
                       },
