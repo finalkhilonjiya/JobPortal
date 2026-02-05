@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
@@ -28,7 +30,6 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
   PlatformFile? _resumeFile;
   PlatformFile? _photoFile;
 
-  bool _loading = false;
   bool _submitting = false;
 
   @override
@@ -41,51 +42,69 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
   }
 
   // ------------------------------------------------------------
-  // PICKERS
+  // PICKERS (ANDROID SAFE)
   // ------------------------------------------------------------
   Future<void> _pickResume() async {
-    final res = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['pdf'],
-      withData: true,
-    );
+    try {
+      final res = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['pdf'],
+        withData: true,
+      );
 
-    if (res == null) return;
+      if (res == null) return;
 
-    final file = res.files.single;
+      final file = res.files.single;
 
-    if (file.bytes == null) {
+      if (file.bytes == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Resume could not be read. Please pick again."),
+          ),
+        );
+        return;
+      }
+
+      if (!mounted) return;
+      setState(() => _resumeFile = file);
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Resume could not be read. Pick again.")),
+        SnackBar(content: Text("Resume pick failed: $e")),
       );
-      return;
     }
-
-    if (!mounted) return;
-    setState(() => _resumeFile = file);
   }
 
   Future<void> _pickPhoto() async {
-    final res = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      withData: true,
-    );
+    try {
+      final res = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        withData: true,
+      );
 
-    if (res == null) return;
+      if (res == null) return;
 
-    final file = res.files.single;
+      final file = res.files.single;
 
-    if (file.bytes == null) {
+      if (file.bytes == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Photo could not be read. Please pick again."),
+          ),
+        );
+        return;
+      }
+
+      if (!mounted) return;
+      setState(() => _photoFile = file);
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Photo could not be read. Pick again.")),
+        SnackBar(content: Text("Photo pick failed: $e")),
       );
-      return;
     }
-
-    if (!mounted) return;
-    setState(() => _photoFile = file);
   }
 
   // ------------------------------------------------------------
@@ -98,7 +117,7 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
 
     if (_resumeFile == null || _photoFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Resume and photo are required")),
+        const SnackBar(content: Text('Resume and photo are required')),
       );
       return;
     }
@@ -114,21 +133,15 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
           'name': _name.text.trim(),
           'email': _email.text.trim(),
           'phone': _phone.text.trim(),
-          'skills': _skills.text
-              .split(',')
-              .map((e) => e.trim())
-              .where((e) => e.isNotEmpty)
-              .toList(),
-          'status': 'submitted',
+          'skills': _skills.text.trim(),
         },
       );
 
       if (!mounted) return;
-
       Navigator.pop(context, true);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Application submitted successfully")),
+        const SnackBar(content: Text('Application submitted successfully')),
       );
     } catch (e) {
       if (!mounted) return;
@@ -163,6 +176,7 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
               _field(_email, 'Email'),
               _field(_phone, 'Phone'),
               _field(_skills, 'Skills (comma separated)'),
+
               SizedBox(height: 1.h),
 
               _fileTile(
