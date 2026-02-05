@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../login_screen/mobile_auth_service.dart';
 import '../../../routes/app_routes.dart';
+import '../../login_screen/mobile_auth_service.dart';
+import '../../../services/employer_job_service.dart';
 
 class CompanyDashboard extends StatefulWidget {
   const CompanyDashboard({Key? key}) : super(key: key);
@@ -13,7 +13,7 @@ class CompanyDashboard extends StatefulWidget {
 }
 
 class _CompanyDashboardState extends State<CompanyDashboard> {
-  final SupabaseClient _client = Supabase.instance.client;
+  final EmployerJobService _service = EmployerJobService();
 
   bool _loading = true;
   List<Map<String, dynamic>> _jobs = [];
@@ -25,25 +25,12 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   Future<void> _loadJobs() async {
+    if (!mounted) return;
     setState(() => _loading = true);
 
     try {
-      final user = _client.auth.currentUser;
-      if (user == null) {
-        setState(() {
-          _jobs = [];
-          _loading = false;
-        });
-        return;
-      }
-
-      final res = await _client
-          .from('job_listings')
-          .select('id, job_title, status, created_at, applications_count')
-          .eq('user_id', user.id) // ✅ correct column
-          .order('created_at', ascending: false);
-
-      _jobs = List<Map<String, dynamic>>.from(res);
+      final res = await _service.fetchEmployerJobs();
+      _jobs = res;
     } catch (_) {
       _jobs = [];
     }
@@ -77,6 +64,9 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
   int get _pausedJobs =>
       _jobs.where((e) => (e['status'] ?? '') == 'paused').length;
+
+  int get _expiredJobs =>
+      _jobs.where((e) => (e['status'] ?? '') == 'expired').length;
 
   @override
   Widget build(BuildContext context) {
@@ -136,19 +126,19 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             ),
 
       // ------------------------------------------------------------
-      // CREATE JOB BUTTON
+      // CREATE JOB BUTTON (FAB)
       // ------------------------------------------------------------
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // TODO: we will create this screen next
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Create Job screen coming next")),
-          );
+        onPressed: () async {
+          // Navigate to Create Job screen
+          // After coming back, refresh list
+          await Navigator.pushNamed(context, AppRoutes.createJob);
+          await _loadJobs();
         },
         backgroundColor: const Color(0xFF2563EB),
         label: const Text(
           'Create Job',
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: TextStyle(fontWeight: FontWeight.w800),
         ),
         icon: const Icon(Icons.add),
       ),
@@ -169,10 +159,10 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
               decoration: const BoxDecoration(
                 color: Color(0xFF0F172A),
               ),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     "Employer Menu",
                     style: TextStyle(
                       color: Colors.white,
@@ -180,10 +170,10 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                   Text(
-                    _client.auth.currentUser?.email ?? "",
-                    style: const TextStyle(
+                    "Manage jobs and applicants",
+                    style: TextStyle(
                       color: Color(0xFFCBD5E1),
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -193,9 +183,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
               ),
             ),
 
-            // ------------------------------------------------------------
-            // MENU ITEMS
-            // ------------------------------------------------------------
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
@@ -205,25 +192,35 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                     title: "My Job Listings",
                     onTap: () {
                       Navigator.pop(context);
-                      // You are already on dashboard.
-                      // Next we will build a dedicated listings screen.
+                      // Already on dashboard
+                    },
+                  ),
+                  _drawerTile(
+                    icon: Icons.add_circle_outline,
+                    title: "Create Job",
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await Navigator.pushNamed(context, AppRoutes.createJob);
+                      await _loadJobs();
                     },
                   ),
                   _drawerTile(
                     icon: Icons.people_outline,
-                    title: "Applicants (Coming next)",
+                    title: "Applicants (Job wise)",
                     onTap: () {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text("Applicants screen coming next"),
+                          content: Text(
+                            "Open any job and click Applicants",
+                          ),
                         ),
                       );
                     },
                   ),
                   _drawerTile(
                     icon: Icons.business_outlined,
-                    title: "Company Profile (Coming later)",
+                    title: "Company Profile (Later)",
                     onTap: () {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -241,7 +238,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                     },
                   ),
                   const Divider(height: 1),
-
                   _drawerTile(
                     icon: Icons.logout,
                     title: "Logout",
@@ -273,7 +269,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       title: Text(
         title,
         style: TextStyle(
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
           color: color,
         ),
       ),
@@ -301,6 +297,8 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           _statTile('Paused', _pausedJobs.toString()),
           _divider(),
           _statTile('Closed', _closedJobs.toString()),
+          _divider(),
+          _statTile('Expired', _expiredJobs.toString()),
         ],
       ),
     );
@@ -313,8 +311,8 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           Text(
             value,
             style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w800,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w900,
               color: const Color(0xFF0F172A),
             ),
           ),
@@ -322,9 +320,9 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           Text(
             title,
             style: TextStyle(
-              fontSize: 10.5.sp,
+              fontSize: 9.5.sp,
               color: const Color(0xFF64748B),
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -345,13 +343,14 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       'Recent Job Listings',
       style: TextStyle(
         fontSize: 18,
-        fontWeight: FontWeight.w800,
+        fontWeight: FontWeight.w900,
         color: Color(0xFF0F172A),
       ),
     );
   }
 
   Widget _jobCard(Map<String, dynamic> job) {
+    final jobId = (job['id'] ?? '').toString();
     final title = (job['job_title'] ?? '').toString();
     final status = (job['status'] ?? 'active').toString();
     final applicationsCount = job['applications_count'] ?? 0;
@@ -375,7 +374,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                   title,
                   style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w900,
                     color: Color(0xFF0F172A),
                   ),
                 ),
@@ -391,7 +390,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             style: const TextStyle(
               fontSize: 12.5,
               color: Color(0xFF64748B),
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
             ),
           ),
           SizedBox(height: 2.h),
@@ -402,20 +401,26 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
               _actionButton(
                 icon: Icons.people_outline,
                 label: 'Applicants',
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Applicants screen next")),
+                onTap: () async {
+                  await Navigator.pushNamed(
+                    context,
+                    AppRoutes.jobApplicants,
+                    arguments: jobId,
                   );
+                  await _loadJobs();
                 },
               ),
               SizedBox(width: 3.w),
               _actionButton(
                 icon: Icons.edit_outlined,
                 label: 'Edit',
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Edit screen next")),
+                onTap: () async {
+                  await Navigator.pushNamed(
+                    context,
+                    AppRoutes.editJob,
+                    arguments: jobId,
                   );
+                  await _loadJobs();
                 },
               ),
             ],
@@ -460,7 +465,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         label,
         style: TextStyle(
           fontSize: 12,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w900,
           color: fg,
         ),
       ),
@@ -503,7 +508,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             'No jobs posted yet',
             style: TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w900,
               color: Color(0xFF0F172A),
             ),
           ),
@@ -513,20 +518,19 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Color(0xFF64748B),
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
             ),
           ),
           SizedBox(height: 3.h),
           ElevatedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Create Job screen coming next")),
-              );
+            onPressed: () async {
+              await Navigator.pushNamed(context, AppRoutes.createJob);
+              await _loadJobs();
             },
             icon: const Icon(Icons.add),
             label: const Text(
               'Create Job',
-              style: TextStyle(fontWeight: FontWeight.w800),
+              style: TextStyle(fontWeight: FontWeight.w900),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2563EB),
@@ -551,7 +555,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
     final diff = DateTime.now().difference(d);
 
-    if (diff.inMinutes < 60) return 'today';
     if (diff.inHours < 24) return 'today';
     if (diff.inDays == 1) return '1 day ago';
     return '${diff.inDays} days ago';
