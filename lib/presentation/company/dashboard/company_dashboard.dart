@@ -1,3 +1,4 @@
+// File: lib/presentation/company/dashboard/company_dashboard.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
@@ -130,10 +131,12 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       // ------------------------------------------------------------
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          // Navigate to Create Job screen
-          // After coming back, refresh list
-          await Navigator.pushNamed(context, AppRoutes.createJob);
-          await _loadJobs();
+          final res = await Navigator.pushNamed(context, AppRoutes.createJob);
+
+          // refresh only if job created
+          if (res == true) {
+            await _loadJobs();
+          }
         },
         backgroundColor: const Color(0xFF2563EB),
         label: const Text(
@@ -192,7 +195,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                     title: "My Job Listings",
                     onTap: () {
                       Navigator.pop(context);
-                      // Already on dashboard
                     },
                   ),
                   _drawerTile(
@@ -200,8 +202,13 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                     title: "Create Job",
                     onTap: () async {
                       Navigator.pop(context);
-                      await Navigator.pushNamed(context, AppRoutes.createJob);
-                      await _loadJobs();
+
+                      final res =
+                          await Navigator.pushNamed(context, AppRoutes.createJob);
+
+                      if (res == true) {
+                        await _loadJobs();
+                      }
                     },
                   ),
                   _drawerTile(
@@ -211,9 +218,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text(
-                            "Open any job and click Applicants",
-                          ),
+                          content: Text("Open any job and click Applicants"),
                         ),
                       );
                     },
@@ -407,6 +412,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                     AppRoutes.jobApplicants,
                     arguments: jobId,
                   );
+
                   await _loadJobs();
                 },
               ),
@@ -414,13 +420,12 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
               _actionButton(
                 icon: Icons.edit_outlined,
                 label: 'Edit',
-                onTap: () async {
-                  await Navigator.pushNamed(
-                    context,
-                    AppRoutes.editJob,
-                    arguments: jobId,
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Edit Job screen coming next"),
+                    ),
                   );
-                  await _loadJobs();
                 },
               ),
             ],
@@ -524,8 +529,14 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           SizedBox(height: 3.h),
           ElevatedButton.icon(
             onPressed: () async {
-              await Navigator.pushNamed(context, AppRoutes.createJob);
-              await _loadJobs();
+              final res = await Navigator.pushNamed(
+                context,
+                AppRoutes.createJob,
+              );
+
+              if (res == true) {
+                await _loadJobs();
+              }
             },
             icon: const Icon(Icons.add),
             label: const Text(
