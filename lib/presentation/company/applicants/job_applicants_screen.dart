@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../services/employer_job_service.dart';
 
 class JobApplicantsScreen extends StatefulWidget {
   final String jobId;
@@ -15,7 +16,7 @@ class JobApplicantsScreen extends StatefulWidget {
 }
 
 class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
-  final SupabaseClient _client = Supabase.instance.client;
+  final EmployerJobService _service = EmployerJobService();
 
   bool _loading = true;
   List<Map<String, dynamic>> _rows = [];
@@ -31,57 +32,123 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
     setState(() => _loading = true);
 
     try {
-      final res = await _client
-          .from('job_applications_listings')
-          .select('''
-            id,
-            applied_at,
-            application_status,
-            employer_notes,
-            interview_date,
+      final res = await _service.fetchApplicantsForJob(widget.jobId);
 
-            job_applications (
-              id,
-              user_id,
-              created_at,
+      if (!mounted) return;
+      setState(() {
+        _rows = res;
+        _loading = false;
+      });
+    } catch (e) {
+      _service.logError(e);
 
-              user_profiles (
-                id,
-                full_name,
-                mobile_number,
-                email,
-                district,
-                address,
-                education,
-                experience_years,
-                skills,
-                expected_salary
-              )
-            )
-          ''')
-          .eq('listing_id', widget.jobId)
-          .order('applied_at', ascending: false);
-
-      _rows = List<Map<String, dynamic>>.from(res);
-    } catch (_) {
-      _rows = [];
+      if (!mounted) return;
+      setState(() {
+        _rows = [];
+        _loading = false;
+      });
     }
-
-    if (!mounted) return;
-    setState(() => _loading = false);
   }
 
-  Future<void> _updateStatus(String rowId, String status) async {
-    await _client
-        .from('job_applications_listings')
-        .update({
-          'application_status': status,
-        })
-        .eq('id', rowId);
+  Future<void> _updateStatus({
+    required String rowId,
+    required String status,
+    String? notes,
+    DateTime? interviewDate,
+  }) async {
+    try {
+      await _service.updateApplicantStatus(
+        jobApplicationListingId: rowId,
+        status: status,
+        employerNotes: notes,
+        interviewDate: interviewDate,
+      );
 
-    await _loadApplicants();
+      await _loadApplicants();
+    } catch (e) {
+      _service.logError(e);
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to update status")),
+      );
+    }
   }
 
+  // ------------------------------------------------------------
+  // NOTES DIALOG
+  // ------------------------------------------------------------
+  Future<void> _openNotesDialog({
+    required String rowId,
+    required String currentStatus,
+    String? existingNotes,
+  }) async {
+    final ctrl = TextEditingController(text: existingNotes ?? "");
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Employer Notes"),
+        content: TextField(
+          controller: ctrl,
+          maxLines: 5,
+          decoration: const InputDecoration(
+            hintText: "Write notes about this candidate...",
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+
+    if (saved == true) {
+      await _updateStatus(
+        rowId: rowId,
+        status: currentStatus, // keep same status
+        notes: ctrl.text.trim(),
+      );
+    }
+  }
+
+  // ------------------------------------------------------------
+  // INTERVIEW DATE PICKER
+  // ------------------------------------------------------------
+  Future<void> _pickInterviewDate({
+    required String rowId,
+    required String currentStatus,
+    String? existingNotes,
+  }) async {
+    final now = DateTime.now();
+
+    final picked = await showDatePicker(
+      context: context,
+      firstDate: now.subtract(const Duration(days: 0)),
+      lastDate: now.add(const Duration(days: 365)),
+      initialDate: now.add(const Duration(days: 1)),
+    );
+
+    if (picked == null) return;
+
+    await _updateStatus(
+      rowId: rowId,
+      status: "interviewed",
+      notes: existingNotes,
+      interviewDate: picked,
+    );
+  }
+
+  // ------------------------------------------------------------
+  // UI
+  // ------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -112,46 +179,44 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                   itemBuilder: (context, index) {
                     final row = _rows[index];
 
-                    final jobApp =
+                    final rowId = (row['id'] ?? '').toString();
+                    final status =
+                        (row['application_status'] ?? 'applied').toString();
+
+                    final appliedAt = row['applied_at']?.toString();
+                    final notes = row['employer_notes']?.toString();
+                    final interviewDate = row['interview_date']?.toString();
+
+                    final app =
                         row['job_applications'] as Map<String, dynamic>?;
 
-                    final profile = jobApp?['user_profiles']
-                        as Map<String, dynamic>?;
-
-                    final name =
-                        (profile?['full_name'] ?? 'Candidate').toString();
-                    final phone =
-                        (profile?['mobile_number'] ?? '').toString();
-                    final email = (profile?['email'] ?? '').toString();
-
-                    final expYears = profile?['experience_years'];
-                    final expectedSalary = profile?['expected_salary'];
-
-                    final education =
-                        (profile?['education'] ?? '').toString();
+                    final name = (app?['name'] ?? 'Candidate').toString();
+                    final phone = (app?['phone'] ?? '').toString();
+                    final email = (app?['email'] ?? '').toString();
+                    final education = (app?['education'] ?? '').toString();
+                    final expLevel =
+                        (app?['experience_level'] ?? '').toString();
+                    final expectedSalary =
+                        (app?['expected_salary'] ?? '').toString();
 
                     return _applicantCard(
-                      rowId: row['id'].toString(),
-                      status:
-                          (row['application_status'] ?? 'applied').toString(),
-                      appliedAt: row['applied_at']?.toString(),
+                      rowId: rowId,
+                      status: status,
+                      appliedAt: appliedAt,
                       name: name,
                       phone: phone,
                       email: email,
                       education: education,
-                      expText: expYears == null ? '' : '$expYears yrs',
-                      expectedSalaryText: expectedSalary == null
-                          ? ''
-                          : expectedSalary.toString(),
+                      expLevel: expLevel,
+                      expectedSalary: expectedSalary,
+                      notes: notes,
+                      interviewDate: interviewDate,
                     );
                   },
                 ),
     );
   }
 
-  // ------------------------------------------------------------
-  // UI
-  // ------------------------------------------------------------
   Widget _applicantCard({
     required String rowId,
     required String status,
@@ -160,8 +225,10 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
     required String phone,
     required String email,
     required String education,
-    required String expText,
-    required String expectedSalaryText,
+    required String expLevel,
+    required String expectedSalary,
+    required String? notes,
+    required String? interviewDate,
   }) {
     final s = status.toLowerCase();
 
@@ -205,6 +272,19 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               ),
             ),
 
+          if (interviewDate != null && interviewDate.trim().isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(top: 0.6.h),
+              child: Text(
+                "Interview: ${_formatDate(interviewDate)}",
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: Color(0xFF0F172A),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+
           SizedBox(height: 1.4.h),
 
           // Contact
@@ -216,76 +296,112 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
           // Education + Experience
           if (education.isNotEmpty)
             _metaLine(Icons.school_outlined, education),
+          if (expLevel.isNotEmpty) _metaLine(Icons.work_outline, expLevel),
+          if (expectedSalary.isNotEmpty)
+            _metaLine(Icons.currency_rupee, expectedSalary),
 
-          if (expText.isNotEmpty) _metaLine(Icons.work_outline, expText),
-
-          if (expectedSalaryText.isNotEmpty)
-            _metaLine(Icons.currency_rupee, expectedSalaryText),
+          if (notes != null && notes.trim().isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(top: 1.2.h),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Text(
+                  "Notes: $notes",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF334155),
+                  ),
+                ),
+              ),
+            ),
 
           SizedBox(height: 1.8.h),
           const Divider(height: 1),
           SizedBox(height: 1.2.h),
 
-          // Actions
-          if (s == 'applied')
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => _updateStatus(rowId, 'shortlisted'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF16A34A),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                    child: const Text(
-                      'Shortlist',
-                      style: TextStyle(fontWeight: FontWeight.w900),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 3.w),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _updateStatus(rowId, 'rejected'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFEF4444),
-                      side: const BorderSide(color: Color(0xFFEF4444)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                    child: const Text(
-                      'Reject',
-                      style: TextStyle(fontWeight: FontWeight.w900),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-          if (s == 'shortlisted')
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => _updateStatus(rowId, 'rejected'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFEF4444),
-                  side: const BorderSide(color: Color(0xFFEF4444)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                ),
-                child: const Text(
-                  'Reject Candidate',
-                  style: TextStyle(fontWeight: FontWeight.w900),
+          // ------------------------------------------------------------
+          // ACTIONS
+          // ------------------------------------------------------------
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _smallButton(
+                label: "Add Notes",
+                icon: Icons.note_add_outlined,
+                onTap: () => _openNotesDialog(
+                  rowId: rowId,
+                  currentStatus: s,
+                  existingNotes: notes,
                 ),
               ),
-            ),
+
+              if (s == "applied" || s == "viewed")
+                _smallButton(
+                  label: "Shortlist",
+                  icon: Icons.check_circle_outline,
+                  color: const Color(0xFF16A34A),
+                  onTap: () =>
+                      _updateStatus(rowId: rowId, status: "shortlisted"),
+                ),
+
+              if (s == "shortlisted")
+                _smallButton(
+                  label: "Schedule Interview",
+                  icon: Icons.event_available_outlined,
+                  color: const Color(0xFF2563EB),
+                  onTap: () => _pickInterviewDate(
+                    rowId: rowId,
+                    currentStatus: s,
+                    existingNotes: notes,
+                  ),
+                ),
+
+              if (s == "interviewed" || s == "shortlisted")
+                _smallButton(
+                  label: "Select",
+                  icon: Icons.verified_outlined,
+                  color: const Color(0xFF7C3AED),
+                  onTap: () => _updateStatus(rowId: rowId, status: "selected"),
+                ),
+
+              if (s != "rejected" && s != "selected")
+                _smallButton(
+                  label: "Reject",
+                  icon: Icons.cancel_outlined,
+                  color: const Color(0xFFEF4444),
+                  onTap: () => _updateStatus(rowId: rowId, status: "rejected"),
+                ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _smallButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 18, color: color),
+      label: Text(
+        label,
+        style: TextStyle(fontWeight: FontWeight.w900, color: color),
+      ),
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(color: color ?? const Color(0xFFE2E8F0)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       ),
     );
   }
@@ -337,6 +453,11 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
         bg = const Color(0xFFEDE9FE);
         fg = const Color(0xFF5B21B6);
         label = 'Selected';
+        break;
+      case 'viewed':
+        bg = const Color(0xFFFFEDD5);
+        fg = const Color(0xFF9A3412);
+        label = 'Viewed';
         break;
       default:
         bg = const Color(0xFFEFF6FF);
@@ -399,5 +520,14 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
     if (diff.inHours < 24) return 'today';
     if (diff.inDays == 1) return '1 day ago';
     return '${diff.inDays} days ago';
+  }
+
+  String _formatDate(String date) {
+    final d = DateTime.tryParse(date);
+    if (d == null) return date;
+
+    return "${d.day.toString().padLeft(2, '0')}-"
+        "${d.month.toString().padLeft(2, '0')}-"
+        "${d.year}";
   }
 }
