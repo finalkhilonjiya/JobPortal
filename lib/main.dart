@@ -35,7 +35,18 @@ class AppStateNotifier with ChangeNotifier {
 /* ----------  MAIN  ---------- */
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
+  /// UI chrome (set before runApp)
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
 
   /// Load env
   try {
@@ -53,16 +64,6 @@ Future<void> main() async {
   }
 
   runApp(const MyApp());
-
-  /// UI chrome
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Colors.white,
-      systemNavigationBarIconBrightness: Brightness.dark,
-    ),
-  );
 }
 
 /* ----------  APP WIDGET  ---------- */
@@ -89,7 +90,7 @@ class MyApp extends StatelessWidget {
             /// STATIC ROUTES
             routes: AppRoutes.routes,
 
-            /// IMPORTANT: DYNAMIC ROUTES (arguments based)
+            /// DYNAMIC ROUTES (arguments based)
             onGenerateRoute: AppRoutes.onGenerateRoute,
 
             builder: (context, child) => MediaQuery(
