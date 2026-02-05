@@ -151,7 +151,8 @@ class _EmployerLoginScreenState extends State<EmployerLoginScreen>
 
       if (!mounted) return;
 
-      Navigator.pushReplacementNamed(context, AppRoutes.homeJobsFeed);
+      // ✅ PRODUCTION: ALWAYS go to HomeRouter (it decides role dashboard)
+      Navigator.pushReplacementNamed(context, AppRoutes.homeRouter);
     } catch (e) {
       setState(() {
         _isLoading = false;
