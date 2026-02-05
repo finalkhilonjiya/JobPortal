@@ -72,12 +72,12 @@ class JobsService {
     }
 
     // ------------------------------------------------------------
-    // 3) Duplicate apply check (CORRECT)
+    // 3) Duplicate apply check (FINAL TRUTH)
     // ------------------------------------------------------------
     final existingBridge = await _supabase
         .from('job_applications_listings')
         .select('id')
-        .eq('application_id', applicationId)
+        .eq('user_id', userId)
         .eq('listing_id', jobId)
         .maybeSingle();
 
@@ -130,6 +130,7 @@ class JobsService {
     await _supabase.from('job_applications_listings').insert({
       'application_id': applicationId,
       'listing_id': jobId,
+      'user_id': userId, // ✅ REQUIRED
       'applied_at': DateTime.now().toIso8601String(),
       'application_status': 'applied',
     });
