@@ -230,7 +230,7 @@ class NaukriDrawer extends StatelessWidget {
         _logoutItem(context),
       ];
 
-  /// ================= LOGOUT (FIXED) =================
+  /// ================= LOGOUT (SAFE) =================
   Widget _logoutItem(BuildContext context) {
     return _item(
       context,
@@ -239,10 +239,7 @@ class NaukriDrawer extends StatelessWidget {
       () async {
         await MobileAuthService().logout();
 
-        if (!context.mounted) return;
-
-        /// IMPORTANT:
-        /// Always go back to the starting page (RoleSelection)
+        // StatelessWidget has no mounted, so just navigate
         Navigator.pushNamedAndRemoveUntil(
           context,
           AppRoutes.roleSelection,
