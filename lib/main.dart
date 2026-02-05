@@ -85,7 +85,12 @@ class MyApp extends StatelessWidget {
 
             /// ALWAYS start with initializer
             home: const AppInitializer(),
+
+            /// STATIC ROUTES
             routes: AppRoutes.routes,
+
+            /// IMPORTANT: DYNAMIC ROUTES (arguments based)
+            onGenerateRoute: AppRoutes.onGenerateRoute,
 
             builder: (context, child) => MediaQuery(
               data: MediaQuery.of(context)
@@ -142,8 +147,7 @@ class _AppInitializerState extends State<AppInitializer> {
       if (session != null && user != null) {
         notifier.setState(AppState.authenticated);
 
-        /// IMPORTANT:
-        /// Always go to HomeRouter, not directly to job feed.
+        /// Always go to HomeRouter (role based)
         NavigationService.pushReplacementNamed(AppRoutes.homeJobsFeed);
         return;
       }
