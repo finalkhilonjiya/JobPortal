@@ -19,6 +19,15 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
   final SupabaseClient _client = Supabase.instance.client;
 
   bool _loading = true;
+
+  /// Each row will be:
+  /// {
+  ///   id,
+  ///   applied_at,
+  ///   application_status,
+  ///   job_applications: {...},
+  ///   user_profiles: {...}   // manually attached by us
+  /// }
   List<Map<String, dynamic>> _rows = [];
 
   @override
@@ -32,6 +41,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
     setState(() => _loading = true);
 
     try {
+      // 1) fetch bridge rows + job_applications
       final res = await _client
           .from('job_applications_listings')
           .select('''
@@ -44,28 +54,62 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
             job_applications (
               id,
               user_id,
-              created_at,
+              name,
+              phone,
+              email,
+              district,
+              address,
+              education,
+              experience_level,
+              experience_details,
+              skills,
+              expected_salary,
+              availability,
               resume_file_url,
               photo_file_url,
-
-              user_profiles (
-                id,
-                full_name,
-                mobile_number,
-                email,
-                district,
-                address,
-                education,
-                experience_years,
-                skills,
-                expected_salary
-              )
+              created_at
             )
           ''')
           .eq('listing_id', widget.jobId)
           .order('applied_at', ascending: false);
 
-      _rows = List<Map<String, dynamic>>.from(res);
+      final rows = List<Map<String, dynamic>>.from(res);
+
+      // 2) collect user_ids
+      final userIds = <String>{};
+
+      for (final r in rows) {
+        final app = r['job_applications'] as Map<String, dynamic>?;
+        final uid = app?['user_id']?.toString();
+        if (uid != null && uid.isNotEmpty) userIds.add(uid);
+      }
+
+      // 3) fetch profiles in one query (safe)
+      Map<String, Map<String, dynamic>> profilesById = {};
+
+      if (userIds.isNotEmpty) {
+        final profilesRes = await _client
+            .from('user_profiles')
+            .select(
+              'id, full_name, mobile_number, email, district, address, education, experience_years, skills, expected_salary',
+            )
+            .inFilter('id', userIds.toList());
+
+        final profiles = List<Map<String, dynamic>>.from(profilesRes);
+
+        profilesById = {
+          for (final p in profiles) p['id'].toString(): p,
+        };
+      }
+
+      // 4) attach profile to each row
+      for (final r in rows) {
+        final app = r['job_applications'] as Map<String, dynamic>?;
+        final uid = app?['user_id']?.toString();
+        r['user_profiles'] = uid == null ? null : profilesById[uid];
+      }
+
+      _rows = rows;
     } catch (_) {
       _rows = [];
     }
@@ -77,10 +121,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
   Future<void> _updateStatus(String rowId, String status) async {
     await _client
         .from('job_applications_listings')
-        .update({
-          'application_status': status,
-        })
-        .eq('id', rowId);
+        .update({'application_status': status}).eq('id', rowId);
 
     await _loadApplicants();
   }
@@ -139,38 +180,48 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                     final jobApp =
                         row['job_applications'] as Map<String, dynamic>?;
 
-                    final profile = jobApp?['user_profiles']
-                        as Map<String, dynamic>?;
+                    final profile =
+                        row['user_profiles'] as Map<String, dynamic>?;
+
+                    // Prefer profile values if present, else fallback to job_applications
+                    final name = (profile?['full_name'] ??
+                            jobApp?['name'] ??
+                            'Candidate')
+                        .toString();
+
+                    final phone = (profile?['mobile_number'] ??
+                            jobApp?['phone'] ??
+                            '')
+                        .toString();
+
+                    final email =
+                        (profile?['email'] ?? jobApp?['email'] ?? '').toString();
+
+                    final district = (profile?['district'] ??
+                            jobApp?['district'] ??
+                            '')
+                        .toString();
+
+                    final address =
+                        (profile?['address'] ?? jobApp?['address'] ?? '')
+                            .toString();
+
+                    final education =
+                        (profile?['education'] ?? jobApp?['education'] ?? '')
+                            .toString();
+
+                    final expYears = profile?['experience_years'];
+                    final expectedSalary = profile?['expected_salary'];
+
+                    final skillsRaw = profile?['skills'] ?? jobApp?['skills'];
+                    final skills = skillsRaw is List
+                        ? skillsRaw.map((e) => e.toString()).toList()
+                        : <String>[];
 
                     final resumeUrl =
                         (jobApp?['resume_file_url'] ?? '').toString();
                     final photoUrl =
                         (jobApp?['photo_file_url'] ?? '').toString();
-
-                    final name =
-                        (profile?['full_name'] ?? 'Candidate').toString();
-
-                    final phone =
-                        (profile?['mobile_number'] ?? '').toString();
-
-                    final email = (profile?['email'] ?? '').toString();
-
-                    final district =
-                        (profile?['district'] ?? '').toString();
-
-                    final address =
-                        (profile?['address'] ?? '').toString();
-
-                    final education =
-                        (profile?['education'] ?? '').toString();
-
-                    final expYears = profile?['experience_years'];
-                    final expectedSalary = profile?['expected_salary'];
-
-                    final skillsRaw = profile?['skills'];
-                    final skills = skillsRaw is List
-                        ? skillsRaw.map((e) => e.toString()).toList()
-                        : <String>[];
 
                     return _applicantCard(
                       rowId: row['id'].toString(),
@@ -184,8 +235,9 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                       address: address,
                       education: education,
                       expText: expYears == null ? '' : '$expYears yrs',
-                      expectedSalaryText:
-                          expectedSalary == null ? '' : expectedSalary.toString(),
+                      expectedSalaryText: expectedSalary == null
+                          ? ''
+                          : expectedSalary.toString(),
                       skillsText: skills.isEmpty ? '' : skills.join(', '),
                       resumeUrl: resumeUrl,
                       photoUrl: photoUrl,
@@ -227,7 +279,6 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Name + Status
           Row(
             children: [
               Expanded(
@@ -243,9 +294,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               _statusChip(s),
             ],
           ),
-
           SizedBox(height: 0.8.h),
-
           if (appliedAt != null)
             Text(
               "Applied ${_postedAgo(appliedAt)}",
@@ -255,20 +304,17 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-
           SizedBox(height: 1.4.h),
 
-          // Contact
           if (phone.isNotEmpty) _metaLine(Icons.phone_outlined, phone),
           if (email.isNotEmpty) _metaLine(Icons.email_outlined, email),
 
-          // Location
-          if (district.isNotEmpty) _metaLine(Icons.location_on_outlined, district),
+          if (district.isNotEmpty)
+            _metaLine(Icons.location_on_outlined, district),
           if (address.isNotEmpty) _metaLine(Icons.home_outlined, address),
 
           SizedBox(height: 1.2.h),
 
-          // Education + Experience
           if (education.isNotEmpty)
             _metaLine(Icons.school_outlined, education),
 
@@ -277,12 +323,10 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
           if (expectedSalaryText.isNotEmpty)
             _metaLine(Icons.currency_rupee, expectedSalaryText),
 
-          if (skillsText.isNotEmpty)
-            _metaLine(Icons.star_outline, skillsText),
+          if (skillsText.isNotEmpty) _metaLine(Icons.star_outline, skillsText),
 
           SizedBox(height: 1.6.h),
 
-          // Resume + Photo
           Row(
             children: [
               Expanded(
@@ -329,7 +373,6 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
           const Divider(height: 1),
           SizedBox(height: 1.2.h),
 
-          // Actions
           _actions(rowId, s),
         ],
       ),
@@ -337,8 +380,6 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
   }
 
   Widget _actions(String rowId, String status) {
-    // you can expand later, for now clean and useful
-
     if (status == 'applied') {
       return Row(
         children: [
