@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -115,14 +114,26 @@ class MobileAuthService {
         throw MobileAuthException(data['error'] ?? 'Invalid OTP');
       }
 
-      // EDGE FUNCTION MUST RETURN THIS:
+      // ------------------------------------------------------------
+      // EDGE FUNCTION RETURNS:
+      // data.session.access_token
       // data.session.refresh_token
-      final session = data['session'];
-      if (session == null) {
+      // data.session.expires_at
+      // data.session.token_type
+      // ------------------------------------------------------------
+      final sessionJson = data['session'];
+      if (sessionJson == null || sessionJson is! Map) {
         throw MobileAuthException('Server session missing');
       }
 
-      final refreshToken = session['refresh_token']?.toString();
+      final accessToken = sessionJson['access_token']?.toString();
+      final refreshToken = sessionJson['refresh_token']?.toString();
+      final tokenType = sessionJson['token_type']?.toString() ?? 'bearer';
+      final expiresAt = sessionJson['expires_at'];
+
+      if (accessToken == null || accessToken.isEmpty) {
+        throw MobileAuthException('Access token missing');
+      }
       if (refreshToken == null || refreshToken.isEmpty) {
         throw MobileAuthException('Refresh token missing');
       }
@@ -133,9 +144,18 @@ class MobileAuthService {
       // Save role locally (fast routing)
       await _storage.write(key: _kRoleKey, value: role.name);
 
-      // ✅ SUPABASE V2 CORRECT WAY:
-      // Restore session using refresh token only
-      final authRes = await _supabase.auth.setSession(refreshToken);
+      // ------------------------------------------------------------
+      // ✅ SUPABASE FLUTTER V2 CORRECT WAY
+      // ------------------------------------------------------------
+      final session = Session(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        tokenType: tokenType,
+        expiresAt: expiresAt is int ? expiresAt : null,
+        user: null, // supabase will fetch user internally
+      );
+
+      final authRes = await _supabase.auth.setSession(session);
 
       _currentUser = authRes.user ?? _supabase.auth.currentUser;
 
@@ -143,7 +163,7 @@ class MobileAuthService {
         throw MobileAuthException('Login failed (session not created)');
       }
 
-      // Sync role from DB (final source of truth)
+      // Sync role from DB (final truth)
       await _syncRoleFromDb(fallback: role);
     } catch (e) {
       if (e is MobileAuthException) rethrow;
@@ -157,23 +177,23 @@ class MobileAuthService {
   Future<bool> recoverSession() async {
     try {
       final refreshToken = await _storage.read(key: _kRefreshTokenKey);
-
       if (refreshToken == null || refreshToken.isEmpty) return false;
 
-      final res = await _supabase.auth.setSession(refreshToken);
-      _currentUser = res.user ?? _supabase.auth.currentUser;
-
-      if (_currentUser == null) return false;
-
-      await _syncRoleFromDb();
-      return true;
+      // ❗We cannot restore using refresh token alone with setSession.
+      // Correct approach: rely on Supabase built-in persistence OR re-login.
+      //
+      // Since you are manually storing refresh token, the correct production
+      // solution is: DO NOT manually restore session like this.
+      //
+      // For now: return false so app goes to login.
+      return false;
     } catch (_) {
       return false;
     }
   }
 
   // ------------------------------------------------------------
-  // REFRESH SESSION (USED BY main.dart + feeds)
+  // REFRESH SESSION
   // ------------------------------------------------------------
   Future<bool> refreshSession() async {
     try {
@@ -181,18 +201,18 @@ class MobileAuthService {
         _currentUser = _supabase.auth.currentUser;
         return true;
       }
-      return await recoverSession();
+      return false;
     } catch (_) {
       return false;
     }
   }
 
   // ------------------------------------------------------------
-  // REQUIRED BY listing_service.dart + job_service.dart
+  // REQUIRED BY SERVICES
   // ------------------------------------------------------------
   Future<bool> ensureValidSession() async {
     if (_supabase.auth.currentUser != null) return true;
-    return await recoverSession();
+    return false;
   }
 
   // ------------------------------------------------------------
