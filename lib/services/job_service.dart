@@ -4,20 +4,17 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../presentation/login_screen/mobile_auth_service.dart';
-
 class JobService {
   final SupabaseClient _supabase = Supabase.instance.client;
-  final MobileAuthService _authService = MobileAuthService();
 
-  /* ================= AUTH ================= */
+  // ------------------------------------------------------------
+  // AUTH (KEEP SIMPLE)
+  // ------------------------------------------------------------
+  void _ensureAuthenticatedSync() {
+    final user = _supabase.auth.currentUser;
+    final session = _supabase.auth.currentSession;
 
-  Future<void> _ensureAuthenticated() async {
-    final sessionValid = await _authService.ensureValidSession();
-
-    if (!sessionValid ||
-        _supabase.auth.currentUser == null ||
-        _supabase.auth.currentSession == null) {
+    if (user == null || session == null) {
       throw Exception('Authentication required. Please login again.');
     }
   }
@@ -83,7 +80,7 @@ class JobService {
     int offset = 0,
     int limit = 20,
   }) async {
-    await _ensureAuthenticated();
+    _ensureAuthenticatedSync();
 
     final nowIso = DateTime.now().toIso8601String();
 
@@ -99,7 +96,7 @@ class JobService {
   }
 
   Future<List<Map<String, dynamic>>> fetchPremiumJobs({int limit = 5}) async {
-    await _ensureAuthenticated();
+    _ensureAuthenticatedSync();
 
     final nowIso = DateTime.now().toIso8601String();
 
@@ -121,7 +118,7 @@ class JobService {
   Future<List<Map<String, dynamic>>> getRecommendedJobs({
     int limit = 40,
   }) async {
-    await _ensureAuthenticated();
+    _ensureAuthenticatedSync();
 
     final userId = _supabase.auth.currentUser!.id;
     final nowIso = DateTime.now().toIso8601String();
@@ -163,7 +160,7 @@ class JobService {
   Future<List<Map<String, dynamic>>> getJobsBasedOnActivity({
     int limit = 50,
   }) async {
-    await _ensureAuthenticated();
+    _ensureAuthenticatedSync();
 
     final userId = _supabase.auth.currentUser!.id;
     final nowIso = DateTime.now().toIso8601String();
@@ -196,10 +193,8 @@ class JobService {
   Future<void> trackJobView(String jobId) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
 
-      // IMPORTANT:
-      // Your schema does NOT define a unique constraint for (user_id, job_id)
-      // So upsert() with onConflict will not work reliably.
       await _supabase.from('job_views').insert({
         'user_id': userId,
         'job_id': jobId,
@@ -214,7 +209,7 @@ class JobService {
   /* ================= SAVED JOBS ================= */
 
   Future<Set<String>> getUserSavedJobs() async {
-    await _ensureAuthenticated();
+    _ensureAuthenticatedSync();
 
     final userId = _supabase.auth.currentUser!.id;
 
@@ -225,7 +220,7 @@ class JobService {
   }
 
   Future<List<Map<String, dynamic>>> getSavedJobs() async {
-    await _ensureAuthenticated();
+    _ensureAuthenticatedSync();
 
     final userId = _supabase.auth.currentUser!.id;
 
@@ -239,7 +234,7 @@ class JobService {
   }
 
   Future<bool> toggleSaveJob(String jobId) async {
-    await _ensureAuthenticated();
+    _ensureAuthenticatedSync();
 
     final userId = _supabase.auth.currentUser!.id;
 
@@ -275,7 +270,7 @@ class JobService {
     required String jobId,
     required String applicationId,
   }) async {
-    await _ensureAuthenticated();
+    _ensureAuthenticatedSync();
 
     final exists = await _supabase
         .from('job_applications_listings')
@@ -301,7 +296,7 @@ class JobService {
   }
 
   Future<List<Map<String, dynamic>>> getUserAppliedJobs() async {
-    await _ensureAuthenticated();
+    _ensureAuthenticatedSync();
 
     final userId = _supabase.auth.currentUser!.id;
 
@@ -325,7 +320,7 @@ class JobService {
   /* ================= PROFILE ================= */
 
   Future<int> calculateProfileCompletion() async {
-    await _ensureAuthenticated();
+    _ensureAuthenticatedSync();
 
     final userId = _supabase.auth.currentUser!.id;
 
@@ -337,9 +332,6 @@ class JobService {
 
     final filled = profile.values.where((v) => v != null).length;
 
-    // Your profile has MANY columns.
-    // This old logic will always show very low completion.
-    // But we keep it for now (you can improve later).
     return ((filled / 20) * 100).round().clamp(0, 100);
   }
 }
