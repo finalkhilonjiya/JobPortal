@@ -1,7 +1,10 @@
+// File: lib/presentation/jobs/job_application_form.dart
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../services/jobs_service.dart';
@@ -28,7 +31,10 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
   final _skills = TextEditingController();
 
   PlatformFile? _resumeFile;
-  PlatformFile? _photoFile;
+
+  /// Photo picked via image_picker (Android 10 safe)
+  XFile? _photoXFile;
+  Uint8List? _photoBytes;
 
   bool _submitting = false;
 
@@ -42,7 +48,7 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
   }
 
   // ------------------------------------------------------------
-  // PICKERS (ANDROID SAFE)
+  // PICK RESUME (PDF) -> file_picker
   // ------------------------------------------------------------
   Future<void> _pickResume() async {
     try {
@@ -76,29 +82,27 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
     }
   }
 
+  // ------------------------------------------------------------
+  // PICK PHOTO -> image_picker (Android 10 SAFE)
+  // ------------------------------------------------------------
   Future<void> _pickPhoto() async {
     try {
-      final res = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        withData: true,
+      final picker = ImagePicker();
+
+      final XFile? xfile = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
       );
 
-      if (res == null) return;
+      if (xfile == null) return;
 
-      final file = res.files.single;
-
-      if (file.bytes == null) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Photo could not be read. Please pick again."),
-          ),
-        );
-        return;
-      }
+      final bytes = await xfile.readAsBytes();
 
       if (!mounted) return;
-      setState(() => _photoFile = file);
+      setState(() {
+        _photoXFile = xfile;
+        _photoBytes = bytes;
+      });
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -115,7 +119,7 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
 
     if (!_formKey.currentState!.validate()) return;
 
-    if (_resumeFile == null || _photoFile == null) {
+    if (_resumeFile == null || _photoBytes == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Resume and photo are required')),
       );
@@ -128,7 +132,8 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
       await _jobsService.applyForJob(
         jobId: widget.jobId,
         resumeFile: _resumeFile!,
-        photoFile: _photoFile!,
+        photoBytes: _photoBytes!,
+        photoFileName: _photoXFile?.name ?? "photo.jpg",
         applicationData: {
           'name': _name.text.trim(),
           'email': _email.text.trim(),
@@ -187,7 +192,7 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
 
               _fileTile(
                 title: 'Photo',
-                fileName: _photoFile?.name,
+                fileName: _photoXFile?.name,
                 onPick: _pickPhoto,
               ),
 
