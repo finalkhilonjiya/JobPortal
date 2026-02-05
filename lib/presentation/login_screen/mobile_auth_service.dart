@@ -44,7 +44,6 @@ class MobileAuthService {
   // INIT
   // ------------------------------------------------------------
   Future<void> initialize() async {
-    // Supabase Flutter already persists session internally.
     _currentUser = _supabase.auth.currentUser;
   }
 
@@ -112,35 +111,23 @@ class MobileAuthService {
         throw MobileAuthException(data['error'] ?? 'Invalid OTP');
       }
 
-      // EDGE FUNCTION RETURNS: data.session.*
+      // EDGE FUNCTION RETURNS: data.session.refresh_token
       final sessionJson = data['session'];
       if (sessionJson == null || sessionJson is! Map) {
         throw MobileAuthException('Server session missing');
       }
 
-      final accessToken = sessionJson['access_token']?.toString();
       final refreshToken = sessionJson['refresh_token']?.toString();
-      final tokenType = sessionJson['token_type']?.toString() ?? 'bearer';
 
-      if (accessToken == null || accessToken.isEmpty) {
-        throw MobileAuthException('Access token missing');
-      }
       if (refreshToken == null || refreshToken.isEmpty) {
         throw MobileAuthException('Refresh token missing');
       }
 
       // ------------------------------------------------------------
-      // ✅ SUPABASE FLUTTER V2 CORRECT WAY (YOUR VERSION):
-      // Session() does NOT support expiresAt
+      // ✅ CORRECT FOR YOUR SUPABASE VERSION:
+      // setSession(refreshToken)
       // ------------------------------------------------------------
-      final session = Session(
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-        tokenType: tokenType,
-        user: null,
-      );
-
-      final authRes = await _supabase.auth.setSession(session);
+      final authRes = await _supabase.auth.setSession(refreshToken);
 
       _currentUser = authRes.user ?? _supabase.auth.currentUser;
 
@@ -171,9 +158,6 @@ class MobileAuthService {
     }
   }
 
-  // ------------------------------------------------------------
-  // REQUIRED BY SERVICES
-  // ------------------------------------------------------------
   Future<bool> ensureValidSession() async {
     return await refreshSession();
   }
@@ -182,12 +166,10 @@ class MobileAuthService {
   // ROLE
   // ------------------------------------------------------------
   Future<UserRole> getUserRole() async {
-    // local first (fast)
     final local = await _storage.read(key: _kRoleKey);
     final parsedLocal = _parseRole(local);
     if (parsedLocal != null) return parsedLocal;
 
-    // fallback to DB
     return await syncRoleFromDbStrict(fallback: UserRole.jobSeeker);
   }
 
@@ -221,12 +203,11 @@ class MobileAuthService {
 
     if (v == 'employer') return UserRole.employer;
 
-    // correct DB value
-    if (v == 'job_seeker') return UserRole.jobSeeker;
-
-    // old values (backward compatibility)
     if (v == 'jobseeker') return UserRole.jobSeeker;
+    if (v == 'job_seeker') return UserRole.jobSeeker;
     if (v == 'job-seeker') return UserRole.jobSeeker;
+
+    // legacy mapping
     if (v == 'buyer') return UserRole.jobSeeker;
 
     return null;
