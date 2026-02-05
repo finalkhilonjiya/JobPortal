@@ -1,4 +1,4 @@
-// lib/services/employer_job_service.dart
+// File: lib/services/employer_job_service.dart
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -18,7 +18,7 @@ class EmployerJobService {
         .select(
           'id, job_title, status, created_at, updated_at, applications_count, views_count, salary_min, salary_max, district, job_type',
         )
-        .eq('user_id', user.id) // ✅ correct schema column
+        .eq('user_id', user.id)
         .order('created_at', ascending: false);
 
     return List<Map<String, dynamic>>.from(res);
@@ -32,7 +32,7 @@ class EmployerJobService {
         .from('job_listings')
         .select('*')
         .eq('id', jobId)
-        .eq('user_id', user.id) // security: employer can only read own job
+        .eq('user_id', user.id)
         .maybeSingle();
 
     if (res == null) return null;
@@ -45,9 +45,10 @@ class EmployerJobService {
 
     await _client.from('job_listings').insert({
       ...data,
-      'user_id': user.id, // ✅ correct schema column
+      'user_id': user.id,
       'status': data['status'] ?? 'active',
-      'created_at': DateTime.now().toIso8601String(),
+
+      // only update updated_at manually
       'updated_at': DateTime.now().toIso8601String(),
     });
   }
@@ -85,11 +86,10 @@ class EmployerJobService {
   // APPLICANTS (PER JOB)
   // ------------------------------------------------------------
   //
-  // IMPORTANT:
-  // Applicants are linked via job_applications_listings table
-  //
   // job_applications_listings.listing_id -> job_listings.id
   // job_applications_listings.application_id -> job_applications.id
+  //
+  // job_applications.user_id -> user_profiles.id
   //
   // ------------------------------------------------------------
 
@@ -97,7 +97,7 @@ class EmployerJobService {
     final user = _client.auth.currentUser;
     if (user == null) return [];
 
-    // Ensure employer owns this job (prevents leaking applicants)
+    // Ensure employer owns this job
     final job = await _client
         .from('job_listings')
         .select('id')
@@ -111,28 +111,31 @@ class EmployerJobService {
         .from('job_applications_listings')
         .select('''
           id,
+          listing_id,
+          application_id,
           applied_at,
           application_status,
           employer_notes,
           interview_date,
+
           job_applications (
             id,
-            name,
-            phone,
-            email,
-            district,
-            address,
-            gender,
-            date_of_birth,
-            education,
-            experience_level,
-            experience_details,
-            skills,
-            expected_salary,
-            availability,
-            resume_file_url,
-            photo_file_url,
-            created_at
+            user_id,
+            created_at,
+            user_profiles (
+              id,
+              full_name,
+              mobile_number,
+              email,
+              district,
+              address,
+              gender,
+              date_of_birth,
+              education,
+              experience_years,
+              skills,
+              expected_salary
+            )
           )
         ''')
         .eq('listing_id', jobId)
