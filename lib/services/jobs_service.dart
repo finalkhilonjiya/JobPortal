@@ -1,19 +1,15 @@
-import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class JobsService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  /// IMPORTANT:
-  /// Your storage bucket name must exist.
-  /// If you named it differently, change it here.
+  /// Your storage bucket name
   static const String _bucket = 'job-files';
 
-  /// If your bucket is PRIVATE, keep this true.
-  /// If your bucket is PUBLIC, you can set false.
+  /// If bucket is PRIVATE -> true (recommended later)
   static const bool _useSignedUrls = false;
 
   // ------------------------------------------------------------
@@ -22,8 +18,11 @@ class JobsService {
   Future<void> applyForJob({
     required String jobId,
     required Map<String, dynamic> applicationData,
-    File? resumeFile,
-    File? photoFile,
+
+    /// IMPORTANT:
+    /// Use PlatformFile so Android 10+ does not crash
+    required PlatformFile resumeFile,
+    required PlatformFile photoFile,
   }) async {
     final user = _supabase.auth.currentUser;
     if (user == null) throw Exception('User not logged in');
@@ -49,14 +48,7 @@ class JobsService {
     // ------------------------------------------------------------
     // 2) Get / Create user's job_application row
     // ------------------------------------------------------------
-    //
-    // Your schema:
-    // job_applications.user_id -> user_profiles.id
-    //
-    // We keep ONE application row per user.
-    //
-    // ------------------------------------------------------------
-    Map<String, dynamic>? existingApp = await _supabase
+    final existingApp = await _supabase
         .from('job_applications')
         .select('id')
         .eq('user_id', userId)
@@ -65,7 +57,6 @@ class JobsService {
     String applicationId;
 
     if (existingApp == null) {
-      // create it
       final created = await _supabase
           .from('job_applications')
           .insert({
@@ -95,43 +86,36 @@ class JobsService {
     }
 
     // ------------------------------------------------------------
-    // 4) Upload resume + photo (SAFE)
+    // 4) Upload resume + photo (NO CRASH)
     // ------------------------------------------------------------
-    String? resumeUrl;
-    String? photoUrl;
+    final resumeBytes = resumeFile.bytes;
+    final photoBytes = photoFile.bytes;
 
-    if (resumeFile != null) {
-      resumeUrl = await _uploadFile(
-        userId: userId,
-        folder: 'resumes',
-        file: resumeFile,
-        fileNameFromUi: applicationData['resume_file_name']?.toString(),
-        contentType: 'application/pdf',
-      );
+    if (resumeBytes == null) {
+      throw Exception("Resume file could not be read. Please select again.");
+    }
+    if (photoBytes == null) {
+      throw Exception("Photo file could not be read. Please select again.");
     }
 
-    if (photoFile != null) {
-      photoUrl = await _uploadFile(
-        userId: userId,
-        folder: 'photos',
-        file: photoFile,
-        fileNameFromUi: applicationData['photo_file_name']?.toString(),
-        contentType: 'image/jpeg',
-      );
-    }
+    final resumeUrl = await _uploadBytes(
+      userId: userId,
+      folder: 'resumes',
+      bytes: resumeBytes,
+      fileName: resumeFile.name,
+      contentType: 'application/pdf',
+    );
+
+    final photoUrl = await _uploadBytes(
+      userId: userId,
+      folder: 'photos',
+      bytes: photoBytes,
+      fileName: photoFile.name,
+      contentType: 'image/jpeg',
+    );
 
     // ------------------------------------------------------------
-    // 5) Update user's application profile
-    // ------------------------------------------------------------
-    //
-    // IMPORTANT:
-    // Your employer applicants screen reads:
-    // job_applications -> user_profiles
-    //
-    // So most candidate data should be in user_profiles.
-    //
-    // But we still store resume/photo in job_applications.
-    //
+    // 5) Update job_applications with candidate info + file urls
     // ------------------------------------------------------------
     await _supabase.from('job_applications').update({
       ...applicationData,
@@ -151,9 +135,9 @@ class JobsService {
     });
 
     // ------------------------------------------------------------
-    // 7) Increment applications_count safely
+    // 7) Increment applications_count (SAFE)
     // ------------------------------------------------------------
-    final currentCount = (job['applications_count'] ?? 0) as int;
+    final currentCount = _toInt(job['applications_count']);
 
     await _supabase
         .from('job_listings')
@@ -171,23 +155,22 @@ class JobsService {
         'created_at': DateTime.now().toIso8601String(),
       });
     } catch (_) {
-      // ignore (activity table may not exist or may have RLS)
+      // ignore
     }
   }
 
   // ------------------------------------------------------------
-  // STORAGE UPLOAD (ANDROID SAFE)
+  // STORAGE UPLOAD
   // ------------------------------------------------------------
-  Future<String> _uploadFile({
+  Future<String> _uploadBytes({
     required String userId,
     required String folder,
-    required File file,
-    required String? fileNameFromUi,
+    required Uint8List bytes,
+    required String fileName,
     required String contentType,
   }) async {
-    final bytes = await file.readAsBytes();
-
-    final safeName = (fileNameFromUi ?? 'file')
+    final safeName = fileName
+        .trim()
         .replaceAll(' ', '_')
         .replaceAll(RegExp(r'[^a-zA-Z0-9_\.\-]'), '');
 
@@ -203,17 +186,22 @@ class JobsService {
           ),
         );
 
-    // If bucket is public:
     if (!_useSignedUrls) {
       return _supabase.storage.from(_bucket).getPublicUrl(path);
     }
 
-    // If bucket is private:
     final signed = await _supabase.storage.from(_bucket).createSignedUrl(
           path,
-          60 * 60 * 24 * 7, // 7 days
+          60 * 60 * 24 * 7,
         );
 
     return signed;
+  }
+
+  int _toInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is int) return v;
+    if (v is double) return v.toInt();
+    return int.tryParse(v.toString()) ?? 0;
   }
 }
