@@ -27,12 +27,10 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
   }
 
   Future<void> _loadApplicants() async {
+    if (!mounted) return;
     setState(() => _loading = true);
 
     try {
-      /// IMPORTANT:
-      /// Applicants come from job_applications_listings (bridge table)
-      /// and that points to job_applications (user’s profile application)
       final res = await _client
           .from('job_applications_listings')
           .select('''
@@ -41,20 +39,24 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
             application_status,
             employer_notes,
             interview_date,
+
             job_applications (
               id,
-              name,
-              phone,
-              email,
-              district,
-              education,
-              experience_level,
-              experience_details,
-              skills,
-              expected_salary,
-              availability,
-              resume_file_url,
-              photo_file_url
+              user_id,
+              created_at,
+
+              user_profiles (
+                id,
+                full_name,
+                mobile_number,
+                email,
+                district,
+                address,
+                education,
+                experience_years,
+                skills,
+                expected_salary
+              )
             )
           ''')
           .eq('listing_id', widget.jobId)
@@ -109,26 +111,38 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                   itemCount: _rows.length,
                   itemBuilder: (context, index) {
                     final row = _rows[index];
-                    final app = row['job_applications'] as Map<String, dynamic>?;
 
-                    final name = (app?['name'] ?? 'Candidate').toString();
-                    final phone = (app?['phone'] ?? '').toString();
-                    final email = (app?['email'] ?? '').toString();
-                    final expLevel = (app?['experience_level'] ?? '').toString();
-                    final expectedSalary =
-                        (app?['expected_salary'] ?? '').toString();
-                    final education = (app?['education'] ?? '').toString();
+                    final jobApp =
+                        row['job_applications'] as Map<String, dynamic>?;
+
+                    final profile = jobApp?['user_profiles']
+                        as Map<String, dynamic>?;
+
+                    final name =
+                        (profile?['full_name'] ?? 'Candidate').toString();
+                    final phone =
+                        (profile?['mobile_number'] ?? '').toString();
+                    final email = (profile?['email'] ?? '').toString();
+
+                    final expYears = profile?['experience_years'];
+                    final expectedSalary = profile?['expected_salary'];
+
+                    final education =
+                        (profile?['education'] ?? '').toString();
 
                     return _applicantCard(
                       rowId: row['id'].toString(),
-                      status: (row['application_status'] ?? 'applied').toString(),
+                      status:
+                          (row['application_status'] ?? 'applied').toString(),
                       appliedAt: row['applied_at']?.toString(),
                       name: name,
                       phone: phone,
                       email: email,
-                      expLevel: expLevel,
                       education: education,
-                      expectedSalary: expectedSalary,
+                      expText: expYears == null ? '' : '$expYears yrs',
+                      expectedSalaryText: expectedSalary == null
+                          ? ''
+                          : expectedSalary.toString(),
                     );
                   },
                 ),
@@ -145,9 +159,9 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
     required String name,
     required String phone,
     required String email,
-    required String expLevel,
     required String education,
-    required String expectedSalary,
+    required String expText,
+    required String expectedSalaryText,
   }) {
     final s = status.toLowerCase();
 
@@ -194,21 +208,19 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
           SizedBox(height: 1.4.h),
 
           // Contact
-          if (phone.isNotEmpty)
-            _metaLine(Icons.phone_outlined, phone),
-          if (email.isNotEmpty)
-            _metaLine(Icons.email_outlined, email),
+          if (phone.isNotEmpty) _metaLine(Icons.phone_outlined, phone),
+          if (email.isNotEmpty) _metaLine(Icons.email_outlined, email),
 
           SizedBox(height: 1.2.h),
 
           // Education + Experience
           if (education.isNotEmpty)
             _metaLine(Icons.school_outlined, education),
-          if (expLevel.isNotEmpty)
-            _metaLine(Icons.work_outline, expLevel),
 
-          if (expectedSalary.isNotEmpty)
-            _metaLine(Icons.currency_rupee, expectedSalary),
+          if (expText.isNotEmpty) _metaLine(Icons.work_outline, expText),
+
+          if (expectedSalaryText.isNotEmpty)
+            _metaLine(Icons.currency_rupee, expectedSalaryText),
 
           SizedBox(height: 1.8.h),
           const Divider(height: 1),
