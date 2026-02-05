@@ -36,12 +36,28 @@ class _JobDetailsPageState extends State<JobDetailsPage>
     _checkApplied();
   }
 
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
   Future<void> _checkApplied() async {
     try {
       final apps = await _jobService.getUserAppliedJobs();
-      _isApplied =
-          apps.any((e) => e['listing_id'] == widget.job['id']);
-    } catch (_) {}
+
+      final jobId = widget.job['id']?.toString();
+
+      _isApplied = apps.any((row) {
+        // row is from job_applications_listings
+        final listingId = row['listing_id']?.toString();
+        return listingId == jobId;
+      });
+    } catch (_) {
+      _isApplied = false;
+    }
+
+    if (!mounted) return;
     setState(() => _checking = false);
   }
 
@@ -49,37 +65,48 @@ class _JobDetailsPageState extends State<JobDetailsPage>
   Widget build(BuildContext context) {
     final job = widget.job;
 
-    final title = job['job_title'] ?? '';
-    final company = job['company_name'] ?? '';
-    final location = job['district'] ?? '';
+    final title = (job['job_title'] ?? '').toString();
+    final company = (job['company_name'] ?? '').toString();
+    final location = (job['district'] ?? '').toString();
+
     final salaryMin = job['salary_min'];
     final salaryMax = job['salary_max'];
-    final description = job['job_description'] ?? '';
+
+    final description = (job['job_description'] ?? '').toString();
     final skills = (job['skills_required'] as List?) ?? [];
-    final postedAt = job['created_at'];
+
+    final postedAt = job['created_at']?.toString();
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
 
-      /// APPLY BUTTON — FIXED HEIGHT, NO CLIP
+      /// APPLY BUTTON
       bottomNavigationBar: SafeArea(
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.2.h),
           color: Colors.white,
           child: SizedBox(
-            height: 40, // 🔧 HALF SIZE
+            height: 40,
             child: ElevatedButton(
               onPressed: _checking || _isApplied
                   ? null
                   : () async {
-                      await Navigator.push(
+                      final res = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) =>
-                              JobApplicationForm(jobId: job['id']),
+                              JobApplicationForm(jobId: job['id'].toString()),
                         ),
                       );
-                      _checkApplied();
+
+                      // If applied successfully, instantly disable button
+                      if (res == true) {
+                        if (!mounted) return;
+                        setState(() => _isApplied = true);
+                      } else {
+                        // still re-check for safety
+                        await _checkApplied();
+                      }
                     },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
@@ -87,14 +114,14 @@ class _JobDetailsPageState extends State<JobDetailsPage>
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(22),
                 ),
-                padding: EdgeInsets.zero, // 🔧 prevents text clipping
+                padding: EdgeInsets.zero,
               ),
-              child: const Text(
-                'Apply now',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
+              child: Text(
+                _isApplied ? 'Already Applied' : 'Apply now',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
                   fontSize: 14,
-                  height: 1.2, // 🔧 fixes vertical cut
+                  height: 1.2,
                 ),
               ),
             ),
@@ -112,9 +139,7 @@ class _JobDetailsPageState extends State<JobDetailsPage>
             actions: [
               IconButton(
                 icon: Icon(
-                  widget.isSaved
-                      ? Icons.bookmark
-                      : Icons.bookmark_border,
+                  widget.isSaved ? Icons.bookmark : Icons.bookmark_border,
                   color: Colors.black,
                 ),
                 onPressed: widget.onSaveToggle,
@@ -122,7 +147,7 @@ class _JobDetailsPageState extends State<JobDetailsPage>
             ],
           ),
 
-          /// 🔒 FIXED JOB HEADER (NO SCROLL)
+          /// HEADER
           Container(
             color: Colors.white,
             padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 2.h),
@@ -139,7 +164,7 @@ class _JobDetailsPageState extends State<JobDetailsPage>
                         title,
                         style: TextStyle(
                           fontSize: 20.sp,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                       SizedBox(height: 0.6.h),
@@ -148,6 +173,7 @@ class _JobDetailsPageState extends State<JobDetailsPage>
                         style: TextStyle(
                           fontSize: 12.5.sp,
                           color: Colors.grey.shade700,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       SizedBox(height: 0.4.h),
@@ -156,6 +182,7 @@ class _JobDetailsPageState extends State<JobDetailsPage>
                         style: TextStyle(
                           fontSize: 10.5.sp,
                           color: Colors.grey.shade500,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -165,7 +192,7 @@ class _JobDetailsPageState extends State<JobDetailsPage>
             ),
           ),
 
-          /// FIXED TABS (UNDER HEADER)
+          /// TABS
           Container(
             color: Colors.white,
             child: TabBar(
@@ -180,12 +207,11 @@ class _JobDetailsPageState extends State<JobDetailsPage>
             ),
           ),
 
-          /// SCROLLING CONTENT ONLY
+          /// BODY
           Expanded(
             child: TabBarView(
               controller: _tabController,
               children: [
-                /// DETAILS TAB
                 ListView(
                   padding: EdgeInsets.all(4.w),
                   children: [
@@ -200,23 +226,20 @@ class _JobDetailsPageState extends State<JobDetailsPage>
                     _section('Description', description),
                     if (skills.isNotEmpty) ...[
                       SizedBox(height: 2.h),
-                      _section(
-                        'Must have skills',
-                        skills.join(', '),
-                      ),
+                      _section('Must have skills', skills.join(', ')),
                     ],
                     SizedBox(height: 8.h),
                   ],
                 ),
 
-                /// ABOUT COMPANY TAB
                 ListView(
                   padding: EdgeInsets.all(4.w),
                   children: [
                     _section(
                       'About company',
-                      job['company_description'] ??
-                          'Company information not available.',
+                      (job['company_description'] ??
+                              'Company information not available.')
+                          .toString(),
                     ),
                     SizedBox(height: 8.h),
                   ],
@@ -229,8 +252,9 @@ class _JobDetailsPageState extends State<JobDetailsPage>
     );
   }
 
-  /// ---------------- HELPERS ----------------
-
+  // ------------------------------------------------------------
+  // HELPERS
+  // ------------------------------------------------------------
   Widget _infoCard({required List<Widget> children}) {
     return Container(
       padding: EdgeInsets.all(4.w),
@@ -252,7 +276,7 @@ class _JobDetailsPageState extends State<JobDetailsPage>
           Expanded(
             child: Text(
               text,
-              style: TextStyle(fontSize: 12.sp),
+              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -268,7 +292,7 @@ class _JobDetailsPageState extends State<JobDetailsPage>
           title,
           style: TextStyle(
             fontSize: 14.5.sp,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w800,
           ),
         ),
         SizedBox(height: 1.h),
@@ -283,6 +307,7 @@ class _JobDetailsPageState extends State<JobDetailsPage>
             style: TextStyle(
               fontSize: 12.sp,
               height: 1.6,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -290,19 +315,34 @@ class _JobDetailsPageState extends State<JobDetailsPage>
     );
   }
 
-  String _salary(int? min, int? max) {
+  String _salary(dynamic min, dynamic max) {
+    int? toInt(dynamic v) {
+      if (v == null) return null;
+      if (v is int) return v;
+      return int.tryParse(v.toString());
+    }
+
+    final mn = toInt(min);
+    final mx = toInt(max);
+
     String f(int v) => '${(v / 100000).toStringAsFixed(1)} Lacs PA';
-    if (min != null && max != null) return '${f(min)} - ${f(max)}';
-    if (min != null) return f(min);
+
+    if (mn != null && mx != null) return '${f(mn)} - ${f(mx)}';
+    if (mn != null) return f(mn);
     return 'Not disclosed';
   }
 
   String _postedAgo(String? date) {
     if (date == null) return 'Recently';
+
     final d = DateTime.tryParse(date);
     if (d == null) return 'Recently';
-    final days = DateTime.now().difference(d).inDays;
-    return 'Posted $days d ago';
+
+    final diff = DateTime.now().difference(d);
+
+    if (diff.inHours < 24) return 'Posted today';
+    if (diff.inDays == 1) return 'Posted 1 day ago';
+    return 'Posted ${diff.inDays} days ago';
   }
 }
 
@@ -313,8 +353,7 @@ class _CompanyLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final letter =
-        company.isNotEmpty ? company[0].toUpperCase() : 'C';
+    final letter = company.isNotEmpty ? company[0].toUpperCase() : 'C';
     final color = Colors.primaries[
         Random(company.hashCode).nextInt(Colors.primaries.length)];
 
