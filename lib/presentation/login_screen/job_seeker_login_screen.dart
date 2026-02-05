@@ -151,7 +151,8 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
 
       if (!mounted) return;
 
-      Navigator.pushReplacementNamed(context, AppRoutes.homeJobsFeed);
+      // ✅ PRODUCTION: ALWAYS go to HomeRouter (it decides role screen)
+      Navigator.pushReplacementNamed(context, AppRoutes.homeRouter);
     } catch (e) {
       setState(() {
         _isLoading = false;
