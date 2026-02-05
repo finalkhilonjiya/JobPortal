@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
-import '../../login_screen/mobile_login_screen.dart';
+import '../../../routes/app_routes.dart';
 import '../../login_screen/mobile_auth_service.dart';
 
 import 'profile_page.dart';
@@ -18,7 +18,7 @@ class NaukriDrawer extends StatelessWidget {
   final int profileCompletion;
   final VoidCallback onClose;
 
-  /// 🔑 Role flag
+  /// Role flag
   final bool isCompanyUser;
 
   const NaukriDrawer({
@@ -31,8 +31,7 @@ class NaukriDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final safeCompletion =
-        profileCompletion.clamp(0, 100); // safety
+    final safeCompletion = profileCompletion.clamp(0, 100);
 
     return Drawer(
       child: SafeArea(
@@ -105,7 +104,9 @@ class NaukriDrawer extends StatelessWidget {
                   },
                   child: Container(
                     padding: EdgeInsets.symmetric(
-                        horizontal: 4.w, vertical: 1.6.h),
+                      horizontal: 4.w,
+                      vertical: 1.6.h,
+                    ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -117,8 +118,10 @@ class NaukriDrawer extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.workspace_premium,
-                            color: Colors.amber.shade800),
+                        Icon(
+                          Icons.workspace_premium,
+                          color: Colors.amber.shade800,
+                        ),
                         SizedBox(width: 3.w),
                         Expanded(
                           child: Text(
@@ -129,8 +132,11 @@ class NaukriDrawer extends StatelessWidget {
                             ),
                           ),
                         ),
-                        Icon(Icons.arrow_forward_ios,
-                            size: 14, color: Colors.grey),
+                        const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 14,
+                          color: Colors.grey,
+                        ),
                       ],
                     ),
                   ),
@@ -156,20 +162,44 @@ class NaukriDrawer extends StatelessWidget {
 
   /// ================= APPLICANT MENU =================
   List<Widget> _applicantMenu(BuildContext context) => [
-        _item(context, Icons.search, 'Search jobs',
-            () => _go(context, SearchPage())),
+        _item(
+          context,
+          Icons.search,
+          'Search jobs',
+          () => _go(context, const SearchPage()),
+        ),
         _item(context, Icons.work_outline, 'Recommended jobs', onClose),
-        _item(context, Icons.assignment_turned_in_outlined, 'My applications',
-            () => _go(context, MyApplicationsPage())),
-        _item(context, Icons.bookmark_border, 'Saved jobs',
-            () => _go(context, SavedJobsPage())),
-        _item(context, Icons.bar_chart_outlined, 'Profile performance',
-            () => _go(context, ProfilePerformancePage())),
+        _item(
+          context,
+          Icons.assignment_turned_in_outlined,
+          'My applications',
+          () => _go(context, const MyApplicationsPage()),
+        ),
+        _item(
+          context,
+          Icons.bookmark_border,
+          'Saved jobs',
+          () => _go(context, const SavedJobsPage()),
+        ),
+        _item(
+          context,
+          Icons.bar_chart_outlined,
+          'Profile performance',
+          () => _go(context, const ProfilePerformancePage()),
+        ),
         _divider(),
-        _item(context, Icons.settings_outlined, 'Settings',
-            () => _go(context, SettingsPage())),
-        _item(context, Icons.help_outline, 'Help',
-            () => _go(context, HelpPage())),
+        _item(
+          context,
+          Icons.settings_outlined,
+          'Settings',
+          () => _go(context, const SettingsPage()),
+        ),
+        _item(
+          context,
+          Icons.help_outline,
+          'Help',
+          () => _go(context, const HelpPage()),
+        ),
         _divider(),
         _logoutItem(context),
       ];
@@ -177,17 +207,30 @@ class NaukriDrawer extends StatelessWidget {
   /// ================= COMPANY MENU =================
   List<Widget> _companyMenu(BuildContext context) => [
         _item(context, Icons.dashboard_outlined, 'Dashboard', onClose),
-        _item(context, Icons.assignment_ind_outlined, 'Applications received',
-            onClose),
+        _item(
+          context,
+          Icons.assignment_ind_outlined,
+          'Applications received',
+          onClose,
+        ),
         _divider(),
-        _item(context, Icons.settings_outlined, 'Settings',
-            () => _go(context, SettingsPage())),
-        _item(context, Icons.help_outline, 'Help',
-            () => _go(context, HelpPage())),
+        _item(
+          context,
+          Icons.settings_outlined,
+          'Settings',
+          () => _go(context, const SettingsPage()),
+        ),
+        _item(
+          context,
+          Icons.help_outline,
+          'Help',
+          () => _go(context, const HelpPage()),
+        ),
         _divider(),
         _logoutItem(context),
       ];
 
+  /// ================= LOGOUT (FIXED) =================
   Widget _logoutItem(BuildContext context) {
     return _item(
       context,
@@ -195,9 +238,14 @@ class NaukriDrawer extends StatelessWidget {
       'Logout',
       () async {
         await MobileAuthService().logout();
-        Navigator.pushAndRemoveUntil(
+
+        if (!context.mounted) return;
+
+        /// IMPORTANT:
+        /// Always go back to the starting page (RoleSelection)
+        Navigator.pushNamedAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => MobileLoginScreen()),
+          AppRoutes.roleSelection,
           (_) => false,
         );
       },
