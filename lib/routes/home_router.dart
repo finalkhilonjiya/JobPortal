@@ -22,11 +22,16 @@ class _HomeRouterState extends State<HomeRouter> {
   }
 
   Future<UserRole> _resolveRole() async {
-    // 1) Ensure session exists
-    await _auth.refreshSession();
+    try {
+      // 1) Ensure session exists
+      await _auth.refreshSession();
 
-    // 2) Always fetch role from DB (final truth)
-    return await _auth.syncRoleFromDbStrict();
+      // 2) Always fetch role from DB (final truth)
+      return await _auth.syncRoleFromDbStrict();
+    } catch (_) {
+      // If anything fails, fallback
+      return UserRole.jobSeeker;
+    }
   }
 
   @override
@@ -40,7 +45,6 @@ class _HomeRouterState extends State<HomeRouter> {
           );
         }
 
-        // fallback if something failed
         final role = snap.data ?? UserRole.jobSeeker;
 
         if (role == UserRole.employer) {
