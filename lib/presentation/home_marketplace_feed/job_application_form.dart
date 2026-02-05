@@ -26,12 +26,14 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
   final _phone = TextEditingController();
   final _skills = TextEditingController();
 
-  // Picked files (safe for Android 10+)
   PlatformFile? _resumeFile;
   PlatformFile? _photoFile;
 
   bool _loading = true;
   bool _submitting = false;
+
+  // Your bucket
+  static const String _bucket = "job-files";
 
   @override
   void initState() {
@@ -70,14 +72,10 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
 
         final skills = profile['skills'];
         if (skills is List) {
-          _skills.text = skills.join(', ');
-        } else {
-          _skills.text = '';
+          _skills.text = skills.map((e) => e.toString()).join(', ');
         }
       }
-    } catch (_) {
-      // ignore
-    }
+    } catch (_) {}
 
     if (!mounted) return;
     setState(() => _loading = false);
@@ -90,14 +88,13 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
     final res = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: const ['pdf'],
-      withData: true, // IMPORTANT
+      withData: true,
     );
 
     if (res == null) return;
 
     final file = res.files.single;
 
-    // bytes must exist, otherwise Supabase upload will fail
     if (file.bytes == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -115,7 +112,7 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
   Future<void> _pickPhoto() async {
     final res = await FilePicker.platform.pickFiles(
       type: FileType.image,
-      withData: true, // IMPORTANT
+      withData: true,
     );
 
     if (res == null) return;
@@ -137,7 +134,7 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
   }
 
   // ------------------------------------------------------------
-  // SUBMIT
+  // APPLY
   // ------------------------------------------------------------
   Future<void> _apply() async {
     if (_submitting) return;
@@ -157,94 +154,81 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
       final user = _supabase.auth.currentUser;
       if (user == null) throw Exception("Not logged in");
 
-      // 1) Create/Fetch user's job_application record
-      // NOTE: Your schema already uses job_applications table.
-      // We keep it minimal and safe.
+      final userId = user.id;
+
+      // 1) Prevent duplicate apply (correct)
       final existing = await _supabase
-          .from('job_applications')
-          .select('id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-      String applicationId;
-
-      if (existing != null) {
-        applicationId = existing['id'].toString();
-
-        await _supabase.from('job_applications').update({
-          'name': _name.text.trim(),
-          'email': _email.text.trim(),
-          'phone': _phone.text.trim(),
-          'skills': _skills.text
-              .split(',')
-              .map((e) => e.trim())
-              .where((e) => e.isNotEmpty)
-              .toList(),
-          'updated_at': DateTime.now().toIso8601String(),
-        }).eq('id', applicationId);
-      } else {
-        final created = await _supabase
-            .from('job_applications')
-            .insert({
-              'user_id': user.id,
-              'name': _name.text.trim(),
-              'email': _email.text.trim(),
-              'phone': _phone.text.trim(),
-              'skills': _skills.text
-                  .split(',')
-                  .map((e) => e.trim())
-                  .where((e) => e.isNotEmpty)
-                  .toList(),
-              'created_at': DateTime.now().toIso8601String(),
-            })
-            .select('id')
-            .single();
-
-        applicationId = created['id'].toString();
-      }
-
-      // 2) Upload resume + photo to storage
-      // Bucket names must exist in Supabase:
-      // - resumes
-      // - photos
-      final resumeUrl = await _uploadToStorage(
-        bucket: 'resumes',
-        bytes: _resumeFile!.bytes!,
-        fileName: _safeFileName(_resumeFile!.name, defaultExt: 'pdf'),
-        folder: user.id,
-      );
-
-      final photoUrl = await _uploadToStorage(
-        bucket: 'photos',
-        bytes: _photoFile!.bytes!,
-        fileName: _safeFileName(_photoFile!.name, defaultExt: 'jpg'),
-        folder: user.id,
-      );
-
-      // 3) Update job_applications with uploaded file urls
-      await _supabase.from('job_applications').update({
-        'resume_file_url': resumeUrl,
-        'photo_file_url': photoUrl,
-      }).eq('id', applicationId);
-
-      // 4) Link application to job listing (bridge table)
-      final exists = await _supabase
           .from('job_applications_listings')
           .select('id')
-          .eq('application_id', applicationId)
+          .eq('user_id', userId)
           .eq('listing_id', widget.jobId)
           .maybeSingle();
 
-      if (exists != null) {
+      if (existing != null) {
         throw Exception("You already applied for this job");
       }
 
+      // 2) Upload resume + photo
+      final resumeUrl = await _uploadToJobFiles(
+        folder: "resumes/$userId",
+        bytes: _resumeFile!.bytes!,
+        fileName: _safeFileName(_resumeFile!.name, defaultExt: "pdf"),
+      );
+
+      final photoUrl = await _uploadToJobFiles(
+        folder: "photos/$userId",
+        bytes: _photoFile!.bytes!,
+        fileName: _safeFileName(_photoFile!.name, defaultExt: "jpg"),
+      );
+
+      // 3) Insert job_applications row (NEW ROW PER APPLY)
+      final createdApp = await _supabase
+          .from('job_applications')
+          .insert({
+            'user_id': userId,
+            'name': _name.text.trim(),
+            'email': _email.text.trim(),
+            'phone': _phone.text.trim(),
+            'skills': _skills.text
+                .split(',')
+                .map((e) => e.trim())
+                .where((e) => e.isNotEmpty)
+                .toList(),
+            'resume_file_url': resumeUrl,
+            'photo_file_url': photoUrl,
+            'status': 'submitted',
+            'created_at': DateTime.now().toIso8601String(),
+          })
+          .select('id')
+          .single();
+
+      final applicationId = createdApp['id'].toString();
+
+      // 4) Insert job_applications_listings row
       await _supabase.from('job_applications_listings').insert({
         'application_id': applicationId,
         'listing_id': widget.jobId,
+        'user_id': userId,
         'applied_at': DateTime.now().toIso8601String(),
         'application_status': 'applied',
       });
+
+      // 5) Increment job count safely
+      // (No need to read old value. Just +1 using RPC would be best,
+      // but for now we keep it safe.)
+      try {
+        final job = await _supabase
+            .from('job_listings')
+            .select('applications_count')
+            .eq('id', widget.jobId)
+            .maybeSingle();
+
+        final current = (job?['applications_count'] ?? 0) as int;
+
+        await _supabase
+            .from('job_listings')
+            .update({'applications_count': current + 1}).eq('id', widget.jobId);
+      } catch (_) {}
 
       if (!mounted) return;
 
@@ -264,23 +248,23 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
   }
 
   // ------------------------------------------------------------
-  // STORAGE HELPERS
+  // STORAGE
   // ------------------------------------------------------------
-  Future<String> _uploadToStorage({
-    required String bucket,
+  Future<String> _uploadToJobFiles({
+    required String folder,
     required Uint8List bytes,
     required String fileName,
-    required String folder,
   }) async {
-    final path = '$folder/${DateTime.now().millisecondsSinceEpoch}_$fileName';
+    final path =
+        '$folder/${DateTime.now().millisecondsSinceEpoch}_$fileName';
 
-    await _supabase.storage.from(bucket).uploadBinary(
+    await _supabase.storage.from(_bucket).uploadBinary(
           path,
           bytes,
           fileOptions: const FileOptions(upsert: true),
         );
 
-    return _supabase.storage.from(bucket).getPublicUrl(path);
+    return _supabase.storage.from(_bucket).getPublicUrl(path);
   }
 
   String _safeFileName(String original, {required String defaultExt}) {
@@ -318,23 +302,18 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
               _field(_email, 'Email'),
               _field(_phone, 'Phone'),
               _field(_skills, 'Skills (comma separated)'),
-
               SizedBox(height: 1.h),
-
               _fileTile(
                 title: 'Resume (PDF)',
                 fileName: _resumeFile?.name,
                 onPick: _pickResume,
               ),
-
               _fileTile(
                 title: 'Photo',
                 fileName: _photoFile?.name,
                 onPick: _pickPhoto,
               ),
-
               const Spacer(),
-
               SizedBox(
                 width: double.infinity,
                 height: 44,
