@@ -1,7 +1,9 @@
 // File: lib/services/job_service.dart
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter/foundation.dart';
 import 'dart:math' as math;
+
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../presentation/login_screen/mobile_auth_service.dart';
 
 class JobService {
@@ -12,6 +14,7 @@ class JobService {
 
   Future<void> _ensureAuthenticated() async {
     final sessionValid = await _authService.ensureValidSession();
+
     if (!sessionValid ||
         _supabase.auth.currentUser == null ||
         _supabase.auth.currentSession == null) {
@@ -24,40 +27,44 @@ class JobService {
   double _toRadians(double degree) => degree * math.pi / 180;
 
   double _calculateDistance(
-      double lat1, double lon1, double lat2, double lon2) {
+    double lat1,
+    double lon1,
+    double lat2,
+    double lon2,
+  ) {
     const double earthRadius = 6371;
     final dLat = _toRadians(lat2 - lat1);
     final dLon = _toRadians(lon2 - lon1);
+
     final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(_toRadians(lat1)) *
             math.cos(_toRadians(lat2)) *
             math.sin(dLon / 2) *
             math.sin(dLon / 2);
+
     return earthRadius * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
   }
 
   int _calculateMatchScore(
-      Map<String, dynamic> job, Map<String, dynamic> profile) {
+    Map<String, dynamic> job,
+    Map<String, dynamic> profile,
+  ) {
     int score = 0;
 
-    final jobSkills =
-        (job['skills_required'] as List?)?.cast<String>() ?? [];
+    final jobSkills = (job['skills_required'] as List?)?.cast<String>() ?? [];
     final userSkills = (profile['skills'] as List?)?.cast<String>() ?? [];
 
     if (jobSkills.isNotEmpty && userSkills.isNotEmpty) {
-      final match =
-          jobSkills.where((s) => userSkills.contains(s)).length;
+      final match = jobSkills.where((s) => userSkills.contains(s)).length;
       score += ((match / jobSkills.length) * 40).round();
     }
 
-    if ((profile['preferred_job_types'] as List?)
-            ?.contains(job['job_type']) ==
+    if ((profile['preferred_job_types'] as List?)?.contains(job['job_type']) ==
         true) {
       score += 20;
     }
 
-    if ((profile['preferred_locations'] as List?)
-            ?.contains(job['district']) ==
+    if ((profile['preferred_locations'] as List?)?.contains(job['district']) ==
         true) {
       score += 20;
     }
@@ -77,40 +84,53 @@ class JobService {
     int limit = 20,
   }) async {
     await _ensureAuthenticated();
+
+    final nowIso = DateTime.now().toIso8601String();
+
     final res = await _supabase
         .from('job_listings')
         .select('*')
         .eq('status', 'active')
+        .gte('expires_at', nowIso)
         .order('created_at', ascending: false)
         .range(offset, offset + limit - 1);
+
     return List<Map<String, dynamic>>.from(res);
   }
 
   Future<List<Map<String, dynamic>>> fetchPremiumJobs({int limit = 5}) async {
     await _ensureAuthenticated();
+
+    final nowIso = DateTime.now().toIso8601String();
+
     final res = await _supabase
         .from('job_listings')
         .select('*')
         .eq('status', 'active')
         .eq('is_premium', true)
+        .gte('expires_at', nowIso)
         .order('created_at', ascending: false)
         .limit(limit);
+
     return List<Map<String, dynamic>>.from(res);
   }
 
   /* ================= REQUIRED BY HOME ================= */
 
-  /// ✅ USED IN HomeJobsFeed
+  /// USED IN HomeJobsFeed
   Future<List<Map<String, dynamic>>> getRecommendedJobs({
     int limit = 40,
   }) async {
     await _ensureAuthenticated();
+
     final userId = _supabase.auth.currentUser!.id;
+    final nowIso = DateTime.now().toIso8601String();
 
     final profile = await _supabase
         .from('user_profiles')
         .select(
-            'skills, preferred_job_types, preferred_locations, expected_salary_min')
+          'skills, preferred_job_types, preferred_locations, expected_salary_min',
+        )
         .eq('id', userId)
         .maybeSingle();
 
@@ -122,6 +142,7 @@ class JobService {
         .from('job_listings')
         .select('*')
         .eq('status', 'active')
+        .gte('expires_at', nowIso)
         .order('created_at', ascending: false)
         .limit(limit);
 
@@ -138,12 +159,14 @@ class JobService {
     return jobs;
   }
 
-  /// ✅ USED IN HomeJobsFeed
+  /// USED IN HomeJobsFeed
   Future<List<Map<String, dynamic>>> getJobsBasedOnActivity({
     int limit = 50,
   }) async {
     await _ensureAuthenticated();
+
     final userId = _supabase.auth.currentUser!.id;
+    final nowIso = DateTime.now().toIso8601String();
 
     final views = await _supabase
         .from('job_views')
@@ -162,21 +185,27 @@ class JobService {
     final res = await _supabase
         .from('job_listings')
         .select('*')
-        .inFilter('id', jobIds);
+        .inFilter('id', jobIds)
+        .eq('status', 'active')
+        .gte('expires_at', nowIso);
 
     return List<Map<String, dynamic>>.from(res);
   }
 
-  /// ✅ USED IN HomeJobsFeed + JobDetailsPage
+  /// USED IN HomeJobsFeed + JobDetailsPage
   Future<void> trackJobView(String jobId) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
-      await _supabase.from('job_views').upsert({
+
+      // IMPORTANT:
+      // Your schema does NOT define a unique constraint for (user_id, job_id)
+      // So upsert() with onConflict will not work reliably.
+      await _supabase.from('job_views').insert({
         'user_id': userId,
         'job_id': jobId,
         'viewed_at': DateTime.now().toIso8601String(),
         'device_type': 'mobile',
-      }, onConflict: 'user_id,job_id');
+      });
     } catch (e) {
       debugPrint('trackJobView error: $e');
     }
@@ -186,16 +215,18 @@ class JobService {
 
   Future<Set<String>> getUserSavedJobs() async {
     await _ensureAuthenticated();
+
     final userId = _supabase.auth.currentUser!.id;
-    final res = await _supabase
-        .from('saved_jobs')
-        .select('job_id')
-        .eq('user_id', userId);
+
+    final res =
+        await _supabase.from('saved_jobs').select('job_id').eq('user_id', userId);
+
     return res.map<String>((e) => e['job_id'].toString()).toSet();
   }
 
   Future<List<Map<String, dynamic>>> getSavedJobs() async {
     await _ensureAuthenticated();
+
     final userId = _supabase.auth.currentUser!.id;
 
     final res = await _supabase
@@ -204,13 +235,12 @@ class JobService {
         .eq('user_id', userId)
         .order('saved_at', ascending: false);
 
-    return res
-        .map<Map<String, dynamic>>((e) => e['job_listings'])
-        .toList();
+    return res.map<Map<String, dynamic>>((e) => e['job_listings']).toList();
   }
 
   Future<bool> toggleSaveJob(String jobId) async {
     await _ensureAuthenticated();
+
     final userId = _supabase.auth.currentUser!.id;
 
     final existing = await _supabase
@@ -226,6 +256,7 @@ class JobService {
           .delete()
           .eq('user_id', userId)
           .eq('job_id', jobId);
+
       return false;
     }
 
@@ -234,6 +265,7 @@ class JobService {
       'job_id': jobId,
       'saved_at': DateTime.now().toIso8601String(),
     });
+
     return true;
   }
 
@@ -270,6 +302,7 @@ class JobService {
 
   Future<List<Map<String, dynamic>>> getUserAppliedJobs() async {
     await _ensureAuthenticated();
+
     final userId = _supabase.auth.currentUser!.id;
 
     final app = await _supabase
@@ -293,6 +326,7 @@ class JobService {
 
   Future<int> calculateProfileCompletion() async {
     await _ensureAuthenticated();
+
     final userId = _supabase.auth.currentUser!.id;
 
     final profile = await _supabase
@@ -301,7 +335,11 @@ class JobService {
         .eq('id', userId)
         .single();
 
-    int filled = profile.values.where((v) => v != null).length;
+    final filled = profile.values.where((v) => v != null).length;
+
+    // Your profile has MANY columns.
+    // This old logic will always show very low completion.
+    // But we keep it for now (you can improve later).
     return ((filled / 20) * 100).round().clamp(0, 100);
   }
 }
