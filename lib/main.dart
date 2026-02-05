@@ -35,18 +35,7 @@ class AppStateNotifier with ChangeNotifier {
 /* ----------  MAIN  ---------- */
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-
-  /// UI chrome (set before runApp)
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Colors.white,
-      systemNavigationBarIconBrightness: Brightness.dark,
-    ),
-  );
 
   /// Load env
   try {
@@ -62,6 +51,16 @@ Future<void> main() async {
       );
     } catch (_) {}
   }
+
+  /// UI chrome
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
 
   runApp(const MyApp());
 }
@@ -125,7 +124,6 @@ class _AppInitializerState extends State<AppInitializer> {
 
   Future<void> _bootstrap() async {
     try {
-      /// Splash delay
       await Future.delayed(const Duration(milliseconds: 1200));
 
       /// If Supabase env missing → continue app
@@ -137,11 +135,9 @@ class _AppInitializerState extends State<AppInitializer> {
 
       final client = Supabase.instance.client;
 
-      /// Supabase v2 persists session automatically.
       final session = client.auth.currentSession;
       final user = client.auth.currentUser;
 
-      /// Also init our service (for role + helpers)
       final auth = MobileAuthService();
       await auth.initialize();
 
