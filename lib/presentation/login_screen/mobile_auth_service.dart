@@ -44,7 +44,6 @@ class MobileAuthService {
   // INIT
   // ------------------------------------------------------------
   Future<void> initialize() async {
-    // Supabase Flutter already persists session internally.
     _currentUser = _supabase.auth.currentUser;
   }
 
@@ -112,6 +111,7 @@ class MobileAuthService {
         throw MobileAuthException(data['error'] ?? 'Invalid OTP');
       }
 
+      // EDGE FUNCTION RETURNS: data.session.*
       final sessionJson = data['session'];
       if (sessionJson == null || sessionJson is! Map) {
         throw MobileAuthException('Server session missing');
@@ -119,6 +119,8 @@ class MobileAuthService {
 
       final accessToken = sessionJson['access_token']?.toString();
       final refreshToken = sessionJson['refresh_token']?.toString();
+      final tokenType = sessionJson['token_type']?.toString() ?? 'bearer';
+      final expiresAt = sessionJson['expires_at'];
 
       if (accessToken == null || accessToken.isEmpty) {
         throw MobileAuthException('Access token missing');
@@ -127,9 +129,19 @@ class MobileAuthService {
         throw MobileAuthException('Refresh token missing');
       }
 
+      // ------------------------------------------------------------
       // ✅ SUPABASE FLUTTER V2 CORRECT WAY:
-      // setSession() takes ONE argument: refreshToken
-      final authRes = await _supabase.auth.setSession(refreshToken);
+      // setSession(Session(...))
+      // ------------------------------------------------------------
+      final session = Session(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        tokenType: tokenType,
+        expiresAt: expiresAt is int ? expiresAt : null,
+        user: null,
+      );
+
+      final authRes = await _supabase.auth.setSession(session);
 
       _currentUser = authRes.user ?? _supabase.auth.currentUser;
 
@@ -137,11 +149,11 @@ class MobileAuthService {
         throw MobileAuthException('Login failed (session not created)');
       }
 
-      // Save role locally for faster routing
+      // Save role locally for routing
       await _storage.write(key: _kRoleKey, value: role.name);
 
-      // IMPORTANT: DB is final truth
-      await syncRoleFromDbStrict();
+      // DB is final truth
+      await syncRoleFromDbStrict(fallback: role);
     } catch (e) {
       if (e is MobileAuthException) rethrow;
       throw MobileAuthException('Invalid OTP');
@@ -149,7 +161,7 @@ class MobileAuthService {
   }
 
   // ------------------------------------------------------------
-  // SESSION REFRESH (USED BY main.dart + feeds)
+  // SESSION REFRESH
   // ------------------------------------------------------------
   Future<bool> refreshSession() async {
     try {
@@ -160,29 +172,21 @@ class MobileAuthService {
     }
   }
 
-  // ------------------------------------------------------------
-  // REQUIRED BY SERVICES
-  // ------------------------------------------------------------
   Future<bool> ensureValidSession() async {
     return await refreshSession();
   }
 
   // ------------------------------------------------------------
-  // ROLE (FAST)
+  // ROLE
   // ------------------------------------------------------------
   Future<UserRole> getUserRole() async {
-    // local first (fast)
     final local = await _storage.read(key: _kRoleKey);
     final parsedLocal = _parseRole(local);
     if (parsedLocal != null) return parsedLocal;
 
-    // fallback to DB
     return await syncRoleFromDbStrict(fallback: UserRole.jobSeeker);
   }
 
-  // ------------------------------------------------------------
-  // ROLE (STRICT = PRODUCTION SAFE)
-  // ------------------------------------------------------------
   Future<UserRole> syncRoleFromDbStrict({
     UserRole fallback = UserRole.jobSeeker,
   }) async {
@@ -232,7 +236,6 @@ class MobileAuthService {
     } catch (_) {}
 
     _currentUser = null;
-
     await _storage.delete(key: _kRoleKey);
   }
 
