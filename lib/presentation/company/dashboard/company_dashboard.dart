@@ -17,10 +17,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
   bool _loading = true;
 
-  // Existing
   List<Map<String, dynamic>> _jobs = [];
-
-  // New dashboard data
   Map<String, dynamic> _stats = {};
   List<Map<String, dynamic>> _recentApplicants = [];
   List<Map<String, dynamic>> _topJobs = [];
@@ -36,12 +33,11 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     setState(() => _loading = true);
 
     try {
-      // Load all in parallel
       final results = await Future.wait([
         _service.fetchEmployerJobs(),
         _service.fetchEmployerDashboardStats(),
-        _service.fetchRecentApplicants(limit: 5),
-        _service.fetchTopJobs(limit: 5),
+        _service.fetchRecentApplicants(limit: 6),
+        _service.fetchTopJobs(limit: 6),
       ]);
 
       _jobs = List<Map<String, dynamic>>.from(results[0] as List);
@@ -74,7 +70,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // FALLBACK STATS (SAFE)
+  // SAFE STATS
   // ------------------------------------------------------------
   int _s(String key) => _toInt(_stats[key]);
 
@@ -88,21 +84,31 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   int get _totalViews => _s('total_views');
   int get _applicants24h => _s('applicants_last_24h');
 
+  // ------------------------------------------------------------
+  // THEME COLORS (Fluent Light style)
+  // ------------------------------------------------------------
+  static const _bg = Color(0xFFF6F7FB);
+  static const _card = Colors.white;
+  static const _text = Color(0xFF0F172A);
+  static const _muted = Color(0xFF64748B);
+  static const _line = Color(0xFFE6EAF2);
+  static const _primary = Color(0xFF2563EB);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FC),
+      backgroundColor: _bg,
       drawer: _employerDrawer(),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        titleSpacing: 2.w,
+        backgroundColor: _bg,
+        surfaceTintColor: _bg,
+        titleSpacing: 4.w,
         title: const Text(
-          'Dashboard',
+          'Employer Dashboard',
           style: TextStyle(
-            color: Color(0xFF0F172A),
-            fontWeight: FontWeight.w900,
+            color: _text,
+            fontWeight: FontWeight.w800,
             letterSpacing: -0.2,
           ),
         ),
@@ -114,62 +120,61 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           ),
           SizedBox(width: 2.w),
         ],
-        iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
+        iconTheme: const IconThemeData(color: _text),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _loadDashboard,
               child: ListView(
-                padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 3.h),
+                padding: EdgeInsets.fromLTRB(4.w, 1.h, 4.w, 12.h),
                 children: [
-                  _welcomeHeader(),
+                  _heroHeader(),
                   SizedBox(height: 2.2.h),
 
-                  // NEW: Overview
-                  _overviewCards(),
+                  _kpiGrid(),
                   SizedBox(height: 2.2.h),
 
-                  // Existing: Job status breakdown
-                  _jobStatusBreakdown(),
-                  SizedBox(height: 2.8.h),
+                  _jobStatusStrip(),
+                  SizedBox(height: 2.4.h),
 
-                  // NEW: Recent applicants
-                  _sectionHeader(
-                    title: 'Recent Applicants',
-                    subtitle: 'Latest candidates across your jobs',
-                    actionLabel: null,
-                    onAction: null,
+                  _sectionTitle(
+                    title: "Recent Applicants",
+                    subtitle: "Latest candidates across your jobs",
+                    action: _recentApplicants.isEmpty
+                        ? null
+                        : TextButton(
+                            onPressed: () {
+                              // optional future screen
+                            },
+                            child: const Text(
+                              "See all",
+                              style: TextStyle(fontWeight: FontWeight.w800),
+                            ),
+                          ),
                   ),
                   SizedBox(height: 1.2.h),
                   _recentApplicantsSection(),
-                  SizedBox(height: 2.8.h),
+                  SizedBox(height: 2.4.h),
 
-                  // NEW: Top jobs
-                  _sectionHeader(
-                    title: 'Top Performing Jobs',
-                    subtitle: 'Jobs with most applications',
-                    actionLabel: null,
-                    onAction: null,
+                  _sectionTitle(
+                    title: "Top Jobs",
+                    subtitle: "Jobs with most applications",
                   ),
                   SizedBox(height: 1.2.h),
                   _topJobsSection(),
-                  SizedBox(height: 2.8.h),
+                  SizedBox(height: 2.6.h),
 
-                  // Existing: jobs list
-                  _sectionHeader(
-                    title: 'My Job Listings',
-                    subtitle: 'Manage, edit and view applicants',
-                    actionLabel: null,
-                    onAction: null,
+                  _sectionTitle(
+                    title: "My Job Listings",
+                    subtitle: "Manage posts and view applicants",
                   ),
-                  SizedBox(height: 1.4.h),
+                  SizedBox(height: 1.2.h),
+
                   if (_jobs.isEmpty)
                     _emptyState()
                   else
                     ..._jobs.map(_jobCard).toList(),
-
-                  SizedBox(height: 10.h),
                 ],
               ),
             ),
@@ -178,12 +183,12 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           final res = await Navigator.pushNamed(context, AppRoutes.createJob);
           if (res == true) await _loadDashboard();
         },
-        backgroundColor: const Color(0xFF2563EB),
+        backgroundColor: _primary,
         foregroundColor: Colors.white,
-        elevation: 2,
+        elevation: 1.5,
         label: const Text(
           'Create Job',
-          style: TextStyle(fontWeight: FontWeight.w900),
+          style: TextStyle(fontWeight: FontWeight.w800),
         ),
         icon: const Icon(Icons.add_rounded),
       ),
@@ -191,20 +196,20 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // HEADER
+  // HERO HEADER (NO MENU ICON INSIDE CARD)
   // ------------------------------------------------------------
-  Widget _welcomeHeader() {
+  Widget _heroHeader() {
     return Container(
-      padding: EdgeInsets.all(4.w),
+      padding: EdgeInsets.fromLTRB(4.w, 2.2.h, 4.w, 2.2.h),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE7EAF0)),
+        color: _card,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: _line),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -215,37 +220,36 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             height: 54,
             decoration: BoxDecoration(
               color: const Color(0xFFEFF6FF),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(color: const Color(0xFFDBEAFE)),
             ),
             child: const Icon(
-              Icons.business_center_rounded,
-              color: Color(0xFF2563EB),
+              Icons.apartment_rounded,
+              color: _primary,
               size: 26,
             ),
           ),
           SizedBox(width: 4.w),
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
-                  'Employer Dashboard',
+                  "Welcome back",
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF0F172A),
-                    letterSpacing: -0.2,
+                    fontSize: 12.5,
+                    color: _muted,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                SizedBox(height: 4),
+                SizedBox(height: 3),
                 Text(
-                  'Track performance and manage hiring',
+                  "Track jobs, applicants and performance",
                   style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF64748B),
-                    fontWeight: FontWeight.w700,
-                    height: 1.2,
+                    fontSize: 15.5,
+                    color: _text,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
                   ),
                 ),
               ],
@@ -254,6 +258,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           IconButton(
             onPressed: () => Scaffold.of(context).openDrawer(),
             icon: const Icon(Icons.menu_rounded),
+            tooltip: "Menu",
           ),
         ],
       ),
@@ -261,47 +266,43 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // NEW: OVERVIEW CARDS
+  // KPI GRID (Fluent Light)
   // ------------------------------------------------------------
-  Widget _overviewCards() {
+  Widget _kpiGrid() {
     return Column(
       children: [
         Row(
           children: [
-            _metricCard(
-              title: 'Total Jobs',
+            _kpiCard(
+              title: "Total Jobs",
               value: _totalJobs.toString(),
               icon: Icons.work_outline_rounded,
-              bg: const Color(0xFFF1F5F9),
-              fg: const Color(0xFF0F172A),
+              accent: const Color(0xFF0EA5E9),
             ),
             SizedBox(width: 2.6.w),
-            _metricCard(
-              title: 'Applicants',
+            _kpiCard(
+              title: "Applicants",
               value: _totalApplicants.toString(),
               icon: Icons.people_alt_outlined,
-              bg: const Color(0xFFEFF6FF),
-              fg: const Color(0xFF1D4ED8),
+              accent: const Color(0xFF2563EB),
             ),
           ],
         ),
         SizedBox(height: 1.4.h),
         Row(
           children: [
-            _metricCard(
-              title: 'Total Views',
+            _kpiCard(
+              title: "Total Views",
               value: _totalViews.toString(),
               icon: Icons.visibility_outlined,
-              bg: const Color(0xFFECFDF5),
-              fg: const Color(0xFF166534),
+              accent: const Color(0xFF7C3AED),
             ),
             SizedBox(width: 2.6.w),
-            _metricCard(
-              title: 'New (24h)',
+            _kpiCard(
+              title: "New (24h)",
               value: _applicants24h.toString(),
               icon: Icons.bolt_rounded,
-              bg: const Color(0xFFFFFBEB),
-              fg: const Color(0xFF7C2D12),
+              accent: const Color(0xFFF59E0B),
             ),
           ],
         ),
@@ -309,39 +310,38 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     );
   }
 
-  Widget _metricCard({
+  Widget _kpiCard({
     required String title,
     required String value,
     required IconData icon,
-    required Color bg,
-    required Color fg,
+    required Color accent,
   }) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE7EAF0)),
+          color: _card,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: _line),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withOpacity(0.025),
               blurRadius: 14,
-              offset: const Offset(0, 8),
+              offset: const Offset(0, 10),
             ),
           ],
         ),
         child: Row(
           children: [
             Container(
-              width: 42,
-              height: 42,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: bg,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.black.withOpacity(0.04)),
+                color: accent.withOpacity(0.10),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: accent.withOpacity(0.18)),
               ),
-              child: Icon(icon, color: fg, size: 20),
+              child: Icon(icon, color: accent, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -354,17 +354,17 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 12.5,
-                      color: Color(0xFF64748B),
-                      fontWeight: FontWeight.w800,
+                      color: _muted,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     value,
                     style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF0F172A),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: _text,
                       letterSpacing: -0.2,
                     ),
                   ),
@@ -378,20 +378,20 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // EXISTING STYLE: JOB STATUS BREAKDOWN
+  // JOB STATUS STRIP (NO BAD COLORS)
   // ------------------------------------------------------------
-  Widget _jobStatusBreakdown() {
+  Widget _jobStatusStrip() {
     return Container(
-      padding: EdgeInsets.all(4.w),
+      padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 2.h),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE7EAF0)),
+        color: _card,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: _line),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(0.025),
             blurRadius: 16,
-            offset: const Offset(0, 8),
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -399,48 +399,23 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Job Status',
+            "Job Status",
             style: TextStyle(
               fontSize: 15,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF0F172A),
-              letterSpacing: -0.2,
+              fontWeight: FontWeight.w800,
+              color: _text,
             ),
           ),
-          SizedBox(height: 1.6.h),
+          SizedBox(height: 1.4.h),
           Row(
             children: [
-              _statPill(
-                title: 'Active',
-                value: _activeJobs.toString(),
-                bg: const Color(0xFFECFDF5),
-                fg: const Color(0xFF14532D),
-              ),
+              _statusMini("Active", _activeJobs, const Color(0xFF22C55E)),
               SizedBox(width: 2.w),
-              _statPill(
-                title: 'Paused',
-                value: _pausedJobs.toString(),
-                bg: const Color(0xFFFFFBEB),
-                fg: const Color(0xFF7C2D12),
-              ),
-            ],
-          ),
-          SizedBox(height: 1.2.h),
-          Row(
-            children: [
-              _statPill(
-                title: 'Closed',
-                value: _closedJobs.toString(),
-                bg: const Color(0xFFFFF1F2),
-                fg: const Color(0xFF9F1239),
-              ),
+              _statusMini("Paused", _pausedJobs, const Color(0xFFF59E0B)),
               SizedBox(width: 2.w),
-              _statPill(
-                title: 'Expired',
-                value: _expiredJobs.toString(),
-                bg: const Color(0xFFF1F5F9),
-                fg: const Color(0xFF475569),
-              ),
+              _statusMini("Closed", _closedJobs, const Color(0xFFEF4444)),
+              SizedBox(width: 2.w),
+              _statusMini("Expired", _expiredJobs, const Color(0xFF64748B)),
             ],
           ),
         ],
@@ -448,51 +423,36 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     );
   }
 
-  Widget _statPill({
-    required String title,
-    required String value,
-    required Color bg,
-    required Color fg,
-  }) {
+  Widget _statusMini(String label, int value, Color accent) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withOpacity(0.05)),
+          color: accent.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: accent.withOpacity(0.16)),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: fg.withOpacity(0.70),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      color: fg,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                ],
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                color: _text.withOpacity(0.75),
+                fontWeight: FontWeight.w700,
               ),
             ),
-            Icon(
-              Icons.circle,
-              color: fg.withOpacity(0.35),
-              size: 10,
+            const SizedBox(height: 5),
+            Text(
+              value.toString(),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: _text,
+              ),
             ),
           ],
         ),
@@ -501,13 +461,12 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // SECTION HEADER
+  // SECTION TITLE
   // ------------------------------------------------------------
-  Widget _sectionHeader({
+  Widget _sectionTitle({
     required String title,
     required String subtitle,
-    String? actionLabel,
-    VoidCallback? onAction,
+    Widget? action,
   }) {
     return Row(
       children: [
@@ -518,9 +477,9 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF0F172A),
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: _text,
                   letterSpacing: -0.2,
                 ),
               ),
@@ -528,63 +487,58 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
               Text(
                 subtitle,
                 style: const TextStyle(
-                  fontSize: 12.8,
-                  color: Color(0xFF64748B),
+                  fontSize: 12.6,
+                  color: _muted,
                   fontWeight: FontWeight.w700,
                 ),
               ),
             ],
           ),
         ),
-        if (actionLabel != null && onAction != null)
-          TextButton(
-            onPressed: onAction,
-            child: Text(
-              actionLabel,
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
+        if (action != null) action,
       ],
     );
   }
 
   // ------------------------------------------------------------
-  // NEW: RECENT APPLICANTS SECTION
+  // RECENT APPLICANTS
   // ------------------------------------------------------------
   Widget _recentApplicantsSection() {
     if (_recentApplicants.isEmpty) {
       return _softEmptyCard(
         icon: Icons.people_alt_outlined,
-        title: 'No applicants yet',
-        subtitle: 'When someone applies, they will appear here.',
+        title: "No applicants yet",
+        subtitle: "When someone applies, they will appear here.",
       );
     }
 
     return Container(
-      padding: EdgeInsets.all(3.6.w),
+      padding: EdgeInsets.fromLTRB(4.w, 1.2.h, 4.w, 1.2.h),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE7EAF0)),
+        color: _card,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: _line),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.025),
+            blurRadius: 16,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Column(
         children: [
-          ..._recentApplicants.map((a) => _applicantTile(a)).toList(),
+          for (int i = 0; i < _recentApplicants.length; i++) ...[
+            _recentApplicantTile(_recentApplicants[i]),
+            if (i != _recentApplicants.length - 1)
+              Divider(height: 18, color: Colors.black.withOpacity(0.06)),
+          ],
         ],
       ),
     );
   }
 
-  Widget _applicantTile(Map<String, dynamic> row) {
+  Widget _recentApplicantTile(Map<String, dynamic> row) {
     final listing = (row['job_listings'] ?? {}) as Map;
     final app = (row['job_applications'] ?? {}) as Map;
 
@@ -596,9 +550,8 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     final jobTitle = (listing['job_title'] ?? 'Job').toString();
 
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(18),
       onTap: () async {
-        // Go to job applicants page
         await Navigator.pushNamed(
           context,
           AppRoutes.jobApplicants,
@@ -607,21 +560,18 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         await _loadDashboard();
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: EdgeInsets.symmetric(vertical: 1.2.h),
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 46,
+              height: 46,
               decoration: BoxDecoration(
                 color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE7EAF0)),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: _line),
               ),
-              child: const Icon(
-                Icons.person_outline_rounded,
-                color: Color(0xFF0F172A),
-              ),
+              child: const Icon(Icons.person_outline_rounded, color: _text),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -633,19 +583,19 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF0F172A),
+                      fontWeight: FontWeight.w800,
+                      color: _text,
                       letterSpacing: -0.1,
                     ),
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '$jobTitle • ${_timeAgo(appliedAt)}',
+                    "$jobTitle • ${_timeAgo(appliedAt)}",
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 12.5,
-                      color: Color(0xFF64748B),
+                      color: _muted,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -702,7 +652,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         label,
         style: TextStyle(
           fontSize: 11.5,
-          fontWeight: FontWeight.w900,
+          fontWeight: FontWeight.w800,
           color: fg,
         ),
       ),
@@ -710,34 +660,38 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // NEW: TOP JOBS SECTION
+  // TOP JOBS
   // ------------------------------------------------------------
   Widget _topJobsSection() {
     if (_topJobs.isEmpty) {
       return _softEmptyCard(
         icon: Icons.work_outline_rounded,
-        title: 'No job performance yet',
-        subtitle: 'Once applicants come in, top jobs will show here.',
+        title: "No performance yet",
+        subtitle: "Once applicants come in, top jobs will show here.",
       );
     }
 
     return Container(
-      padding: EdgeInsets.all(3.6.w),
+      padding: EdgeInsets.fromLTRB(4.w, 1.2.h, 4.w, 1.2.h),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE7EAF0)),
+        color: _card,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: _line),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.025),
+            blurRadius: 16,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Column(
         children: [
-          ..._topJobs.map((j) => _topJobTile(j)).toList(),
+          for (int i = 0; i < _topJobs.length; i++) ...[
+            _topJobTile(_topJobs[i]),
+            if (i != _topJobs.length - 1)
+              Divider(height: 18, color: Colors.black.withOpacity(0.06)),
+          ],
         ],
       ),
     );
@@ -751,7 +705,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     final status = (job['status'] ?? 'active').toString();
 
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(18),
       onTap: () async {
         await Navigator.pushNamed(
           context,
@@ -761,20 +715,20 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         await _loadDashboard();
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: EdgeInsets.symmetric(vertical: 1.2.h),
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 46,
+              height: 46,
               decoration: BoxDecoration(
                 color: const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: const Color(0xFFDBEAFE)),
               ),
               child: const Icon(
                 Icons.work_outline_rounded,
-                color: Color(0xFF2563EB),
+                color: _primary,
               ),
             ),
             const SizedBox(width: 12),
@@ -787,16 +741,16 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF0F172A),
+                      fontWeight: FontWeight.w800,
+                      color: _text,
                     ),
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '$apps applicants • $views views',
+                    "$apps applicants • $views views",
                     style: const TextStyle(
                       fontSize: 12.5,
-                      color: Color(0xFF64748B),
+                      color: _muted,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -804,7 +758,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
               ),
             ),
             const SizedBox(width: 10),
-            _statusChip(status),
+            _jobStatusChip(status),
             const SizedBox(width: 8),
             const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8)),
           ],
@@ -814,25 +768,33 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // JOBS LIST UI (EXISTING)
+  // JOB LISTINGS (Fix applicants wrong)
   // ------------------------------------------------------------
   Widget _jobCard(Map<String, dynamic> job) {
     final jobId = (job['id'] ?? '').toString();
     final title = (job['job_title'] ?? '').toString();
     final status = (job['status'] ?? 'active').toString();
+
+    // IMPORTANT:
+    // Your UI was using applications_count but old queries returned job_applications(count)
+    // Now service returns applications_count directly.
     final applicationsCount = _toInt(job['applications_count']);
+
+    final district = (job['district'] ?? '').toString();
+    final salaryMin = job['salary_min'];
+    final salaryMax = job['salary_max'];
 
     return Container(
       margin: EdgeInsets.only(bottom: 2.h),
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE7EAF0)),
+        color: _card,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: _line),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.035),
-            blurRadius: 18,
+            color: Colors.black.withOpacity(0.025),
+            blurRadius: 16,
             offset: const Offset(0, 10),
           ),
         ],
@@ -840,32 +802,56 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // title + status
           Row(
             children: [
               Expanded(
                 child: Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF0F172A),
+                    fontSize: 15.8,
+                    fontWeight: FontWeight.w800,
+                    color: _text,
                     letterSpacing: -0.2,
                   ),
                 ),
               ),
-              _statusChip(status),
+              _jobStatusChip(status),
             ],
           ),
-          SizedBox(height: 1.h),
+
+          SizedBox(height: 0.8.h),
+
           Text(
-            'Posted ${_postedAgo(job['created_at'])} • $applicationsCount applications',
+            district.isEmpty ? "Location not set" : district,
             style: const TextStyle(
-              fontSize: 12.5,
-              color: Color(0xFF64748B),
+              fontSize: 12.6,
+              color: _muted,
               fontWeight: FontWeight.w700,
             ),
           ),
-          SizedBox(height: 2.h),
+
+          SizedBox(height: 1.2.h),
+
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _tinyPill(
+                icon: Icons.currency_rupee_rounded,
+                text: "${salaryMin ?? "-"} - ${salaryMax ?? "-"}",
+              ),
+              _tinyPill(
+                icon: Icons.people_alt_outlined,
+                text: "$applicationsCount applicants",
+              ),
+            ],
+          ),
+
+          SizedBox(height: 1.6.h),
+          Divider(color: Colors.black.withOpacity(0.06), height: 1),
+          SizedBox(height: 1.4.h),
+
           Row(
             children: [
               Expanded(
@@ -880,16 +866,16 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                   },
                   icon: const Icon(Icons.people_alt_outlined, size: 18),
                   label: const Text(
-                    'Applicants',
-                    style: TextStyle(fontWeight: FontWeight.w900),
+                    "Applicants",
+                    style: TextStyle(fontWeight: FontWeight.w800),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0F172A),
+                    backgroundColor: _primary,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
                 ),
@@ -899,22 +885,20 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                 child: OutlinedButton.icon(
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Edit Job screen coming next"),
-                      ),
+                      const SnackBar(content: Text("Edit job coming next")),
                     );
                   },
                   icon: const Icon(Icons.edit_outlined, size: 18),
                   label: const Text(
-                    'Edit',
-                    style: TextStyle(fontWeight: FontWeight.w900),
+                    "Edit",
+                    style: TextStyle(fontWeight: FontWeight.w800),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF0F172A),
-                    side: const BorderSide(color: Color(0xFFE2E8F0)),
+                    foregroundColor: _text,
+                    side: const BorderSide(color: _line),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
                 ),
@@ -926,7 +910,32 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     );
   }
 
-  Widget _statusChip(String status) {
+  Widget _tinyPill({required IconData icon, required String text}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: _line),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFF334155)),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF334155),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _jobStatusChip(String status) {
     final s = status.toLowerCase();
 
     Color bg;
@@ -935,7 +944,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
     if (s == 'active') {
       bg = const Color(0xFFECFDF5);
-      fg = const Color(0xFF14532D);
+      fg = const Color(0xFF166534);
       label = 'Active';
     } else if (s == 'paused') {
       bg = const Color(0xFFFFFBEB);
@@ -956,12 +965,13 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: fg.withOpacity(0.10)),
       ),
       child: Text(
         label,
         style: TextStyle(
           fontSize: 12,
-          fontWeight: FontWeight.w900,
+          fontWeight: FontWeight.w800,
           color: fg,
         ),
       ),
@@ -979,27 +989,28 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     return Container(
       padding: EdgeInsets.all(5.w),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE7EAF0)),
+        color: _card,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: _line),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.025),
+            blurRadius: 16,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Row(
         children: [
           Container(
-            width: 52,
-            height: 52,
+            width: 54,
+            height: 54,
             decoration: BoxDecoration(
               color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: _line),
             ),
-            child: Icon(icon, color: const Color(0xFF0F172A)),
+            child: Icon(icon, color: _text),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -1009,8 +1020,8 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF0F172A),
+                    fontWeight: FontWeight.w800,
+                    color: _text,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -1018,7 +1029,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                   subtitle,
                   style: const TextStyle(
                     fontSize: 12.5,
-                    color: Color(0xFF64748B),
+                    color: _muted,
                     fontWeight: FontWeight.w700,
                     height: 1.3,
                   ),
@@ -1032,86 +1043,15 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   Widget _emptyState() {
-    return Container(
-      padding: EdgeInsets.all(6.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE7EAF0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Icon(
-              Icons.work_outline_rounded,
-              size: 34,
-              color: Colors.grey.shade600,
-            ),
-          ),
-          SizedBox(height: 2.2.h),
-          const Text(
-            'No jobs posted yet',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF0F172A),
-              letterSpacing: -0.2,
-            ),
-          ),
-          SizedBox(height: 1.h),
-          const Text(
-            'Create your first job to start receiving applications.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Color(0xFF64748B),
-              fontWeight: FontWeight.w700,
-              height: 1.4,
-            ),
-          ),
-          SizedBox(height: 3.h),
-          ElevatedButton.icon(
-            onPressed: () async {
-              final res = await Navigator.pushNamed(
-                context,
-                AppRoutes.createJob,
-              );
-              if (res == true) await _loadDashboard();
-            },
-            icon: const Icon(Icons.add_rounded),
-            label: const Text(
-              'Create Job',
-              style: TextStyle(fontWeight: FontWeight.w900),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-            ),
-          ),
-        ],
-      ),
+    return _softEmptyCard(
+      icon: Icons.work_outline_rounded,
+      title: "No jobs posted yet",
+      subtitle: "Create your first job to start receiving applications.",
     );
   }
 
   // ------------------------------------------------------------
-  // DRAWER UI
+  // DRAWER (Fluent Light + elegant)
   // ------------------------------------------------------------
   Widget _employerDrawer() {
     return Drawer(
@@ -1121,35 +1061,24 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           children: [
             Container(
               width: double.infinity,
-              padding: EdgeInsets.fromLTRB(5.w, 2.4.h, 5.w, 2.2.h),
+              padding: EdgeInsets.fromLTRB(5.w, 2.2.h, 5.w, 2.2.h),
               decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color(0xFF0F172A),
-                    Color(0xFF111827),
-                  ],
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(18),
-                  bottomRight: Radius.circular(18),
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: _line),
                 ),
               ),
               child: Row(
                 children: [
                   Container(
-                    width: 46,
-                    height: 46,
+                    width: 50,
+                    height: 50,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.10),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.18),
-                      ),
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFDBEAFE)),
                     ),
-                    child: const Icon(
-                      Icons.apartment_rounded,
-                      color: Colors.white,
-                    ),
+                    child: const Icon(Icons.apartment_rounded, color: _primary),
                   ),
                   SizedBox(width: 3.5.w),
                   const Expanded(
@@ -1159,27 +1088,23 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                         Text(
                           "Employer",
                           style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
+                            color: _text,
+                            fontSize: 16.5,
+                            fontWeight: FontWeight.w800,
                             letterSpacing: -0.2,
                           ),
                         ),
                         SizedBox(height: 3),
                         Text(
-                          "Jobs • Applicants • Hiring",
+                          "Manage jobs and applicants",
                           style: TextStyle(
-                            color: Color(0xFFCBD5E1),
+                            color: _muted,
                             fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded, color: Colors.white),
                   ),
                 ],
               ),
@@ -1204,21 +1129,10 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                       if (res == true) await _loadDashboard();
                     },
                   ),
-                  _drawerTile(
-                    icon: Icons.people_alt_outlined,
-                    title: "Applicants (Job wise)",
-                    onTap: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Open any job and click Applicants"),
-                        ),
-                      );
-                    },
-                  ),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                    child: Divider(color: Colors.grey.shade200, height: 1),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                    child: Divider(color: Colors.black.withOpacity(0.06)),
                   ),
                   _drawerTile(
                     icon: Icons.logout_rounded,
@@ -1228,6 +1142,30 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                       Navigator.pop(context);
                       await _logout();
                     },
+                  ),
+                ],
+              ),
+            ),
+
+            // Footer
+            Padding(
+              padding: EdgeInsets.fromLTRB(4.w, 1.h, 4.w, 2.2.h),
+              child: Column(
+                children: const [
+                  Text(
+                    "Made in Assam",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF475569),
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    "© Khilonjiya",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF94A3B8),
+                    ),
                   ),
                 ],
               ),
@@ -1244,17 +1182,17 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     required VoidCallback onTap,
     bool isDestructive = false,
   }) {
-    final iconColor = isDestructive ? const Color(0xFFEF4444) : null;
-    final textColor = isDestructive ? const Color(0xFFEF4444) : null;
+    final iconColor = isDestructive ? const Color(0xFFEF4444) : _text;
+    final textColor = isDestructive ? const Color(0xFFEF4444) : _text;
 
     return ListTile(
       dense: true,
-      leading: Icon(icon, color: iconColor ?? const Color(0xFF0F172A)),
+      leading: Icon(icon, color: iconColor),
       title: Text(
         title,
         style: TextStyle(
           fontWeight: FontWeight.w800,
-          color: textColor ?? const Color(0xFF0F172A),
+          color: textColor,
         ),
       ),
       onTap: onTap,
@@ -1264,19 +1202,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   // ------------------------------------------------------------
   // UTILS
   // ------------------------------------------------------------
-  String _postedAgo(dynamic date) {
-    if (date == null) return 'recently';
-
-    final d = DateTime.tryParse(date.toString());
-    if (d == null) return 'recently';
-
-    final diff = DateTime.now().difference(d);
-
-    if (diff.inHours < 24) return 'today';
-    if (diff.inDays == 1) return '1 day ago';
-    return '${diff.inDays} days ago';
-  }
-
   String _timeAgo(dynamic date) {
     if (date == null) return 'recent';
 
