@@ -31,6 +31,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
 
   Future<void> _loadApplicants() async {
     try {
+      if (!mounted) return;
       setState(() {
         _loading = true;
         _error = null;
@@ -38,6 +39,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
 
       final user = _client.auth.currentUser;
       if (user == null) {
+        if (!mounted) return;
         setState(() {
           _loading = false;
           _error = "Session expired. Please login again.";
@@ -45,9 +47,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
         return;
       }
 
-      // ✅ Correct query based on schema:
-      // job_applications_listings.listing_id -> job_listings.id
-      // job_applications_listings.application_id -> job_applications.id
+      // ✅ Correct query based on schema
       final res = await _client
           .from('job_applications_listings')
           .select('''
@@ -63,24 +63,25 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
             job_applications (
               id,
               user_id,
-              name,
-              phone,
+              created_at,
+              updated_at,
+
+              full_name,
+              mobile_number,
               email,
               district,
               address,
+
               gender,
               date_of_birth,
+
               education,
-              experience_level,
-              experience_details,
+              experience_years,
               skills,
               expected_salary,
-              availability,
-              additional_info,
+
               resume_file_url,
-              photo_file_url,
-              created_at,
-              updated_at
+              photo_file_url
             )
           ''')
           .eq('listing_id', widget.jobId)
@@ -159,24 +160,25 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                         itemCount: _rows.length,
                         itemBuilder: (context, index) {
                           final row = _rows[index];
-                          final app =
-                              (row['job_applications'] ?? {}) as Map<String, dynamic>;
+
+                          final app = (row['job_applications'] ?? {})
+                              as Map<String, dynamic>;
+
+                          final skillsText = _skillsToText(app['skills']);
 
                           return _applicantCard(
                             listingRowId: row['id'].toString(),
                             status: (row['application_status'] ?? 'applied')
                                 .toString(),
                             appliedAt: row['applied_at'],
-                            name: (app['name'] ?? 'Candidate').toString(),
-                            mobile: (app['phone'] ?? '').toString(),
+                            name: (app['full_name'] ?? 'Candidate').toString(),
+                            mobile: (app['mobile_number'] ?? '').toString(),
                             email: (app['email'] ?? '').toString(),
                             district: (app['district'] ?? '').toString(),
                             education: (app['education'] ?? '').toString(),
-                            expLevel:
-                                (app['experience_level'] ?? '').toString(),
-                            expDetails:
-                                (app['experience_details'] ?? '').toString(),
-                            skills: (app['skills'] ?? '').toString(),
+                            experienceYears:
+                                _toIntOrNull(app['experience_years']),
+                            skills: skillsText,
                             expectedSalary:
                                 (app['expected_salary'] ?? '').toString(),
                           );
@@ -187,7 +189,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
   }
 
   // ------------------------------------------------------------
-  // CARD UI (WORLD CLASS)
+  // CARD UI
   // ------------------------------------------------------------
   Widget _applicantCard({
     required String listingRowId,
@@ -198,8 +200,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
     required String email,
     required String district,
     required String education,
-    required String expLevel,
-    required String expDetails,
+    required int? experienceYears,
     required String skills,
     required String expectedSalary,
   }) {
@@ -299,13 +300,15 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               ),
               _pill(
                 icon: Icons.work_rounded,
-                text: expLevel.isEmpty ? "Experience not set" : expLevel,
+                text: experienceYears == null
+                    ? "Experience not set"
+                    : "$experienceYears yrs",
               ),
               _pill(
                 icon: Icons.currency_rupee_rounded,
                 text: expectedSalary.isEmpty
                     ? "Salary not set"
-                    : expectedSalary,
+                    : "₹$expectedSalary",
               ),
             ],
           ),
@@ -316,20 +319,6 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
             const SizedBox(height: 6),
             Text(
               skills,
-              style: const TextStyle(
-                color: Color(0xFF334155),
-                fontWeight: FontWeight.w700,
-                height: 1.35,
-              ),
-            ),
-          ],
-
-          if (expDetails.trim().isNotEmpty) ...[
-            SizedBox(height: 1.6.h),
-            _sectionTitle("Experience Details"),
-            const SizedBox(height: 6),
-            Text(
-              expDetails,
               style: const TextStyle(
                 color: Color(0xFF334155),
                 fontWeight: FontWeight.w700,
@@ -411,6 +400,32 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
         ],
       ),
     );
+  }
+
+  // ------------------------------------------------------------
+  // HELPERS
+  // ------------------------------------------------------------
+  String _skillsToText(dynamic skills) {
+    if (skills == null) return '';
+
+    // text[] in Supabase usually comes as List<dynamic>
+    if (skills is List) {
+      final items = skills
+          .map((e) => e.toString().trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+      return items.join(', ');
+    }
+
+    final s = skills.toString().trim();
+    return s;
+  }
+
+  int? _toIntOrNull(dynamic v) {
+    if (v == null) return null;
+    if (v is int) return v;
+    if (v is double) return v.toInt();
+    return int.tryParse(v.toString());
   }
 
   // ------------------------------------------------------------
@@ -529,8 +544,9 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
 
     final diff = DateTime.now().difference(d);
 
-    if (diff.inMinutes < 60) return "Applied just now";
-    if (diff.inHours < 24) return "Applied today";
+    if (diff.inMinutes < 2) return "Applied just now";
+    if (diff.inMinutes < 60) return "Applied ${diff.inMinutes}m ago";
+    if (diff.inHours < 24) return "Applied ${diff.inHours}h ago";
     if (diff.inDays == 1) return "Applied 1 day ago";
     return "Applied ${diff.inDays} days ago";
   }
