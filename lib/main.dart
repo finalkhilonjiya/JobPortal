@@ -5,7 +5,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
-import 'core/app_export.dart';
 import 'core/navigation_service.dart';
 import 'routes/app_routes.dart';
 import 'presentation/login_screen/mobile_auth_service.dart';
@@ -65,6 +64,150 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
+/* ----------  GLOBAL THEME (Fluent Light) ---------- */
+class AppFluentTheme {
+  static const Color bg = Color(0xFFF6F7FB);
+  static const Color card = Colors.white;
+  static const Color text = Color(0xFF0F172A);
+  static const Color muted = Color(0xFF64748B);
+  static const Color line = Color(0xFFE6EAF2);
+  static const Color primary = Color(0xFF2563EB);
+
+  static ThemeData light() {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      fontFamily: "Poppins",
+      scaffoldBackgroundColor: bg,
+
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primary,
+        brightness: Brightness.light,
+      ),
+
+      appBarTheme: const AppBarTheme(
+        backgroundColor: bg,
+        surfaceTintColor: bg,
+        elevation: 0,
+        centerTitle: false,
+        titleTextStyle: TextStyle(
+          fontFamily: "Poppins",
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: text,
+          letterSpacing: -0.2,
+        ),
+        iconTheme: IconThemeData(color: text),
+      ),
+
+      snackBarTheme: const SnackBarThemeData(
+        backgroundColor: Color(0xFF0F172A),
+        contentTextStyle: TextStyle(
+          fontFamily: "Poppins",
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+      ),
+
+      dividerTheme: const DividerThemeData(
+        color: line,
+        thickness: 1,
+        space: 1,
+      ),
+
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFFF8FAFC),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        labelStyle: const TextStyle(
+          fontFamily: "Poppins",
+          fontWeight: FontWeight.w600,
+          color: muted,
+        ),
+        hintStyle: const TextStyle(
+          fontFamily: "Poppins",
+          fontWeight: FontWeight.w500,
+          color: Color(0xFF94A3B8),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: line),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: primary, width: 1.4),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFFFCA5A5)),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.2),
+        ),
+      ),
+
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          textStyle: const TextStyle(
+            fontFamily: "Poppins",
+            fontWeight: FontWeight.w700,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: text,
+          side: const BorderSide(color: line),
+          textStyle: const TextStyle(
+            fontFamily: "Poppins",
+            fontWeight: FontWeight.w700,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+
+      textTheme: const TextTheme(
+        titleLarge: TextStyle(
+          fontFamily: "Poppins",
+          fontWeight: FontWeight.w700,
+          color: text,
+        ),
+        titleMedium: TextStyle(
+          fontFamily: "Poppins",
+          fontWeight: FontWeight.w600,
+          color: text,
+        ),
+        bodyLarge: TextStyle(
+          fontFamily: "Poppins",
+          fontWeight: FontWeight.w500,
+          color: text,
+        ),
+        bodyMedium: TextStyle(
+          fontFamily: "Poppins",
+          fontWeight: FontWeight.w500,
+          color: text,
+        ),
+        bodySmall: TextStyle(
+          fontFamily: "Poppins",
+          fontWeight: FontWeight.w500,
+          color: muted,
+        ),
+      ),
+    );
+  }
+}
+
 /* ----------  APP WIDGET  ---------- */
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -77,11 +220,12 @@ class MyApp extends StatelessWidget {
         builder: (_, __, ___) => Sizer(
           builder: (_, __, ___) => MaterialApp(
             title: 'khilonjiya.com',
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: ThemeMode.system,
-            navigatorKey: NavigationService.navigatorKey,
             debugShowCheckedModeBanner: false,
+            navigatorKey: NavigationService.navigatorKey,
+
+            // ✅ IMPORTANT: Use fluent light theme globally
+            theme: AppFluentTheme.light(),
+            themeMode: ThemeMode.light,
 
             /// ALWAYS start with initializer
             home: const AppInitializer(),
@@ -89,7 +233,7 @@ class MyApp extends StatelessWidget {
             /// STATIC ROUTES
             routes: AppRoutes.routes,
 
-            /// DYNAMIC ROUTES (arguments based)
+            /// DYNAMIC ROUTES
             onGenerateRoute: AppRoutes.onGenerateRoute,
 
             builder: (context, child) => MediaQuery(
@@ -126,7 +270,6 @@ class _AppInitializerState extends State<AppInitializer> {
     try {
       await Future.delayed(const Duration(milliseconds: 1200));
 
-      /// If Supabase env missing → continue app
       if (!AppConfig.hasSupabase) {
         notifier.setState(AppState.offline);
         NavigationService.pushReplacementNamed(AppRoutes.roleSelection);
@@ -143,8 +286,6 @@ class _AppInitializerState extends State<AppInitializer> {
 
       if (session != null && user != null) {
         notifier.setState(AppState.authenticated);
-
-        /// Always go to HomeRouter (role based)
         NavigationService.pushReplacementNamed(AppRoutes.homeJobsFeed);
         return;
       }
@@ -174,6 +315,7 @@ class _AppInitializerState extends State<AppInitializer> {
                 errorBuilder: (context, error, stackTrace) => const Text(
                   'K',
                   style: TextStyle(
+                    fontFamily: "Poppins",
                     fontSize: 72,
                     color: Color(0xFF2563EB),
                     fontWeight: FontWeight.w800,
@@ -184,6 +326,7 @@ class _AppInitializerState extends State<AppInitializer> {
               const Text(
                 'Khilonjiya.com',
                 style: TextStyle(
+                  fontFamily: "Poppins",
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF0F172A),
@@ -199,6 +342,7 @@ class _AppInitializerState extends State<AppInitializer> {
               Text(
                 _getLoadingText(n.state),
                 style: const TextStyle(
+                  fontFamily: "Poppins",
                   fontSize: 16,
                   color: Color(0xFF64748B),
                   fontWeight: FontWeight.w500,
