@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -61,8 +62,15 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
       }
 
       /// IMPORTANT:
-      /// We select BOTH old and new schema column names
-      /// so app works even if DB differs.
+      /// Your real schema (job_applications) fields:
+      /// - name
+      /// - phone
+      /// - email
+      /// - skills (TEXT)
+      /// - resume_file_url
+      /// - photo_file_url
+      /// - experience_level
+      /// - experience_details
       final res = await _client
           .from('job_applications_listings')
           .select('''
@@ -79,30 +87,24 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               id,
               user_id,
               created_at,
-
-              -- NEW schema
-              full_name,
-              mobile_number,
-              resume_file_url,
-              photo_file_url,
-
-              -- OLD schema
               name,
               phone,
-              resume_url,
-              photo_url,
-
               email,
               district,
               address,
-
               gender,
               date_of_birth,
-
               education,
-              experience_years,
+              experience_level,
+              experience_details,
               skills,
-              expected_salary
+              expected_salary,
+              availability,
+              additional_info,
+              resume_file_name,
+              resume_file_url,
+              photo_file_name,
+              photo_file_url
             )
           ''')
           .eq('listing_id', widget.jobId)
@@ -114,7 +116,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
         _rows = List<Map<String, dynamic>>.from(res);
         _loading = false;
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() {
         _loading = false;
@@ -186,15 +188,15 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
     return Scaffold(
       backgroundColor: _bg,
       appBar: AppBar(
-        backgroundColor: _bg,
-        surfaceTintColor: _bg,
-        elevation: 0,
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0.6,
         iconTheme: const IconThemeData(color: _text),
         titleSpacing: 4.w,
         title: const Text(
           'Applicants',
           style: TextStyle(
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w900,
             color: _text,
             letterSpacing: -0.2,
           ),
@@ -217,34 +219,44 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                   : RefreshIndicator(
                       onRefresh: _loadApplicants,
                       child: ListView.builder(
-                        padding: EdgeInsets.fromLTRB(4.w, 1.h, 4.w, 4.h),
+                        padding: EdgeInsets.fromLTRB(4.w, 1.2.h, 4.w, 4.h),
                         itemCount: _rows.length,
                         itemBuilder: (context, index) {
                           final row = _rows[index];
-
                           final app = (row['job_applications'] ?? {})
                               as Map<String, dynamic>;
 
-                          // ✅ support both old + new schema
-                          final name = _pickString(app, ['full_name', 'name'])
-                              .ifEmpty("Candidate");
+                          final name =
+                              (app['name'] ?? '').toString().trim().ifEmpty(
+                                    "Candidate",
+                                  );
 
-                          final phone =
-                              _pickString(app, ['mobile_number', 'phone']);
+                          final phone = (app['phone'] ?? '').toString().trim();
+                          final email = (app['email'] ?? '').toString().trim();
 
-                          final email = _pickString(app, ['email']);
+                          final district =
+                              (app['district'] ?? '').toString().trim();
+                          final education =
+                              (app['education'] ?? '').toString().trim();
 
-                          final district = _pickString(app, ['district']);
-                          final education = _pickString(app, ['education']);
                           final expectedSalary =
-                              _pickString(app, ['expected_salary']);
+                              (app['expected_salary'] ?? '').toString().trim();
 
-                          final resumeUrl = _pickString(
-                            app,
-                            ['resume_file_url', 'resume_url'],
-                          );
+                          final experienceLevel =
+                              (app['experience_level'] ?? '').toString().trim();
 
-                          final skillsText = _skillsToText(app['skills']);
+                          final experienceDetails =
+                              (app['experience_details'] ?? '')
+                                  .toString()
+                                  .trim();
+
+                          final skills = (app['skills'] ?? '').toString().trim();
+
+                          final resumeUrl =
+                              (app['resume_file_url'] ?? '').toString().trim();
+
+                          final photoUrl =
+                              (app['photo_file_url'] ?? '').toString().trim();
 
                           return _applicantCard(
                             listingRowId: row['id'].toString(),
@@ -252,15 +264,16 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                                 .toString(),
                             appliedAt: row['applied_at'],
                             name: name,
-                            mobile: phone,
+                            phone: phone,
                             email: email,
                             district: district,
                             education: education,
-                            experienceYears:
-                                _toIntOrNull(app['experience_years']),
-                            skills: skillsText,
                             expectedSalary: expectedSalary,
+                            experienceLevel: experienceLevel,
+                            experienceDetails: experienceDetails,
+                            skills: skills,
                             resumeUrl: resumeUrl,
+                            photoUrl: photoUrl,
                           );
                         },
                       ),
@@ -276,20 +289,22 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
     required String status,
     required dynamic appliedAt,
     required String name,
-    required String mobile,
+    required String phone,
     required String email,
     required String district,
     required String education,
-    required int? experienceYears,
-    required String skills,
     required String expectedSalary,
+    required String experienceLevel,
+    required String experienceDetails,
+    required String skills,
     required String resumeUrl,
+    required String photoUrl,
   }) {
     final statusUi = _statusUi(status);
 
     return Container(
       margin: EdgeInsets.only(bottom: 1.6.h),
-      padding: EdgeInsets.fromLTRB(4.w, 2.1.h, 4.w, 2.1.h),
+      padding: EdgeInsets.fromLTRB(4.w, 2.0.h, 4.w, 2.0.h),
       decoration: BoxDecoration(
         color: _card,
         borderRadius: BorderRadius.circular(22),
@@ -308,16 +323,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
           // Header
           Row(
             children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: _line),
-                ),
-                child: const Icon(Icons.person_rounded, color: _text),
-              ),
+              _avatar(photoUrl),
               SizedBox(width: 3.w),
               Expanded(
                 child: Column(
@@ -329,7 +335,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 15.6,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w900,
                         color: _text,
                         letterSpacing: -0.2,
                       ),
@@ -340,7 +346,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                       style: const TextStyle(
                         fontSize: 12.5,
                         color: _muted,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
@@ -359,7 +365,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                 child: _miniAction(
                   icon: Icons.call_rounded,
                   label: "Call",
-                  onTap: mobile.trim().isEmpty ? null : () => _call(mobile),
+                  onTap: phone.trim().isEmpty ? null : () => _call(phone),
                 ),
               ),
               SizedBox(width: 2.5.w),
@@ -402,9 +408,9 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               ),
               _pill(
                 icon: Icons.work_rounded,
-                text: experienceYears == null
+                text: experienceLevel.isEmpty
                     ? "Experience not set"
-                    : "$experienceYears yrs",
+                    : experienceLevel,
               ),
               _pill(
                 icon: Icons.currency_rupee_rounded,
@@ -415,11 +421,31 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
             ],
           ),
 
-          if (mobile.trim().isNotEmpty || email.trim().isNotEmpty) ...[
+          if (phone.trim().isNotEmpty || email.trim().isNotEmpty) ...[
             SizedBox(height: 1.4.h),
-            _keyValueRow("Phone", mobile.isEmpty ? "Not provided" : mobile),
-            if (email.trim().isNotEmpty)
-              _keyValueRow("Email", email.trim()),
+            _keyValueRow("Phone", phone.isEmpty ? "Not provided" : phone),
+            if (email.trim().isNotEmpty) _keyValueRow("Email", email.trim()),
+          ],
+
+          if (experienceDetails.trim().isNotEmpty) ...[
+            SizedBox(height: 1.6.h),
+            const Text(
+              "Experience Details",
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+                color: _text,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              experienceDetails,
+              style: const TextStyle(
+                color: Color(0xFF334155),
+                fontWeight: FontWeight.w700,
+                height: 1.35,
+              ),
+            ),
           ],
 
           if (skills.trim().isNotEmpty) ...[
@@ -428,7 +454,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               "Skills",
               style: TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w900,
                 color: _text,
               ),
             ),
@@ -437,7 +463,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               skills,
               style: const TextStyle(
                 color: Color(0xFF334155),
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 height: 1.35,
               ),
             ),
@@ -455,7 +481,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                     icon: const Icon(Icons.check_circle_rounded, size: 18),
                     label: const Text(
                       "Shortlist",
-                      style: TextStyle(fontWeight: FontWeight.w800),
+                      style: TextStyle(fontWeight: FontWeight.w900),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _primary,
@@ -475,7 +501,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                     icon: const Icon(Icons.cancel_rounded, size: 18),
                     label: const Text(
                       "Reject",
-                      style: TextStyle(fontWeight: FontWeight.w800),
+                      style: TextStyle(fontWeight: FontWeight.w900),
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF9F1239),
@@ -498,7 +524,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                     icon: const Icon(Icons.remove_red_eye_rounded, size: 18),
                     label: const Text(
                       "Mark Viewed",
-                      style: TextStyle(fontWeight: FontWeight.w800),
+                      style: TextStyle(fontWeight: FontWeight.w900),
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _text,
@@ -514,6 +540,54 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _avatar(String photoUrl) {
+    if (photoUrl.trim().isEmpty) {
+      return Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: _line),
+        ),
+        child: const Icon(Icons.person_rounded, color: _text),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: CachedNetworkImage(
+        imageUrl: photoUrl,
+        width: 52,
+        height: 52,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => Container(
+          width: 52,
+          height: 52,
+          color: const Color(0xFFF1F5F9),
+          child: const Center(
+            child: SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        ),
+        errorWidget: (_, __, ___) => Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF1F2),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFFECACA)),
+          ),
+          child: const Icon(Icons.error_outline_rounded,
+              color: Color(0xFF9F1239)),
+        ),
       ),
     );
   }
@@ -552,7 +626,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
             Text(
               label,
               style: TextStyle(
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
                 color: disabled ? const Color(0xFF94A3B8) : _primary,
               ),
             ),
@@ -578,7 +652,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
           Text(
             text,
             style: const TextStyle(
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
               color: Color(0xFF334155),
             ),
           ),
@@ -598,7 +672,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
             child: Text(
               k,
               style: const TextStyle(
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
                 color: _muted,
               ),
             ),
@@ -607,7 +681,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
             child: Text(
               v,
               style: const TextStyle(
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
                 color: _text,
               ),
             ),
@@ -628,7 +702,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
         label,
         style: TextStyle(
           fontSize: 12,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w900,
           color: fg,
         ),
       ),
@@ -638,38 +712,6 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
   // ------------------------------------------------------------
   // HELPERS
   // ------------------------------------------------------------
-  String _skillsToText(dynamic skills) {
-    if (skills == null) return '';
-
-    if (skills is List) {
-      final items = skills
-          .map((e) => e.toString().trim())
-          .where((e) => e.isNotEmpty)
-          .toList();
-      return items.join(', ');
-    }
-
-    final s = skills.toString().trim();
-    return s;
-  }
-
-  int? _toIntOrNull(dynamic v) {
-    if (v == null) return null;
-    if (v is int) return v;
-    if (v is double) return v.toInt();
-    return int.tryParse(v.toString());
-  }
-
-  String _pickString(Map<String, dynamic> map, List<String> keys) {
-    for (final k in keys) {
-      final v = map[k];
-      if (v == null) continue;
-      final s = v.toString().trim();
-      if (s.isNotEmpty) return s;
-    }
-    return "";
-  }
-
   _StatusUI _statusUi(String status) {
     final s = status.toLowerCase();
 
@@ -746,7 +788,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               'No applicants yet',
               style: TextStyle(
                 fontSize: 18,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w900,
                 color: _text,
                 letterSpacing: -0.2,
               ),
@@ -757,7 +799,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: _muted,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 height: 1.35,
               ),
             ),
@@ -767,7 +809,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               icon: const Icon(Icons.refresh_rounded),
               label: const Text(
                 "Refresh",
-                style: TextStyle(fontWeight: FontWeight.w800),
+                style: TextStyle(fontWeight: FontWeight.w900),
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: _text,
@@ -812,7 +854,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 15,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w900,
                 color: _text,
               ),
             ),
@@ -822,7 +864,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               icon: const Icon(Icons.refresh_rounded),
               label: const Text(
                 "Try Again",
-                style: TextStyle(fontWeight: FontWeight.w800),
+                style: TextStyle(fontWeight: FontWeight.w900),
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: _text,
