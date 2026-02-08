@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class JobApplicantsScreen extends StatefulWidget {
   final String jobId;
@@ -20,8 +21,17 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
   bool _loading = true;
   String? _error;
 
-  // Each item = job_applications_listings row + nested job_applications
   List<Map<String, dynamic>> _rows = [];
+
+  // ------------------------------------------------------------
+  // FLUENT LIGHT PALETTE
+  // ------------------------------------------------------------
+  static const _bg = Color(0xFFF6F7FB);
+  static const _card = Colors.white;
+  static const _text = Color(0xFF0F172A);
+  static const _muted = Color(0xFF64748B);
+  static const _line = Color(0xFFE6EAF2);
+  static const _primary = Color(0xFF2563EB);
 
   @override
   void initState() {
@@ -29,6 +39,9 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
     _loadApplicants();
   }
 
+  // ------------------------------------------------------------
+  // LOAD
+  // ------------------------------------------------------------
   Future<void> _loadApplicants() async {
     try {
       if (!mounted) return;
@@ -47,7 +60,9 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
         return;
       }
 
-      // ✅ Correct query based on schema
+      /// IMPORTANT:
+      /// We select BOTH old and new schema column names
+      /// so app works even if DB differs.
       final res = await _client
           .from('job_applications_listings')
           .select('''
@@ -64,10 +79,19 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               id,
               user_id,
               created_at,
-              updated_at,
 
+              -- NEW schema
               full_name,
               mobile_number,
+              resume_file_url,
+              photo_file_url,
+
+              -- OLD schema
+              name,
+              phone,
+              resume_url,
+              photo_url,
+
               email,
               district,
               address,
@@ -78,10 +102,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               education,
               experience_years,
               skills,
-              expected_salary,
-
-              resume_file_url,
-              photo_file_url
+              expected_salary
             )
           ''')
           .eq('listing_id', widget.jobId)
@@ -93,7 +114,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
         _rows = List<Map<String, dynamic>>.from(res);
         _loading = false;
       });
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
       setState(() {
         _loading = false;
@@ -102,6 +123,9 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
     }
   }
 
+  // ------------------------------------------------------------
+  // UPDATE STATUS
+  // ------------------------------------------------------------
   Future<void> _updateStatus(String listingRowId, String status) async {
     try {
       await _client
@@ -112,9 +136,45 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
       await _loadApplicants();
     } catch (_) {
       if (!mounted) return;
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to update status")),
       );
+    }
+  }
+
+  // ------------------------------------------------------------
+  // ACTIONS
+  // ------------------------------------------------------------
+  Future<void> _call(String phone) async {
+    final p = phone.trim();
+    if (p.isEmpty) return;
+
+    final uri = Uri.parse("tel:$p");
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  Future<void> _email(String email) async {
+    final e = email.trim();
+    if (e.isEmpty) return;
+
+    final uri = Uri.parse("mailto:$e");
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  Future<void> _openUrl(String url) async {
+    final u = url.trim();
+    if (u.isEmpty) return;
+
+    final uri = Uri.tryParse(u);
+    if (uri == null) return;
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -124,20 +184,21 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FC),
+      backgroundColor: _bg,
       appBar: AppBar(
+        backgroundColor: _bg,
+        surfaceTintColor: _bg,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: _text),
+        titleSpacing: 4.w,
         title: const Text(
           'Applicants',
           style: TextStyle(
-            fontWeight: FontWeight.w900,
-            color: Color(0xFF0F172A),
+            fontWeight: FontWeight.w800,
+            color: _text,
             letterSpacing: -0.2,
           ),
         ),
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        elevation: 0.6,
-        iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
         actions: [
           IconButton(
             onPressed: _loadApplicants,
@@ -156,13 +217,32 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                   : RefreshIndicator(
                       onRefresh: _loadApplicants,
                       child: ListView.builder(
-                        padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 4.h),
+                        padding: EdgeInsets.fromLTRB(4.w, 1.h, 4.w, 4.h),
                         itemCount: _rows.length,
                         itemBuilder: (context, index) {
                           final row = _rows[index];
 
                           final app = (row['job_applications'] ?? {})
                               as Map<String, dynamic>;
+
+                          // ✅ support both old + new schema
+                          final name = _pickString(app, ['full_name', 'name'])
+                              .ifEmpty("Candidate");
+
+                          final phone =
+                              _pickString(app, ['mobile_number', 'phone']);
+
+                          final email = _pickString(app, ['email']);
+
+                          final district = _pickString(app, ['district']);
+                          final education = _pickString(app, ['education']);
+                          final expectedSalary =
+                              _pickString(app, ['expected_salary']);
+
+                          final resumeUrl = _pickString(
+                            app,
+                            ['resume_file_url', 'resume_url'],
+                          );
 
                           final skillsText = _skillsToText(app['skills']);
 
@@ -171,16 +251,16 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                             status: (row['application_status'] ?? 'applied')
                                 .toString(),
                             appliedAt: row['applied_at'],
-                            name: (app['full_name'] ?? 'Candidate').toString(),
-                            mobile: (app['mobile_number'] ?? '').toString(),
-                            email: (app['email'] ?? '').toString(),
-                            district: (app['district'] ?? '').toString(),
-                            education: (app['education'] ?? '').toString(),
+                            name: name,
+                            mobile: phone,
+                            email: email,
+                            district: district,
+                            education: education,
                             experienceYears:
                                 _toIntOrNull(app['experience_years']),
                             skills: skillsText,
-                            expectedSalary:
-                                (app['expected_salary'] ?? '').toString(),
+                            expectedSalary: expectedSalary,
+                            resumeUrl: resumeUrl,
                           );
                         },
                       ),
@@ -189,7 +269,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
   }
 
   // ------------------------------------------------------------
-  // CARD UI
+  // CARD
   // ------------------------------------------------------------
   Widget _applicantCard({
     required String listingRowId,
@@ -203,20 +283,21 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
     required int? experienceYears,
     required String skills,
     required String expectedSalary,
+    required String resumeUrl,
   }) {
     final statusUi = _statusUi(status);
 
     return Container(
-      margin: EdgeInsets.only(bottom: 2.h),
-      padding: EdgeInsets.all(4.w),
+      margin: EdgeInsets.only(bottom: 1.6.h),
+      padding: EdgeInsets.fromLTRB(4.w, 2.1.h, 4.w, 2.1.h),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE7EAF0)),
+        color: _card,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: _line),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 16,
+            color: Colors.black.withOpacity(0.025),
+            blurRadius: 18,
             offset: const Offset(0, 10),
           ),
         ],
@@ -224,21 +305,18 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top row
+          // Header
           Row(
             children: [
               Container(
-                width: 46,
-                height: 46,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: _line),
                 ),
-                child: const Icon(
-                  Icons.person_rounded,
-                  color: Color(0xFF0F172A),
-                ),
+                child: const Icon(Icons.person_rounded, color: _text),
               ),
               SizedBox(width: 3.w),
               Expanded(
@@ -250,9 +328,9 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF0F172A),
+                        fontSize: 15.6,
+                        fontWeight: FontWeight.w800,
+                        color: _text,
                         letterSpacing: -0.2,
                       ),
                     ),
@@ -261,8 +339,8 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                       _appliedAgo(appliedAt),
                       style: const TextStyle(
                         fontSize: 12.5,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w700,
+                        color: _muted,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -274,12 +352,36 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
 
           SizedBox(height: 1.6.h),
 
-          // Contact
-          _infoRow(Icons.call_rounded, mobile.isEmpty ? "No phone" : mobile),
-          if (email.trim().isNotEmpty) ...[
-            SizedBox(height: 0.8.h),
-            _infoRow(Icons.mail_rounded, email),
-          ],
+          // Contact buttons row
+          Row(
+            children: [
+              Expanded(
+                child: _miniAction(
+                  icon: Icons.call_rounded,
+                  label: "Call",
+                  onTap: mobile.trim().isEmpty ? null : () => _call(mobile),
+                ),
+              ),
+              SizedBox(width: 2.5.w),
+              Expanded(
+                child: _miniAction(
+                  icon: Icons.mail_rounded,
+                  label: "Email",
+                  onTap: email.trim().isEmpty ? null : () => _email(email),
+                ),
+              ),
+              SizedBox(width: 2.5.w),
+              Expanded(
+                child: _miniAction(
+                  icon: Icons.picture_as_pdf_rounded,
+                  label: "Resume",
+                  onTap: resumeUrl.trim().isEmpty
+                      ? null
+                      : () => _openUrl(resumeUrl),
+                ),
+              ),
+            ],
+          ),
 
           SizedBox(height: 1.6.h),
           Divider(color: Colors.black.withOpacity(0.06), height: 1),
@@ -313,15 +415,29 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
             ],
           ),
 
+          if (mobile.trim().isNotEmpty || email.trim().isNotEmpty) ...[
+            SizedBox(height: 1.4.h),
+            _keyValueRow("Phone", mobile.isEmpty ? "Not provided" : mobile),
+            if (email.trim().isNotEmpty)
+              _keyValueRow("Email", email.trim()),
+          ],
+
           if (skills.trim().isNotEmpty) ...[
             SizedBox(height: 1.6.h),
-            _sectionTitle("Skills"),
+            const Text(
+              "Skills",
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: _text,
+              ),
+            ),
             const SizedBox(height: 6),
             Text(
               skills,
               style: const TextStyle(
                 color: Color(0xFF334155),
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
                 height: 1.35,
               ),
             ),
@@ -329,7 +445,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
 
           SizedBox(height: 2.h),
 
-          // Actions
+          // Status actions
           if (status == 'applied') ...[
             Row(
               children: [
@@ -339,15 +455,15 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                     icon: const Icon(Icons.check_circle_rounded, size: 18),
                     label: const Text(
                       "Shortlist",
-                      style: TextStyle(fontWeight: FontWeight.w900),
+                      style: TextStyle(fontWeight: FontWeight.w800),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0F172A),
+                      backgroundColor: _primary,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                   ),
@@ -359,14 +475,14 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                     icon: const Icon(Icons.cancel_rounded, size: 18),
                     label: const Text(
                       "Reject",
-                      style: TextStyle(fontWeight: FontWeight.w900),
+                      style: TextStyle(fontWeight: FontWeight.w800),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF991B1B),
-                      side: const BorderSide(color: Color(0xFFFCA5A5)),
+                      foregroundColor: const Color(0xFF9F1239),
+                      side: const BorderSide(color: Color(0xFFFECACA)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                   ),
@@ -382,14 +498,14 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
                     icon: const Icon(Icons.remove_red_eye_rounded, size: 18),
                     label: const Text(
                       "Mark Viewed",
-                      style: TextStyle(fontWeight: FontWeight.w900),
+                      style: TextStyle(fontWeight: FontWeight.w800),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF0F172A),
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                      foregroundColor: _text,
+                      side: const BorderSide(color: _line),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                   ),
@@ -403,12 +519,128 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
   }
 
   // ------------------------------------------------------------
+  // SMALL UI PIECES
+  // ------------------------------------------------------------
+  Widget _miniAction({
+    required IconData icon,
+    required String label,
+    required VoidCallback? onTap,
+  }) {
+    final bool disabled = onTap == null;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: disabled ? const Color(0xFFF1F5F9) : const Color(0xFFEFF6FF),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: disabled ? _line : const Color(0xFFDBEAFE),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: disabled ? const Color(0xFF94A3B8) : _primary,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: disabled ? const Color(0xFF94A3B8) : _primary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _pill({required IconData icon, required String text}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: _line),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFF334155)),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF334155),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _keyValueRow(String k, String v) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 74,
+            child: Text(
+              k,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: _muted,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              v,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: _text,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statusChip(String label, Color bg, Color fg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: fg,
+        ),
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------
   // HELPERS
   // ------------------------------------------------------------
   String _skillsToText(dynamic skills) {
     if (skills == null) return '';
 
-    // text[] in Supabase usually comes as List<dynamic>
     if (skills is List) {
       final items = skills
           .map((e) => e.toString().trim())
@@ -428,80 +660,14 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
     return int.tryParse(v.toString());
   }
 
-  // ------------------------------------------------------------
-  // SMALL UI PIECES
-  // ------------------------------------------------------------
-  Widget _sectionTitle(String t) {
-    return Text(
-      t,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w900,
-        color: Color(0xFF0F172A),
-      ),
-    );
-  }
-
-  Widget _pill({required IconData icon, required String text}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: const Color(0xFF334155)),
-          const SizedBox(width: 8),
-          Text(
-            text,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF334155),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _infoRow(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: const Color(0xFF475569)),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: 13.2,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _statusChip(String label, Color bg, Color fg) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w900,
-          color: fg,
-        ),
-      ),
-    );
+  String _pickString(Map<String, dynamic> map, List<String> keys) {
+    for (final k in keys) {
+      final v = map[k];
+      if (v == null) continue;
+      final s = v.toString().trim();
+      if (s.isNotEmpty) return s;
+    }
+    return "";
   }
 
   _StatusUI _statusUi(String status) {
@@ -551,6 +717,9 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
     return "Applied ${diff.inDays} days ago";
   }
 
+  // ------------------------------------------------------------
+  // STATES
+  // ------------------------------------------------------------
   Widget _emptyState() {
     return Center(
       child: Padding(
@@ -564,7 +733,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: _line),
               ),
               child: const Icon(
                 Icons.people_alt_outlined,
@@ -577,8 +746,8 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               'No applicants yet',
               style: TextStyle(
                 fontSize: 18,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFF0F172A),
+                fontWeight: FontWeight.w800,
+                color: _text,
                 letterSpacing: -0.2,
               ),
             ),
@@ -587,8 +756,8 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               'Candidates will appear here once they apply for this job.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Color(0xFF64748B),
-                fontWeight: FontWeight.w700,
+                color: _muted,
+                fontWeight: FontWeight.w600,
                 height: 1.35,
               ),
             ),
@@ -598,15 +767,15 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               icon: const Icon(Icons.refresh_rounded),
               label: const Text(
                 "Refresh",
-                style: TextStyle(fontWeight: FontWeight.w900),
+                style: TextStyle(fontWeight: FontWeight.w800),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF0F172A),
-                side: const BorderSide(color: Color(0xFFE2E8F0)),
+                foregroundColor: _text,
+                side: const BorderSide(color: _line),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
             ),
@@ -643,8 +812,8 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 15,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFF0F172A),
+                fontWeight: FontWeight.w800,
+                color: _text,
               ),
             ),
             SizedBox(height: 1.8.h),
@@ -653,15 +822,15 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
               icon: const Icon(Icons.refresh_rounded),
               label: const Text(
                 "Try Again",
-                style: TextStyle(fontWeight: FontWeight.w900),
+                style: TextStyle(fontWeight: FontWeight.w800),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF0F172A),
-                side: const BorderSide(color: Color(0xFFE2E8F0)),
+                foregroundColor: _text,
+                side: const BorderSide(color: _line),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
             ),
@@ -682,4 +851,8 @@ class _StatusUI {
     required this.bg,
     required this.fg,
   });
+}
+
+extension _StringExt on String {
+  String ifEmpty(String fallback) => trim().isEmpty ? fallback : this;
 }
