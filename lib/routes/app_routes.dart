@@ -10,6 +10,7 @@ import '../presentation/home_marketplace_feed/home_jobs_feed.dart';
 import '../presentation/company/dashboard/company_dashboard.dart';
 
 import '../presentation/company/jobs/create_job_screen.dart';
+import '../presentation/company/jobs/employer_job_list_screen.dart';
 import '../presentation/company/applicants/job_applicants_screen.dart';
 
 import '../presentation/registration_screen/registration_screen.dart';
@@ -46,6 +47,7 @@ class AppRoutes {
   /// EMPLOYER
   /// ------------------------------------------------------------
   static const String companyDashboard = '/company-dashboard';
+  static const String employerJobs = '/employer-jobs';
   static const String createJob = '/create-job';
   static const String jobApplicants = '/job-applicants';
 
@@ -87,6 +89,7 @@ class AppRoutes {
     companyDashboard: (_) => const CompanyDashboard(),
 
     /// EMPLOYER
+    employerJobs: (_) => const EmployerJobListScreen(),
     createJob: (_) => const CreateJobScreen(),
 
     /// EXISTING
