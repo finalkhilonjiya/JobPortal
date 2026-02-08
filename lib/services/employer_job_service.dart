@@ -83,14 +83,141 @@ class EmployerJobService {
   }
 
   // ------------------------------------------------------------
-  // APPLICANTS (PER JOB)
+  // DASHBOARD METHODS (NEW)
   // ------------------------------------------------------------
-  //
-  // job_applications_listings.listing_id -> job_listings.id
-  // job_applications_listings.application_id -> job_applications.id
-  //
-  // job_applications.user_id -> user_profiles.id
-  //
+
+  /// Used by the new world-class dashboard UI.
+  /// Returns:
+  /// {
+  ///   totalJobs, activeJobs, pausedJobs, closedJobs, expiredJobs,
+  ///   totalApplicants, totalViews
+  /// }
+  Future<Map<String, dynamic>> fetchEmployerDashboardStats() async {
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      return {
+        'totalJobs': 0,
+        'activeJobs': 0,
+        'pausedJobs': 0,
+        'closedJobs': 0,
+        'expiredJobs': 0,
+        'totalApplicants': 0,
+        'totalViews': 0,
+      };
+    }
+
+    // We compute from job_listings only (fast + consistent)
+    final res = await _client
+        .from('job_listings')
+        .select(
+          'status, applications_count, views_count',
+        )
+        .eq('user_id', user.id);
+
+    final rows = List<Map<String, dynamic>>.from(res);
+
+    int totalJobs = rows.length;
+    int activeJobs = 0;
+    int pausedJobs = 0;
+    int closedJobs = 0;
+    int expiredJobs = 0;
+
+    int totalApplicants = 0;
+    int totalViews = 0;
+
+    for (final r in rows) {
+      final status = (r['status'] ?? 'active').toString().toLowerCase();
+
+      if (status == 'active') activeJobs++;
+      if (status == 'paused') pausedJobs++;
+      if (status == 'closed') closedJobs++;
+      if (status == 'expired') expiredJobs++;
+
+      totalApplicants += (r['applications_count'] ?? 0) as int;
+      totalViews += (r['views_count'] ?? 0) as int;
+    }
+
+    return {
+      'totalJobs': totalJobs,
+      'activeJobs': activeJobs,
+      'pausedJobs': pausedJobs,
+      'closedJobs': closedJobs,
+      'expiredJobs': expiredJobs,
+      'totalApplicants': totalApplicants,
+      'totalViews': totalViews,
+    };
+  }
+
+  /// Fetch latest applicants across all jobs (for employer)
+  /// Uses job_applications_listings table (correct schema)
+  Future<List<Map<String, dynamic>>> fetchRecentApplicants({
+    int limit = 5,
+  }) async {
+    final user = _client.auth.currentUser;
+    if (user == null) return [];
+
+    // Step 1: fetch employer jobs
+    final jobsRes = await _client
+        .from('job_listings')
+        .select('id, job_title')
+        .eq('user_id', user.id);
+
+    final jobs = List<Map<String, dynamic>>.from(jobsRes);
+    if (jobs.isEmpty) return [];
+
+    final jobIds = jobs.map((e) => e['id'].toString()).toList();
+
+    // Step 2: fetch latest applications for those job IDs
+    final res = await _client
+        .from('job_applications_listings')
+        .select('''
+          id,
+          listing_id,
+          applied_at,
+          application_status,
+          job_listings (
+            id,
+            job_title
+          ),
+          job_applications (
+            id,
+            name,
+            phone,
+            email,
+            district,
+            education,
+            experience_level,
+            skills
+          )
+        ''')
+        .inFilter('listing_id', jobIds)
+        .order('applied_at', ascending: false)
+        .limit(limit);
+
+    return List<Map<String, dynamic>>.from(res);
+  }
+
+  /// Fetch top jobs sorted by applications_count
+  Future<List<Map<String, dynamic>>> fetchTopJobs({
+    int limit = 5,
+  }) async {
+    final user = _client.auth.currentUser;
+    if (user == null) return [];
+
+    final res = await _client
+        .from('job_listings')
+        .select(
+          'id, job_title, status, applications_count, views_count, created_at',
+        )
+        .eq('user_id', user.id)
+        .order('applications_count', ascending: false)
+        .limit(limit);
+
+    return List<Map<String, dynamic>>.from(res);
+  }
+
+  // ------------------------------------------------------------
+  // APPLICANTS (PER JOB)
   // ------------------------------------------------------------
 
   Future<List<Map<String, dynamic>>> fetchApplicantsForJob(String jobId) async {
@@ -132,7 +259,7 @@ class EmployerJobService {
               gender,
               date_of_birth,
               education,
-              experience_years,
+              experience_details,
               skills,
               expected_salary
             )
