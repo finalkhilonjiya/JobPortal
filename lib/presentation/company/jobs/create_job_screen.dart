@@ -239,9 +239,8 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
 
         // other
         "hiring_urgency": _hiringUrgency,
-        "benefits": _benefitsCtrl.text.trim().isEmpty
-            ? null
-            : _benefitsCtrl.text.trim(),
+        "benefits":
+            _benefitsCtrl.text.trim().isEmpty ? null : _benefitsCtrl.text.trim(),
         "additional_info": _additionalInfoCtrl.text.trim().isEmpty
             ? null
             : _additionalInfoCtrl.text.trim(),
@@ -300,157 +299,337 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF7F8FC),
       appBar: AppBar(
         title: const Text(
           "Create Job",
-          style: TextStyle(fontWeight: FontWeight.w900),
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: Color(0xFF0F172A),
+          ),
         ),
         backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
         elevation: 0.6,
         iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(4.w),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              _section("Company Details"),
-              _field("Company Name", _companyNameCtrl),
-              _field("Contact Person", _contactPersonCtrl),
-              _field(
-                "Phone",
-                _phoneCtrl,
-                validator: _phoneValidator,
-                keyboard: TextInputType.phone,
-                formatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(10),
-                ],
-              ),
-              _field(
-                "Email",
-                _emailCtrl,
-                validator: _emailValidator,
-                keyboard: TextInputType.emailAddress,
-              ),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 12.h),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  _pageIntro(),
+                  SizedBox(height: 2.2.h),
 
-              _section("Job Details"),
-              _field("Job Title", _jobTitleCtrl),
-
-              _categoryDropdown(),
-
-              _dropdown("Job Type", _jobType, _jobTypes, (v) {
-                setState(() => _jobType = v);
-              }),
-              _dropdown("Employment Type", _employmentType, _employmentTypes,
-                  (v) {
-                setState(() => _employmentType = v);
-              }),
-              _dropdown("Work Mode", _workMode, _workModes, (v) {
-                setState(() => _workMode = v);
-              }),
-
-              _section("Salary"),
-              _rowFields(
-                _field("Min Salary", _salaryMinCtrl, number: true),
-                _field("Max Salary", _salaryMaxCtrl, number: true),
-              ),
-              _dropdown("Salary Period", _salaryPeriod, _salaryPeriods, (v) {
-                setState(() => _salaryPeriod = v);
-              }),
-
-              _section("Requirements"),
-              _multilineField("Job Description", _jobDescriptionCtrl),
-              _multilineField("Requirements", _requirementsCtrl),
-              _field("Education Required", _educationCtrl),
-              _field("Experience Required", _experienceCtrl),
-              _field(
-                "Skills (comma separated)",
-                _skillsCtrl,
-                hint: "Flutter, Firebase, Sales",
-              ),
-
-              _section("Location"),
-              _field("District", _districtCtrl),
-              _multilineField("Full Job Address", _addressCtrl),
-
-              _section("Other"),
-              _dropdown("Hiring Urgency", _hiringUrgency, _urgencies, (v) {
-                setState(() => _hiringUrgency = v);
-              }),
-              _field("Openings", _openingsCtrl, number: true),
-              _multilineField(
-                "Benefits (optional)",
-                _benefitsCtrl,
-                required: false,
-              ),
-              _multilineField(
-                "Additional Info (optional)",
-                _additionalInfoCtrl,
-                required: false,
-              ),
-
-              SizedBox(height: 4.h),
-
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _loading ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                  _cardSection(
+                    title: "Company Details",
+                    subtitle: "Basic company information shown to candidates",
+                    child: Column(
+                      children: [
+                        _field("Company Name", _companyNameCtrl),
+                        _field("Contact Person", _contactPersonCtrl),
+                        _field(
+                          "Phone",
+                          _phoneCtrl,
+                          validator: _phoneValidator,
+                          keyboard: TextInputType.phone,
+                          formatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(10),
+                          ],
+                        ),
+                        _field(
+                          "Email",
+                          _emailCtrl,
+                          validator: _emailValidator,
+                          keyboard: TextInputType.emailAddress,
+                        ),
+                      ],
                     ),
                   ),
-                  child: _loading
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.6,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Text(
-                          "Publish Job",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                          ),
+
+                  SizedBox(height: 2.2.h),
+
+                  _cardSection(
+                    title: "Job Details",
+                    subtitle: "Job title, category and working type",
+                    child: Column(
+                      children: [
+                        _field("Job Title", _jobTitleCtrl),
+                        _categoryDropdown(),
+                        _dropdown("Job Type", _jobType, _jobTypes, (v) {
+                          setState(() => _jobType = v);
+                        }),
+                        _dropdown(
+                          "Employment Type",
+                          _employmentType,
+                          _employmentTypes,
+                          (v) => setState(() => _employmentType = v),
                         ),
+                        _dropdown("Work Mode", _workMode, _workModes, (v) {
+                          setState(() => _workMode = v);
+                        }),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 2.2.h),
+
+                  _cardSection(
+                    title: "Salary",
+                    subtitle: "Monthly / yearly salary range",
+                    child: Column(
+                      children: [
+                        _rowFields(
+                          _field("Min Salary", _salaryMinCtrl, number: true),
+                          _field("Max Salary", _salaryMaxCtrl, number: true),
+                        ),
+                        _dropdown(
+                          "Salary Period",
+                          _salaryPeriod,
+                          _salaryPeriods,
+                          (v) => setState(() => _salaryPeriod = v),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 2.2.h),
+
+                  _cardSection(
+                    title: "Requirements",
+                    subtitle: "Job description and candidate requirements",
+                    child: Column(
+                      children: [
+                        _multilineField("Job Description", _jobDescriptionCtrl),
+                        _multilineField("Requirements", _requirementsCtrl),
+                        _field("Education Required", _educationCtrl),
+                        _field("Experience Required", _experienceCtrl),
+                        _field(
+                          "Skills (comma separated)",
+                          _skillsCtrl,
+                          hint: "Flutter, Firebase, Sales",
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 2.2.h),
+
+                  _cardSection(
+                    title: "Location",
+                    subtitle: "Where the candidate will work",
+                    child: Column(
+                      children: [
+                        _field("District", _districtCtrl),
+                        _multilineField("Full Job Address", _addressCtrl),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 2.2.h),
+
+                  _cardSection(
+                    title: "Other",
+                    subtitle: "Urgency, openings and optional details",
+                    child: Column(
+                      children: [
+                        _dropdown(
+                          "Hiring Urgency",
+                          _hiringUrgency,
+                          _urgencies,
+                          (v) => setState(() => _hiringUrgency = v),
+                        ),
+                        _field("Openings", _openingsCtrl, number: true),
+                        _multilineField(
+                          "Benefits (optional)",
+                          _benefitsCtrl,
+                          required: false,
+                        ),
+                        _multilineField(
+                          "Additional Info (optional)",
+                          _additionalInfoCtrl,
+                          required: false,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Sticky submit bar
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              padding: EdgeInsets.fromLTRB(4.w, 1.4.h, 4.w, 2.2.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(color: Colors.black.withOpacity(0.06)),
                 ),
               ),
-
-              SizedBox(height: 6.h),
-            ],
+              child: SafeArea(
+                top: false,
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton(
+                    onPressed: _loading ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      disabledBackgroundColor: const Color(0xFFE2E8F0),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: _loading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.6,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Text(
+                            "Publish Job",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
+      ),
+    );
+  }
+
+  Widget _pageIntro() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE7EAF0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFDBEAFE)),
+            ),
+            child: const Icon(
+              Icons.add_business_rounded,
+              color: Color(0xFF2563EB),
+              size: 24,
+            ),
+          ),
+          SizedBox(width: 4.w),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Post a new job",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF0F172A),
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  "Fill details carefully. Candidates will see this exactly.",
+                  style: TextStyle(
+                    fontSize: 12.8,
+                    color: Color(0xFF64748B),
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
   // ------------------------------------------------------------
-  // UI HELPERS
+  // UI HELPERS (WORLD CLASS)
   // ------------------------------------------------------------
-  Widget _section(String title) {
-    return Padding(
-      padding: EdgeInsets.only(top: 3.h, bottom: 1.h),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          title,
-          style: TextStyle(
-            fontSize: 15.sp,
-            fontWeight: FontWeight.w900,
-            color: const Color(0xFF0F172A),
+  Widget _cardSection({
+    required String title,
+    required String subtitle,
+    required Widget child,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(4.w, 2.2.h, 4.w, 2.2.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE7EAF0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
           ),
-        ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 15.5,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF0F172A),
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              fontSize: 12.8,
+              color: Color(0xFF64748B),
+              fontWeight: FontWeight.w700,
+              height: 1.2,
+            ),
+          ),
+          SizedBox(height: 2.h),
+          child,
+        ],
       ),
     );
   }
@@ -463,14 +642,14 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
           child: const Text(
             "Loading categories...",
             style: TextStyle(
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
               color: Color(0xFF64748B),
             ),
           ),
@@ -485,9 +664,9 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            color: const Color(0xFFFFF1F2),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFFECACA)),
           ),
           child: Row(
             children: [
@@ -495,8 +674,8 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
                 child: Text(
                   "No job categories found in DB",
                   style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFFEF4444),
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF9F1239),
                   ),
                 ),
               ),
@@ -535,24 +714,44 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
             keyboard ?? (number ? TextInputType.number : TextInputType.text),
         inputFormatters: formatters,
         validator: validator ?? _requiredValidator,
+        style: const TextStyle(
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF0F172A),
+        ),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
           filled: true,
-          fillColor: Colors.white,
+          fillColor: const Color(0xFFF8FAFC),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF64748B),
+          ),
+          hintStyle: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF94A3B8),
+          ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.4),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFFFCA5A5)),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.2),
           ),
         ),
       ),
@@ -576,23 +775,40 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
           if (value.isEmpty) return "Required";
           return null;
         },
+        style: const TextStyle(
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF0F172A),
+          height: 1.35,
+        ),
         decoration: InputDecoration(
           labelText: label,
           filled: true,
-          fillColor: Colors.white,
+          fillColor: const Color(0xFFF8FAFC),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF64748B),
+          ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.4),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFFFCA5A5)),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.2),
           ),
         ),
       ),
@@ -623,7 +839,13 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
             .map(
               (e) => DropdownMenuItem(
                 value: e,
-                child: Text(e),
+                child: Text(
+                  e,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
               ),
             )
             .toList(),
@@ -634,13 +856,29 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
         decoration: InputDecoration(
           labelText: label,
           filled: true,
-          fillColor: Colors.white,
+          fillColor: const Color(0xFFF8FAFC),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF64748B),
+          ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.4),
           ),
         ),
+        icon: const Icon(Icons.keyboard_arrow_down_rounded),
+        dropdownColor: Colors.white,
+        borderRadius: BorderRadius.circular(16),
       ),
     );
   }
