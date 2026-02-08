@@ -85,7 +85,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   int get _applicants24h => _s('applicants_last_24h');
 
   // ------------------------------------------------------------
-  // THEME COLORS (Fluent Light style)
+  // FLUENT LIGHT PALETTE (Premium)
   // ------------------------------------------------------------
   static const _bg = Color(0xFFF6F7FB);
   static const _card = Colors.white;
@@ -99,6 +99,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     return Scaffold(
       backgroundColor: _bg,
       drawer: _employerDrawer(),
+
       appBar: AppBar(
         elevation: 0,
         backgroundColor: _bg,
@@ -118,10 +119,11 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             tooltip: 'Refresh',
             onPressed: _loadDashboard,
           ),
-          SizedBox(width: 2.w),
+          SizedBox(width: 1.w),
         ],
         iconTheme: const IconThemeData(color: _text),
       ),
+
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -141,17 +143,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                   _sectionTitle(
                     title: "Recent Applicants",
                     subtitle: "Latest candidates across your jobs",
-                    action: _recentApplicants.isEmpty
-                        ? null
-                        : TextButton(
-                            onPressed: () {
-                              // optional future screen
-                            },
-                            child: const Text(
-                              "See all",
-                              style: TextStyle(fontWeight: FontWeight.w800),
-                            ),
-                          ),
                   ),
                   SizedBox(height: 1.2.h),
                   _recentApplicantsSection(),
@@ -178,6 +169,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                 ],
               ),
             ),
+
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           final res = await Navigator.pushNamed(context, AppRoutes.createJob);
@@ -196,7 +188,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // HERO HEADER (NO MENU ICON INSIDE CARD)
+  // HERO HEADER (Premium)
   // ------------------------------------------------------------
   Widget _heroHeader() {
     return Container(
@@ -244,7 +236,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                 ),
                 SizedBox(height: 3),
                 Text(
-                  "Track jobs, applicants and performance",
+                  "Track hiring performance in one place",
                   style: TextStyle(
                     fontSize: 15.5,
                     color: _text,
@@ -255,18 +247,13 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
               ],
             ),
           ),
-          IconButton(
-            onPressed: () => Scaffold.of(context).openDrawer(),
-            icon: const Icon(Icons.menu_rounded),
-            tooltip: "Menu",
-          ),
         ],
       ),
     );
   }
 
   // ------------------------------------------------------------
-  // KPI GRID (Fluent Light)
+  // KPI GRID
   // ------------------------------------------------------------
   Widget _kpiGrid() {
     return Column(
@@ -378,7 +365,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // JOB STATUS STRIP (NO BAD COLORS)
+  // JOB STATUS STRIP (Clean)
   // ------------------------------------------------------------
   Widget _jobStatusStrip() {
     return Container(
@@ -409,7 +396,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           SizedBox(height: 1.4.h),
           Row(
             children: [
-              _statusMini("Active", _activeJobs, const Color(0xFF22C55E)),
+              _statusMini("Active", _activeJobs, const Color(0xFF16A34A)),
               SizedBox(width: 2.w),
               _statusMini("Paused", _pausedJobs, const Color(0xFFF59E0B)),
               SizedBox(width: 2.w),
@@ -466,36 +453,28 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   Widget _sectionTitle({
     required String title,
     required String subtitle,
-    Widget? action,
   }) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: _text,
-                  letterSpacing: -0.2,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 12.6,
-                  color: _muted,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            color: _text,
+            letterSpacing: -0.2,
           ),
         ),
-        if (action != null) action,
+        const SizedBox(height: 3),
+        Text(
+          subtitle,
+          style: const TextStyle(
+            fontSize: 12.6,
+            color: _muted,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ],
     );
   }
@@ -768,16 +747,12 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // JOB LISTINGS (Fix applicants wrong)
+  // JOB LISTINGS
   // ------------------------------------------------------------
   Widget _jobCard(Map<String, dynamic> job) {
     final jobId = (job['id'] ?? '').toString();
     final title = (job['job_title'] ?? '').toString();
     final status = (job['status'] ?? 'active').toString();
-
-    // IMPORTANT:
-    // Your UI was using applications_count but old queries returned job_applications(count)
-    // Now service returns applications_count directly.
     final applicationsCount = _toInt(job['applications_count']);
 
     final district = (job['district'] ?? '').toString();
@@ -1051,7 +1026,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // DRAWER (Fluent Light + elegant)
+  // DRAWER (Premium light)
   // ------------------------------------------------------------
   Widget _employerDrawer() {
     return Drawer(
@@ -1124,8 +1099,10 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                     title: "Create Job",
                     onTap: () async {
                       Navigator.pop(context);
-                      final res =
-                          await Navigator.pushNamed(context, AppRoutes.createJob);
+                      final res = await Navigator.pushNamed(
+                        context,
+                        AppRoutes.createJob,
+                      );
                       if (res == true) await _loadDashboard();
                     },
                   ),
@@ -1146,8 +1123,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                 ],
               ),
             ),
-
-            // Footer
             Padding(
               padding: EdgeInsets.fromLTRB(4.w, 1.h, 4.w, 2.2.h),
               child: Column(
