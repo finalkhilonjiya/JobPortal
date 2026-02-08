@@ -47,8 +47,6 @@ class EmployerJobService {
       ...data,
       'user_id': user.id,
       'status': data['status'] ?? 'active',
-
-      // only update updated_at manually
       'updated_at': DateTime.now().toIso8601String(),
     });
   }
@@ -83,111 +81,128 @@ class EmployerJobService {
   }
 
   // ------------------------------------------------------------
-  // DASHBOARD METHODS (NEW)
+  // DASHBOARD: STATS
+  // ------------------------------------------------------------
+  //
+  // This returns safe numeric stats so UI never crashes.
+  //
   // ------------------------------------------------------------
 
-  /// Used by the new world-class dashboard UI.
-  /// Returns:
-  /// {
-  ///   totalJobs, activeJobs, pausedJobs, closedJobs, expiredJobs,
-  ///   totalApplicants, totalViews
-  /// }
   Future<Map<String, dynamic>> fetchEmployerDashboardStats() async {
     final user = _client.auth.currentUser;
-    if (user == null) {
-      return {
-        'totalJobs': 0,
-        'activeJobs': 0,
-        'pausedJobs': 0,
-        'closedJobs': 0,
-        'expiredJobs': 0,
-        'totalApplicants': 0,
-        'totalViews': 0,
-      };
-    }
+    if (user == null) return {};
 
-    // We compute from job_listings only (fast + consistent)
-    final res = await _client
+    // Load all jobs (minimal fields) then compute in Dart
+    final jobs = await _client
         .from('job_listings')
         .select(
-          'status, applications_count, views_count',
+          'id, status, views_count, applications_count, created_at',
         )
         .eq('user_id', user.id);
 
-    final rows = List<Map<String, dynamic>>.from(res);
+    final list = List<Map<String, dynamic>>.from(jobs);
 
-    int totalJobs = rows.length;
+    int totalJobs = list.length;
     int activeJobs = 0;
     int pausedJobs = 0;
     int closedJobs = 0;
     int expiredJobs = 0;
 
-    int totalApplicants = 0;
     int totalViews = 0;
+    int totalApplicants = 0;
 
-    for (final r in rows) {
-      final status = (r['status'] ?? 'active').toString().toLowerCase();
+    for (final j in list) {
+      final s = (j['status'] ?? 'active').toString().toLowerCase();
+      if (s == 'active') activeJobs++;
+      if (s == 'paused') pausedJobs++;
+      if (s == 'closed') closedJobs++;
+      if (s == 'expired') expiredJobs++;
 
-      if (status == 'active') activeJobs++;
-      if (status == 'paused') pausedJobs++;
-      if (status == 'closed') closedJobs++;
-      if (status == 'expired') expiredJobs++;
+      totalViews += _toInt(j['views_count']);
+      totalApplicants += _toInt(j['applications_count']);
+    }
 
-      totalApplicants += (r['applications_count'] ?? 0) as int;
-      totalViews += (r['views_count'] ?? 0) as int;
+    // Applicants in last 24h:
+    // We count rows from job_applications_listings for jobs owned by employer.
+    int applicants24h = 0;
+
+    try {
+      final since = DateTime.now().subtract(const Duration(hours: 24));
+
+      // Get employer job ids
+      final ids = list.map((e) => e['id']).where((e) => e != null).toList();
+
+      if (ids.isNotEmpty) {
+        final res = await _client
+            .from('job_applications_listings')
+            .select('id, applied_at')
+            .inFilter('listing_id', ids)
+            .gte('applied_at', since.toIso8601String());
+
+        applicants24h = List<Map<String, dynamic>>.from(res).length;
+      }
+    } catch (_) {
+      applicants24h = 0;
     }
 
     return {
-      'totalJobs': totalJobs,
-      'activeJobs': activeJobs,
-      'pausedJobs': pausedJobs,
-      'closedJobs': closedJobs,
-      'expiredJobs': expiredJobs,
-      'totalApplicants': totalApplicants,
-      'totalViews': totalViews,
+      'total_jobs': totalJobs,
+      'active_jobs': activeJobs,
+      'paused_jobs': pausedJobs,
+      'closed_jobs': closedJobs,
+      'expired_jobs': expiredJobs,
+      'total_views': totalViews,
+      'total_applicants': totalApplicants,
+      'applicants_last_24h': applicants24h,
     };
   }
 
-  /// Fetch latest applicants across all jobs (for employer)
-  /// Uses job_applications_listings table (correct schema)
+  // ------------------------------------------------------------
+  // DASHBOARD: RECENT APPLICANTS
+  // ------------------------------------------------------------
+  //
+  // Reads from job_applications_listings (bridge table)
+  // and joins job_listings + job_applications.
+  //
+  // ------------------------------------------------------------
+
   Future<List<Map<String, dynamic>>> fetchRecentApplicants({
     int limit = 5,
   }) async {
     final user = _client.auth.currentUser;
     if (user == null) return [];
 
-    // Step 1: fetch employer jobs
-    final jobsRes = await _client
+    // Get employer job ids first (safe + avoids RLS join issues)
+    final jobs = await _client
         .from('job_listings')
         .select('id, job_title')
         .eq('user_id', user.id);
 
-    final jobs = List<Map<String, dynamic>>.from(jobsRes);
-    if (jobs.isEmpty) return [];
+    final jobList = List<Map<String, dynamic>>.from(jobs);
+    final jobIds = jobList.map((e) => e['id']).where((e) => e != null).toList();
 
-    final jobIds = jobs.map((e) => e['id'].toString()).toList();
+    if (jobIds.isEmpty) return [];
 
-    // Step 2: fetch latest applications for those job IDs
     final res = await _client
         .from('job_applications_listings')
         .select('''
           id,
           listing_id,
+          application_id,
           applied_at,
           application_status,
+
           job_listings (
             id,
             job_title
           ),
+
           job_applications (
             id,
-            name,
-            phone,
-            email,
-            district,
-            education,
-            experience_level,
-            skills
+            user_id,
+            full_name,
+            mobile_number,
+            email
           )
         ''')
         .inFilter('listing_id', jobIds)
@@ -197,7 +212,10 @@ class EmployerJobService {
     return List<Map<String, dynamic>>.from(res);
   }
 
-  /// Fetch top jobs sorted by applications_count
+  // ------------------------------------------------------------
+  // DASHBOARD: TOP JOBS
+  // ------------------------------------------------------------
+
   Future<List<Map<String, dynamic>>> fetchTopJobs({
     int limit = 5,
   }) async {
@@ -207,7 +225,7 @@ class EmployerJobService {
     final res = await _client
         .from('job_listings')
         .select(
-          'id, job_title, status, applications_count, views_count, created_at',
+          'id, job_title, status, applications_count, views_count',
         )
         .eq('user_id', user.id)
         .order('applications_count', ascending: false)
@@ -249,20 +267,19 @@ class EmployerJobService {
             id,
             user_id,
             created_at,
-            user_profiles (
-              id,
-              full_name,
-              mobile_number,
-              email,
-              district,
-              address,
-              gender,
-              date_of_birth,
-              education,
-              experience_details,
-              skills,
-              expected_salary
-            )
+            full_name,
+            mobile_number,
+            email,
+            district,
+            address,
+            gender,
+            date_of_birth,
+            education,
+            experience_years,
+            skills,
+            expected_salary,
+            resume_file_url,
+            photo_file_url
           )
         ''')
         .eq('listing_id', jobId)
@@ -309,8 +326,15 @@ class EmployerJobService {
   }
 
   // ------------------------------------------------------------
-  // DEBUG HELPERS
+  // HELPERS
   // ------------------------------------------------------------
+
+  int _toInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is int) return v;
+    if (v is double) return v.toInt();
+    return int.tryParse(v.toString()) ?? 0;
+  }
 
   void logError(Object e) {
     debugPrint("EmployerJobService error: $e");
