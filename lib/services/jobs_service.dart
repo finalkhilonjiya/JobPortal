@@ -7,9 +7,17 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class JobsService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  // Supabase storage bucket
   static const String _bucket = 'job-files';
+
+  // You are using public bucket (your URLs are public)
   static const bool _useSignedUrls = false;
 
+  /// Apply for a job:
+  /// - Upload resume + photo to Supabase Storage
+  /// - Insert into job_applications
+  /// - Insert into job_applications_listings (bridge)
+  /// - Increment job_listings.applications_count
   Future<void> applyForJob({
     required String jobId,
     required Map<String, dynamic> applicationData,
@@ -24,7 +32,27 @@ class JobsService {
 
     final userId = user.id;
 
-    // 1) Ensure job exists and active
+    // ------------------------------------------------------------
+    // 1) Validate required fields for your schema
+    // job_applications requires:
+    // user_id, name, phone, email, skills (text not null)
+    // ------------------------------------------------------------
+    final name = (applicationData['name'] ?? '').toString().trim();
+    final email = (applicationData['email'] ?? '').toString().trim();
+    final phone = (applicationData['phone'] ?? '').toString().trim();
+
+    // skills in schema is TEXT NOT NULL
+    // we store comma separated string
+    final skillsText = _normalizeSkills(applicationData['skills']);
+
+    if (name.isEmpty) throw Exception("Full name is required");
+    if (phone.isEmpty) throw Exception("Phone number is required");
+    if (email.isEmpty) throw Exception("Email is required");
+    if (skillsText.isEmpty) throw Exception("Skills are required");
+
+    // ------------------------------------------------------------
+    // 2) Ensure job exists and active
+    // ------------------------------------------------------------
     final job = await _supabase
         .from('job_listings')
         .select('id, applications_count, status')
@@ -38,7 +66,11 @@ class JobsService {
       throw Exception("This job is not accepting applications");
     }
 
-    // 2) Duplicate apply check
+    // ------------------------------------------------------------
+    // 3) Duplicate apply check
+    // job_applications_listings has:
+    // user_id + listing_id
+    // ------------------------------------------------------------
     final existingBridge = await _supabase
         .from('job_applications_listings')
         .select('id')
@@ -50,13 +82,17 @@ class JobsService {
       throw Exception('You have already applied for this job');
     }
 
-    // 3) Resume bytes
+    // ------------------------------------------------------------
+    // 4) Resume bytes
+    // ------------------------------------------------------------
     final resumeBytes = resumeFile.bytes;
     if (resumeBytes == null) {
       throw Exception("Resume file could not be read. Please select again.");
     }
 
-    // 4) Upload resume + photo
+    // ------------------------------------------------------------
+    // 5) Upload resume + photo
+    // ------------------------------------------------------------
     final resumeUrl = await _uploadBytes(
       userId: userId,
       folder: 'resumes',
@@ -73,35 +109,62 @@ class JobsService {
       contentType: 'image/jpeg',
     );
 
-    // 5) Insert job_applications row (name is required)
+    // ------------------------------------------------------------
+    // 6) Insert job_applications row
+    // IMPORTANT: match schema columns exactly
+    // ------------------------------------------------------------
     final created = await _supabase
         .from('job_applications')
         .insert({
           'user_id': userId,
-          'name': (applicationData['name'] ?? '').toString().trim(),
-          'email': (applicationData['email'] ?? '').toString().trim(),
-          'phone': (applicationData['phone'] ?? '').toString().trim(),
-          'skills': _skillsToList(applicationData['skills']),
+          'name': name,
+          'phone': phone,
+          'email': email,
+
+          // Optional fields (we keep null if not provided)
+          'district': _nullIfEmpty(applicationData['district']),
+          'address': _nullIfEmpty(applicationData['address']),
+          'gender': _nullIfEmpty(applicationData['gender']),
+          'date_of_birth': applicationData['date_of_birth'],
+
+          'education': _nullIfEmpty(applicationData['education']),
+          'experience_level': _nullIfEmpty(applicationData['experience_level']),
+          'experience_details':
+              _nullIfEmpty(applicationData['experience_details']),
+
+          // REQUIRED by schema: skills text NOT NULL
+          'skills': skillsText,
+
+          'expected_salary': _nullIfEmpty(applicationData['expected_salary']),
+          'availability': _nullIfEmpty(applicationData['availability']),
+          'additional_info': _nullIfEmpty(applicationData['additional_info']),
+
+          'resume_file_name': resumeFile.name,
           'resume_file_url': resumeUrl,
+
+          'photo_file_name': photoFileName,
           'photo_file_url': photoUrl,
+
           'status': 'submitted',
-          'created_at': DateTime.now().toIso8601String(),
         })
         .select('id')
         .single();
 
     final applicationId = created['id'].toString();
 
-    // 6) Insert bridge row
+    // ------------------------------------------------------------
+    // 7) Insert bridge row (job_applications_listings)
+    // ------------------------------------------------------------
     await _supabase.from('job_applications_listings').insert({
       'application_id': applicationId,
       'listing_id': jobId,
       'user_id': userId,
-      'applied_at': DateTime.now().toIso8601String(),
       'application_status': 'applied',
     });
 
-    // 7) Increment applications_count
+    // ------------------------------------------------------------
+    // 8) Increment applications_count
+    // ------------------------------------------------------------
     final currentCount = _toInt(job['applications_count']);
 
     await _supabase
@@ -110,6 +173,9 @@ class JobsService {
         .eq('id', jobId);
   }
 
+  // ------------------------------------------------------------
+  // STORAGE UPLOAD
+  // ------------------------------------------------------------
   Future<String> _uploadBytes({
     required String userId,
     required String folder,
@@ -117,11 +183,10 @@ class JobsService {
     required String fileName,
     required String contentType,
   }) async {
-    final safeName = fileName
-        .trim()
-        .replaceAll(' ', '_')
-        .replaceAll(RegExp(r'[^a-zA-Z0-9_\.\-]'), '');
+    final safeName = _safeFileName(fileName);
 
+    // Your Supabase public URL example:
+    // .../job-files/photos/<userId>/<timestamp>_IMG.jpeg
     final path =
         '$folder/$userId/${DateTime.now().millisecondsSinceEpoch}_$safeName';
 
@@ -146,22 +211,49 @@ class JobsService {
     return signed;
   }
 
-  List<String> _skillsToList(dynamic raw) {
-    if (raw == null) return [];
+  // ------------------------------------------------------------
+  // HELPERS
+  // ------------------------------------------------------------
+  String _safeFileName(String fileName) {
+    final trimmed = fileName.trim();
+    if (trimmed.isEmpty) return 'file';
 
+    return trimmed
+        .replaceAll(' ', '_')
+        .replaceAll(RegExp(r'[^a-zA-Z0-9_\.\-]'), '');
+  }
+
+  String _normalizeSkills(dynamic raw) {
+    if (raw == null) return '';
+
+    // if someone passed list
     if (raw is List) {
-      return raw
+      final items = raw
           .map((e) => e.toString().trim())
           .where((e) => e.isNotEmpty)
           .toList();
+      return items.join(', ');
     }
 
-    final text = raw.toString();
-    return text
+    // text
+    final text = raw.toString().trim();
+    if (text.isEmpty) return '';
+
+    // normalize: "a, b ,c" -> "a, b, c"
+    final parts = text
         .split(',')
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty)
         .toList();
+
+    return parts.join(', ');
+  }
+
+  dynamic _nullIfEmpty(dynamic v) {
+    if (v == null) return null;
+    final s = v.toString().trim();
+    if (s.isEmpty) return null;
+    return s;
   }
 
   int _toInt(dynamic v) {
