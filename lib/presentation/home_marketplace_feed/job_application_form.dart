@@ -54,7 +54,10 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
   // PALETTE (Fluent Light)
   // ------------------------------------------------------------
   static const _bg = Color(0xFFF6F7FB);
-  static const _card = Colors.white;
+
+  /// FIX: this was `_card` but that conflicts with Widget _card(...)
+  static const _cardColor = Colors.white;
+
   static const _text = Color(0xFF0F172A);
   static const _muted = Color(0xFF64748B);
   static const _line = Color(0xFFE6EAF2);
@@ -177,11 +180,9 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
           'name': _name.text.trim(),
           'email': _email.text.trim(),
           'phone': _phone.text.trim(),
-
           'district': _district.text.trim(),
           'address': _address.text.trim(),
           'gender': _gender,
-
           'education': _education.text.trim(),
           'experience_level': _experienceLevel.text.trim(),
           'experience_details': _experienceDetails.text.trim(),
@@ -244,7 +245,6 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
                 icon: Icons.person_outline_rounded,
               ),
               SizedBox(height: 1.2.h),
-
               _card(
                 child: Column(
                   children: [
@@ -276,16 +276,13 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
                   ],
                 ),
               ),
-
               SizedBox(height: 2.2.h),
-
               _sectionHeader(
                 title: "Location",
                 subtitle: "Optional but recommended",
                 icon: Icons.location_on_outlined,
               ),
               SizedBox(height: 1.2.h),
-
               _card(
                 child: Column(
                   children: [
@@ -304,16 +301,13 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
                   ],
                 ),
               ),
-
               SizedBox(height: 2.2.h),
-
               _sectionHeader(
                 title: "Profile",
                 subtitle: "Education, experience and skills",
                 icon: Icons.badge_outlined,
               ),
               SizedBox(height: 1.2.h),
-
               _card(
                 child: Column(
                   children: [
@@ -346,16 +340,13 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
                   ],
                 ),
               ),
-
               SizedBox(height: 2.2.h),
-
               _sectionHeader(
                 title: "Documents",
                 subtitle: "Resume and photo are required",
                 icon: Icons.upload_file_outlined,
               ),
               SizedBox(height: 1.2.h),
-
               _card(
                 child: Column(
                   children: [
@@ -377,16 +368,13 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
                   ],
                 ),
               ),
-
               SizedBox(height: 2.2.h),
-
               _sectionHeader(
                 title: "Optional",
                 subtitle: "Expected salary and availability",
                 icon: Icons.tune_rounded,
               ),
               SizedBox(height: 1.2.h),
-
               _card(
                 child: Column(
                   children: [
@@ -411,9 +399,7 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
                   ],
                 ),
               ),
-
               SizedBox(height: 2.8.h),
-
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -445,9 +431,7 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
                         ),
                 ),
               ),
-
               SizedBox(height: 1.4.h),
-
               Text(
                 "By submitting, you confirm your details are correct.",
                 textAlign: TextAlign.center,
@@ -518,7 +502,7 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
     return Container(
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: _card,
+        color: _cardColor,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: _line),
         boxShadow: [
