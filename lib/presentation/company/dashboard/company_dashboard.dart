@@ -85,7 +85,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   int get _applicants24h => _s('applicants_last_24h');
 
   // ------------------------------------------------------------
-  // FLUENT LIGHT PALETTE (Premium)
+  // FLUENT LIGHT PALETTE
   // ------------------------------------------------------------
   static const _bg = Color(0xFFF6F7FB);
   static const _card = Colors.white;
@@ -93,6 +93,8 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   static const _muted = Color(0xFF64748B);
   static const _line = Color(0xFFE6EAF2);
   static const _primary = Color(0xFF2563EB);
+
+  static const _radius = 22.0;
 
   @override
   Widget build(BuildContext context) {
@@ -134,38 +136,53 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                   _heroHeader(),
                   SizedBox(height: 2.2.h),
 
+                  _quickActions(),
+                  SizedBox(height: 2.2.h),
+
                   _kpiGrid(),
                   SizedBox(height: 2.2.h),
 
                   _jobStatusStrip(),
-                  SizedBox(height: 2.4.h),
+                  SizedBox(height: 2.6.h),
 
                   _sectionTitle(
                     title: "Recent Applicants",
                     subtitle: "Latest candidates across your jobs",
+                    actionText: "View all",
+                    onActionTap: () {
+                      Navigator.pushNamed(context, AppRoutes.employerJobs);
+                    },
                   ),
                   SizedBox(height: 1.2.h),
                   _recentApplicantsSection(),
-                  SizedBox(height: 2.4.h),
+                  SizedBox(height: 2.6.h),
 
                   _sectionTitle(
                     title: "Top Jobs",
-                    subtitle: "Jobs with most applications",
+                    subtitle: "Jobs with the most applications",
+                    actionText: "View all",
+                    onActionTap: () {
+                      Navigator.pushNamed(context, AppRoutes.employerJobs);
+                    },
                   ),
                   SizedBox(height: 1.2.h),
                   _topJobsSection(),
                   SizedBox(height: 2.6.h),
 
                   _sectionTitle(
-                    title: "My Job Listings",
-                    subtitle: "Manage posts and view applicants",
+                    title: "My Jobs (Preview)",
+                    subtitle: "Latest 3 jobs only. Use My Jobs for full list.",
+                    actionText: "My Jobs",
+                    onActionTap: () {
+                      Navigator.pushNamed(context, AppRoutes.employerJobs);
+                    },
                   ),
                   SizedBox(height: 1.2.h),
 
                   if (_jobs.isEmpty)
                     _emptyState()
                   else
-                    ..._jobs.map(_jobCard).toList(),
+                    ..._jobs.take(3).map(_jobCard).toList(),
                 ],
               ),
             ),
@@ -188,14 +205,14 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // HERO HEADER (Premium)
+  // HERO HEADER
   // ------------------------------------------------------------
   Widget _heroHeader() {
     return Container(
       padding: EdgeInsets.fromLTRB(4.w, 2.2.h, 4.w, 2.2.h),
       decoration: BoxDecoration(
         color: _card,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(_radius),
         border: Border.all(color: _line),
         boxShadow: [
           BoxShadow(
@@ -248,6 +265,123 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------
+  // QUICK ACTIONS (Premium)
+  // ------------------------------------------------------------
+  Widget _quickActions() {
+    return Container(
+      padding: EdgeInsets.fromLTRB(4.w, 1.6.h, 4.w, 1.6.h),
+      decoration: BoxDecoration(
+        color: _card,
+        borderRadius: BorderRadius.circular(_radius),
+        border: Border.all(color: _line),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.025),
+            blurRadius: 16,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _actionButton(
+              icon: Icons.add_circle_outline_rounded,
+              title: "Create Job",
+              subtitle: "Post new",
+              onTap: () async {
+                final res = await Navigator.pushNamed(
+                  context,
+                  AppRoutes.createJob,
+                );
+                if (res == true) await _loadDashboard();
+              },
+            ),
+          ),
+          SizedBox(width: 3.w),
+          Expanded(
+            child: _actionButton(
+              icon: Icons.work_outline_rounded,
+              title: "My Jobs",
+              subtitle: "Manage",
+              onTap: () {
+                Navigator.pushNamed(context, AppRoutes.employerJobs);
+              },
+            ),
+          ),
+          SizedBox(width: 3.w),
+          Expanded(
+            child: _actionButton(
+              icon: Icons.people_alt_outlined,
+              title: "Applicants",
+              subtitle: "Review",
+              onTap: () {
+                Navigator.pushNamed(context, AppRoutes.employerJobs);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _actionButton({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: _line),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFDBEAFE)),
+              ),
+              child: Icon(icon, color: _primary, size: 22),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                color: _text,
+                letterSpacing: -0.1,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12,
+                color: _muted,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -312,7 +446,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           border: Border.all(color: _line),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.025),
+              color: Colors.black.withOpacity(0.02),
               blurRadius: 14,
               offset: const Offset(0, 10),
             ),
@@ -365,18 +499,18 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // JOB STATUS STRIP (Clean)
+  // JOB STATUS STRIP
   // ------------------------------------------------------------
   Widget _jobStatusStrip() {
     return Container(
       padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 2.h),
       decoration: BoxDecoration(
         color: _card,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(_radius),
         border: Border.all(color: _line),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.025),
+            color: Colors.black.withOpacity(0.02),
             blurRadius: 16,
             offset: const Offset(0, 10),
           ),
@@ -453,28 +587,48 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   Widget _sectionTitle({
     required String title,
     required String subtitle,
+    String? actionText,
+    VoidCallback? onActionTap,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w800,
-            color: _text,
-            letterSpacing: -0.2,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: _text,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 12.6,
+                  color: _muted,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 3),
-        Text(
-          subtitle,
-          style: const TextStyle(
-            fontSize: 12.6,
-            color: _muted,
-            fontWeight: FontWeight.w700,
+        if (actionText != null && onActionTap != null)
+          TextButton(
+            onPressed: onActionTap,
+            child: Text(
+              actionText,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                color: _primary,
+              ),
+            ),
           ),
-        ),
       ],
     );
   }
@@ -495,11 +649,11 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       padding: EdgeInsets.fromLTRB(4.w, 1.2.h, 4.w, 1.2.h),
       decoration: BoxDecoration(
         color: _card,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(_radius),
         border: Border.all(color: _line),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.025),
+            color: Colors.black.withOpacity(0.02),
             blurRadius: 16,
             offset: const Offset(0, 10),
           ),
@@ -525,7 +679,9 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     final status = (row['application_status'] ?? 'applied').toString();
     final appliedAt = row['applied_at'];
 
-    final name = (app['name'] ?? 'Candidate').toString();
+    // ✅ FIX: correct schema field
+    final name = (app['full_name'] ?? 'Candidate').toString();
+
     final jobTitle = (listing['job_title'] ?? 'Job').toString();
 
     return InkWell(
@@ -654,11 +810,11 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       padding: EdgeInsets.fromLTRB(4.w, 1.2.h, 4.w, 1.2.h),
       decoration: BoxDecoration(
         color: _card,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(_radius),
         border: Border.all(color: _line),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.025),
+            color: Colors.black.withOpacity(0.02),
             blurRadius: 16,
             offset: const Offset(0, 10),
           ),
@@ -747,7 +903,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // JOB LISTINGS
+  // JOB LISTINGS (Preview only)
   // ------------------------------------------------------------
   Widget _jobCard(Map<String, dynamic> job) {
     final jobId = (job['id'] ?? '').toString();
@@ -764,11 +920,11 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
         color: _card,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(_radius),
         border: Border.all(color: _line),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.025),
+            color: Colors.black.withOpacity(0.02),
             blurRadius: 16,
             offset: const Offset(0, 10),
           ),
@@ -965,11 +1121,11 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       padding: EdgeInsets.all(5.w),
       decoration: BoxDecoration(
         color: _card,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(_radius),
         border: Border.all(color: _line),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.025),
+            color: Colors.black.withOpacity(0.02),
             blurRadius: 16,
             offset: const Offset(0, 10),
           ),
@@ -1026,7 +1182,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // DRAWER (Premium light)
+  // DRAWER
   // ------------------------------------------------------------
   Widget _employerDrawer() {
     return Drawer(
@@ -1037,7 +1193,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             Container(
               width: double.infinity,
               padding: EdgeInsets.fromLTRB(5.w, 2.2.h, 5.w, 2.2.h),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: Colors.white,
                 border: Border(
                   bottom: BorderSide(color: _line),
@@ -1093,6 +1249,14 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                     icon: Icons.dashboard_rounded,
                     title: "Dashboard",
                     onTap: () => Navigator.pop(context),
+                  ),
+                  _drawerTile(
+                    icon: Icons.work_outline_rounded,
+                    title: "My Jobs",
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, AppRoutes.employerJobs);
+                    },
                   ),
                   _drawerTile(
                     icon: Icons.add_circle_outline_rounded,
