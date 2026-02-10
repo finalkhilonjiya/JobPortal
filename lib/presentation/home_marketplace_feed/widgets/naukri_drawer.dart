@@ -1,157 +1,216 @@
 import 'package:flutter/material.dart';
-import 'package:sizer/sizer.dart';
 
-import '../../../routes/app_routes.dart';
-import '../../login_screen/mobile_auth_service.dart';
-
-import 'profile_page.dart';
-import '../premium_package_page.dart';
-import '../search_page.dart';
-import '../my_applications_page.dart';
-import '../saved_jobs_page.dart';
-import '../profile_performance_page.dart';
-import '../settings_page.dart';
-import '../help_page.dart';
+import '../../../theme/app_theme.dart';
+import '../../../ui/app_styles.dart';
 
 class NaukriDrawer extends StatelessWidget {
   final String userName;
-  final int profileCompletion;
+  final int profileCompletion; // 0 - 100
   final VoidCallback onClose;
-
-  /// Role flag
-  final bool isCompanyUser;
 
   const NaukriDrawer({
     Key? key,
     required this.userName,
     required this.profileCompletion,
     required this.onClose,
-    this.isCompanyUser = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final safeCompletion = profileCompletion.clamp(0, 100);
+    final name = (userName.trim().isEmpty) ? "Pankaj" : userName.trim();
+
+    final progress = (profileCompletion.clamp(0, 100)) / 100.0;
+    final pctText = "${profileCompletion.clamp(0, 100)}%";
 
     return Drawer(
+      backgroundColor: Colors.white,
       child: SafeArea(
         child: Column(
           children: [
-            /// ================= HEADER =================
-            Padding(
-              padding: EdgeInsets.fromLTRB(4.w, 3.h, 3.w, 2.h),
-              child: Row(
+            // -----------------------------
+            // HEADER
+            // -----------------------------
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: AppTheme.border),
+                ),
+              ),
+              child: Column(
                 children: [
-                  _ProfileCompletionCircle(completion: safeCompletion),
-                  SizedBox(width: 4.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          userName.isEmpty ? 'Your Profile' : userName,
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        SizedBox(height: 0.6.h),
-                        InkWell(
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ProfilePage(),
+                  Row(
+                    children: [
+                      _ProfileRing(
+                        progress: progress,
+                        text: pctText,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.text,
                               ),
-                            );
-                          },
-                          child: Text(
-                            safeCompletion < 100
-                                ? 'Complete your profile'
-                                : 'View profile',
-                            style: TextStyle(
-                              fontSize: 10.5.sp,
-                              color: Colors.blue.shade600,
                             ),
-                          ),
+                            const SizedBox(height: 3),
+                            GestureDetector(
+                              onTap: () {
+                                // TODO: connect route later
+                                Navigator.pop(context);
+                              },
+                              child: const Text(
+                                "Update profile",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.blue,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      IconButton(
+                        onPressed: onClose,
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: onClose,
+                  const SizedBox(height: 14),
+
+                  // Upgrade Card
+                  _UpgradeCard(
+                    onTap: () {
+                      // TODO: connect route later
+                      Navigator.pop(context);
+                    },
                   ),
                 ],
               ),
             ),
 
-            /// ================= UPGRADE (APPLICANT ONLY) =================
-            if (!isCompanyUser)
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4.w),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(10),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => PremiumPackagePage(),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 4.w,
-                      vertical: 1.6.h,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.amber.shade100,
-                          Colors.amber.shade50,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.workspace_premium,
-                          color: Colors.amber.shade800,
-                        ),
-                        SizedBox(width: 3.w),
-                        Expanded(
-                          child: Text(
-                            'Upgrade to Pro',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        const Icon(
-                          Icons.arrow_forward_ios,
-                          size: 14,
-                          color: Colors.grey,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-            SizedBox(height: 3.h),
-
-            /// ================= MENU =================
+            // -----------------------------
+            // MENU
+            // -----------------------------
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
-                children: isCompanyUser
-                    ? _companyMenu(context)
-                    : _applicantMenu(context),
+                children: [
+                  _MenuItem(
+                    icon: Icons.edit_outlined,
+                    title: "Set your job search status",
+                    trailing: const Icon(Icons.edit, size: 16),
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  _MenuItem(
+                    icon: Icons.auto_awesome_outlined,
+                    title: "Neo - AI Job Agent",
+                    badge: "New",
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  _MenuItem(
+                    icon: Icons.search_rounded,
+                    title: "Search jobs",
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  _MenuItem(
+                    icon: Icons.star_border_rounded,
+                    title: "Recommended jobs",
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  _MenuItem(
+                    icon: Icons.bookmark_border_rounded,
+                    title: "Saved jobs",
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  _MenuItem(
+                    icon: Icons.trending_up_rounded,
+                    title: "Profile performance",
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  _MenuItem(
+                    icon: Icons.palette_outlined,
+                    title: "Display preferences",
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  _MenuItem(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    title: "Chat for help",
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  _MenuItem(
+                    icon: Icons.settings_outlined,
+                    title: "Settings",
+                    onTap: () => Navigator.pop(context),
+                  ),
+
+                  // Divider strip
+                  Container(
+                    height: 10,
+                    color: AppTheme.bg,
+                  ),
+
+                  _MenuItem(
+                    icon: Icons.work_outline_rounded,
+                    title: "Jobseeker services",
+                    badge: "Paid",
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  _MenuItem(
+                    icon: Icons.workspace_premium_outlined,
+                    title: "Khilonjiya Pro",
+                    badge: "Paid",
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  _MenuItem(
+                    icon: Icons.article_outlined,
+                    title: "Khilonjiya blog",
+                    onTap: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+
+            // -----------------------------
+            // FEEDBACK STRIP
+            // -----------------------------
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              decoration: BoxDecoration(
+                color: AppTheme.bg,
+                border: Border(
+                  top: BorderSide(color: AppTheme.border),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      "Finding this app useful?",
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.text,
+                      ),
+                    ),
+                  ),
+                  _FeedbackButton(
+                    icon: Icons.thumb_up_outlined,
+                    onTap: () {},
+                  ),
+                  const SizedBox(width: 10),
+                  _FeedbackButton(
+                    icon: Icons.thumb_down_outlined,
+                    onTap: () {},
+                  ),
+                ],
               ),
             ),
           ],
@@ -159,152 +218,170 @@ class NaukriDrawer extends StatelessWidget {
       ),
     );
   }
-
-  /// ================= APPLICANT MENU =================
-  List<Widget> _applicantMenu(BuildContext context) => [
-        _item(
-          context,
-          Icons.search,
-          'Search jobs',
-          () => _go(context, const SearchPage()),
-        ),
-        _item(context, Icons.work_outline, 'Recommended jobs', onClose),
-        _item(
-          context,
-          Icons.assignment_turned_in_outlined,
-          'My applications',
-          () => _go(context, const MyApplicationsPage()),
-        ),
-        _item(
-          context,
-          Icons.bookmark_border,
-          'Saved jobs',
-          () => _go(context, const SavedJobsPage()),
-        ),
-        _item(
-          context,
-          Icons.bar_chart_outlined,
-          'Profile performance',
-          () => _go(context, const ProfilePerformancePage()),
-        ),
-        _divider(),
-        _item(
-          context,
-          Icons.settings_outlined,
-          'Settings',
-          () => _go(context, const SettingsPage()),
-        ),
-        _item(
-          context,
-          Icons.help_outline,
-          'Help',
-          () => _go(context, const HelpPage()),
-        ),
-        _divider(),
-        _logoutItem(context),
-      ];
-
-  /// ================= COMPANY MENU =================
-  List<Widget> _companyMenu(BuildContext context) => [
-        _item(context, Icons.dashboard_outlined, 'Dashboard', onClose),
-        _item(
-          context,
-          Icons.assignment_ind_outlined,
-          'Applications received',
-          onClose,
-        ),
-        _divider(),
-        _item(
-          context,
-          Icons.settings_outlined,
-          'Settings',
-          () => _go(context, const SettingsPage()),
-        ),
-        _item(
-          context,
-          Icons.help_outline,
-          'Help',
-          () => _go(context, const HelpPage()),
-        ),
-        _divider(),
-        _logoutItem(context),
-      ];
-
-  /// ================= LOGOUT (SAFE) =================
-  Widget _logoutItem(BuildContext context) {
-    return _item(
-      context,
-      Icons.logout,
-      'Logout',
-      () async {
-        await MobileAuthService().logout();
-
-        // StatelessWidget has no mounted, so just navigate
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          AppRoutes.roleSelection,
-          (_) => false,
-        );
-      },
-      iconColor: Colors.redAccent,
-    );
-  }
-
-  Widget _item(
-    BuildContext context,
-    IconData icon,
-    String label,
-    VoidCallback onTap, {
-    Color? iconColor,
-  }) {
-    return ListTile(
-      dense: true,
-      leading: Icon(icon, size: 20, color: iconColor ?? Colors.grey.shade800),
-      title: Text(label, style: TextStyle(fontSize: 11.5.sp)),
-      onTap: () {
-        Navigator.pop(context);
-        onTap();
-      },
-    );
-  }
-
-  Widget _divider() => Padding(
-        padding: EdgeInsets.symmetric(vertical: 1.h),
-        child: Divider(color: Colors.grey.shade300),
-      );
-
-  void _go(BuildContext context, Widget page) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
-  }
 }
 
-/// ================= PROFILE COMPLETION =================
+// ===============================================================
+// COMPONENTS
+// ===============================================================
 
-class _ProfileCompletionCircle extends StatelessWidget {
-  final int completion;
+class _ProfileRing extends StatelessWidget {
+  final double progress;
+  final String text;
 
-  const _ProfileCompletionCircle({required this.completion});
+  const _ProfileRing({
+    required this.progress,
+    required this.text,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        SizedBox(
-          width: 46,
-          height: 46,
-          child: CircularProgressIndicator(
-            value: completion / 100,
-            strokeWidth: 3,
-            backgroundColor: Colors.grey.shade300,
-            color: Colors.blue,
+    return SizedBox(
+      width: 52,
+      height: 52,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CircularProgressIndicator(
+            value: progress,
+            strokeWidth: 4,
+            backgroundColor: AppTheme.border,
+            valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.blue),
+          ),
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.text,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UpgradeCard extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _UpgradeCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: AppStyles.r16,
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: AppStyles.r16,
+          border: Border.all(color: AppTheme.blue.withOpacity(0.18)),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppTheme.blue.withOpacity(0.07),
+              Colors.deepPurple.withOpacity(0.06),
+            ],
           ),
         ),
-        Text(
-          '$completion%',
-          style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w600),
+        child: Row(
+          children: const [
+            Icon(Icons.workspace_premium_rounded, color: AppTheme.blue),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                "Upgrade to Khilonjiya Pro",
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.text,
+                ),
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: AppTheme.subText),
+          ],
         ),
-      ],
+      ),
+    );
+  }
+}
+
+class _MenuItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? badge;
+  final Widget? trailing;
+  final VoidCallback onTap;
+
+  const _MenuItem({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.badge,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      dense: true,
+      minLeadingWidth: 22,
+      leading: Icon(icon, size: 20, color: AppTheme.subText),
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 13.8,
+          fontWeight: FontWeight.w600,
+          color: AppTheme.text,
+        ),
+      ),
+      trailing: badge != null
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppTheme.blue.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: AppTheme.blue.withOpacity(0.12)),
+              ),
+              child: Text(
+                badge!,
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.blue,
+                ),
+              ),
+            )
+          : trailing,
+      onTap: onTap,
+    );
+  }
+}
+
+class _FeedbackButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _FeedbackButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppTheme.border),
+        ),
+        child: Icon(icon, size: 18, color: AppTheme.subText),
+      ),
     );
   }
 }
