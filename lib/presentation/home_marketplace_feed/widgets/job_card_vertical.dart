@@ -30,21 +30,20 @@ class JobCardVertical extends StatelessWidget {
     final salaryMin = job['salary_min'];
     final salaryMax = job['salary_max'];
 
-    String salaryText = "Salary not disclosed";
+    String salaryText = "Salary";
     if (salaryMin != null || salaryMax != null) {
-      salaryText = "₹${salaryMin ?? ''} - ₹${salaryMax ?? ''}";
+      salaryText = "₹${salaryMin ?? ''}-${salaryMax ?? ''}";
     }
 
-    final posted = (job['created_at'] ?? '').toString().isEmpty
-        ? "Posted recently"
-        : "Posted";
+    final posted = (job['created_at'] ?? job['posted_time'] ?? 'Recently')
+        .toString();
 
     return InkWell(
       onTap: onTap,
       borderRadius: KhilonjiyaUI.r16,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: KhilonjiyaUI.r16,
@@ -57,115 +56,100 @@ class JobCardVertical extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Logo
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF3F4F6),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: KhilonjiyaUI.border),
-              ),
-              child: const Icon(
-                Icons.business_outlined,
-                color: Color(0xFF334155),
-              ),
-            ),
-
-            const SizedBox(width: 12),
-
-            // Content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: KhilonjiyaUI.cardTitle.copyWith(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      InkWell(
-                        onTap: onSaveToggle,
-                        borderRadius: BorderRadius.circular(999),
-                        child: Padding(
-                          padding: const EdgeInsets.all(6),
-                          child: Icon(
-                            isSaved
-                                ? Icons.bookmark_rounded
-                                : Icons.bookmark_outline,
-                            size: 22,
-                            color: isSaved
-                                ? KhilonjiyaUI.primary
-                                : const Color(0xFF64748B),
-                          ),
-                        ),
-                      ),
-                    ],
+            // Header row
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: KhilonjiyaUI.border),
                   ),
-
-                  const SizedBox(height: 6),
-
-                  Text(
-                    company,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: KhilonjiyaUI.sub.copyWith(fontSize: 12.8),
+                  child: const Icon(
+                    Icons.business_outlined,
+                    color: Color(0xFF334155),
+                    size: 26,
                   ),
+                ),
+                const SizedBox(width: 12),
 
-                  const SizedBox(height: 10),
-
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 6,
-                    children: [
-                      _pill(
-                        icon: Icons.location_on_outlined,
-                        text: location,
-                      ),
-                      _pill(
-                        icon: Icons.work_outline,
-                        text: exp,
-                      ),
-                      _pill(
-                        icon: Icons.currency_rupee,
-                        text: salaryText,
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  Row(
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        posted,
-                        style: KhilonjiyaUI.sub.copyWith(
-                          fontSize: 11.5,
-                          color: const Color(0xFF94A3B8),
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: KhilonjiyaUI.cardTitle.copyWith(
+                          fontSize: 14.8,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
-                      const Spacer(),
-                      const Icon(
-                        Icons.arrow_forward,
-                        size: 18,
-                        color: KhilonjiyaUI.muted,
+                      const SizedBox(height: 5),
+                      Text(
+                        company,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: KhilonjiyaUI.sub.copyWith(fontSize: 12.8),
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+
+                InkWell(
+                  onTap: onSaveToggle,
+                  borderRadius: BorderRadius.circular(999),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(
+                      isSaved ? Icons.bookmark_rounded : Icons.bookmark_outline,
+                      size: 24,
+                      color: isSaved
+                          ? KhilonjiyaUI.primary
+                          : const Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 14),
+
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _pill(Icons.location_on_outlined, location),
+                _pill(Icons.work_outline, exp),
+                _pill(Icons.currency_rupee, salaryText),
+              ],
+            ),
+
+            const SizedBox(height: 14),
+
+            Row(
+              children: [
+                Text(
+                  posted,
+                  style: KhilonjiyaUI.sub.copyWith(
+                    fontSize: 12.2,
+                    color: const Color(0xFF94A3B8),
+                  ),
+                ),
+                const Spacer(),
+                const Icon(
+                  Icons.arrow_forward,
+                  size: 18,
+                  color: KhilonjiyaUI.muted,
+                ),
+              ],
             ),
           ],
         ),
@@ -173,10 +157,7 @@ class JobCardVertical extends StatelessWidget {
     );
   }
 
-  Widget _pill({
-    required IconData icon,
-    required String text,
-  }) {
+  Widget _pill(IconData icon, String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -190,12 +171,12 @@ class JobCardVertical extends StatelessWidget {
           Icon(icon, size: 14, color: const Color(0xFF64748B)),
           const SizedBox(width: 6),
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 170),
+            constraints: const BoxConstraints(maxWidth: 190),
             child: Text(
               text,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: KhilonjiyaUI.sub.copyWith(fontSize: 12.2),
+              style: KhilonjiyaUI.sub.copyWith(fontSize: 12.0),
             ),
           ),
         ],
