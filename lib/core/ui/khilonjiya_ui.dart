@@ -22,6 +22,14 @@ class KhilonjiyaUI {
     height: 1.2,
   );
 
+  // ✅ ADDED (USED IN HOME SECTIONS)
+  static const TextStyle h2 = TextStyle(
+    fontSize: 15.5,
+    fontWeight: FontWeight.w800,
+    color: text,
+    height: 1.2,
+  );
+
   static const TextStyle hTitle = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w700,
