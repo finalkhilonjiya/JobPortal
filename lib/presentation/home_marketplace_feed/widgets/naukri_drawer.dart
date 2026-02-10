@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-
-import '../../../theme/app_theme.dart';
-import '../../../ui/app_styles.dart';
+import '../../../core/ui/khilonjiya_ui.dart';
 
 class NaukriDrawer extends StatelessWidget {
   final String userName;
-  final int profileCompletion; // 0 - 100
+  final int profileCompletion;
   final VoidCallback onClose;
 
   const NaukriDrawer({
@@ -17,34 +15,54 @@ class NaukriDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = (userName.trim().isEmpty) ? "Pankaj" : userName.trim();
-
-    final progress = (profileCompletion.clamp(0, 100)) / 100.0;
-    final pctText = "${profileCompletion.clamp(0, 100)}%";
+    final p = profileCompletion.clamp(0, 100);
+    final value = p / 100;
 
     return Drawer(
       backgroundColor: Colors.white,
       child: SafeArea(
         child: Column(
           children: [
-            // -----------------------------
+            // ------------------------------------------------------------
             // HEADER
-            // -----------------------------
+            // ------------------------------------------------------------
             Container(
-              padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  bottom: BorderSide(color: AppTheme.border),
-                ),
+              padding: const EdgeInsets.fromLTRB(16, 12, 12, 14),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: KhilonjiyaUI.border)),
               ),
               child: Column(
                 children: [
                   Row(
                     children: [
-                      _ProfileRing(
-                        progress: progress,
-                        text: pctText,
+                      SizedBox(
+                        width: 54,
+                        height: 54,
+                        child: Stack(
+                          children: [
+                            Positioned.fill(
+                              child: CircularProgressIndicator(
+                                value: value,
+                                strokeWidth: 4,
+                                backgroundColor: const Color(0xFFE5E7EB),
+                                valueColor:
+                                    const AlwaysStoppedAnimation<Color>(
+                                  KhilonjiyaUI.primary,
+                                ),
+                              ),
+                            ),
+                            Center(
+                              child: Text(
+                                "$p%",
+                                style: KhilonjiyaUI.sub.copyWith(
+                                  color: KhilonjiyaUI.text,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -52,164 +70,202 @@ class NaukriDrawer extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              name,
-                              style: const TextStyle(
+                              userName.isEmpty ? "User" : userName,
+                              style: KhilonjiyaUI.hTitle.copyWith(
                                 fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.text,
+                                fontWeight: FontWeight.w900,
                               ),
                             ),
-                            const SizedBox(height: 3),
-                            GestureDetector(
-                              onTap: () {
-                                // TODO: connect route later
-                                Navigator.pop(context);
-                              },
-                              child: const Text(
-                                "Update profile",
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.blue,
-                                ),
-                              ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Update profile",
+                              style: KhilonjiyaUI.link.copyWith(fontSize: 13),
                             ),
                           ],
                         ),
                       ),
                       IconButton(
                         onPressed: onClose,
-                        icon: const Icon(Icons.close_rounded),
+                        icon: const Icon(Icons.close),
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 14),
 
-                  // Upgrade Card
-                  _UpgradeCard(
-                    onTap: () {
-                      // TODO: connect route later
-                      Navigator.pop(context);
-                    },
+                  // Upgrade card
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFEFF6FF), Color(0xFFF5F3FF)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: KhilonjiyaUI.r16,
+                      border: Border.all(color: const Color(0xFFDBEAFE)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: KhilonjiyaUI.border),
+                          ),
+                          child: const Icon(
+                            Icons.workspace_premium_outlined,
+                            color: KhilonjiyaUI.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            "Upgrade to Khilonjiya Pro",
+                            style: KhilonjiyaUI.body.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right,
+                            color: KhilonjiyaUI.muted),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
 
-            // -----------------------------
+            // ------------------------------------------------------------
             // MENU
-            // -----------------------------
+            // ------------------------------------------------------------
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  _MenuItem(
+                  const SizedBox(height: 8),
+
+                  _menuItem(
+                    context,
                     icon: Icons.edit_outlined,
                     title: "Set your job search status",
-                    trailing: const Icon(Icons.edit, size: 16),
-                    onTap: () => Navigator.pop(context),
+                    trailing: const Icon(Icons.edit,
+                        size: 18, color: KhilonjiyaUI.muted),
                   ),
-                  _MenuItem(
+
+                  _menuItem(
+                    context,
                     icon: Icons.auto_awesome_outlined,
                     title: "Neo - AI Job Agent",
                     badge: "New",
-                    onTap: () => Navigator.pop(context),
                   ),
-                  _MenuItem(
-                    icon: Icons.search_rounded,
+
+                  _menuItem(
+                    context,
+                    icon: Icons.search,
                     title: "Search jobs",
-                    onTap: () => Navigator.pop(context),
                   ),
-                  _MenuItem(
-                    icon: Icons.star_border_rounded,
+
+                  _menuItem(
+                    context,
+                    icon: Icons.star_outline,
                     title: "Recommended jobs",
-                    onTap: () => Navigator.pop(context),
                   ),
-                  _MenuItem(
-                    icon: Icons.bookmark_border_rounded,
+
+                  _menuItem(
+                    context,
+                    icon: Icons.bookmark_outline,
                     title: "Saved jobs",
-                    onTap: () => Navigator.pop(context),
                   ),
-                  _MenuItem(
-                    icon: Icons.trending_up_rounded,
+
+                  _menuItem(
+                    context,
+                    icon: Icons.person_outline,
                     title: "Profile performance",
-                    onTap: () => Navigator.pop(context),
                   ),
-                  _MenuItem(
+
+                  _menuItem(
+                    context,
                     icon: Icons.palette_outlined,
                     title: "Display preferences",
-                    onTap: () => Navigator.pop(context),
                   ),
-                  _MenuItem(
-                    icon: Icons.chat_bubble_outline_rounded,
+
+                  _menuItem(
+                    context,
+                    icon: Icons.chat_outlined,
                     title: "Chat for help",
-                    onTap: () => Navigator.pop(context),
                   ),
-                  _MenuItem(
+
+                  _menuItem(
+                    context,
                     icon: Icons.settings_outlined,
                     title: "Settings",
-                    onTap: () => Navigator.pop(context),
                   ),
 
-                  // Divider strip
+                  const SizedBox(height: 8),
+
                   Container(
                     height: 10,
-                    color: AppTheme.bg,
+                    color: const Color(0xFFF7F8FA),
                   ),
 
-                  _MenuItem(
-                    icon: Icons.work_outline_rounded,
+                  const SizedBox(height: 8),
+
+                  _menuItem(
+                    context,
+                    icon: Icons.work_outline,
                     title: "Jobseeker services",
                     badge: "Paid",
-                    onTap: () => Navigator.pop(context),
+                    badgeColor: const Color(0xFFFFF7ED),
+                    badgeTextColor: const Color(0xFFEA580C),
+                    badgeBorderColor: const Color(0xFFFED7AA),
                   ),
-                  _MenuItem(
+
+                  _menuItem(
+                    context,
                     icon: Icons.workspace_premium_outlined,
                     title: "Khilonjiya Pro",
                     badge: "Paid",
-                    onTap: () => Navigator.pop(context),
+                    badgeColor: const Color(0xFFFFF7ED),
+                    badgeTextColor: const Color(0xFFEA580C),
+                    badgeBorderColor: const Color(0xFFFED7AA),
                   ),
-                  _MenuItem(
+
+                  _menuItem(
+                    context,
                     icon: Icons.article_outlined,
                     title: "Khilonjiya blog",
-                    onTap: () => Navigator.pop(context),
                   ),
+
+                  const SizedBox(height: 14),
                 ],
               ),
             ),
 
-            // -----------------------------
+            // ------------------------------------------------------------
             // FEEDBACK STRIP
-            // -----------------------------
+            // ------------------------------------------------------------
             Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-              decoration: BoxDecoration(
-                color: AppTheme.bg,
-                border: Border(
-                  top: BorderSide(color: AppTheme.border),
-                ),
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF7F8FA),
+                border: Border(top: BorderSide(color: KhilonjiyaUI.border)),
               ),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       "Finding this app useful?",
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.text,
+                      style: KhilonjiyaUI.body.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                  _FeedbackButton(
-                    icon: Icons.thumb_up_outlined,
-                    onTap: () {},
-                  ),
+                  _feedbackBtn(Icons.thumb_up_outlined),
                   const SizedBox(width: 10),
-                  _FeedbackButton(
-                    icon: Icons.thumb_down_outlined,
-                    onTap: () {},
-                  ),
+                  _feedbackBtn(Icons.thumb_down_outlined),
                 ],
               ),
             ),
@@ -218,170 +274,83 @@ class NaukriDrawer extends StatelessWidget {
       ),
     );
   }
-}
 
-// ===============================================================
-// COMPONENTS
-// ===============================================================
-
-class _ProfileRing extends StatelessWidget {
-  final double progress;
-  final String text;
-
-  const _ProfileRing({
-    required this.progress,
-    required this.text,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 52,
-      height: 52,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          CircularProgressIndicator(
-            value: progress,
-            strokeWidth: 4,
-            backgroundColor: AppTheme.border,
-            valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.blue),
-          ),
-          Text(
-            text,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.text,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _UpgradeCard extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _UpgradeCard({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
+  // ------------------------------------------------------------
+  // UI HELPERS
+  // ------------------------------------------------------------
+  Widget _menuItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    String? badge,
+    Widget? trailing,
+    Color? badgeColor,
+    Color? badgeTextColor,
+    Color? badgeBorderColor,
+  }) {
     return InkWell(
-      borderRadius: AppStyles.r16,
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: AppStyles.r16,
-          border: Border.all(color: AppTheme.blue.withOpacity(0.18)),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.blue.withOpacity(0.07),
-              Colors.deepPurple.withOpacity(0.06),
+      onTap: () {},
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: KhilonjiyaUI.r16,
+            border: Border.all(color: Colors.transparent),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 22, color: const Color(0xFF334155)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: KhilonjiyaUI.body.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (badge != null)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: badgeColor ?? const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: badgeBorderColor ?? const Color(0xFFBFDBFE),
+                    ),
+                  ),
+                  child: Text(
+                    badge,
+                    style: KhilonjiyaUI.sub.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: badgeTextColor ?? KhilonjiyaUI.primary,
+                    ),
+                  ),
+                )
+              else
+                (trailing ??
+                    const Icon(Icons.chevron_right,
+                        color: KhilonjiyaUI.muted)),
             ],
           ),
         ),
-        child: Row(
-          children: const [
-            Icon(Icons.workspace_premium_rounded, color: AppTheme.blue),
-            SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                "Upgrade to Khilonjiya Pro",
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.text,
-                ),
-              ),
-            ),
-            Icon(Icons.chevron_right_rounded, color: AppTheme.subText),
-          ],
-        ),
       ),
     );
   }
-}
 
-class _MenuItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String? badge;
-  final Widget? trailing;
-  final VoidCallback onTap;
-
-  const _MenuItem({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-    this.badge,
-    this.trailing,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      dense: true,
-      minLeadingWidth: 22,
-      leading: Icon(icon, size: 20, color: AppTheme.subText),
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 13.8,
-          fontWeight: FontWeight.w600,
-          color: AppTheme.text,
-        ),
+  Widget _feedbackBtn(IconData icon) {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: KhilonjiyaUI.border),
       ),
-      trailing: badge != null
-          ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppTheme.blue.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: AppTheme.blue.withOpacity(0.12)),
-              ),
-              child: Text(
-                badge!,
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.blue,
-                ),
-              ),
-            )
-          : trailing,
-      onTap: onTap,
-    );
-  }
-}
-
-class _FeedbackButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _FeedbackButton({
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(10),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppTheme.border),
-        ),
-        child: Icon(icon, size: 18, color: AppTheme.subText),
-      ),
+      child: Icon(icon, size: 20, color: const Color(0xFF475569)),
     );
   }
 }
