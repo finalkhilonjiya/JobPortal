@@ -8,20 +8,33 @@ class AppTheme {
   static const Color subText = Color(0xFF6B7280);
   static const Color blue = Color(0xFF2563EB);
 
+  /// Old screens in your project are calling AppTheme.lightTheme
+  static final ThemeData lightTheme = ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.light,
+    fontFamily: "Inter",
+    scaffoldBackgroundColor: bg,
+    cardColor: card,
+    colorScheme: ColorScheme.fromSeed(seedColor: blue).copyWith(
+      primary: blue,
+      surface: Colors.white,
+      outline: border,
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
+    ),
+  );
+
+  // Keep this method too (optional usage)
   static ThemeData light({required String fontFamily}) {
-    return ThemeData(
-      useMaterial3: true,
-      fontFamily: fontFamily,
-      scaffoldBackgroundColor: bg,
-      colorScheme: ColorScheme.fromSeed(seedColor: blue).copyWith(
-        primary: blue,
-        surface: Colors.white,
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-      ),
-    );
+    return lightTheme.copyWith(fontFamily: fontFamily);
   }
+
+  // These are referenced in some of your old screens.
+  // Add them so build does not fail.
+  static Color getSuccessColor(bool _) => const Color(0xFF16A34A);
+  static Color getWarningColor(bool _) => const Color(0xFFF59E0B);
+  static Color getAccentColor(bool _) => const Color(0xFF2563EB);
 }
