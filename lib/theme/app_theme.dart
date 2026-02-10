@@ -27,13 +27,27 @@ class AppTheme {
     ),
   );
 
-  // Keep this method too (optional usage)
+  /// ✅ FIXED: ThemeData.copyWith() doesn't support fontFamily
+  /// So we rebuild the theme and only override the fontFamily.
   static ThemeData light({required String fontFamily}) {
-    return lightTheme.copyWith(fontFamily: fontFamily);
+    return ThemeData(
+      useMaterial3: lightTheme.useMaterial3,
+      brightness: lightTheme.brightness,
+      fontFamily: fontFamily,
+      scaffoldBackgroundColor: lightTheme.scaffoldBackgroundColor,
+      cardColor: lightTheme.cardColor,
+      colorScheme: lightTheme.colorScheme,
+      appBarTheme: lightTheme.appBarTheme,
+      dividerTheme: lightTheme.dividerTheme,
+      inputDecorationTheme: lightTheme.inputDecorationTheme,
+      elevatedButtonTheme: lightTheme.elevatedButtonTheme,
+      outlinedButtonTheme: lightTheme.outlinedButtonTheme,
+      textTheme: lightTheme.textTheme,
+    );
   }
 
   // These are referenced in some of your old screens.
-  // Add them so build does not fail.
+  // Keep them so build does not fail.
   static Color getSuccessColor(bool _) => const Color(0xFF16A34A);
   static Color getWarningColor(bool _) => const Color(0xFFF59E0B);
   static Color getAccentColor(bool _) => const Color(0xFF2563EB);
