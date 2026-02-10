@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/ui/khilonjiya_ui.dart';
+import '../../../../core/ui/khilonjiya_ui.dart';
 
 class JobCardVertical extends StatelessWidget {
   final Map<String, dynamic> job;
@@ -15,150 +15,157 @@ class JobCardVertical extends StatelessWidget {
     required this.onTap,
   }) : super(key: key);
 
-  String _s(dynamic v) => (v ?? '').toString();
-
   @override
   Widget build(BuildContext context) {
-    final title = _s(job['title']).isEmpty ? 'Job Title' : _s(job['title']);
-    final company =
-        _s(job['company_name']).isEmpty ? 'Company' : _s(job['company_name']);
-    final location =
-        _s(job['location']).isEmpty ? 'Location' : _s(job['location']);
-    final experience =
-        _s(job['experience']).isEmpty ? '0-2 yrs' : _s(job['experience']);
-    final salary = _s(job['salary']).isEmpty ? 'Not disclosed' : _s(job['salary']);
-    final posted = _s(job['posted_time']).isEmpty ? '1d ago' : _s(job['posted_time']);
+    final title = (job['job_title'] ?? job['title'] ?? 'Job').toString();
+    final company = (job['company_name'] ?? job['company'] ?? 'Company')
+        .toString();
 
-    return GestureDetector(
+    final location = (job['district'] ?? job['location'] ?? 'Location')
+        .toString();
+
+    final exp = (job['experience_level'] ?? job['experience'] ?? 'Experience')
+        .toString();
+
+    final salaryMin = job['salary_min'];
+    final salaryMax = job['salary_max'];
+
+    String salaryText = "Salary not disclosed";
+    if (salaryMin != null || salaryMax != null) {
+      salaryText = "₹${salaryMin ?? ''} - ₹${salaryMax ?? ''}";
+    }
+
+    final posted = (job['created_at'] ?? '').toString().isEmpty
+        ? "Posted recently"
+        : "Posted";
+
+    return InkWell(
       onTap: onTap,
+      borderRadius: KhilonjiyaUI.r16,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: KhilonjiyaUI.cardDecoration(radius: KhilonjiyaUI.r16),
-        child: Column(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: KhilonjiyaUI.r16,
+          border: Border.all(color: KhilonjiyaUI.border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top row
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Logo
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: KhilonjiyaUI.border),
-                  ),
-                  child: const Icon(
-                    Icons.business_outlined,
-                    color: Color(0xFF64748B),
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 12),
-
-                // Title + company
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: KhilonjiyaUI.cardTitle.copyWith(fontSize: 14.5),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        company,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: KhilonjiyaUI.sub.copyWith(fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(width: 8),
-
-                InkWell(
-                  onTap: onSaveToggle,
-                  borderRadius: BorderRadius.circular(999),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Icon(
-                      isSaved ? Icons.bookmark : Icons.bookmark_border,
-                      size: 22,
-                      color: isSaved ? KhilonjiyaUI.primary : KhilonjiyaUI.muted,
-                    ),
-                  ),
-                ),
-              ],
+            // Logo
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: KhilonjiyaUI.border),
+              ),
+              child: const Icon(
+                Icons.business_outlined,
+                color: Color(0xFF334155),
+              ),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(width: 12),
 
-            // Rating + category pills (static for now)
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _smallPill(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      const Icon(Icons.star, size: 14, color: Color(0xFFF59E0B)),
-                      const SizedBox(width: 4),
-                      Text(
-                        "4.2 (1.2k)",
-                        style: KhilonjiyaUI.sub.copyWith(
-                          fontSize: 12,
-                          color: KhilonjiyaUI.text,
-                          fontWeight: FontWeight.w700,
+                      Expanded(
+                        child: Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: KhilonjiyaUI.cardTitle.copyWith(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      InkWell(
+                        onTap: onSaveToggle,
+                        borderRadius: BorderRadius.circular(999),
+                        child: Padding(
+                          padding: const EdgeInsets.all(6),
+                          child: Icon(
+                            isSaved
+                                ? Icons.bookmark_rounded
+                                : Icons.bookmark_outline,
+                            size: 22,
+                            color: isSaved
+                                ? KhilonjiyaUI.primary
+                                : const Color(0xFF64748B),
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
-                _smallPill(
-                  child: Text(
-                    "Corporate",
-                    style: KhilonjiyaUI.sub.copyWith(
-                      fontSize: 12,
-                      color: KhilonjiyaUI.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
+
+                  const SizedBox(height: 6),
+
+                  Text(
+                    company,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: KhilonjiyaUI.sub.copyWith(fontSize: 12.8),
                   ),
-                ),
-              ],
-            ),
 
-            const SizedBox(height: 12),
+                  const SizedBox(height: 10),
 
-            // Details
-            _detailRow(Icons.location_on_outlined, location),
-            const SizedBox(height: 6),
-            _detailRow(Icons.work_outline, experience),
-            const SizedBox(height: 6),
-            _detailRow(Icons.currency_rupee, salary),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 6,
+                    children: [
+                      _pill(
+                        icon: Icons.location_on_outlined,
+                        text: location,
+                      ),
+                      _pill(
+                        icon: Icons.work_outline,
+                        text: exp,
+                      ),
+                      _pill(
+                        icon: Icons.currency_rupee,
+                        text: salaryText,
+                      ),
+                    ],
+                  ),
 
-            const SizedBox(height: 14),
+                  const SizedBox(height: 12),
 
-            // Footer
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  posted,
-                  style: KhilonjiyaUI.sub.copyWith(fontSize: 12),
-                ),
-                Text(
-                  "View",
-                  style: KhilonjiyaUI.link.copyWith(fontSize: 13),
-                ),
-              ],
+                  Row(
+                    children: [
+                      Text(
+                        posted,
+                        style: KhilonjiyaUI.sub.copyWith(
+                          fontSize: 11.5,
+                          color: const Color(0xFF94A3B8),
+                        ),
+                      ),
+                      const Spacer(),
+                      const Icon(
+                        Icons.arrow_forward,
+                        size: 18,
+                        color: KhilonjiyaUI.muted,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -166,23 +173,10 @@ class JobCardVertical extends StatelessWidget {
     );
   }
 
-  Widget _detailRow(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: KhilonjiyaUI.muted),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: KhilonjiyaUI.sub.copyWith(fontSize: 13),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _smallPill({required Widget child}) {
+  Widget _pill({
+    required IconData icon,
+    required String text,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -190,7 +184,22 @@ class JobCardVertical extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: KhilonjiyaUI.border),
       ),
-      child: child,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: const Color(0xFF64748B)),
+          const SizedBox(width: 6),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 170),
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: KhilonjiyaUI.sub.copyWith(fontSize: 12.2),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
