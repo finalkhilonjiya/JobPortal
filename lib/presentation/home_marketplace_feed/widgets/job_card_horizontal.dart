@@ -30,20 +30,17 @@ class JobCardHorizontal extends StatelessWidget {
     final salaryMin = job['salary_min'];
     final salaryMax = job['salary_max'];
 
-    String salaryText = "Salary not disclosed";
+    String salaryText = "Salary";
     if (salaryMin != null || salaryMax != null) {
-      salaryText = "₹${salaryMin ?? ''} - ₹${salaryMax ?? ''}";
+      salaryText = "₹${salaryMin ?? ''}-${salaryMax ?? ''}";
     }
-
-    final posted = (job['created_at'] ?? '').toString().isEmpty
-        ? "Posted recently"
-        : "Posted";
 
     return InkWell(
       onTap: onTap,
       borderRadius: KhilonjiyaUI.r16,
       child: Container(
-        width: 270,
+        width: 280,
+        margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -60,8 +57,9 @@ class JobCardHorizontal extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Logo + Save
+            // Header row
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   width: 44,
@@ -74,18 +72,40 @@ class JobCardHorizontal extends StatelessWidget {
                   child: const Icon(
                     Icons.business_outlined,
                     color: Color(0xFF334155),
+                    size: 22,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: KhilonjiyaUI.cardTitle.copyWith(
+                          fontSize: 13.8,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        company,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: KhilonjiyaUI.sub.copyWith(fontSize: 12.4),
+                      ),
+                    ],
+                  ),
+                ),
                 InkWell(
                   onTap: onSaveToggle,
                   borderRadius: BorderRadius.circular(999),
                   child: Padding(
                     padding: const EdgeInsets.all(6),
                     child: Icon(
-                      isSaved
-                          ? Icons.bookmark_rounded
-                          : Icons.bookmark_outline,
+                      isSaved ? Icons.bookmark_rounded : Icons.bookmark_outline,
                       size: 22,
                       color: isSaved
                           ? KhilonjiyaUI.primary
@@ -96,45 +116,37 @@ class JobCardHorizontal extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
 
-            Text(
-              title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: KhilonjiyaUI.cardTitle.copyWith(
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
-              ),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _pill(Icons.location_on_outlined, location),
+                _pill(Icons.work_outline, exp),
+                _pill(Icons.currency_rupee, salaryText),
+              ],
             ),
-            const SizedBox(height: 6),
-
-            Text(
-              company,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: KhilonjiyaUI.sub.copyWith(fontSize: 12.5),
-            ),
-
-            const SizedBox(height: 10),
-
-            _metaRow(Icons.location_on_outlined, location),
-            const SizedBox(height: 6),
-            _metaRow(Icons.work_outline, exp),
-            const SizedBox(height: 6),
-            _metaRow(Icons.currency_rupee, salaryText),
 
             const Spacer(),
 
-            const SizedBox(height: 10),
-
             Row(
               children: [
-                Text(
-                  posted,
-                  style: KhilonjiyaUI.sub.copyWith(
-                    fontSize: 11.5,
-                    color: const Color(0xFF94A3B8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: const Color(0xFFDBEAFE)),
+                  ),
+                  child: Text(
+                    "Early access",
+                    style: KhilonjiyaUI.sub.copyWith(
+                      fontSize: 11.5,
+                      color: KhilonjiyaUI.primary,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
                 const Spacer(),
@@ -151,20 +163,30 @@ class JobCardHorizontal extends StatelessWidget {
     );
   }
 
-  Widget _metaRow(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: const Color(0xFF64748B)),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: KhilonjiyaUI.sub.copyWith(fontSize: 12.2),
+  Widget _pill(IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: KhilonjiyaUI.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: const Color(0xFF64748B)),
+          const SizedBox(width: 6),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 150),
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: KhilonjiyaUI.sub.copyWith(fontSize: 12.0),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
