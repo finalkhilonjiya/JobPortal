@@ -208,8 +208,11 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.search,
-                        size: 18, color: Color(0xFF64748B)),
+                    const Icon(
+                      Icons.search,
+                      size: 18,
+                      color: Color(0xFF64748B),
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -296,33 +299,50 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
       );
     }
 
+    final earlyAccessList = (_premiumJobs.isNotEmpty ? _premiumJobs : _profileJobs);
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       children: [
         // A) AI banner
-        const AIBannerCard(),
+        AIBannerCard(),
 
         const SizedBox(height: 14),
 
         // B) profile + search appearance cards
-        ProfileAndSearchCards(profileCompletion: _profileCompletion),
+        ProfileAndSearchCards(
+          profileCompletion: _profileCompletion,
+          profileName: "Pankaj",
+          lastUpdatedText: "Updated 4d ago",
+          missingDetailsText: "8 Missing details",
+          searchAppearances: "0",
+        ),
 
         const SizedBox(height: 14),
 
         // C) boost card
-        const BoostCard(),
+        BoostCard(
+          boostLabel: "Boost 2%",
+          title: "Personal details help recruiters know more about you",
+          buttonText: "Add details",
+        ),
 
         const SizedBox(height: 14),
 
         // D) expected salary
-        const ExpectedSalaryCard(),
+        ExpectedSalaryCard(
+          title: "Add your expected salary",
+          subtitle:
+              "30% of your colleagues have added their expected annual salary. Add yours now!",
+          hintText: "Eg: 7,00,000",
+        ),
 
         const SizedBox(height: 18),
 
         // E) early access roles (horizontal)
         SectionHeader(
           title: "Early access roles",
-          action: "View all",
+          ctaText: "View all",
           onTap: () {},
         ),
         const SizedBox(height: 10),
@@ -330,14 +350,10 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
           height: 210,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: (_premiumJobs.isNotEmpty ? _premiumJobs : _profileJobs)
-                .take(8)
-                .length,
+            itemCount: earlyAccessList.take(8).length,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (_, i) {
-              final list =
-                  (_premiumJobs.isNotEmpty ? _premiumJobs : _profileJobs);
-              final job = list[i];
+              final job = earlyAccessList[i];
               return JobCardHorizontal(
                 job: job,
                 isSaved: _savedJobIds.contains(job['id'].toString()),
@@ -351,14 +367,14 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
         const SizedBox(height: 18),
 
         // F) AI interview prep
-        const AIInterviewPrepCard(),
+        AIInterviewPrepCard(),
 
         const SizedBox(height: 18),
 
         // G) top companies
         SectionHeader(
           title: "Top companies",
-          action: "View all",
+          ctaText: "View all",
           onTap: () {},
         ),
         const SizedBox(height: 10),
@@ -372,7 +388,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
             crossAxisSpacing: 12,
             childAspectRatio: 1.08,
           ),
-          itemBuilder: (_, i) => CompanyCard(data: _dummyCompanies[i]),
+          itemBuilder: (_, i) => CompanyCard(company: _dummyCompanies[i]),
         ),
 
         const SizedBox(height: 18),
@@ -380,7 +396,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
         // H) minis feed
         SectionHeader(
           title: "Stay informed with minis",
-          action: "View feed",
+          ctaText: "View feed",
           onTap: () {},
         ),
         const SizedBox(height: 10),
@@ -394,7 +410,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
             crossAxisSpacing: 12,
             childAspectRatio: 0.95,
           ),
-          itemBuilder: (_, i) => MiniNewsCard(data: _dummyMinis[i]),
+          itemBuilder: (_, i) => MiniNewsCard(news: _dummyMinis[i]),
         ),
 
         const SizedBox(height: 18),
@@ -402,7 +418,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
         // I) jobs based on your applies (horizontal)
         SectionHeader(
           title: "Jobs based on your applies",
-          action: "View all",
+          ctaText: "View all",
           onTap: () {},
         ),
         const SizedBox(height: 10),
@@ -429,7 +445,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
         // J) jobs based on your profile (vertical list)
         SectionHeader(
           title: "Jobs based on your profile",
-          action: "View all",
+          ctaText: "View all",
           onTap: () {},
         ),
         const SizedBox(height: 10),
@@ -461,9 +477,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
         currentIndex: _bottomIndex,
         onTap: (i) {
           setState(() => _bottomIndex = i);
-
-          // For now: only UI
-          // Later: we will connect routes
+          // UI only now
         },
         type: BottomNavigationBarType.fixed,
         elevation: 0,
