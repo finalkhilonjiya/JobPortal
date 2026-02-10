@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
 import 'core/navigation_service.dart';
+import 'core/ui/khilonjiya_ui.dart';
 import 'routes/app_routes.dart';
 import 'presentation/login_screen/mobile_auth_service.dart';
 
@@ -64,150 +65,6 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-/* ----------  GLOBAL THEME (Fluent Light) ---------- */
-class AppFluentTheme {
-  static const Color bg = Color(0xFFF6F7FB);
-  static const Color card = Colors.white;
-  static const Color text = Color(0xFF0F172A);
-  static const Color muted = Color(0xFF64748B);
-  static const Color line = Color(0xFFE6EAF2);
-  static const Color primary = Color(0xFF2563EB);
-
-  static ThemeData light() {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      fontFamily: "Poppins",
-      scaffoldBackgroundColor: bg,
-
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primary,
-        brightness: Brightness.light,
-      ),
-
-      appBarTheme: const AppBarTheme(
-        backgroundColor: bg,
-        surfaceTintColor: bg,
-        elevation: 0,
-        centerTitle: false,
-        titleTextStyle: TextStyle(
-          fontFamily: "Poppins",
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: text,
-          letterSpacing: -0.2,
-        ),
-        iconTheme: IconThemeData(color: text),
-      ),
-
-      snackBarTheme: const SnackBarThemeData(
-        backgroundColor: Color(0xFF0F172A),
-        contentTextStyle: TextStyle(
-          fontFamily: "Poppins",
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      ),
-
-      dividerTheme: const DividerThemeData(
-        color: line,
-        thickness: 1,
-        space: 1,
-      ),
-
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: const Color(0xFFF8FAFC),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        labelStyle: const TextStyle(
-          fontFamily: "Poppins",
-          fontWeight: FontWeight.w600,
-          color: muted,
-        ),
-        hintStyle: const TextStyle(
-          fontFamily: "Poppins",
-          fontWeight: FontWeight.w500,
-          color: Color(0xFF94A3B8),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: line),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primary, width: 1.4),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFFCA5A5)),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.2),
-        ),
-      ),
-
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          textStyle: const TextStyle(
-            fontFamily: "Poppins",
-            fontWeight: FontWeight.w700,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-      ),
-
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: text,
-          side: const BorderSide(color: line),
-          textStyle: const TextStyle(
-            fontFamily: "Poppins",
-            fontWeight: FontWeight.w700,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-      ),
-
-      textTheme: const TextTheme(
-        titleLarge: TextStyle(
-          fontFamily: "Poppins",
-          fontWeight: FontWeight.w700,
-          color: text,
-        ),
-        titleMedium: TextStyle(
-          fontFamily: "Poppins",
-          fontWeight: FontWeight.w600,
-          color: text,
-        ),
-        bodyLarge: TextStyle(
-          fontFamily: "Poppins",
-          fontWeight: FontWeight.w500,
-          color: text,
-        ),
-        bodyMedium: TextStyle(
-          fontFamily: "Poppins",
-          fontWeight: FontWeight.w500,
-          color: text,
-        ),
-        bodySmall: TextStyle(
-          fontFamily: "Poppins",
-          fontWeight: FontWeight.w500,
-          color: muted,
-        ),
-      ),
-    );
-  }
-}
-
 /* ----------  APP WIDGET  ---------- */
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -219,12 +76,12 @@ class MyApp extends StatelessWidget {
       child: Consumer<AppStateNotifier>(
         builder: (_, __, ___) => Sizer(
           builder: (_, __, ___) => MaterialApp(
-            title: 'khilonjiya.com',
+            title: 'Khilonjiya.com',
             debugShowCheckedModeBanner: false,
             navigatorKey: NavigationService.navigatorKey,
 
-            // ✅ IMPORTANT: Use fluent light theme globally
-            theme: AppFluentTheme.light(),
+            // ✅ NEW FIGMA STYLE THEME
+            theme: KhilonjiyaUI.theme(),
             themeMode: ThemeMode.light,
 
             /// ALWAYS start with initializer
@@ -302,7 +159,7 @@ class _AppInitializerState extends State<AppInitializer> {
   Widget build(BuildContext context) {
     return Consumer<AppStateNotifier>(
       builder: (_, n, __) => Scaffold(
-        backgroundColor: const Color(0xFFFAFAFA),
+        backgroundColor: KhilonjiyaUI.bg,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -312,40 +169,32 @@ class _AppInitializerState extends State<AppInitializer> {
                 width: 120,
                 height: 120,
                 fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => const Text(
+                errorBuilder: (context, error, stackTrace) => Text(
                   'K',
-                  style: TextStyle(
-                    fontFamily: "Poppins",
+                  style: KhilonjiyaUI.h1.copyWith(
                     fontSize: 72,
-                    color: Color(0xFF2563EB),
-                    fontWeight: FontWeight.w800,
+                    color: KhilonjiyaUI.primary,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Khilonjiya.com',
-                style: TextStyle(
-                  fontFamily: "Poppins",
+                style: KhilonjiyaUI.h1.copyWith(
                   fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
-                  letterSpacing: -0.5,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
               const SizedBox(height: 48),
-              const CircularProgressIndicator(
-                strokeWidth: 3,
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
-              ),
+              const CircularProgressIndicator(strokeWidth: 3),
               const SizedBox(height: 20),
               Text(
                 _getLoadingText(n.state),
-                style: const TextStyle(
-                  fontFamily: "Poppins",
+                style: KhilonjiyaUI.body.copyWith(
                   fontSize: 16,
-                  color: Color(0xFF64748B),
-                  fontWeight: FontWeight.w500,
+                  color: KhilonjiyaUI.muted,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
