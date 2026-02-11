@@ -9,7 +9,7 @@ import './widgets/job_details_page.dart';
 import './widgets/naukri_drawer.dart';
 import './widgets/shimmer_widgets.dart';
 
-// NEW UI widgets (we created in steps)
+// NEW UI widgets (Figma)
 import '../../core/ui/khilonjiya_ui.dart';
 import './widgets/home_sections/ai_banner_card.dart';
 import './widgets/home_sections/profile_and_search_cards.dart';
@@ -38,7 +38,6 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
   int _bottomIndex = 0;
 
-  String _currentLocation = 'Detecting...';
   int _profileCompletion = 0;
 
   List<Map<String, dynamic>> _profileJobs = [];
@@ -91,7 +90,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   }
 
   // ------------------------------------------------------------
-  // INIT (NO MobileAuthService) - KEEP SAME
+  // INIT (KEEP SAME)
   // ------------------------------------------------------------
   Future<void> _initialize() async {
     try {
@@ -288,7 +287,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   }
 
   // ------------------------------------------------------------
-  // FIGMA SECTIONS (HOME FEED)
+  // HOME FEED (FIGMA)
   // ------------------------------------------------------------
   Widget _buildHomeFeed() {
     if (_isLoadingProfile) {
@@ -299,38 +298,40 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
       );
     }
 
-    final earlyAccessList = (_premiumJobs.isNotEmpty ? _premiumJobs : _profileJobs);
+    final earlyAccessList =
+        (_premiumJobs.isNotEmpty ? _premiumJobs : _profileJobs);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       children: [
         // A) AI banner
-        AIBannerCard(),
+        const AIBannerCard(),
 
         const SizedBox(height: 14),
 
         // B) profile + search appearance cards
         ProfileAndSearchCards(
           profileCompletion: _profileCompletion,
-          profileName: "Pankaj",
+          profileName: "Pankaj's profile",
           lastUpdatedText: "Updated 4d ago",
-          missingDetailsText: "8 Missing details",
-          searchAppearances: "0",
+          searchAppearances: 0,
+          searchWindowText: "Last 90 days",
         ),
 
         const SizedBox(height: 14),
 
         // C) boost card
-        BoostCard(
+        const BoostCard(
           boostLabel: "Boost 2%",
           title: "Personal details help recruiters know more about you",
+          subtitle: "Add a few missing details to improve visibility.",
           buttonText: "Add details",
         ),
 
         const SizedBox(height: 14),
 
         // D) expected salary
-        ExpectedSalaryCard(
+        const ExpectedSalaryCard(
           title: "Add your expected salary",
           subtitle:
               "30% of your colleagues have added their expected annual salary. Add yours now!",
@@ -339,7 +340,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 18),
 
-        // E) early access roles (horizontal)
+        // E) early access roles
         SectionHeader(
           title: "Early access roles",
           ctaText: "View all",
@@ -367,7 +368,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
         const SizedBox(height: 18),
 
         // F) AI interview prep
-        AIInterviewPrepCard(),
+        const AIInterviewPrepCard(),
 
         const SizedBox(height: 18),
 
@@ -415,7 +416,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 18),
 
-        // I) jobs based on your applies (horizontal)
+        // I) jobs based on your applies
         SectionHeader(
           title: "Jobs based on your applies",
           ctaText: "View all",
@@ -442,14 +443,13 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 18),
 
-        // J) jobs based on your profile (vertical list)
+        // J) jobs based on your profile
         SectionHeader(
           title: "Jobs based on your profile",
           ctaText: "View all",
           onTap: () {},
         ),
         const SizedBox(height: 10),
-
         ..._profileJobs.take(10).map((job) {
           return JobCardVertical(
             job: job,
@@ -475,10 +475,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
       ),
       child: BottomNavigationBar(
         currentIndex: _bottomIndex,
-        onTap: (i) {
-          setState(() => _bottomIndex = i);
-          // UI only now
-        },
+        onTap: (i) => setState(() => _bottomIndex = i),
         type: BottomNavigationBarType.fixed,
         elevation: 0,
         backgroundColor: Colors.white,
@@ -531,26 +528,19 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
     return Scaffold(
       backgroundColor: KhilonjiyaUI.bg,
-
       drawer: NaukriDrawer(
         userName: '',
         profileCompletion: _profileCompletion,
         onClose: () => Navigator.pop(context),
       ),
-
       body: SafeArea(
         child: Column(
           children: [
-            Builder(
-              builder: (scaffoldContext) {
-                return _buildTopBar(scaffoldContext);
-              },
-            ),
+            Builder(builder: (scaffoldContext) => _buildTopBar(scaffoldContext)),
             Expanded(child: _buildHomeFeed()),
           ],
         ),
       ),
-
       bottomNavigationBar: _buildBottomNav(),
     );
   }
