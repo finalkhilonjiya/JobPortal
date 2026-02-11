@@ -15,12 +15,14 @@ import './widgets/home_sections/ai_banner_card.dart';
 import './widgets/home_sections/profile_and_search_cards.dart';
 import './widgets/home_sections/boost_card.dart';
 import './widgets/home_sections/expected_salary_card.dart';
-import './widgets/home_sections/ai_interview_prep_card.dart';
 import './widgets/home_sections/section_header.dart';
 import './widgets/home_sections/mini_news_card.dart';
 import './widgets/home_sections/company_card.dart';
 import './widgets/home_sections/job_card_horizontal.dart';
 import './widgets/job_card_vertical.dart';
+
+// ✅ NEW PAGE (already created by you)
+import './recommended_jobs_page.dart';
 
 class HomeJobsFeed extends StatefulWidget {
   const HomeJobsFeed({Key? key}) : super(key: key);
@@ -90,7 +92,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   }
 
   // ------------------------------------------------------------
-  // INIT (KEEP SAME)
+  // INIT
   // ------------------------------------------------------------
   Future<void> _initialize() async {
     try {
@@ -125,7 +127,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   }
 
   // ------------------------------------------------------------
-  // ROUTING (KEEP SAME)
+  // ROUTING
   // ------------------------------------------------------------
   void _redirectToStart() {
     if (_isDisposed) return;
@@ -139,7 +141,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   }
 
   // ------------------------------------------------------------
-  // UI EVENTS (KEEP SAME)
+  // UI EVENTS
   // ------------------------------------------------------------
   Future<void> _toggleSaveJob(String jobId) async {
     final isSaved = await _jobService.toggleSaveJob(jobId);
@@ -304,39 +306,36 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       children: [
-        // A) AI banner
-        const AIBannerCard(),
+        // A) AI banner (✅ CONNECTED)
+        AIBannerCard(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const RecommendedJobsPage(),
+              ),
+            );
+          },
+        ),
 
         const SizedBox(height: 14),
 
-        // B) profile + search appearance cards
+        // B) profile + jobs posted today card (your updated widget will show automatically)
         ProfileAndSearchCards(
           profileCompletion: _profileCompletion,
-          profileName: "Pankaj's profile",
-          lastUpdatedText: "Updated 4d ago",
-          searchAppearances: 0,
-          searchWindowText: "Last 90 days",
+          profileName: "Your Profile", // you will later replace with real name
+          lastUpdatedText: "Updated recently", // later real last_profile_update
         ),
 
         const SizedBox(height: 14),
 
-        // C) boost card
-        const BoostCard(
-          boostLabel: "Boost 2%",
-          title: "Personal details help recruiters know more about you",
-          subtitle: "Add a few missing details to improve visibility.",
-          buttonText: "Add details",
-        ),
+        // C) BoostCard (your updated BoostCard UI will show automatically)
+        const BoostCard(),
 
         const SizedBox(height: 14),
 
-        // D) expected salary
-        const ExpectedSalaryCard(
-          title: "Add your expected salary",
-          subtitle:
-              "30% of your colleagues have added their expected annual salary. Add yours now!",
-          hintText: "Eg: 7,00,000",
-        ),
+        // D) Expected salary card (your updated UI will show automatically)
+        const ExpectedSalaryCard(),
 
         const SizedBox(height: 18),
 
@@ -364,11 +363,6 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
             },
           ),
         ),
-
-        const SizedBox(height: 18),
-
-        // F) AI interview prep
-        const AIInterviewPrepCard(),
 
         const SizedBox(height: 18),
 
