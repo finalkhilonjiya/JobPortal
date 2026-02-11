@@ -7,13 +7,17 @@ class ExpectedSalaryCard extends StatelessWidget {
   final String hintText;
   final TextEditingController? controller;
 
+  /// Tap on the small icon button (navigation later)
+  final VoidCallback? onIconTap;
+
   const ExpectedSalaryCard({
     Key? key,
-    this.title = "Add your expected salary",
+    this.title = "Enter your expected salary per month",
     this.subtitle =
-        "30% of your colleagues have added their expected annual salary. Add yours now!",
-    this.hintText = "Eg: 7,00,000",
+        "50% of your colleagues have found jobs as per expected salary. Find yours now !",
+    this.hintText = "Eg: 25,000",
     this.controller,
+    this.onIconTap,
   }) : super(key: key);
 
   @override
@@ -66,17 +70,23 @@ class ExpectedSalaryCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: KhilonjiyaUI.border),
-                ),
-                child: const Icon(
-                  Icons.savings_outlined,
-                  color: Color(0xFF334155),
+
+              // Icon tap ONLY
+              InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: onIconTap, // navigation later
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: KhilonjiyaUI.border),
+                  ),
+                  child: const Icon(
+                    Icons.savings_outlined,
+                    color: Color(0xFF334155),
+                  ),
                 ),
               ),
             ],
