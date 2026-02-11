@@ -77,15 +77,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   }
 
   // ------------------------------------------------------------
-  // CHAT (UI only now)
-  // ------------------------------------------------------------
-  void _chatRecruiter() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Chat Recruiter coming soon")),
-    );
-  }
-
-  // ------------------------------------------------------------
   // BUILD
   // ------------------------------------------------------------
   @override
@@ -110,103 +101,101 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     return Scaffold(
       backgroundColor: KhilonjiyaUI.bg,
 
-      // Sticky bottom action bar (Figma style)
-      bottomNavigationBar: _buildStickyBottomBar(
+      // ✅ FIXED: simple bottom bar, only Apply Now, no overlap
+      bottomNavigationBar: _buildApplyBottomBar(
         salaryText: _salary(salaryMin, salaryMax),
       ),
 
       body: SafeArea(
-        child: Stack(
-          children: [
-            // Main scroll
-            CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(child: _buildTopBar()),
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(child: _buildTopBar()),
 
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // HERO CARD
-                        _jobHeroCard(
-                          title: title,
-                          company: company,
-                          location: location,
-                          salary: _salary(salaryMin, salaryMax),
-                          postedText: _postedAgo(postedAt),
-                        ),
-
-                        const SizedBox(height: 14),
-
-                        // Quick info chips
-                        _quickInfoChips(job),
-
-                        const SizedBox(height: 16),
-
-                        // Description
-                        _sectionCard(
-                          title: "Job Description",
-                          child: _descriptionBlock(description),
-                        ),
-
-                        const SizedBox(height: 14),
-
-                        // Skills
-                        if (skills.isNotEmpty)
-                          _sectionCard(
-                            title: "Key Skills",
-                            child: _skillsWrap(skills),
-                          ),
-
-                        if (skills.isNotEmpty) const SizedBox(height: 14),
-
-                        // Roles (derived from description, UI only)
-                        _sectionCard(
-                          title: "Roles & Responsibilities",
-                          child: _bulletList([
-                            "Build and maintain high-quality mobile applications",
-                            "Collaborate with design and backend teams",
-                            "Ensure clean UI and good performance",
-                            "Write maintainable code and follow best practices",
-                          ]),
-                        ),
-
-                        const SizedBox(height: 14),
-
-                        // Company overview
-                        _sectionCard(
-                          title: "Company Overview",
-                          child: _companyOverview(
-                            company: company,
-                            companyDesc: companyDesc,
-                          ),
-                        ),
-
-                        const SizedBox(height: 18),
-
-                        // Similar jobs placeholder (UI only)
-                        Text(
-                          "Similar jobs",
-                          style: KhilonjiyaUI.hTitle,
-                        ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          height: 145,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: 6,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(width: 12),
-                            itemBuilder: (_, i) => _similarJobCard(),
-                          ),
-                        ),
-                      ],
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // HERO CARD
+                    _jobHeroCard(
+                      title: title,
+                      company: company,
+                      location: location,
+                      salary: _salary(salaryMin, salaryMax),
+                      postedText: _postedAgo(postedAt),
                     ),
-                  ),
+
+                    const SizedBox(height: 14),
+
+                    // Quick info chips
+                    _quickInfoChips(job),
+
+                    const SizedBox(height: 16),
+
+                    // ✅ FIXED: Job Description full width same style
+                    _sectionCard(
+                      title: "Job Description",
+                      child: _descriptionBlock(description),
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // ✅ FIXED: Key Skills full width same style
+                    if (skills.isNotEmpty)
+                      _sectionCard(
+                        title: "Key Skills",
+                        child: _skillsWrap(skills),
+                      ),
+
+                    if (skills.isNotEmpty) const SizedBox(height: 14),
+
+                    // Roles & Responsibilities
+                    _sectionCard(
+                      title: "Roles & Responsibilities",
+                      child: _bulletList([
+                        "Build and maintain high-quality mobile applications",
+                        "Collaborate with design and backend teams",
+                        "Ensure clean UI and good performance",
+                        "Write maintainable code and follow best practices",
+                      ]),
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // Company overview
+                    _sectionCard(
+                      title: "Company Overview",
+                      child: _companyOverview(
+                        company: company,
+                        companyDesc: companyDesc,
+                      ),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    // Similar jobs placeholder (UI only)
+                    Text(
+                      "Similar jobs",
+                      style: KhilonjiyaUI.hTitle,
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      height: 145,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: 6,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(width: 12),
+                        itemBuilder: (_, i) => _similarJobCard(),
+                      ),
+                    ),
+
+                    // ✅ Add bottom padding so last content doesn't hide behind bar
+                    const SizedBox(height: 18),
+                  ],
                 ),
-              ],
+              ),
             ),
           ],
         ),
@@ -240,23 +229,13 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
             ),
           ),
 
-          // Save
+          // Save in top bar (same as before)
           IconButton(
             onPressed: widget.onSaveToggle,
             icon: Icon(
               widget.isSaved ? Icons.bookmark_rounded : Icons.bookmark_border,
               color: widget.isSaved ? KhilonjiyaUI.primary : KhilonjiyaUI.text,
             ),
-          ),
-
-          // Share (UI only)
-          IconButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Share coming soon")),
-              );
-            },
-            icon: const Icon(Icons.share_outlined),
           ),
         ],
       ),
@@ -307,7 +286,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
 
           const SizedBox(height: 12),
 
-          // Meta rows
           _metaRow(Icons.location_on_outlined,
               location.isEmpty ? "Location not set" : location),
           const SizedBox(height: 8),
@@ -317,7 +295,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
 
           const SizedBox(height: 12),
 
-          // status pill
           Align(
             alignment: Alignment.centerLeft,
             child: Container(
@@ -362,7 +339,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   }
 
   // ------------------------------------------------------------
-  // QUICK INFO CHIPS (Figma style)
+  // QUICK INFO CHIPS
   // ------------------------------------------------------------
   Widget _quickInfoChips(Map<String, dynamic> job) {
     final chips = [
@@ -381,23 +358,19 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
         "label": "Experience",
         "value": (job['experience'] ?? 'Any').toString(),
       },
-      {
-        "icon": Icons.school_outlined,
-        "label": "Education",
-        "value": (job['education'] ?? 'Any').toString(),
-      },
     ];
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: chips.map((c) {
-          return Container(
-            margin: const EdgeInsets.only(right: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    return Row(
+      children: chips.map((c) {
+        return Expanded(
+          child: Container(
+            margin: EdgeInsets.only(
+              right: c == chips.last ? 0 : 10,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(color: KhilonjiyaUI.border),
             ),
             child: Row(
@@ -408,39 +381,46 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                   color: KhilonjiyaUI.primary,
                 ),
                 const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      (c["label"] ?? '').toString(),
-                      style: KhilonjiyaUI.caption.copyWith(fontSize: 10.8),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      (c["value"] ?? '').toString(),
-                      style: KhilonjiyaUI.body.copyWith(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w800,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        (c["label"] ?? '').toString(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: KhilonjiyaUI.caption.copyWith(fontSize: 10.8),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 2),
+                      Text(
+                        (c["value"] ?? '').toString(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: KhilonjiyaUI.body.copyWith(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          );
-        }).toList(),
-      ),
+          ),
+        );
+      }).toList(),
     );
   }
 
   // ------------------------------------------------------------
-  // SECTION CARD (Figma style)
+  // SECTION CARD (same size)
   // ------------------------------------------------------------
   Widget _sectionCard({
     required String title,
     required Widget child,
   }) {
     return Container(
+      width: double.infinity,
       decoration: KhilonjiyaUI.cardDecoration(radius: 20),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -513,7 +493,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
             s,
             style: KhilonjiyaUI.body.copyWith(
               fontSize: 12.5,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w900,
               color: KhilonjiyaUI.primary,
             ),
           ),
@@ -665,10 +645,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                   ),
                 ),
               ),
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.bookmark_border),
-              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -685,133 +661,53 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   }
 
   // ------------------------------------------------------------
-  // STICKY BOTTOM BAR (Apply + Save + Chat)
+  // BOTTOM BAR (ONLY APPLY NOW)
   // ------------------------------------------------------------
-  Widget _buildStickyBottomBar({required String salaryText}) {
+  Widget _buildApplyBottomBar({required String salaryText}) {
     return SafeArea(
+      top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border(top: BorderSide(color: KhilonjiyaUI.border)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 18,
-              offset: const Offset(0, -10),
-            ),
-          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Summary row
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    salaryText,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: KhilonjiyaUI.sub.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF334155),
-                    ),
-                  ),
-                ),
-                if (_isApplied)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFECFDF5),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: const Color(0xFFBBF7D0)),
-                    ),
-                    child: const Text(
-                      "Applied",
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF166534),
-                      ),
-                    ),
-                  ),
-              ],
+            Text(
+              salaryText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: KhilonjiyaUI.sub.copyWith(
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF334155),
+              ),
             ),
-
             const SizedBox(height: 10),
-
-            // Apply + Save
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 46,
-                    child: ElevatedButton(
-                      onPressed: (_checking || _isApplied) ? null : _applyNow,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: KhilonjiyaUI.primary,
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor: const Color(0xFFE2E8F0),
-                        disabledForegroundColor: const Color(0xFF64748B),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: Text(
-                        _checking
-                            ? "Checking..."
-                            : (_isApplied ? "Already Applied" : "Apply Now"),
-                        style: const TextStyle(fontWeight: FontWeight.w900),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                SizedBox(
-                  height: 46,
-                  width: 52,
-                  child: OutlinedButton(
-                    onPressed: widget.onSaveToggle,
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: KhilonjiyaUI.border),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: Icon(
-                      widget.isSaved
-                          ? Icons.bookmark_rounded
-                          : Icons.bookmark_border,
-                      color: widget.isSaved
-                          ? KhilonjiyaUI.primary
-                          : const Color(0xFF0F172A),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            // Chat Recruiter
             SizedBox(
-              height: 46,
+              height: 48,
               width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _chatRecruiter,
-                icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
-                label: const Text(
-                  "Chat Recruiter",
-                  style: TextStyle(fontWeight: FontWeight.w900),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF0F172A),
-                  side: BorderSide(color: KhilonjiyaUI.border),
+              child: ElevatedButton(
+                onPressed: (_checking || _isApplied) ? null : _applyNow,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: KhilonjiyaUI.primary,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFFE2E8F0),
+                  disabledForegroundColor: const Color(0xFF64748B),
+                  elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                child: Text(
+                  _checking
+                      ? "Checking..."
+                      : (_isApplied ? "Already Applied" : "Apply Now"),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
                   ),
                 ),
               ),
