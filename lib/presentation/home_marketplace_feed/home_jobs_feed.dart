@@ -1,3 +1,5 @@
+// File: lib/presentation/home_marketplace_feed/home_jobs_feed.dart
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,6 +13,8 @@ import './widgets/shimmer_widgets.dart';
 
 // NEW UI widgets (Figma)
 import '../../core/ui/khilonjiya_ui.dart';
+
+// Sections
 import './widgets/home_sections/ai_banner_card.dart';
 import './widgets/home_sections/profile_and_search_cards.dart';
 import './widgets/home_sections/boost_card.dart';
@@ -19,9 +23,10 @@ import './widgets/home_sections/section_header.dart';
 import './widgets/home_sections/mini_news_card.dart';
 import './widgets/home_sections/company_card.dart';
 import './widgets/home_sections/job_card_horizontal.dart';
+
 import './widgets/job_card_vertical.dart';
 
-// ✅ NEW PAGE (already created by you)
+// Pages (created by you already)
 import './recommended_jobs_page.dart';
 
 class HomeJobsFeed extends StatefulWidget {
@@ -92,7 +97,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   }
 
   // ------------------------------------------------------------
-  // INIT
+  // INIT (KEEP SAME)
   // ------------------------------------------------------------
   Future<void> _initialize() async {
     try {
@@ -115,10 +120,16 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
     setState(() => _isCheckingAuth = false);
 
     try {
+      // Kept because drawer uses it
       _profileCompletion = await _jobService.calculateProfileCompletion();
+
       _savedJobIds = await _jobService.getUserSavedJobs();
-      _premiumJobs = await _jobService.fetchPremiumJobs(limit: 5);
-      _profileJobs = await _jobService.getRecommendedJobs();
+
+      // Premium
+      _premiumJobs = await _jobService.fetchPremiumJobs(limit: 8);
+
+      // Recommended (with your "if <50% then show all jobs" logic inside service later)
+      _profileJobs = await _jobService.getRecommendedJobs(limit: 40);
     } finally {
       if (!_isDisposed) {
         setState(() => _isLoadingProfile = false);
@@ -127,7 +138,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   }
 
   // ------------------------------------------------------------
-  // ROUTING
+  // ROUTING (KEEP SAME)
   // ------------------------------------------------------------
   void _redirectToStart() {
     if (_isDisposed) return;
@@ -163,6 +174,15 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
           isSaved: _savedJobIds.contains(job['id'].toString()),
           onSaveToggle: () => _toggleSaveJob(job['id'].toString()),
         ),
+      ),
+    );
+  }
+
+  void _openRecommendedJobsPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const RecommendedJobsPage(),
       ),
     );
   }
@@ -306,51 +326,55 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       children: [
-        // A) AI banner (✅ CONNECTED)
+        // A) AI banner (CONNECTED)
         AIBannerCard(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const RecommendedJobsPage(),
-              ),
-            );
+          onTap: _openRecommendedJobsPage,
+        ),
+
+        const SizedBox(height: 14),
+
+        // B) profile + jobs posted today (REAL DATA widget)
+        ProfileAndSearchCards(
+          onMissingDetailsTap: () {
+            // TODO: Navigate to Complete Profile page (later)
+          },
+          onViewAllTap: () {
+            // TODO: Navigate to Jobs Posted Today page (later)
           },
         ),
 
         const SizedBox(height: 14),
 
-        // B) profile + jobs posted today card (your updated widget will show automatically)
-        ProfileAndSearchCards(
-          profileCompletion: _profileCompletion,
-          profileName: "Your Profile", // you will later replace with real name
-          lastUpdatedText: "Updated recently", // later real last_profile_update
+        // C) Construction boost card (UPDATED UI)
+        BoostCard(
+          onTap: () {
+            // TODO: Navigate to Construction Service home (later)
+          },
         ),
 
         const SizedBox(height: 14),
 
-        // C) BoostCard (your updated BoostCard UI will show automatically)
-        const BoostCard(),
-
-        const SizedBox(height: 14),
-
-        // D) Expected salary card (your updated UI will show automatically)
-        const ExpectedSalaryCard(),
+        // D) expected salary (UPDATED UI)
+        ExpectedSalaryCard(
+          onIconTap: () {
+            // TODO: Navigate to salary filtered jobs page (later)
+          },
+        ),
 
         const SizedBox(height: 18),
 
-        // E) early access roles
+        // E) Recommended jobs horizontal (uses your updated JobCardHorizontal)
         SectionHeader(
-          title: "Early access roles",
+          title: "Recommended jobs",
           ctaText: "View all",
-          onTap: () {},
+          onTap: _openRecommendedJobsPage,
         ),
         const SizedBox(height: 10),
         SizedBox(
           height: 210,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: earlyAccessList.take(8).length,
+            itemCount: earlyAccessList.take(10).length,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (_, i) {
               final job = earlyAccessList[i];
@@ -366,7 +390,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 18),
 
-        // G) top companies
+        // G) top companies (still dummy)
         SectionHeader(
           title: "Top companies",
           ctaText: "View all",
@@ -388,7 +412,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 18),
 
-        // H) minis feed
+        // H) minis feed (still dummy)
         SectionHeader(
           title: "Stay informed with minis",
           ctaText: "View feed",
@@ -410,38 +434,11 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 18),
 
-        // I) jobs based on your applies
-        SectionHeader(
-          title: "Jobs based on your applies",
-          ctaText: "View all",
-          onTap: () {},
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 210,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: _profileJobs.take(10).length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (_, i) {
-              final job = _profileJobs[i];
-              return JobCardHorizontal(
-                job: job,
-                isSaved: _savedJobIds.contains(job['id'].toString()),
-                onSaveToggle: () => _toggleSaveJob(job['id'].toString()),
-                onTap: () => _openJobDetails(job),
-              );
-            },
-          ),
-        ),
-
-        const SizedBox(height: 18),
-
-        // J) jobs based on your profile
+        // J) jobs based on your profile (vertical list)
         SectionHeader(
           title: "Jobs based on your profile",
           ctaText: "View all",
-          onTap: () {},
+          onTap: _openRecommendedJobsPage,
         ),
         const SizedBox(height: 10),
         ..._profileJobs.take(10).map((job) {
