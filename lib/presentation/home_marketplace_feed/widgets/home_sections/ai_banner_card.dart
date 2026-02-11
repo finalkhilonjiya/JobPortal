@@ -1,45 +1,44 @@
 import 'package:flutter/material.dart';
 import '../../../../core/ui/khilonjiya_ui.dart';
 
-class AiBannerCard extends StatelessWidget {
+class AIBannerCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback? onTap;
 
-  const AiBannerCard({
+  const AIBannerCard({
     Key? key,
-    required this.title,
-    required this.subtitle,
+    this.title = "I’m Neo, your AI Job Agent.",
+    this.subtitle = "Let’s find your next job. Start now!",
     this.onTap,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF2563EB),
-                Color(0xFF6366F1),
-              ],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF2563EB).withOpacity(0.18),
-                blurRadius: 18,
-                offset: const Offset(0, 10),
-              ),
-            ],
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: KhilonjiyaUI.r20,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF2563EB),
+            Color(0xFF6366F1),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
           ),
+        ],
+      ),
+      child: InkWell(
+        borderRadius: KhilonjiyaUI.r20,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
               Expanded(
@@ -48,9 +47,9 @@ class AiBannerCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: KhilonjiyaUI.h2.copyWith(
+                      style: KhilonjiyaUI.hTitle.copyWith(
                         color: Colors.white,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -58,7 +57,7 @@ class AiBannerCard extends StatelessWidget {
                       subtitle,
                       style: KhilonjiyaUI.body.copyWith(
                         color: Colors.white.withOpacity(0.92),
-                        fontWeight: FontWeight.w600,
+                        fontSize: 13.5,
                       ),
                     ),
                   ],
@@ -66,16 +65,17 @@ class AiBannerCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Container(
-                width: 44,
-                height: 44,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.18),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: Colors.white.withOpacity(0.18)),
+                  color: Colors.white.withOpacity(0.16),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withOpacity(0.25)),
                 ),
                 child: const Icon(
                   Icons.arrow_forward_rounded,
                   color: Colors.white,
+                  size: 22,
                 ),
               ),
             ],
