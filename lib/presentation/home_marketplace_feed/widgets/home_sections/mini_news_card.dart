@@ -2,50 +2,39 @@ import 'package:flutter/material.dart';
 import '../../../../core/ui/khilonjiya_ui.dart';
 
 class MiniNewsCard extends StatelessWidget {
-  final String title;
-  final String source;
-  final String time;
-  final String? imageUrl;
+  final Map<String, dynamic> news;
   final VoidCallback? onTap;
 
   const MiniNewsCard({
     Key? key,
-    required this.title,
-    required this.source,
-    required this.time,
-    this.imageUrl,
+    required this.news,
     this.onTap,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final title = (news["title"] ?? "").toString();
+    final source = (news["source"] ?? "").toString();
+    final time = (news["time"] ?? "").toString();
+
     return InkWell(
-      borderRadius: BorderRadius.circular(16),
       onTap: onTap,
+      borderRadius: KhilonjiyaUI.r16,
       child: Container(
         decoration: KhilonjiyaUI.cardDecoration(radius: 16),
         clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// thumbnail
+            // Thumbnail placeholder
             Container(
-              height: 96,
+              height: 90,
               width: double.infinity,
-              color: const Color(0xFFF3F4F6),
-              child: (imageUrl == null || imageUrl!.trim().isEmpty)
-                  ? const Icon(Icons.image_outlined,
-                      color: Color(0xFF9CA3AF))
-                  : Image.network(
-                      imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(
-                        Icons.image_outlined,
-                        color: Color(0xFF9CA3AF),
-                      ),
-                    ),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF1F5F9),
+              ),
+              child: const Icon(Icons.image_outlined),
             ),
-
             Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
@@ -53,11 +42,11 @@ class MiniNewsCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: KhilonjiyaUI.cardTitle,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
+                    style: KhilonjiyaUI.cardTitle,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
