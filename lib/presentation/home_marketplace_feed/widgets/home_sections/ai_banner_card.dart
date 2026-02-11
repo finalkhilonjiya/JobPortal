@@ -4,11 +4,14 @@ import '../../../../core/ui/khilonjiya_ui.dart';
 class AIBannerCard extends StatelessWidget {
   final String title;
   final String subtitle;
+
+  /// Later this will open Recommended Jobs listing page.
+  /// For now, keep it optional.
   final VoidCallback? onTap;
 
   const AIBannerCard({
     Key? key,
-    this.title = "I’m Neo, your AI Job Agent.",
+    this.title = "Welcome to Khilonjiya Job Portal.",
     this.subtitle = "Let’s find your next job. Start now!",
     this.onTap,
   }) : super(key: key);
