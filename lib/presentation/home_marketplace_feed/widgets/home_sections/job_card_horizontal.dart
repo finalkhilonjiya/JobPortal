@@ -18,29 +18,42 @@ class JobCardHorizontal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = (job['job_title'] ?? job['title'] ?? 'Job').toString();
-    final company = (job['company_name'] ?? job['company'] ?? 'Company')
+
+    // Your real schema uses company_name
+    final company = (job['company_name'] ??
+            job['company'] ??
+            job['companyName'] ??
+            'Company')
         .toString();
 
-    final location = (job['district'] ?? job['location'] ?? 'Location')
-        .toString();
+    final location =
+        (job['district'] ?? job['location'] ?? 'Location').toString();
 
-    final exp = (job['experience_level'] ?? job['experience'] ?? 'Experience')
+    // Your real schema uses experience_required
+    final exp = (job['experience_required'] ??
+            job['experience_level'] ??
+            job['experience'] ??
+            'Experience')
         .toString();
 
     final salaryMin = job['salary_min'];
     final salaryMax = job['salary_max'];
+    final salaryPeriod = (job['salary_period'] ?? 'Monthly').toString();
 
-    String salaryText = "Salary";
-    if (salaryMin != null || salaryMax != null) {
-      salaryText = "₹${salaryMin ?? ''}-${salaryMax ?? ''}";
-    }
+    final createdAt = job['created_at']?.toString();
+    final isPremium = job['is_premium'] == true;
+
+    final salaryText = _salaryText(
+      salaryMin: salaryMin,
+      salaryMax: salaryMax,
+      period: salaryPeriod,
+    );
 
     return InkWell(
       onTap: onTap,
       borderRadius: KhilonjiyaUI.r16,
       child: Container(
         width: 280,
-        margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -96,6 +109,17 @@ class JobCardHorizontal extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: KhilonjiyaUI.sub.copyWith(fontSize: 12.4),
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _postedAgo(createdAt),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: KhilonjiyaUI.sub.copyWith(
+                          fontSize: 11.8,
+                          color: const Color(0xFF94A3B8),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -132,23 +156,42 @@ class JobCardHorizontal extends StatelessWidget {
 
             Row(
               children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: const Color(0xFFDBEAFE)),
-                  ),
-                  child: Text(
-                    "Early access",
-                    style: KhilonjiyaUI.sub.copyWith(
-                      fontSize: 11.5,
-                      color: KhilonjiyaUI.primary,
-                      fontWeight: FontWeight.w800,
+                if (isPremium)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: const Color(0xFFDBEAFE)),
+                    ),
+                    child: Text(
+                      "Recommended",
+                      style: KhilonjiyaUI.sub.copyWith(
+                        fontSize: 11.5,
+                        color: KhilonjiyaUI.primary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  )
+                else
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: KhilonjiyaUI.border),
+                    ),
+                    child: Text(
+                      "Recommended",
+                      style: KhilonjiyaUI.sub.copyWith(
+                        fontSize: 11.5,
+                        color: const Color(0xFF334155),
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
-                ),
                 const Spacer(),
                 const Icon(
                   Icons.arrow_forward,
@@ -163,6 +206,9 @@ class JobCardHorizontal extends StatelessWidget {
     );
   }
 
+  // ------------------------------------------------------------
+  // UI HELPERS
+  // ------------------------------------------------------------
   Widget _pill(IconData icon, String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -188,5 +234,49 @@ class JobCardHorizontal extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _salaryText({
+    required dynamic salaryMin,
+    required dynamic salaryMax,
+    required String period,
+  }) {
+    int? toInt(dynamic v) {
+      if (v == null) return null;
+      if (v is int) return v;
+      if (v is double) return v.toInt();
+      return int.tryParse(v.toString());
+    }
+
+    final mn = toInt(salaryMin);
+    final mx = toInt(salaryMax);
+
+    if (mn == null && mx == null) return "Not disclosed";
+
+    String fmt(int v) => v.toString(); // keep raw number for now
+
+    final range = (mn != null && mx != null)
+        ? "₹${fmt(mn)} - ₹${fmt(mx)}"
+        : (mn != null)
+            ? "₹${fmt(mn)}+"
+            : "Up to ₹${fmt(mx!)}";
+
+    // Example: "₹15000 - ₹25000 / Monthly"
+    return "$range / $period";
+  }
+
+  String _postedAgo(String? date) {
+    if (date == null) return 'Recently';
+
+    final d = DateTime.tryParse(date);
+    if (d == null) return 'Recently';
+
+    final diff = DateTime.now().difference(d);
+
+    if (diff.inMinutes < 2) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays == 1) return '1d ago';
+    return '${diff.inDays}d ago';
   }
 }
