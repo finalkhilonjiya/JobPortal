@@ -1,5 +1,3 @@
-// File: lib/presentation/home_marketplace_feed/widgets/home_sections/company_card.dart
-
 import 'package:flutter/material.dart';
 import '../../../../core/ui/khilonjiya_ui.dart';
 
@@ -35,18 +33,7 @@ class CompanyCard extends StatelessWidget {
       borderRadius: KhilonjiyaUI.r16,
       child: Container(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: KhilonjiyaUI.r16,
-          border: Border.all(color: KhilonjiyaUI.border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
+        decoration: KhilonjiyaUI.cardDecoration(radius: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -66,15 +53,16 @@ class CompanyCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Name + Verified
                       Row(
                         children: [
                           Expanded(
                             child: Text(
-                              name,
+                              name.isEmpty ? "Company" : name,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: KhilonjiyaUI.cardTitle.copyWith(
-                                fontSize: 14.2,
+                                fontSize: 14.4,
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
@@ -89,27 +77,14 @@ class CompanyCard extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: const Color(0xFFEFF6FF),
                                 borderRadius: BorderRadius.circular(999),
-                                border:
-                                    Border.all(color: const Color(0xFFDBEAFE)),
+                                border: Border.all(
+                                  color: const Color(0xFFDBEAFE),
+                                ),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.verified_rounded,
-                                    size: 14,
-                                    color: KhilonjiyaUI.primary,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    "Verified",
-                                    style: KhilonjiyaUI.caption.copyWith(
-                                      fontSize: 11.2,
-                                      color: KhilonjiyaUI.primary,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                ],
+                              child: const Icon(
+                                Icons.verified_rounded,
+                                size: 16,
+                                color: KhilonjiyaUI.primary,
                               ),
                             ),
                           ],
@@ -119,7 +94,7 @@ class CompanyCard extends StatelessWidget {
                       const SizedBox(height: 6),
 
                       Text(
-                        subtitle.isEmpty ? "Company" : subtitle,
+                        subtitle.isEmpty ? "Company profile" : subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: KhilonjiyaUI.sub.copyWith(
@@ -148,14 +123,14 @@ class CompanyCard extends StatelessWidget {
                 Text(
                   rating <= 0 ? "New" : rating.toStringAsFixed(1),
                   style: KhilonjiyaUI.body.copyWith(
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w800,
                     fontSize: 13,
                     color: const Color(0xFF0F172A),
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Text(
-                  totalReviews <= 0 ? "(0 reviews)" : "($totalReviews reviews)",
+                  totalReviews <= 0 ? "0 reviews" : "$totalReviews reviews",
                   style: KhilonjiyaUI.sub.copyWith(
                     fontSize: 12.0,
                     color: const Color(0xFF64748B),
@@ -184,7 +159,7 @@ class CompanyCard extends StatelessWidget {
                     style: KhilonjiyaUI.caption.copyWith(
                       fontSize: 11.8,
                       color: const Color(0xFF334155),
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -223,10 +198,8 @@ class CompanyCard extends StatelessWidget {
     required String size,
   }) {
     final parts = <String>[];
-
     if (industry.trim().isNotEmpty) parts.add(industry.trim());
     if (size.trim().isNotEmpty) parts.add(size.trim());
-
     return parts.join(" • ");
   }
 
@@ -262,7 +235,7 @@ class _CompanyLogo extends StatelessWidget {
       width: 52,
       height: 52,
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: KhilonjiyaUI.border),
       ),
