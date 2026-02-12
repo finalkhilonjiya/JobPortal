@@ -1,58 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/navigation_service.dart';
 import 'core/ui/khilonjiya_ui.dart';
 import 'routes/app_routes.dart';
-import 'presentation/login_screen/mobile_auth_service.dart';
+import 'routes/home_router.dart';
 
-/* ----------  CONFIG  ---------- */
 class AppConfig {
   static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
   static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
   static bool get hasSupabase =>
-      supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
+      supabaseUrl.trim().isNotEmpty && supabaseAnonKey.trim().isNotEmpty;
 }
 
-/* ----------  APP-STATE  ---------- */
-enum AppState { initializing, offline, authenticated, unauthenticated }
-
-class AppStateNotifier with ChangeNotifier {
-  AppState _state = AppState.initializing;
-  AppState get state => _state;
-
-  void setState(AppState s) {
-    _state = s;
-    notifyListeners();
-  }
-}
-
-/* ----------  MAIN  ---------- */
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-  /// Load env
+  // Load env
   try {
     await dotenv.load(fileName: '.env');
-  } catch (_) {}
+  } catch (_) {
+    // Keep silent, we fallback below
+  }
 
-  /// Init Supabase
+  // Init Supabase only if config exists
   if (AppConfig.hasSupabase) {
     try {
       await Supabase.initialize(
         url: AppConfig.supabaseUrl,
         anonKey: AppConfig.supabaseAnonKey,
       );
-    } catch (_) {}
+    } catch (_) {
+      // Keep silent, app will fallback to role selection
+    }
   }
 
-  /// UI chrome
+  // System UI
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -65,71 +53,75 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-/* ----------  APP WIDGET  ---------- */
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AppStateNotifier(),
-      child: Consumer<AppStateNotifier>(
-        builder: (_, __, ___) => Sizer(
-          builder: (_, __, ___) => MaterialApp(
-            title: 'Khilonjiya.com',
-            debugShowCheckedModeBanner: false,
-            navigatorKey: NavigationService.navigatorKey,
+    return Sizer(
+      builder: (_, __, ___) => MaterialApp(
+        title: 'Khilonjiya.com',
+        debugShowCheckedModeBanner: false,
 
-            // ✅ NEW FIGMA STYLE THEME
-            theme: KhilonjiyaUI.theme(),
-            themeMode: ThemeMode.light,
+        navigatorKey: NavigationService.navigatorKey,
 
-            /// ALWAYS start with initializer
-            home: const AppInitializer(),
+        theme: KhilonjiyaUI.theme(),
+        themeMode: ThemeMode.light,
 
-            /// STATIC ROUTES
-            routes: AppRoutes.routes,
+        // Always start from splash/initializer
+        home: const AppInitializer(),
 
-            /// DYNAMIC ROUTES
-            onGenerateRoute: AppRoutes.onGenerateRoute,
+        // Static routes
+        routes: AppRoutes.routes,
 
-            builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(context)
-                  .copyWith(textScaler: const TextScaler.linear(1.0)),
-              child: child!,
-            ),
-          ),
+        // Dynamic routes
+        onGenerateRoute: AppRoutes.onGenerateRoute,
+
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(1.0)),
+          child: child!,
         ),
       ),
     );
   }
 }
 
-/* ----------  APP START / SPLASH ---------- */
+/// ------------------------------------------------------------
+/// AppInitializer
+/// - Shows splash for MINIMUM 3 seconds
+/// - Then routes based on session
+/// ------------------------------------------------------------
 class AppInitializer extends StatefulWidget {
-  const AppInitializer({Key? key}) : super(key: key);
+  const AppInitializer({super.key});
 
   @override
   State<AppInitializer> createState() => _AppInitializerState();
 }
 
 class _AppInitializerState extends State<AppInitializer> {
-  late final AppStateNotifier notifier;
+  static const Duration _minSplash = Duration(seconds: 3);
+
+  bool _navigated = false;
+  String _loadingText = "Initializing...";
 
   @override
   void initState() {
     super.initState();
-    notifier = context.read<AppStateNotifier>();
     WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrap());
   }
 
   Future<void> _bootstrap() async {
-    try {
-      await Future.delayed(const Duration(milliseconds: 1200));
+    final start = DateTime.now();
 
+    try {
+      // 1) Minimum splash time
+      setState(() => _loadingText = "Starting...");
+
+      // 2) If Supabase config missing -> go role selection
       if (!AppConfig.hasSupabase) {
-        notifier.setState(AppState.offline);
-        NavigationService.pushReplacementNamed(AppRoutes.roleSelection);
+        await _waitSplash(start);
+        _go(AppRoutes.roleSelection);
         return;
       }
 
@@ -138,82 +130,85 @@ class _AppInitializerState extends State<AppInitializer> {
       final session = client.auth.currentSession;
       final user = client.auth.currentUser;
 
-      final auth = MobileAuthService();
-      await auth.initialize();
-
+      // 3) If logged in -> go HomeRouter (role-based)
       if (session != null && user != null) {
-        notifier.setState(AppState.authenticated);
-        NavigationService.pushReplacementNamed(AppRoutes.homeJobsFeed);
+        setState(() => _loadingText = "Welcome back...");
+        await _waitSplash(start);
+        _go(AppRoutes.homeJobsFeed); // HomeRouter
         return;
       }
 
-      notifier.setState(AppState.unauthenticated);
-      NavigationService.pushReplacementNamed(AppRoutes.roleSelection);
+      // 4) Not logged in -> go role selection
+      setState(() => _loadingText = "Loading...");
+      await _waitSplash(start);
+      _go(AppRoutes.roleSelection);
     } catch (_) {
-      notifier.setState(AppState.unauthenticated);
-      NavigationService.pushReplacementNamed(AppRoutes.roleSelection);
+      await _waitSplash(start);
+      _go(AppRoutes.roleSelection);
     }
+  }
+
+  Future<void> _waitSplash(DateTime start) async {
+    final elapsed = DateTime.now().difference(start);
+    final remaining = _minSplash - elapsed;
+
+    if (remaining.inMilliseconds > 0) {
+      await Future.delayed(remaining);
+    }
+  }
+
+  void _go(String route) {
+    if (!mounted) return;
+    if (_navigated) return;
+    _navigated = true;
+
+    NavigationService.pushReplacementNamed(route);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppStateNotifier>(
-      builder: (_, n, __) => Scaffold(
-        backgroundColor: KhilonjiyaUI.bg,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/icons/app_icon.png',
-                width: 120,
-                height: 120,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => Text(
-                  'K',
-                  style: KhilonjiyaUI.h1.copyWith(
-                    fontSize: 72,
-                    color: KhilonjiyaUI.primary,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Khilonjiya.com',
+    return Scaffold(
+      backgroundColor: KhilonjiyaUI.bg,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/icons/app_icon.png',
+              width: 120,
+              height: 120,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Text(
+                'K',
                 style: KhilonjiyaUI.h1.copyWith(
-                  fontSize: 28,
+                  fontSize: 72,
+                  color: KhilonjiyaUI.primary,
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              const SizedBox(height: 48),
-              const CircularProgressIndicator(strokeWidth: 3),
-              const SizedBox(height: 20),
-              Text(
-                _getLoadingText(n.state),
-                style: KhilonjiyaUI.body.copyWith(
-                  fontSize: 16,
-                  color: KhilonjiyaUI.muted,
-                  fontWeight: FontWeight.w600,
-                ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Khilonjiya.com',
+              style: KhilonjiyaUI.h1.copyWith(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 48),
+            const CircularProgressIndicator(strokeWidth: 3),
+            const SizedBox(height: 20),
+            Text(
+              _loadingText,
+              style: KhilonjiyaUI.body.copyWith(
+                fontSize: 16,
+                color: KhilonjiyaUI.muted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );
-  }
-
-  String _getLoadingText(AppState state) {
-    switch (state) {
-      case AppState.initializing:
-        return 'Initializing...';
-      case AppState.offline:
-        return 'Starting...';
-      case AppState.authenticated:
-        return 'Welcome back!';
-      case AppState.unauthenticated:
-        return 'Loading...';
-    }
   }
 }
