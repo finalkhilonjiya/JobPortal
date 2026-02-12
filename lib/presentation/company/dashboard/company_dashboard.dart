@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:sizer/sizer.dart';
 
 import '../../../routes/app_routes.dart';
-import '../../login_screen/mobile_auth_service.dart';
 import '../../../services/employer_job_service.dart';
+import '../../../services/mobile_auth_service.dart';
 
 class CompanyDashboard extends StatefulWidget {
   const CompanyDashboard({Key? key}) : super(key: key);
@@ -59,7 +58,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // LOGOUT (KEEP SAME)
+  // LOGOUT
   // ------------------------------------------------------------
   Future<void> _logout() async {
     await MobileAuthService().logout();
@@ -73,7 +72,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // SAFE STATS (KEEP SAME)
+  // SAFE STATS
   // ------------------------------------------------------------
   int _s(String key) => _toInt(_stats[key]);
 
@@ -88,7 +87,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   int get _applicants24h => _s('applicants_last_24h');
 
   // ------------------------------------------------------------
-  // FIGMA UI TOKENS (MATCH JOB SEEKER STYLE)
+  // FIGMA UI TOKENS
   // ------------------------------------------------------------
   static const Color _bg = Color(0xFFF7F8FA);
   static const Color _card = Colors.white;
@@ -105,7 +104,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     return Scaffold(
       backgroundColor: _bg,
       drawer: _newEmployerDrawer(),
-
       body: SafeArea(
         child: Column(
           children: [
@@ -114,7 +112,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                 return _buildTopHeader(scaffoldContext);
               },
             ),
-
             if (_loading)
               const Expanded(
                 child: Center(child: CircularProgressIndicator()),
@@ -129,7 +126,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                       _buildCompanyProfileRow(),
                       const SizedBox(height: 14),
 
-                      // Section 1: Quick Stats (Horizontal)
                       _sectionHeader(
                         title: "Quick Stats",
                         ctaText: "Refresh",
@@ -140,14 +136,12 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
                       const SizedBox(height: 18),
 
-                      // Section 2: Primary Actions (2-column grid)
                       _sectionHeader(title: "Primary Actions"),
                       const SizedBox(height: 10),
                       _buildPrimaryActionsGrid(),
 
                       const SizedBox(height: 18),
 
-                      // Section 3: Recent Applicants
                       _sectionHeader(
                         title: "Recent Applicants",
                         ctaText: "View all",
@@ -160,7 +154,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
                       const SizedBox(height: 18),
 
-                      // Section 4: Active Job Posts
                       _sectionHeader(
                         title: "Your Active Jobs",
                         ctaText: "View all",
@@ -173,21 +166,18 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
                       const SizedBox(height: 18),
 
-                      // Section 5: Interview Schedule (UI only)
                       _sectionHeader(title: "Today’s Interviews"),
                       const SizedBox(height: 10),
                       _buildInterviewsUIOnly(),
 
                       const SizedBox(height: 18),
 
-                      // Section 6: Performance Summary (UI only)
                       _sectionHeader(title: "Job Performance (Last 7 days)"),
                       const SizedBox(height: 10),
                       _buildPerformanceUIOnly(),
 
                       const SizedBox(height: 18),
 
-                      // Section 7: Notifications / Tasks
                       _sectionHeader(title: "Action Needed"),
                       const SizedBox(height: 10),
                       _buildActionNeededUIOnly(),
@@ -199,7 +189,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         ),
       ),
 
-      // FAB stays (important for create job)
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           final res = await Navigator.pushNamed(context, AppRoutes.createJob);
@@ -214,13 +203,12 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
       ),
-
       bottomNavigationBar: _buildBottomNav(),
     );
   }
 
   // ------------------------------------------------------------
-  // TOP HEADER (FIGMA)
+  // TOP HEADER
   // ------------------------------------------------------------
   Widget _buildTopHeader(BuildContext scaffoldContext) {
     return Container(
@@ -289,7 +277,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // COMPANY PROFILE ROW (FIGMA)
+  // COMPANY PROFILE ROW
   // ------------------------------------------------------------
   Widget _buildCompanyProfileRow() {
     return Container(
@@ -389,7 +377,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // SECTION HEADER (FIGMA STYLE)
+  // SECTION HEADER
   // ------------------------------------------------------------
   Widget _sectionHeader({
     required String title,
@@ -430,13 +418,12 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // SECTION 1: QUICK STATS (FIGMA)
+  // SECTION 1: QUICK STATS
   // ------------------------------------------------------------
   Widget _buildQuickStatsRow() {
-    // Using your real stats
     final active = _activeJobs;
-    final newApplicants = _applicants24h; // last 24h
-    final interviewsToday = 0; // UI only now
+    final newApplicants = _applicants24h;
+    final interviewsToday = 0;
 
     return SizedBox(
       height: 122,
@@ -478,7 +465,8 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     required String trendText,
     required bool positive,
   }) {
-    final trendColor = positive ? const Color(0xFF16A34A) : const Color(0xFFEF4444);
+    final trendColor =
+        positive ? const Color(0xFF16A34A) : const Color(0xFFEF4444);
 
     return Container(
       width: 150,
@@ -545,7 +533,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // SECTION 2: PRIMARY ACTIONS (FIGMA)
+  // SECTION 2: PRIMARY ACTIONS
   // ------------------------------------------------------------
   Widget _buildPrimaryActionsGrid() {
     return GridView.count(
@@ -653,7 +641,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // SECTION 3: RECENT APPLICANTS (REAL DATA)
+  // SECTION 3: RECENT APPLICANTS
   // ------------------------------------------------------------
   Widget _buildRecentApplicantsCard() {
     if (_recentApplicants.isEmpty) {
@@ -833,7 +821,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // SECTION 4: ACTIVE JOB POSTS (REAL DATA)
+  // SECTION 4: ACTIVE JOB POSTS
   // ------------------------------------------------------------
   Widget _buildActiveJobsList() {
     if (_jobs.isEmpty) {
@@ -845,7 +833,8 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     }
 
     final activeJobs = _jobs
-        .where((j) => (j['status'] ?? 'active').toString().toLowerCase() == 'active')
+        .where((j) =>
+            (j['status'] ?? 'active').toString().toLowerCase() == 'active')
         .toList();
 
     final list = activeJobs.isNotEmpty ? activeJobs : _jobs;
@@ -1064,7 +1053,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // SECTION 5: INTERVIEW SCHEDULE (UI ONLY NOW)
+  // SECTION 5: INTERVIEW SCHEDULE (UI ONLY)
   // ------------------------------------------------------------
   Widget _buildInterviewsUIOnly() {
     final interviews = [
@@ -1212,7 +1201,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // SECTION 6: PERFORMANCE SUMMARY (UI ONLY NOW)
+  // SECTION 6: PERFORMANCE SUMMARY (UI ONLY)
   // ------------------------------------------------------------
   Widget _buildPerformanceUIOnly() {
     return Container(
@@ -1298,7 +1287,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // SECTION 7: ACTION NEEDED (UI ONLY NOW)
+  // SECTION 7: ACTION NEEDED (UI ONLY)
   // ------------------------------------------------------------
   Widget _buildActionNeededUIOnly() {
     return Column(
@@ -1393,7 +1382,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // NEW FIGMA DRAWER (REPLACES OLD)
+  // DRAWER
   // ------------------------------------------------------------
   Widget _newEmployerDrawer() {
     return Drawer(
@@ -1401,7 +1390,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       child: SafeArea(
         child: Column(
           children: [
-            // Header
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
@@ -1450,7 +1438,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                 ],
               ),
             ),
-
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
@@ -1504,7 +1491,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                 ],
               ),
             ),
-
             const Padding(
               padding: EdgeInsets.fromLTRB(16, 8, 16, 18),
               child: Column(
@@ -1574,7 +1560,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // BOTTOM NAV (FIGMA)
+  // BOTTOM NAV
   // ------------------------------------------------------------
   Widget _buildBottomNav() {
     return Container(
@@ -1634,7 +1620,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // SHARED HELPERS
+  // HELPERS
   // ------------------------------------------------------------
   BoxDecoration _cardDeco({double radius = 16, bool shadow = true}) {
     return BoxDecoration(
@@ -1709,9 +1695,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     return value;
   }
 
-  // ------------------------------------------------------------
-  // UTILS (KEEP SAME)
-  // ------------------------------------------------------------
   String _timeAgo(dynamic date) {
     if (date == null) return 'recent';
 
