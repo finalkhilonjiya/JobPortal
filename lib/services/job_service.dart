@@ -336,18 +336,6 @@ class JobService {
 
   /* ================= HOME: PROFILE + JOBS POSTED TODAY ================= */
 
-  /// Used by ProfileAndSearchCards (UI only widget)
-  /// Returns:
-  /// {
-  ///   profileName: String,
-  ///   profileCompletion: int (0-100),
-  ///   lastUpdatedText: String,
-  ///   missingDetails: int
-  /// }
-  ///
-  /// NOTE:
-  /// - Experience is NOT required for missing details count (as per your instruction)
-  /// - If user is not logged in, returns default safe values
   Future<Map<String, dynamic>> getHomeProfileSummary() async {
     final user = _supabase.auth.currentUser;
 
@@ -373,26 +361,21 @@ class JobService {
           .eq('id', user.id)
           .maybeSingle();
 
-      // Defaults
       String profileName = "Your Profile";
       int completion = 0;
       String lastUpdatedText = "Updated recently";
 
       if (profile != null) {
-        // Name
         final fullName = (profile['full_name'] ?? '').toString().trim();
         profileName = _firstNameOrFallback(fullName);
 
-        // Completion %
         completion =
             _toInt(profile['profile_completion_percentage']).clamp(0, 100);
 
-        // Last updated
         final lastUpdateRaw = profile['last_profile_update']?.toString();
         lastUpdatedText = _formatLastUpdated(lastUpdateRaw);
       }
 
-      // Missing details
       final missingDetails = await _calculateMissingDetailsCount(profile);
 
       return {
@@ -411,8 +394,6 @@ class JobService {
     }
   }
 
-  /// Used by ProfileAndSearchCards
-  /// Returns jobs posted today count (All India, active only)
   Future<int> getJobsPostedTodayCount() async {
     try {
       final now = DateTime.now();
@@ -483,7 +464,6 @@ class JobService {
       return false;
     }
 
-    // REQUIRED fields
     if (isEmpty(profile['full_name'])) missing++;
     if (isEmpty(profile['email'])) missing++;
     if (isEmpty(profile['mobile_number'])) missing++;
@@ -497,7 +477,6 @@ class JobService {
     if (isEmpty(profile['preferred_job_types'])) missing++;
     if (profile['is_open_to_work'] != true) missing++;
 
-    // Education requirement: at least 1 row
     final userId = _supabase.auth.currentUser?.id;
     if (userId != null) {
       final edu = await _supabase
@@ -510,5 +489,47 @@ class JobService {
     }
 
     return missing;
+  }
+
+  // ============================================================
+  // NEW: COMPANIES (USED BY HOME TOP COMPANIES)
+  // ============================================================
+
+  Future<List<Map<String, dynamic>>> fetchTopCompanies({
+    int limit = 8,
+  }) async {
+    _ensureAuthenticatedSync();
+
+    try {
+      // First: try rated companies
+      final res = await _supabase
+          .from('companies')
+          .select(
+            'id, name, slug, logo_url, industry, company_size, '
+            'rating, total_reviews, total_jobs, is_verified',
+          )
+          .not('rating', 'is', null)
+          .order('rating', ascending: false)
+          .limit(limit);
+
+      final list = List<Map<String, dynamic>>.from(res);
+
+      // If we got some, return
+      if (list.isNotEmpty) return list;
+    } catch (_) {
+      // ignore and fallback below
+    }
+
+    // Fallback: latest companies
+    final res2 = await _supabase
+        .from('companies')
+        .select(
+          'id, name, slug, logo_url, industry, company_size, '
+          'rating, total_reviews, total_jobs, is_verified',
+        )
+        .order('created_at', ascending: false)
+        .limit(limit);
+
+    return List<Map<String, dynamic>>.from(res2);
   }
 }
