@@ -1,12 +1,12 @@
 import 'dart:math';
-import 'package:flutter/material.dart';
-import 'package:sizer/sizer.dart';
 
-import '../job_application_form.dart';
+import 'package:flutter/material.dart';
+
+import '../../../core/ui/khilonjiya_ui.dart';
 import '../../../services/job_service.dart';
 
-// IMPORTANT: use the same UI system you already created
-import '../../../core/ui/khilonjiya_ui.dart';
+// FIX: correct import path for your project
+import '../../job_application_form.dart';
 
 class JobDetailsPage extends StatefulWidget {
   final Map<String, dynamic> job;
@@ -61,10 +61,13 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   Future<void> _applyNow() async {
     if (_checking || _isApplied) return;
 
+    final jobId = widget.job['id']?.toString();
+    if (jobId == null || jobId.trim().isEmpty) return;
+
     final res = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => JobApplicationForm(jobId: widget.job['id'].toString()),
+        builder: (_) => JobApplicationForm(jobId: jobId),
       ),
     );
 
@@ -91,7 +94,9 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     final salaryMax = job['salary_max'];
 
     final description = (job['job_description'] ?? '').toString();
-    final skills = (job['skills_required'] as List?) ?? [];
+
+    // FIX: skills_required may be List OR String OR null
+    final skills = _safeSkills(job['skills_required']);
 
     final postedAt = job['created_at']?.toString();
     final companyDesc = (job['company_description'] ??
@@ -101,7 +106,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     return Scaffold(
       backgroundColor: KhilonjiyaUI.bg,
 
-      // ✅ FIXED: simple bottom bar, only Apply Now, no overlap
+      // Bottom bar
       bottomNavigationBar: _buildApplyBottomBar(
         salaryText: _salary(salaryMin, salaryMax),
       ),
@@ -110,14 +115,12 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
         child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(child: _buildTopBar()),
-
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // HERO CARD
                     _jobHeroCard(
                       title: title,
                       company: company,
@@ -125,15 +128,12 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                       salary: _salary(salaryMin, salaryMax),
                       postedText: _postedAgo(postedAt),
                     ),
-
                     const SizedBox(height: 14),
 
-                    // Quick info chips
                     _quickInfoChips(job),
 
                     const SizedBox(height: 16),
 
-                    // ✅ FIXED: Job Description full width same style
                     _sectionCard(
                       title: "Job Description",
                       child: _descriptionBlock(description),
@@ -141,7 +141,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
 
                     const SizedBox(height: 14),
 
-                    // ✅ FIXED: Key Skills full width same style
                     if (skills.isNotEmpty)
                       _sectionCard(
                         title: "Key Skills",
@@ -150,7 +149,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
 
                     if (skills.isNotEmpty) const SizedBox(height: 14),
 
-                    // Roles & Responsibilities
                     _sectionCard(
                       title: "Roles & Responsibilities",
                       child: _bulletList([
@@ -163,7 +161,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
 
                     const SizedBox(height: 14),
 
-                    // Company overview
                     _sectionCard(
                       title: "Company Overview",
                       child: _companyOverview(
@@ -174,7 +171,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
 
                     const SizedBox(height: 18),
 
-                    // Similar jobs placeholder (UI only)
                     Text(
                       "Similar jobs",
                       style: KhilonjiyaUI.hTitle,
@@ -191,7 +187,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                       ),
                     ),
 
-                    // ✅ Add bottom padding so last content doesn't hide behind bar
                     const SizedBox(height: 18),
                   ],
                 ),
@@ -204,7 +199,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   }
 
   // ------------------------------------------------------------
-  // TOP BAR (Figma style)
+  // TOP BAR
   // ------------------------------------------------------------
   Widget _buildTopBar() {
     return Container(
@@ -228,8 +223,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
               style: KhilonjiyaUI.hTitle,
             ),
           ),
-
-          // Save in top bar (same as before)
           IconButton(
             onPressed: widget.onSaveToggle,
             icon: Icon(
@@ -283,18 +276,16 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
               ),
             ],
           ),
-
           const SizedBox(height: 12),
-
-          _metaRow(Icons.location_on_outlined,
-              location.isEmpty ? "Location not set" : location),
+          _metaRow(
+            Icons.location_on_outlined,
+            location.isEmpty ? "Location not set" : location,
+          ),
           const SizedBox(height: 8),
           _metaRow(Icons.currency_rupee_rounded, salary),
           const SizedBox(height: 8),
           _metaRow(Icons.access_time_rounded, postedText),
-
           const SizedBox(height: 12),
-
           Align(
             alignment: Alignment.centerLeft,
             child: Container(
@@ -364,9 +355,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
       children: chips.map((c) {
         return Expanded(
           child: Container(
-            margin: EdgeInsets.only(
-              right: c == chips.last ? 0 : 10,
-            ),
+            margin: EdgeInsets.only(right: c == chips.last ? 0 : 10),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
@@ -413,7 +402,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   }
 
   // ------------------------------------------------------------
-  // SECTION CARD (same size)
+  // SECTION CARD
   // ------------------------------------------------------------
   Widget _sectionCard({
     required String title,
@@ -435,7 +424,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   }
 
   // ------------------------------------------------------------
-  // DESCRIPTION (Read more/less)
+  // DESCRIPTION
   // ------------------------------------------------------------
   Widget _descriptionBlock(String description) {
     final d = description.trim().isEmpty
@@ -475,13 +464,11 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   // ------------------------------------------------------------
   // SKILLS
   // ------------------------------------------------------------
-  Widget _skillsWrap(List skills) {
-    final list = skills.map((e) => e.toString()).toList();
-
+  Widget _skillsWrap(List<String> skills) {
     return Wrap(
       spacing: 10,
       runSpacing: 10,
-      children: list.map((s) {
+      children: skills.map((s) {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
@@ -633,8 +620,11 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
           const SizedBox(height: 10),
           Row(
             children: [
-              const Icon(Icons.location_on_outlined,
-                  size: 16, color: Color(0xFF64748B)),
+              const Icon(
+                Icons.location_on_outlined,
+                size: 16,
+                color: Color(0xFF64748B),
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -661,7 +651,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   }
 
   // ------------------------------------------------------------
-  // BOTTOM BAR (ONLY APPLY NOW)
+  // BOTTOM BAR
   // ------------------------------------------------------------
   Widget _buildApplyBottomBar({required String salaryText}) {
     return SafeArea(
@@ -721,6 +711,38 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   // ------------------------------------------------------------
   // UTILS
   // ------------------------------------------------------------
+  List<String> _safeSkills(dynamic raw) {
+    if (raw == null) return [];
+
+    if (raw is List) {
+      return raw.map((e) => e.toString()).where((s) => s.trim().isNotEmpty).toList();
+    }
+
+    // Sometimes Supabase returns a comma separated string
+    if (raw is String) {
+      final s = raw.trim();
+      if (s.isEmpty) return [];
+
+      // If it looks like "['a','b']" handle roughly
+      if (s.startsWith('[') && s.endsWith(']')) {
+        final inner = s.substring(1, s.length - 1);
+        return inner
+            .split(',')
+            .map((e) => e.replaceAll("'", "").replaceAll('"', '').trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
+      }
+
+      return s
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+
+    return [];
+  }
+
   String _salary(dynamic min, dynamic max) {
     int? toInt(dynamic v) {
       if (v == null) return null;
@@ -752,7 +774,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   }
 }
 
-/// COMPANY LOGO (same logic, but styled to match new UI)
 class _CompanyLogo extends StatelessWidget {
   final String company;
   const _CompanyLogo({required this.company});
