@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:sizer/sizer.dart';
+import '../../../../core/ui/khilonjiya_ui.dart';
 
 class JobCardWidget extends StatelessWidget {
   final Map<String, dynamic> job;
@@ -18,149 +18,183 @@ class JobCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = job['job_title'] ?? '';
-    final company = job['company_name'] ?? '';
-    final location = job['district'] ?? '';
-    final experience = job['experience_required'] ?? '';
+    final title = (job['job_title'] ?? job['title'] ?? 'Job').toString();
+    final company = (job['company_name'] ?? job['company'] ?? 'Company')
+        .toString();
+
+    final location = (job['district'] ?? job['location'] ?? 'Location')
+        .toString();
+
+    final experience = (job['experience_required'] ??
+            job['experience_level'] ??
+            job['experience'] ??
+            'Experience not specified')
+        .toString();
+
     final salaryMin = job['salary_min'];
     final salaryMax = job['salary_max'];
-    final skills = (job['skills_required'] as List?)?.join(', ') ?? '';
-    final vacancies = job['vacancies'];
-    final postedAt = job['created_at'];
 
-    /// TEMP LOGIC (schema-safe)
+    // Salary period from DB (if you have it)
+    final salaryPeriodRaw = (job['salary_period'] ?? 'Monthly').toString();
+
+    // Skills
+    final skillsList = (job['skills_required'] as List?)?.cast<dynamic>() ?? [];
+    final skillsText = skillsList.map((e) => e.toString()).join(', ');
+
+    final vacancies = job['vacancies'];
+    final postedAt = job['created_at']?.toString();
+
+    // TEMP logic (same as your earlier)
     final isInternship =
         (job['employment_type'] ?? '').toString().toLowerCase().contains('intern');
     final isWalkIn =
         (job['job_type'] ?? '').toString().toLowerCase().contains('walk');
 
+    final salaryText = _salaryMonthly(
+      salaryMin: salaryMin,
+      salaryMax: salaryMax,
+      salaryPeriod: salaryPeriodRaw,
+    );
+
     return InkWell(
       onTap: onTap,
+      borderRadius: KhilonjiyaUI.r16,
       child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
-        padding: EdgeInsets.all(4.w),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: KhilonjiyaUI.r16,
+          border: Border.all(color: KhilonjiyaUI.border),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// HEADER ROW
+            // ------------------------------------------------------------
+            // HEADER (Logo LEFT + Title + Save)
+            // ------------------------------------------------------------
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _CompanyLogo(company: company),
+                const SizedBox(width: 12),
+
                 Expanded(
-                  child: Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13.5.sp,
-                      fontWeight: FontWeight.w600,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: KhilonjiyaUI.cardTitle.copyWith(
+                          fontSize: 14.8,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        company,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: KhilonjiyaUI.sub.copyWith(fontSize: 12.8),
+                      ),
+                    ],
+                  ),
+                ),
+
+                InkWell(
+                  onTap: onSaveToggle,
+                  borderRadius: BorderRadius.circular(999),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(
+                      isSaved ? Icons.bookmark_rounded : Icons.bookmark_outline,
+                      size: 24,
+                      color: isSaved
+                          ? KhilonjiyaUI.primary
+                          : const Color(0xFF64748B),
                     ),
                   ),
                 ),
-                SizedBox(width: 3.w),
-                _CompanyLogo(company: company, size: 42),
               ],
             ),
 
-            SizedBox(height: 0.4.h),
+            const SizedBox(height: 12),
 
-            /// COMPANY
-            Text(
-              company,
-              style: TextStyle(
-                fontSize: 11.5.sp,
-                color: Colors.grey.shade700,
-              ),
-            ),
-
-            SizedBox(height: 0.8.h),
-
-            /// TAGS
+            // ------------------------------------------------------------
+            // TAGS
+            // ------------------------------------------------------------
             Wrap(
-              spacing: 2.w,
-              runSpacing: 0.6.h,
+              spacing: 10,
+              runSpacing: 10,
               children: [
-                if (isInternship) _tag('Internship', Colors.orange),
-                if (isWalkIn) _tag('Walk-in', Colors.green),
-                if (vacancies != null)
-                  _tag('$vacancies Vacancies', Colors.blueGrey),
+                if (isInternship) _tagPill("Internship"),
+                if (isWalkIn) _tagPill("Walk-in"),
+                if (vacancies != null) _tagPill("$vacancies Vacancies"),
               ],
             ),
 
-            SizedBox(height: 1.h),
+            if (isInternship || isWalkIn || vacancies != null)
+              const SizedBox(height: 12),
 
-            /// META ROW
-            _metaRow(
-              icon: Icons.location_on,
-              color: Colors.blue,
-              text: location,
+            // ------------------------------------------------------------
+            // META PILLS (Figma style)
+            // ------------------------------------------------------------
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _pill(Icons.location_on_outlined, location),
+                _pill(Icons.work_outline, experience),
+                _pill(Icons.currency_rupee, salaryText),
+              ],
             ),
-            SizedBox(height: 0.4.h),
-            _metaRow(
-              icon: Icons.work_outline,
-              color: Colors.deepPurple,
-              text: experience.isNotEmpty
-                  ? experience
-                  : 'Experience not specified',
-            ),
-            if (salaryMin != null || salaryMax != null) ...[
-              SizedBox(height: 0.4.h),
-              _metaRow(
-                icon: Icons.currency_rupee,
-                color: Colors.green,
-                text: _salary(salaryMin, salaryMax),
-              ),
-            ],
 
-            /// SKILLS
-            if (skills.isNotEmpty) ...[
-              SizedBox(height: 1.h),
+            // ------------------------------------------------------------
+            // SKILLS
+            // ------------------------------------------------------------
+            if (skillsText.trim().isNotEmpty) ...[
+              const SizedBox(height: 12),
               Text(
-                skills,
+                skillsText,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 10.5.sp,
-                  color: Colors.grey.shade600,
+                style: KhilonjiyaUI.sub.copyWith(
+                  fontSize: 12.2,
+                  color: const Color(0xFF64748B),
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
 
-            SizedBox(height: 1.2.h),
+            const SizedBox(height: 14),
 
-            /// FOOTER
+            // ------------------------------------------------------------
+            // FOOTER
+            // ------------------------------------------------------------
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   _postedAgo(postedAt),
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    color: Colors.grey.shade500,
+                  style: KhilonjiyaUI.sub.copyWith(
+                    fontSize: 12.2,
+                    color: const Color(0xFF94A3B8),
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                InkWell(
-                  onTap: onSaveToggle,
-                  child: Icon(
-                    isSaved
-                        ? Icons.bookmark
-                        : Icons.bookmark_border,
-                    size: 18,
-                    color: isSaved
-                        ? Colors.blue
-                        : Colors.grey.shade600,
-                  ),
+                const Spacer(),
+                const Icon(
+                  Icons.arrow_forward,
+                  size: 18,
+                  color: KhilonjiyaUI.muted,
                 ),
               ],
             ),
@@ -170,97 +204,140 @@ class JobCardWidget extends StatelessWidget {
     );
   }
 
-  /// ---------------- HELPERS ----------------
-
-  Widget _metaRow({
-    required IconData icon,
-    required Color color,
-    required String text,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: color),
-        SizedBox(width: 2.w),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 11.sp,
-              color: Colors.grey.shade800,
+  // ------------------------------------------------------------
+  // UI HELPERS
+  // ------------------------------------------------------------
+  Widget _pill(IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: KhilonjiyaUI.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: const Color(0xFF64748B)),
+          const SizedBox(width: 6),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 190),
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: KhilonjiyaUI.sub.copyWith(fontSize: 12.0),
             ),
-            overflow: TextOverflow.ellipsis,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _tag(String text, Color color) {
+  Widget _tagPill(String text) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.4.h),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(20),
+        color: KhilonjiyaUI.primary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: KhilonjiyaUI.primary.withOpacity(0.12)),
       ),
       child: Text(
         text,
-        style: TextStyle(
-          fontSize: 10.5.sp,
-          fontWeight: FontWeight.w500,
-          color: color,
+        style: KhilonjiyaUI.sub.copyWith(
+          fontSize: 12.0,
+          fontWeight: FontWeight.w800,
+          color: KhilonjiyaUI.primary,
         ),
       ),
     );
   }
 
-  String _salary(int? min, int? max) {
-    String f(int v) =>
-        '${(v / 100000).toStringAsFixed(1)} Lacs PA';
-    if (min != null && max != null) return '${f(min)} - ${f(max)}';
-    if (min != null) return f(min);
-    return 'Not disclosed';
+  // ------------------------------------------------------------
+  // SALARY (FORCE MONTHLY)
+  // ------------------------------------------------------------
+  String _salaryMonthly({
+    required dynamic salaryMin,
+    required dynamic salaryMax,
+    required String salaryPeriod,
+  }) {
+    int? toInt(dynamic v) {
+      if (v == null) return null;
+      if (v is int) return v;
+      if (v is double) return v.toInt();
+      return int.tryParse(v.toString());
+    }
+
+    final mn = toInt(salaryMin);
+    final mx = toInt(salaryMax);
+
+    if (mn == null && mx == null) return "Not disclosed";
+
+    // Convert to monthly if your DB is annual
+    // If your DB already stores monthly, keep as-is.
+    //
+    // For now we assume salary_min/salary_max are monthly numbers
+    // because your app wants monthly.
+    String fmt(int v) {
+      // 25000 -> 25,000
+      return v.toString().replaceAllMapped(
+            RegExp(r'\B(?=(\d{3})+(?!\d))'),
+            (m) => ',',
+          );
+    }
+
+    final range = (mn != null && mx != null)
+        ? "₹${fmt(mn)} - ₹${fmt(mx)}"
+        : (mn != null)
+            ? "₹${fmt(mn)}+"
+            : "Up to ₹${fmt(mx!)}";
+
+    return "$range / month";
   }
 
-  String _postedAgo(String? dateStr) {
-    if (dateStr == null) return 'Recently';
-    final d = DateTime.tryParse(dateStr);
+  String _postedAgo(String? date) {
+    if (date == null) return 'Recently';
+
+    final d = DateTime.tryParse(date);
     if (d == null) return 'Recently';
-    final days = DateTime.now().difference(d).inDays;
-    return days == 0 ? 'Today' : '$days d ago';
+
+    final diff = DateTime.now().difference(d);
+
+    if (diff.inMinutes < 2) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays == 1) return '1d ago';
+    return '${diff.inDays}d ago';
   }
 }
 
-/// COMPANY LOGO PLACEHOLDER
+// ------------------------------------------------------------
+// COMPANY LOGO (LEFT)
+// ------------------------------------------------------------
 class _CompanyLogo extends StatelessWidget {
   final String company;
-  final double size;
-
-  const _CompanyLogo({
-    required this.company,
-    required this.size,
-  });
+  const _CompanyLogo({required this.company});
 
   @override
   Widget build(BuildContext context) {
-    final letter =
-        company.isNotEmpty ? company[0].toUpperCase() : 'C';
-
+    final letter = company.isNotEmpty ? company[0].toUpperCase() : 'C';
     final color = Colors.primaries[
         Random(company.hashCode).nextInt(Colors.primaries.length)];
 
     return Container(
-      width: size,
-      height: size,
+      width: 52,
+      height: 52,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(12),
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: KhilonjiyaUI.border),
       ),
       alignment: Alignment.center,
       child: Text(
         letter,
         style: TextStyle(
-          fontSize: size / 2.1,
-          fontWeight: FontWeight.bold,
+          fontSize: 20,
+          fontWeight: FontWeight.w900,
           color: color,
         ),
       ),
