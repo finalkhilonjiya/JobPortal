@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../core/auth/user_role.dart';
+import '../core/auth/user_role.dart';
 
 class MobileAuthException implements Exception {
   final String message;
@@ -30,7 +30,9 @@ class MobileAuthService {
   // ------------------------------------------------------------
   User? get currentUser => _currentUser ?? _supabase.auth.currentUser;
   String? get userId => currentUser?.id;
-  bool get isAuthenticated => currentUser != null;
+
+  /// More correct (always check Supabase session)
+  bool get isAuthenticated => _supabase.auth.currentUser != null;
 
   // ------------------------------------------------------------
   // VALIDATION
@@ -124,7 +126,7 @@ class MobileAuthService {
       }
 
       // ------------------------------------------------------------
-      // ✅ CORRECT FOR YOUR SUPABASE VERSION:
+      // Supabase Flutter:
       // setSession(refreshToken)
       // ------------------------------------------------------------
       final authRes = await _supabase.auth.setSession(refreshToken);
@@ -135,7 +137,7 @@ class MobileAuthService {
         throw MobileAuthException('Login failed (session not created)');
       }
 
-      // Save role locally for routing
+      // Save role locally for routing speed
       await _storage.write(key: _kRoleKey, value: role.name);
 
       // DB is final truth
