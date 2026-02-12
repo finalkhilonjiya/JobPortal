@@ -51,16 +51,13 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   List<Map<String, dynamic>> _premiumJobs = [];
   Set<String> _savedJobIds = {};
 
+  // NEW: real companies
+  List<Map<String, dynamic>> _topCompanies = [];
+  bool _loadingCompanies = true;
+
   bool _isLoadingProfile = true;
 
-  // Dummy sections data (UI only now)
-  final List<Map<String, dynamic>> _dummyCompanies = [
-    {"name": "TCS", "rating": 3.7, "reviews": "1.2L", "tag": "Corporate"},
-    {"name": "Infosys", "rating": 3.6, "reviews": "90K", "tag": "Corporate"},
-    {"name": "Accenture", "rating": 4.1, "reviews": "65K", "tag": "Foreign MNC"},
-    {"name": "Amazon", "rating": 4.2, "reviews": "40K", "tag": "Foreign MNC"},
-  ];
-
+  // Minis still dummy (for now)
   final List<Map<String, dynamic>> _dummyMinis = [
     {
       "title": "Top 10 remote jobs hiring now",
@@ -97,7 +94,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   }
 
   // ------------------------------------------------------------
-  // INIT (KEEP SAME)
+  // INIT
   // ------------------------------------------------------------
   Future<void> _initialize() async {
     try {
@@ -128,17 +125,23 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
       // Premium
       _premiumJobs = await _jobService.fetchPremiumJobs(limit: 8);
 
-      // Recommended (with your "if <50% then show all jobs" logic inside service later)
+      // Recommended
       _profileJobs = await _jobService.getRecommendedJobs(limit: 40);
+
+      // NEW: Top companies from DB
+      _topCompanies = await _jobService.fetchTopCompanies(limit: 8);
     } finally {
       if (!_isDisposed) {
-        setState(() => _isLoadingProfile = false);
+        setState(() {
+          _isLoadingProfile = false;
+          _loadingCompanies = false;
+        });
       }
     }
   }
 
   // ------------------------------------------------------------
-  // ROUTING (KEEP SAME)
+  // ROUTING
   // ------------------------------------------------------------
   void _redirectToStart() {
     if (_isDisposed) return;
@@ -333,7 +336,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 14),
 
-        // B) profile + jobs posted today (REAL DATA widget)
+        // B) profile + jobs posted today
         ProfileAndSearchCards(
           onMissingDetailsTap: () {
             // TODO: Navigate to Complete Profile page (later)
@@ -345,7 +348,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 14),
 
-        // C) Construction boost card (UPDATED UI)
+        // C) Construction boost card
         BoostCard(
           onTap: () {
             // TODO: Navigate to Construction Service home (later)
@@ -354,7 +357,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 14),
 
-        // D) expected salary (UPDATED UI)
+        // D) expected salary
         ExpectedSalaryCard(
           onIconTap: () {
             // TODO: Navigate to salary filtered jobs page (later)
@@ -363,7 +366,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 18),
 
-        // E) Recommended jobs horizontal (uses your updated JobCardHorizontal)
+        // E) Recommended jobs horizontal
         SectionHeader(
           title: "Recommended jobs",
           ctaText: "View all",
@@ -390,25 +393,63 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 18),
 
-        // G) top companies (still dummy)
+        // G) top companies (REAL DATA)
         SectionHeader(
           title: "Top companies",
           ctaText: "View all",
           onTap: () {},
         ),
         const SizedBox(height: 10),
-        GridView.builder(
-          itemCount: _dummyCompanies.length,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.08,
+
+        if (_loadingCompanies)
+          GridView.builder(
+            itemCount: 4,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.08,
+            ),
+            itemBuilder: (_, __) => Container(
+              decoration: KhilonjiyaUI.cardDecoration(radius: 16),
+              padding: const EdgeInsets.all(14),
+              child: const Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
+          )
+        else if (_topCompanies.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text(
+              "No companies found",
+              style: KhilonjiyaUI.sub,
+            ),
+          )
+        else
+          GridView.builder(
+            itemCount: _topCompanies.length,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.08,
+            ),
+            itemBuilder: (_, i) => CompanyCard(
+              company: _topCompanies[i],
+              onTap: () {
+                // TODO: Open Company Details page later
+              },
+            ),
           ),
-          itemBuilder: (_, i) => CompanyCard(company: _dummyCompanies[i]),
-        ),
 
         const SizedBox(height: 18),
 
