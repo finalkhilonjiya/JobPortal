@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/ui/khilonjiya_ui.dart';
+import 'package:khilonjiya_com/core/ui/khilonjiya_ui.dart';
 
-class JobApplicationForm extends StatefulWidget {
+class JobApplicationForm extends StatelessWidget {
   final String jobId;
 
   const JobApplicationForm({
@@ -11,49 +11,48 @@ class JobApplicationForm extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<JobApplicationForm> createState() => _JobApplicationFormState();
-}
-
-class _JobApplicationFormState extends State<JobApplicationForm> {
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: KhilonjiyaUI.bg,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        foregroundColor: KhilonjiyaUI.text,
         elevation: 1,
-        title: const Text("Apply for Job"),
+        title: const Text("Apply"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
           decoration: KhilonjiyaUI.cardDecoration(radius: 20),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text("Job Application Form", style: KhilonjiyaUI.hTitle),
+              const SizedBox(height: 8),
               Text(
-                "Job Application Form",
-                style: KhilonjiyaUI.hTitle,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                "Placeholder screen.\n\nYou will build the real application form later.\n\nJob ID: ${widget.jobId}",
+                "Placeholder screen.\nYou will implement this later.",
                 style: KhilonjiyaUI.body.copyWith(
                   color: const Color(0xFF475569),
                   height: 1.5,
                 ),
               ),
+              const SizedBox(height: 14),
+              Text(
+                "Job ID: $jobId",
+                style: KhilonjiyaUI.sub.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               const Spacer(),
               SizedBox(
-                width: double.infinity,
                 height: 48,
+                width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Return true to simulate successful apply
-                    Navigator.pop(context, true);
+                    // return false (not applied)
+                    Navigator.pop(context, false);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: KhilonjiyaUI.primary,
@@ -64,7 +63,7 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
                     ),
                   ),
                   child: const Text(
-                    "Submit (Mock)",
+                    "Back",
                     style: TextStyle(fontWeight: FontWeight.w900),
                   ),
                 ),
