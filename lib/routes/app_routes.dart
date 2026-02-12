@@ -36,7 +36,13 @@ class AppRoutes {
   // ------------------------------------------------------------
   // POST LOGIN (ROLE BASED)
   // ------------------------------------------------------------
-  static const String homeJobsFeed = '/home';
+  /// IMPORTANT:
+  /// Many files already use AppRoutes.home.
+  /// So we keep this as the official home route.
+  static const String home = '/home';
+
+  /// Backward compatible alias (optional)
+  static const String homeJobsFeed = home;
 
   // ------------------------------------------------------------
   // JOB SEEKER (DIRECT ROUTES)
@@ -71,7 +77,7 @@ class AppRoutes {
     employerLogin: (_) => const EmployerLoginScreen(),
 
     // Role-based router (final truth)
-    homeJobsFeed: (_) => const HomeRouter(),
+    home: (_) => const HomeRouter(),
 
     // Job seeker
     jobSeekerHome: (_) => const HomeJobsFeed(),
