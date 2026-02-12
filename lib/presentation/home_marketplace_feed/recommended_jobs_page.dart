@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../../services/job_service.dart';
 import '../../core/ui/khilonjiya_ui.dart';
 
-import './widgets/job_card_widget.dart';
-import './widgets/job_details_page.dart';
+import '../common/widgets/cards/job_card_widget.dart';
+import '../common/widgets/pages/job_details_page.dart';
 
 class RecommendedJobsPage extends StatefulWidget {
   const RecommendedJobsPage({Key? key}) : super(key: key);
@@ -35,7 +35,7 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    if (!_disposed) setState(() => _loading = true);
 
     try {
       // 1) load saved jobs (for bookmark UI)
