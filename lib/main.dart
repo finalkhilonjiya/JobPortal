@@ -1,3 +1,5 @@
+// File: lib/main.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -7,7 +9,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/navigation_service.dart';
 import 'core/ui/khilonjiya_ui.dart';
 import 'routes/app_routes.dart';
-import 'routes/home_router.dart';
 
 class AppConfig {
   static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
@@ -19,13 +20,14 @@ class AppConfig {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   // Load env
   try {
     await dotenv.load(fileName: '.env');
   } catch (_) {
-    // Keep silent, we fallback below
+    // silent fallback
   }
 
   // Init Supabase only if config exists
@@ -36,7 +38,7 @@ Future<void> main() async {
         anonKey: AppConfig.supabaseAnonKey,
       );
     } catch (_) {
-      // Keep silent, app will fallback to role selection
+      // silent fallback
     }
   }
 
@@ -62,9 +64,7 @@ class MyApp extends StatelessWidget {
       builder: (_, __, ___) => MaterialApp(
         title: 'Khilonjiya.com',
         debugShowCheckedModeBanner: false,
-
         navigatorKey: NavigationService.navigatorKey,
-
         theme: KhilonjiyaUI.theme(),
         themeMode: ThemeMode.light,
 
@@ -115,10 +115,9 @@ class _AppInitializerState extends State<AppInitializer> {
     final start = DateTime.now();
 
     try {
-      // 1) Minimum splash time
       setState(() => _loadingText = "Starting...");
 
-      // 2) If Supabase config missing -> go role selection
+      // 1) If Supabase config missing -> go role selection
       if (!AppConfig.hasSupabase) {
         await _waitSplash(start);
         _go(AppRoutes.roleSelection);
@@ -130,15 +129,15 @@ class _AppInitializerState extends State<AppInitializer> {
       final session = client.auth.currentSession;
       final user = client.auth.currentUser;
 
-      // 3) If logged in -> go HomeRouter (role-based)
+      // 2) If logged in -> go HomeRouter (role-based)
       if (session != null && user != null) {
         setState(() => _loadingText = "Welcome back...");
         await _waitSplash(start);
-        _go(AppRoutes.homeJobsFeed); // HomeRouter
+        _go(AppRoutes.home);
         return;
       }
 
-      // 4) Not logged in -> go role selection
+      // 3) Not logged in -> go role selection
       setState(() => _loadingText = "Loading...");
       await _waitSplash(start);
       _go(AppRoutes.roleSelection);
