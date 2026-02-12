@@ -1,9 +1,12 @@
+// File: lib/routes/home_router.dart
+
 import 'package:flutter/material.dart';
+
+import '../core/auth/user_role.dart';
+import '../services/mobile_auth_service.dart';
 
 import '../presentation/home_marketplace_feed/home_jobs_feed.dart';
 import '../presentation/company/dashboard/company_dashboard.dart';
-import '../presentation/login_screen/mobile_auth_service.dart';
-import '../core/auth/user_role.dart';
 
 class HomeRouter extends StatefulWidget {
   const HomeRouter({Key? key}) : super(key: key);
@@ -23,13 +26,12 @@ class _HomeRouterState extends State<HomeRouter> {
 
   Future<UserRole> _resolveRole() async {
     try {
-      // 1) Ensure session exists
+      // Ensure session exists
       await _auth.refreshSession();
 
-      // 2) Always fetch role from DB (final truth)
+      // Always fetch role from DB (final truth)
       return await _auth.syncRoleFromDbStrict();
     } catch (_) {
-      // If anything fails, fallback
       return UserRole.jobSeeker;
     }
   }
