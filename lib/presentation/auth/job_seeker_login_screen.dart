@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../../routes/app_routes.dart';
 import '../../core/auth/user_role.dart';
-import 'mobile_auth_service.dart';
+import '../../services/mobile_auth_service.dart';
 
 class JobSeekerLoginScreen extends StatefulWidget {
   const JobSeekerLoginScreen({Key? key}) : super(key: key);
@@ -220,7 +220,6 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
               children: [
                 const SizedBox(height: 12),
 
-                /// BACK BUTTON (TO ROLE SELECTION)
                 Align(
                   alignment: Alignment.centerLeft,
                   child: IconButton(
