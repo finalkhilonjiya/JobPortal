@@ -1,33 +1,24 @@
-// File: lib/presentation/home_marketplace_feed/home_jobs_feed.dart
-
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/ui/khilonjiya_ui.dart';
 import '../../routes/app_routes.dart';
 import '../../services/job_service.dart';
 
-import './search_page.dart';
-import './widgets/job_details_page.dart';
-import './widgets/naukri_drawer.dart';
-import './widgets/shimmer_widgets.dart';
+import '../common/widgets/pages/job_details_page.dart';
+import '../common/widgets/cards/company_card.dart';
+import '../common/widgets/cards/job_card_widget.dart';
 
-// UI
-import '../../core/ui/khilonjiya_ui.dart';
+import 'recommended_jobs_page.dart';
+import 'widgets/naukri_drawer.dart';
 
-// Sections
-import './widgets/home_sections/ai_banner_card.dart';
-import './widgets/home_sections/profile_and_search_cards.dart';
-import './widgets/home_sections/boost_card.dart';
-import './widgets/home_sections/expected_salary_card.dart';
-import './widgets/home_sections/section_header.dart';
-import './widgets/home_sections/mini_news_card.dart';
-import './widgets/home_sections/company_card.dart';
-import './widgets/home_sections/job_card_horizontal.dart';
-
-import './widgets/job_card_vertical.dart';
-
-// Pages
-import './recommended_jobs_page.dart';
+import 'widgets/home_sections/ai_banner_card.dart';
+import 'widgets/home_sections/profile_and_search_cards.dart';
+import 'widgets/home_sections/boost_card.dart';
+import 'widgets/home_sections/expected_salary_card.dart';
+import 'widgets/home_sections/section_header.dart';
+import 'widgets/home_sections/mini_news_card.dart';
+import 'widgets/home_sections/job_card_horizontal.dart';
 
 class HomeJobsFeed extends StatefulWidget {
   const HomeJobsFeed({Key? key}) : super(key: key);
@@ -191,7 +182,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   }
 
   // ------------------------------------------------------------
-  // TOP BAR (FIGMA)
+  // TOP BAR
   // ------------------------------------------------------------
   Widget _buildTopBar(BuildContext scaffoldContext) {
     return Container(
@@ -212,45 +203,35 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
           ),
           const SizedBox(width: 10),
 
-          // Search pill
+          // Search pill (TEMP)
           Expanded(
-            child: InkWell(
-              onTap: () {
-                Navigator.push(
-                  scaffoldContext,
-                  MaterialPageRoute(builder: (_) => const SearchPage()),
-                );
-              },
-              borderRadius: BorderRadius.circular(999),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: KhilonjiyaUI.border),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: Color(0xFF64748B),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        "Search for 'Remote Jobs'",
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: KhilonjiyaUI.sub.copyWith(
-                          fontSize: 13.0,
-                          color: const Color(0xFF94A3B8),
-                        ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: KhilonjiyaUI.border),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.search,
+                    size: 18,
+                    color: Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Search jobs",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: KhilonjiyaUI.sub.copyWith(
+                        fontSize: 13.0,
+                        color: const Color(0xFF94A3B8),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -319,57 +300,38 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
       return ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
         itemCount: 6,
-        itemBuilder: (_, __) => const ShimmerJobCard(),
+        itemBuilder: (_, __) => Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          height: 90,
+          decoration: KhilonjiyaUI.cardDecoration(radius: 16),
+        ),
       );
     }
 
     final earlyAccessList =
         (_premiumJobs.isNotEmpty ? _premiumJobs : _profileJobs);
 
-    // IMPORTANT FIX (take(10) -> toList)
     final jobsForHorizontal = earlyAccessList.take(10).toList();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       children: [
-        // A) AI banner
-        AIBannerCard(
-          onTap: _openRecommendedJobsPage,
-        ),
-
+        AIBannerCard(onTap: _openRecommendedJobsPage),
         const SizedBox(height: 14),
 
-        // B) profile + jobs posted today
         ProfileAndSearchCards(
-          onMissingDetailsTap: () {
-            // TODO: Navigate to Complete Profile page (later)
-          },
-          onViewAllTap: () {
-            // TODO: Navigate to Jobs Posted Today page (later)
-          },
+          onMissingDetailsTap: () {},
+          onViewAllTap: () {},
         ),
-
         const SizedBox(height: 14),
 
-        // C) Construction boost card
-        BoostCard(
-          onTap: () {
-            // TODO: Navigate to Construction Service home (later)
-          },
-        ),
-
+        BoostCard(onTap: () {}),
         const SizedBox(height: 14),
 
-        // D) expected salary
-        ExpectedSalaryCard(
-          onIconTap: () {
-            // TODO: Navigate to salary filtered jobs page (later)
-          },
-        ),
-
+        ExpectedSalaryCard(onIconTap: () {}),
         const SizedBox(height: 18),
 
-        // E) Recommended jobs horizontal
+        // Recommended jobs horizontal
         SectionHeader(
           title: "Recommended jobs",
           ctaText: "View all",
@@ -396,13 +358,11 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 18),
 
-        // G) top companies (REAL DATA)
+        // Top companies
         SectionHeader(
           title: "Top companies",
           ctaText: "View all",
-          onTap: () {
-            // TODO: Company listing page later
-          },
+          onTap: () {},
         ),
         const SizedBox(height: 10),
 
@@ -450,15 +410,13 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
             ),
             itemBuilder: (_, i) => CompanyCard(
               company: _topCompanies[i],
-              onTap: () {
-                // TODO: Open Company Details page later
-              },
+              onTap: () {},
             ),
           ),
 
         const SizedBox(height: 18),
 
-        // H) minis feed (dummy for now)
+        // minis feed
         SectionHeader(
           title: "Stay informed with minis",
           ctaText: "View feed",
@@ -480,19 +438,23 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 18),
 
-        // J) jobs based on your profile (vertical list)
+        // Jobs based on your profile (vertical)
         SectionHeader(
           title: "Jobs based on your profile",
           ctaText: "View all",
           onTap: _openRecommendedJobsPage,
         ),
         const SizedBox(height: 10),
+
         ..._profileJobs.take(10).map((job) {
-          return JobCardVertical(
-            job: job,
-            isSaved: _savedJobIds.contains(job['id'].toString()),
-            onSaveToggle: () => _toggleSaveJob(job['id'].toString()),
-            onTap: () => _openJobDetails(job),
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: JobCardWidget(
+              job: job,
+              isSaved: _savedJobIds.contains(job['id'].toString()),
+              onSaveToggle: () => _toggleSaveJob(job['id'].toString()),
+              onTap: () => _openJobDetails(job),
+            ),
           );
         }).toList(),
 
