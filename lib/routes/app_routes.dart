@@ -1,110 +1,84 @@
 import 'package:flutter/material.dart';
 
 import '../presentation/role_selection/role_selection_screen.dart';
-import '../presentation/login_screen/job_seeker_login_screen.dart';
-import '../presentation/login_screen/employer_login_screen.dart';
+import '../presentation/auth/job_seeker_login_screen.dart';
+import '../presentation/auth/employer_login_screen.dart';
 
 import '../routes/home_router.dart';
 
 import '../presentation/home_marketplace_feed/home_jobs_feed.dart';
-import '../presentation/company/dashboard/company_dashboard.dart';
+import '../presentation/home_marketplace_feed/saved_jobs_page.dart';
+import '../presentation/home_marketplace_feed/recommended_jobs_page.dart';
 
+import '../presentation/company/dashboard/company_dashboard.dart';
 import '../presentation/company/jobs/create_job_screen.dart';
 import '../presentation/company/jobs/employer_job_list_screen.dart';
-import '../presentation/company/applicants/job_applicants_screen.dart';
-
-import '../presentation/registration_screen/registration_screen.dart';
-import '../presentation/search_and_filters/search_and_filters.dart';
-import '../presentation/listing_detail/listing_detail.dart';
-import '../presentation/user_profile/user_profile.dart';
-import '../presentation/chat_messaging/chat_messaging.dart';
-import '../presentation/favorites_and_saved_items/favorites_and_saved_items.dart';
-import '../presentation/configuration_setup/configuration_setup.dart';
+import '../presentation/company/jobs/job_applicants_screen.dart';
 
 class AppRoutes {
-  /// ------------------------------------------------------------
-  /// CORE
-  /// ------------------------------------------------------------
+  // ------------------------------------------------------------
+  // CORE
+  // ------------------------------------------------------------
   static const String initial = '/';
-
-  /// ------------------------------------------------------------
-  /// ROLE SELECTION
-  /// ------------------------------------------------------------
   static const String roleSelection = '/role-selection';
 
-  /// ------------------------------------------------------------
-  /// LOGIN (SEPARATE FLOWS)
-  /// ------------------------------------------------------------
+  // ------------------------------------------------------------
+  // AUTH
+  // ------------------------------------------------------------
   static const String jobSeekerLogin = '/job-seeker-login';
   static const String employerLogin = '/employer-login';
 
-  /// ------------------------------------------------------------
-  /// POST LOGIN ROUTER (ROLE BASED)
-  /// ------------------------------------------------------------
-  static const String homeJobsFeed = '/home';
+  // ------------------------------------------------------------
+  // POST LOGIN (ROLE BASED)
+  // ------------------------------------------------------------
+  static const String home = '/home';
 
-  /// ------------------------------------------------------------
-  /// EMPLOYER
-  /// ------------------------------------------------------------
-  static const String companyDashboard = '/company-dashboard';
-  static const String employerJobs = '/employer-jobs';
-  static const String createJob = '/create-job';
-  static const String jobApplicants = '/job-applicants';
+  // ------------------------------------------------------------
+  // JOB SEEKER PAGES
+  // ------------------------------------------------------------
+  static const String homeJobsFeed = '/job-seeker/home-feed';
+  static const String recommendedJobs = '/job-seeker/recommended-jobs';
+  static const String savedJobs = '/job-seeker/saved-jobs';
 
-  /// ------------------------------------------------------------
-  /// JOB SEEKER (DIRECT ACCESS IF EVER NEEDED)
-  /// ------------------------------------------------------------
-  static const String jobSeekerHome = '/job-seeker-home';
+  // ------------------------------------------------------------
+  // EMPLOYER PAGES
+  // ------------------------------------------------------------
+  static const String companyDashboard = '/employer/dashboard';
+  static const String employerJobs = '/employer/jobs';
+  static const String createJob = '/employer/jobs/create';
+  static const String jobApplicants = '/employer/jobs/applicants';
 
-  /// ------------------------------------------------------------
-  /// OTHER EXISTING ROUTES
-  /// ------------------------------------------------------------
-  static const String registrationScreen = '/registration-screen';
-  static const String searchAndFilters = '/search-and-filters';
-  static const String listingDetail = '/listing-detail';
-  static const String userProfile = '/user-profile';
-  static const String chatMessaging = '/chat-messaging';
-  static const String favoritesAndSavedItems = '/favorites-and-saved-items';
-  static const String configurationSetup = '/configuration-setup';
-
-  /// ------------------------------------------------------------
-  /// ROUTES MAP (ONLY FOR SIMPLE ROUTES)
-  /// ------------------------------------------------------------
+  // ------------------------------------------------------------
+  // STATIC ROUTES
+  // ------------------------------------------------------------
   static final Map<String, WidgetBuilder> routes = {
-    /// SAFETY ONLY
+    // Safety
     initial: (_) => const RoleSelectionScreen(),
 
-    /// ROLE SELECTION
+    // Role selection
     roleSelection: (_) => const RoleSelectionScreen(),
 
-    /// LOGIN
+    // Auth
     jobSeekerLogin: (_) => const JobSeekerLoginScreen(),
     employerLogin: (_) => const EmployerLoginScreen(),
 
-    /// ROLE-BASED HOME ROUTER
-    homeJobsFeed: (_) => const HomeRouter(),
+    // Role based router (single entry after login)
+    home: (_) => const HomeRouter(),
 
-    /// DIRECT HOMES (OPTIONAL)
-    jobSeekerHome: (_) => const HomeJobsFeed(),
+    // Job seeker direct routes
+    homeJobsFeed: (_) => const HomeJobsFeed(),
+    recommendedJobs: (_) => const RecommendedJobsPage(),
+    savedJobs: (_) => const SavedJobsPage(),
+
+    // Employer direct routes
     companyDashboard: (_) => const CompanyDashboard(),
-
-    /// EMPLOYER
     employerJobs: (_) => const EmployerJobListScreen(),
     createJob: (_) => const CreateJobScreen(),
-
-    /// EXISTING
-    registrationScreen: (_) => const RegistrationScreen(),
-    searchAndFilters: (_) => const SearchAndFilters(),
-    listingDetail: (_) => const ListingDetail(),
-    userProfile: (_) => const UserProfile(),
-    chatMessaging: (_) => const ChatMessaging(),
-    favoritesAndSavedItems: (_) => const FavoritesAndSavedItems(),
-    configurationSetup: (_) => const ConfigurationSetup(),
   };
 
-  /// ------------------------------------------------------------
-  /// onGenerateRoute (REQUIRED FOR ARGUMENT ROUTES)
-  /// ------------------------------------------------------------
+  // ------------------------------------------------------------
+  // DYNAMIC ROUTES
+  // ------------------------------------------------------------
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case jobApplicants:
@@ -125,7 +99,6 @@ class AppRoutes {
         );
     }
 
-    /// fallback
     return MaterialPageRoute(
       builder: (_) => Scaffold(
         body: Center(
@@ -135,9 +108,9 @@ class AppRoutes {
     );
   }
 
-  /// ------------------------------------------------------------
-  /// HELPERS
-  /// ------------------------------------------------------------
+  // ------------------------------------------------------------
+  // HELPERS
+  // ------------------------------------------------------------
   static Future<void> pushAndClearStack(
     BuildContext context,
     String routeName,
