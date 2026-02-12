@@ -16,21 +16,19 @@ class HomeRouter extends StatefulWidget {
 
 class _HomeRouterState extends State<HomeRouter> {
   late final MobileAuthService _auth;
-  late final Future<UserRole> _roleFuture;
+  late final Future<UserRole?> _roleFuture;
 
   @override
   void initState() {
     super.initState();
     _auth = MobileAuthService();
-    _roleFuture = _resolveRole();
+    _roleFuture = _resolveRoleOrNull();
   }
 
-  Future<UserRole> _resolveRole() async {
+  Future<UserRole?> _resolveRoleOrNull() async {
     // 1) Ensure session exists
     final ok = await _auth.refreshSession();
-    if (!ok) {
-      return UserRole.unknown;
-    }
+    if (!ok) return null;
 
     // 2) DB is final truth
     return await _auth.syncRoleFromDbStrict(fallback: UserRole.jobSeeker);
@@ -49,7 +47,7 @@ class _HomeRouterState extends State<HomeRouter> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<UserRole>(
+    return FutureBuilder<UserRole?>(
       future: _roleFuture,
       builder: (context, snap) {
         if (snap.connectionState != ConnectionState.done) {
@@ -58,16 +56,17 @@ class _HomeRouterState extends State<HomeRouter> {
           );
         }
 
-        final role = snap.data ?? UserRole.unknown;
+        final role = snap.data;
 
-        // If session missing → go back
-        if (role == UserRole.unknown) {
+        // ❌ No session → go RoleSelection
+        if (role == null) {
           _goToRoleSelection();
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
+        // ✅ Role based routing
         if (role == UserRole.employer) {
           return const CompanyDashboard();
         }
