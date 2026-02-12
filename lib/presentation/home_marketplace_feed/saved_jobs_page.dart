@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+
 import '../../services/job_service.dart';
-import './widgets/job_card_widget.dart';
+import '../common/widgets/cards/job_card_widget.dart';
 
 class SavedJobsPage extends StatefulWidget {
   const SavedJobsPage({Key? key}) : super(key: key);
@@ -23,6 +24,7 @@ class _SavedJobsPageState extends State<SavedJobsPage> {
 
   Future<void> _load() async {
     _jobs = await _jobService.getSavedJobs();
+    if (!mounted) return;
     setState(() => _loading = false);
   }
 
@@ -39,7 +41,7 @@ class _SavedJobsPageState extends State<SavedJobsPage> {
                   itemBuilder: (_, i) => JobCardWidget(
                     job: _jobs[i],
                     isSaved: true,
-                    onSaveToggle: () => _load(),
+                    onSaveToggle: _load,
                     onTap: () {},
                   ),
                 ),
