@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+
 import '../../../core/ui/khilonjiya_ui.dart';
+import '../../../routes/app_routes.dart';
+import '../../../services/mobile_auth_service.dart';
+
+import '../search_page.dart';
 
 class NaukriDrawer extends StatelessWidget {
   final String userName;
@@ -12,6 +17,32 @@ class NaukriDrawer extends StatelessWidget {
     required this.profileCompletion,
     required this.onClose,
   }) : super(key: key);
+
+  Future<void> _logout(BuildContext context) async {
+    try {
+      await MobileAuthService().logout();
+    } catch (_) {}
+
+    if (!context.mounted) return;
+
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRoutes.roleSelection,
+      (_) => false,
+    );
+  }
+
+  void _goNamed(BuildContext context, String route) {
+    Navigator.pop(context); // close drawer
+    Navigator.pushNamed(context, route);
+  }
+
+  void _openSearch(BuildContext context) {
+    Navigator.pop(context); // close drawer
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const SearchPage()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +121,6 @@ class NaukriDrawer extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 14),
 
                   // Upgrade card
@@ -129,8 +159,10 @@ class NaukriDrawer extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const Icon(Icons.chevron_right,
-                            color: KhilonjiyaUI.muted),
+                        const Icon(
+                          Icons.chevron_right,
+                          color: KhilonjiyaUI.muted,
+                        ),
                       ],
                     ),
                   ),
@@ -151,8 +183,14 @@ class NaukriDrawer extends StatelessWidget {
                     context,
                     icon: Icons.edit_outlined,
                     title: "Set your job search status",
-                    trailing: const Icon(Icons.edit,
-                        size: 18, color: KhilonjiyaUI.muted),
+                    trailing: const Icon(
+                      Icons.edit,
+                      size: 18,
+                      color: KhilonjiyaUI.muted,
+                    ),
+                    onTap: () {
+                      // TODO: later (job search status page)
+                    },
                   ),
 
                   _menuItem(
@@ -160,48 +198,65 @@ class NaukriDrawer extends StatelessWidget {
                     icon: Icons.auto_awesome_outlined,
                     title: "Neo - AI Job Agent",
                     badge: "New",
+                    onTap: () {
+                      // TODO: later
+                    },
                   ),
 
                   _menuItem(
                     context,
                     icon: Icons.search,
                     title: "Search jobs",
+                    onTap: () => _openSearch(context),
                   ),
 
                   _menuItem(
                     context,
                     icon: Icons.star_outline,
                     title: "Recommended jobs",
+                    onTap: () => _goNamed(context, AppRoutes.recommendedJobs),
                   ),
 
                   _menuItem(
                     context,
                     icon: Icons.bookmark_outline,
                     title: "Saved jobs",
+                    onTap: () => _goNamed(context, AppRoutes.savedJobs),
                   ),
 
                   _menuItem(
                     context,
                     icon: Icons.person_outline,
                     title: "Profile performance",
+                    onTap: () =>
+                        _goNamed(context, AppRoutes.profilePerformance),
                   ),
 
                   _menuItem(
                     context,
                     icon: Icons.palette_outlined,
                     title: "Display preferences",
+                    onTap: () {
+                      // TODO: later
+                    },
                   ),
 
                   _menuItem(
                     context,
                     icon: Icons.chat_outlined,
                     title: "Chat for help",
+                    onTap: () {
+                      // TODO: later
+                    },
                   ),
 
                   _menuItem(
                     context,
                     icon: Icons.settings_outlined,
                     title: "Settings",
+                    onTap: () {
+                      // TODO: later
+                    },
                   ),
 
                   const SizedBox(height: 8),
@@ -221,6 +276,9 @@ class NaukriDrawer extends StatelessWidget {
                     badgeColor: const Color(0xFFFFF7ED),
                     badgeTextColor: const Color(0xFFEA580C),
                     badgeBorderColor: const Color(0xFFFED7AA),
+                    onTap: () {
+                      // TODO: later
+                    },
                   ),
 
                   _menuItem(
@@ -231,12 +289,33 @@ class NaukriDrawer extends StatelessWidget {
                     badgeColor: const Color(0xFFFFF7ED),
                     badgeTextColor: const Color(0xFFEA580C),
                     badgeBorderColor: const Color(0xFFFED7AA),
+                    onTap: () {
+                      // TODO: later
+                    },
                   ),
 
                   _menuItem(
                     context,
                     icon: Icons.article_outlined,
                     title: "Khilonjiya blog",
+                    onTap: () {
+                      // TODO: later
+                    },
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // ------------------------------------------------------------
+                  // LOGOUT
+                  // ------------------------------------------------------------
+                  _menuItem(
+                    context,
+                    icon: Icons.logout_rounded,
+                    title: "Logout",
+                    titleColor: const Color(0xFFEF4444),
+                    iconColor: const Color(0xFFEF4444),
+                    trailing: const SizedBox.shrink(),
+                    onTap: () => _logout(context),
                   ),
 
                   const SizedBox(height: 14),
@@ -282,14 +361,17 @@ class NaukriDrawer extends StatelessWidget {
     BuildContext context, {
     required IconData icon,
     required String title,
+    VoidCallback? onTap,
     String? badge,
     Widget? trailing,
     Color? badgeColor,
     Color? badgeTextColor,
     Color? badgeBorderColor,
+    Color? titleColor,
+    Color? iconColor,
   }) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         child: Container(
@@ -301,13 +383,18 @@ class NaukriDrawer extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(icon, size: 22, color: const Color(0xFF334155)),
+              Icon(
+                icon,
+                size: 22,
+                color: iconColor ?? const Color(0xFF334155),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   title,
                   style: KhilonjiyaUI.body.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: titleColor ?? KhilonjiyaUI.text,
                   ),
                 ),
               ),
@@ -332,8 +419,10 @@ class NaukriDrawer extends StatelessWidget {
                 )
               else
                 (trailing ??
-                    const Icon(Icons.chevron_right,
-                        color: KhilonjiyaUI.muted)),
+                    const Icon(
+                      Icons.chevron_right,
+                      color: KhilonjiyaUI.muted,
+                    )),
             ],
           ),
         ),
