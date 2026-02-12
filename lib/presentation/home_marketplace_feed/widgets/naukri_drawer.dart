@@ -40,7 +40,7 @@ class NaukriDrawer extends StatelessWidget {
     Navigator.pop(context); // close drawer
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const SearchPage()),
+      MaterialPageRoute(builder: (_) => SearchPage()),
     );
   }
 
