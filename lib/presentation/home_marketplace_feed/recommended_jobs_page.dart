@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../services/job_service.dart';
 import '../../core/ui/khilonjiya_ui.dart';
+import '../../services/job_service.dart';
 
 import '../common/widgets/cards/job_card_widget.dart';
 import '../common/widgets/pages/job_details_page.dart';
@@ -49,8 +49,9 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
         final ms = j['match_score'];
         if (ms == null) return false;
         if (ms is int) return ms >= 50;
-        return int.tryParse(ms.toString()) != null &&
-            int.parse(ms.toString()) >= 50;
+
+        final parsed = int.tryParse(ms.toString());
+        return parsed != null && parsed >= 50;
       }).toList();
 
       // 4) fallback to all active jobs if no strong matches
@@ -73,27 +74,48 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
   }
 
   Future<void> _toggleSaveJob(String jobId) async {
-    final isSaved = await _jobService.toggleSaveJob(jobId);
+    try {
+      final isSaved = await _jobService.toggleSaveJob(jobId);
 
-    if (_disposed) return;
-    setState(() {
-      isSaved ? _savedJobIds.add(jobId) : _savedJobIds.remove(jobId);
-    });
+      if (_disposed) return;
+      setState(() {
+        isSaved ? _savedJobIds.add(jobId) : _savedJobIds.remove(jobId);
+      });
+    } catch (_) {
+      if (_disposed) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to update saved job")),
+      );
+    }
   }
 
-  void _openJobDetails(Map<String, dynamic> job) {
-    _jobService.trackJobView(job['id'].toString());
+  Future<void> _openJobDetails(Map<String, dynamic> job) async {
+    final jobId = job['id']?.toString() ?? '';
+    if (jobId.trim().isEmpty) return;
 
-    Navigator.push(
+    // track view (fire and forget)
+    _jobService.trackJobView(jobId);
+
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => JobDetailsPage(
           job: job,
-          isSaved: _savedJobIds.contains(job['id'].toString()),
-          onSaveToggle: () => _toggleSaveJob(job['id'].toString()),
+          isSaved: _savedJobIds.contains(jobId),
+          onSaveToggle: () => _toggleSaveJob(jobId),
         ),
       ),
     );
+
+    // IMPORTANT:
+    // When coming back, refresh saved state so UI stays correct.
+    try {
+      _savedJobIds = await _jobService.getUserSavedJobs();
+    } catch (_) {}
+
+    if (_disposed) return;
+    setState(() {});
   }
 
   @override
@@ -156,6 +178,7 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
                                   child: Text(
                                     "Try again later.",
                                     style: KhilonjiyaUI.sub,
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                               ],
@@ -166,7 +189,7 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
                               itemCount: _jobs.length,
                               itemBuilder: (_, i) {
                                 final job = _jobs[i];
-                                final jobId = job['id'].toString();
+                                final jobId = job['id']?.toString() ?? '';
 
                                 return JobCardWidget(
                                   job: job,
