@@ -151,8 +151,8 @@ class _EmployerLoginScreenState extends State<EmployerLoginScreen>
 
       if (!mounted) return;
 
-      // ✅ ALWAYS GO TO HOME ROUTER (ROLE BASED)
-      Navigator.pushReplacementNamed(context, AppRoutes.homeJobsFeed);
+      // ✅ FINAL FIX: ALWAYS GO TO ROLE BASED HOME ROUTER
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
     } catch (e) {
       setState(() {
         _isLoading = false;
