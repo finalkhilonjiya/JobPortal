@@ -11,7 +11,7 @@ import './widgets/job_details_page.dart';
 import './widgets/naukri_drawer.dart';
 import './widgets/shimmer_widgets.dart';
 
-// NEW UI widgets (Figma)
+// UI
 import '../../core/ui/khilonjiya_ui.dart';
 
 // Sections
@@ -26,7 +26,7 @@ import './widgets/home_sections/job_card_horizontal.dart';
 
 import './widgets/job_card_vertical.dart';
 
-// Pages (created by you already)
+// Pages
 import './recommended_jobs_page.dart';
 
 class HomeJobsFeed extends StatefulWidget {
@@ -51,13 +51,13 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   List<Map<String, dynamic>> _premiumJobs = [];
   Set<String> _savedJobIds = {};
 
-  // NEW: real companies
+  // Companies
   List<Map<String, dynamic>> _topCompanies = [];
   bool _loadingCompanies = true;
 
   bool _isLoadingProfile = true;
 
-  // Minis still dummy (for now)
+  // Minis (dummy for now)
   final List<Map<String, dynamic>> _dummyMinis = [
     {
       "title": "Top 10 remote jobs hiring now",
@@ -117,18 +117,18 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
     setState(() => _isCheckingAuth = false);
 
     try {
-      // Kept because drawer uses it
+      // Drawer needs it
       _profileCompletion = await _jobService.calculateProfileCompletion();
 
       _savedJobIds = await _jobService.getUserSavedJobs();
 
-      // Premium
+      // Premium jobs
       _premiumJobs = await _jobService.fetchPremiumJobs(limit: 8);
 
-      // Recommended
+      // Recommended jobs
       _profileJobs = await _jobService.getRecommendedJobs(limit: 40);
 
-      // NEW: Top companies from DB
+      // Top companies from DB
       _topCompanies = await _jobService.fetchTopCompanies(limit: 8);
     } finally {
       if (!_isDisposed) {
@@ -312,7 +312,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   }
 
   // ------------------------------------------------------------
-  // HOME FEED (FIGMA)
+  // HOME FEED
   // ------------------------------------------------------------
   Widget _buildHomeFeed() {
     if (_isLoadingProfile) {
@@ -326,10 +326,13 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
     final earlyAccessList =
         (_premiumJobs.isNotEmpty ? _premiumJobs : _profileJobs);
 
+    // IMPORTANT FIX (take(10) -> toList)
+    final jobsForHorizontal = earlyAccessList.take(10).toList();
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       children: [
-        // A) AI banner (CONNECTED)
+        // A) AI banner
         AIBannerCard(
           onTap: _openRecommendedJobsPage,
         ),
@@ -377,10 +380,10 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
           height: 210,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: earlyAccessList.take(10).length,
+            itemCount: jobsForHorizontal.length,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (_, i) {
-              final job = earlyAccessList[i];
+              final job = jobsForHorizontal[i];
               return JobCardHorizontal(
                 job: job,
                 isSaved: _savedJobIds.contains(job['id'].toString()),
@@ -397,7 +400,9 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
         SectionHeader(
           title: "Top companies",
           ctaText: "View all",
-          onTap: () {},
+          onTap: () {
+            // TODO: Company listing page later
+          },
         ),
         const SizedBox(height: 10),
 
@@ -453,7 +458,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 18),
 
-        // H) minis feed (still dummy)
+        // H) minis feed (dummy for now)
         SectionHeader(
           title: "Stay informed with minis",
           ctaText: "View feed",
@@ -497,7 +502,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   }
 
   // ------------------------------------------------------------
-  // BOTTOM NAV (FIGMA)
+  // BOTTOM NAV
   // ------------------------------------------------------------
   Widget _buildBottomNav() {
     return Container(
