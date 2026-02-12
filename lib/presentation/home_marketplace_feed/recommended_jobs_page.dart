@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../services/job_service.dart';
 import '../../core/ui/khilonjiya_ui.dart';
 
-import './widgets/job_card_vertical.dart';
+import './widgets/job_card_widget.dart';
 import './widgets/job_details_page.dart';
 
 class RecommendedJobsPage extends StatefulWidget {
@@ -103,7 +103,7 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top bar (same style as your app)
+            // Top bar
             Container(
               padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
               decoration: BoxDecoration(
@@ -168,7 +168,7 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
                                 final job = _jobs[i];
                                 final jobId = job['id'].toString();
 
-                                return JobCardVertical(
+                                return JobCardWidget(
                                   job: job,
                                   isSaved: _savedJobIds.contains(jobId),
                                   onSaveToggle: () => _toggleSaveJob(jobId),
