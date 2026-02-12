@@ -2,11 +2,10 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-import '../../../core/ui/khilonjiya_ui.dart';
-import '../../../services/job_service.dart';
+import 'package:khilonjiya_com/core/ui/khilonjiya_ui.dart';
+import 'package:khilonjiya_com/services/job_service.dart';
 
-// FIX: correct import path for your project
-import '../../job_application_form.dart';
+import '../job_application_form.dart';
 
 class JobDetailsPage extends StatefulWidget {
   final Map<String, dynamic> job;
@@ -95,7 +94,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
 
     final description = (job['job_description'] ?? '').toString();
 
-    // FIX: skills_required may be List OR String OR null
+    // skills_required may be List OR String OR null
     final skills = _safeSkills(job['skills_required']);
 
     final postedAt = job['created_at']?.toString();
@@ -105,12 +104,9 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
 
     return Scaffold(
       backgroundColor: KhilonjiyaUI.bg,
-
-      // Bottom bar
       bottomNavigationBar: _buildApplyBottomBar(
         salaryText: _salary(salaryMin, salaryMax),
       ),
-
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -547,7 +543,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                 ),
               ),
             ),
-            const Icon(
+            Icon(
               Icons.verified_rounded,
               size: 18,
               color: KhilonjiyaUI.primary,
@@ -715,15 +711,16 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     if (raw == null) return [];
 
     if (raw is List) {
-      return raw.map((e) => e.toString()).where((s) => s.trim().isNotEmpty).toList();
+      return raw
+          .map((e) => e.toString())
+          .where((s) => s.trim().isNotEmpty)
+          .toList();
     }
 
-    // Sometimes Supabase returns a comma separated string
     if (raw is String) {
       final s = raw.trim();
       if (s.isEmpty) return [];
 
-      // If it looks like "['a','b']" handle roughly
       if (s.startsWith('[') && s.endsWith(']')) {
         final inner = s.substring(1, s.length - 1);
         return inner
