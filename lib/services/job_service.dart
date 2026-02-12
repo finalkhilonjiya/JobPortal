@@ -176,8 +176,7 @@ class JobService {
       return getRecommendedJobs(limit: limit);
     }
 
-    final jobIds =
-        views.map<String>((e) => e['job_id'].toString()).toList();
+    final jobIds = views.map<String>((e) => e['job_id'].toString()).toList();
 
     final res = await _supabase
         .from('job_listings')
@@ -333,5 +332,183 @@ class JobService {
     final filled = profile.values.where((v) => v != null).length;
 
     return ((filled / 20) * 100).round().clamp(0, 100);
+  }
+
+  /* ================= HOME: PROFILE + JOBS POSTED TODAY ================= */
+
+  /// Used by ProfileAndSearchCards (UI only widget)
+  /// Returns:
+  /// {
+  ///   profileName: String,
+  ///   profileCompletion: int (0-100),
+  ///   lastUpdatedText: String,
+  ///   missingDetails: int
+  /// }
+  ///
+  /// NOTE:
+  /// - Experience is NOT required for missing details count (as per your instruction)
+  /// - If user is not logged in, returns default safe values
+  Future<Map<String, dynamic>> getHomeProfileSummary() async {
+    final user = _supabase.auth.currentUser;
+
+    if (user == null) {
+      return {
+        "profileName": "Your Profile",
+        "profileCompletion": 0,
+        "lastUpdatedText": "Updated recently",
+        "missingDetails": 0,
+      };
+    }
+
+    try {
+      final profile = await _supabase
+          .from('user_profiles')
+          .select(
+            'full_name, profile_completion_percentage, last_profile_update, '
+            'email, mobile_number, '
+            'skills, highest_education, preferred_job_types, preferred_locations, '
+            'expected_salary_min, expected_salary_max, '
+            'current_city, current_state, is_open_to_work',
+          )
+          .eq('id', user.id)
+          .maybeSingle();
+
+      // Defaults
+      String profileName = "Your Profile";
+      int completion = 0;
+      String lastUpdatedText = "Updated recently";
+
+      if (profile != null) {
+        // Name
+        final fullName = (profile['full_name'] ?? '').toString().trim();
+        profileName = _firstNameOrFallback(fullName);
+
+        // Completion %
+        completion =
+            _toInt(profile['profile_completion_percentage']).clamp(0, 100);
+
+        // Last updated
+        final lastUpdateRaw = profile['last_profile_update']?.toString();
+        lastUpdatedText = _formatLastUpdated(lastUpdateRaw);
+      }
+
+      // Missing details
+      final missingDetails = await _calculateMissingDetailsCount(profile);
+
+      return {
+        "profileName": profileName,
+        "profileCompletion": completion,
+        "lastUpdatedText": lastUpdatedText,
+        "missingDetails": missingDetails,
+      };
+    } catch (_) {
+      return {
+        "profileName": "Your Profile",
+        "profileCompletion": 0,
+        "lastUpdatedText": "Updated recently",
+        "missingDetails": 0,
+      };
+    }
+  }
+
+  /// Used by ProfileAndSearchCards
+  /// Returns jobs posted today count (All India, active only)
+  Future<int> getJobsPostedTodayCount() async {
+    try {
+      final now = DateTime.now();
+      final start = DateTime(now.year, now.month, now.day);
+      final end = start.add(const Duration(days: 1));
+
+      final startIso = start.toIso8601String();
+      final endIso = end.toIso8601String();
+
+      final res = await _supabase
+          .from('job_listings')
+          .select('id')
+          .eq('status', 'active')
+          .gte('created_at', startIso)
+          .lt('created_at', endIso);
+
+      return (res as List).length;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  // ------------------------------------------------------------
+  // PRIVATE HELPERS (HOME PROFILE SUMMARY)
+  // ------------------------------------------------------------
+
+  int _toInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is int) return v;
+    return int.tryParse(v.toString()) ?? 0;
+  }
+
+  String _firstNameOrFallback(String fullName) {
+    if (fullName.trim().isEmpty) return "Your Profile";
+    final parts = fullName.trim().split(RegExp(r"\s+"));
+    if (parts.isEmpty) return "Your Profile";
+    return "${parts.first}'s profile";
+  }
+
+  String _formatLastUpdated(String? iso) {
+    if (iso == null || iso.trim().isEmpty) return "Updated recently";
+
+    final d = DateTime.tryParse(iso);
+    if (d == null) return "Updated recently";
+
+    final diff = DateTime.now().difference(d);
+
+    if (diff.inMinutes < 60) return "Updated just now";
+    if (diff.inHours < 24) return "Updated today";
+    if (diff.inDays == 1) return "Updated 1d ago";
+    if (diff.inDays < 7) return "Updated ${diff.inDays}d ago";
+    if (diff.inDays < 30) return "Updated ${(diff.inDays / 7).floor()}w ago";
+
+    return "Updated ${(diff.inDays / 30).floor()}mo ago";
+  }
+
+  Future<int> _calculateMissingDetailsCount(Map<String, dynamic>? profile) async {
+    int missing = 0;
+
+    if (profile == null) {
+      return 12;
+    }
+
+    bool isEmpty(dynamic v) {
+      if (v == null) return true;
+      if (v is String) return v.trim().isEmpty;
+      if (v is List) return v.isEmpty;
+      return false;
+    }
+
+    // REQUIRED fields
+    if (isEmpty(profile['full_name'])) missing++;
+    if (isEmpty(profile['email'])) missing++;
+    if (isEmpty(profile['mobile_number'])) missing++;
+    if (isEmpty(profile['current_city'])) missing++;
+    if (isEmpty(profile['current_state'])) missing++;
+    if (isEmpty(profile['highest_education'])) missing++;
+    if (isEmpty(profile['skills'])) missing++;
+    if (profile['expected_salary_min'] == null) missing++;
+    if (profile['expected_salary_max'] == null) missing++;
+    if (isEmpty(profile['preferred_locations'])) missing++;
+    if (isEmpty(profile['preferred_job_types'])) missing++;
+    if (profile['is_open_to_work'] != true) missing++;
+
+    // Education requirement: at least 1 row
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId != null) {
+      final edu = await _supabase
+          .from('user_education')
+          .select('id')
+          .eq('user_id', userId)
+          .limit(1);
+
+      if ((edu as List).isEmpty) missing++;
+    }
+
+    return missing;
   }
 }
