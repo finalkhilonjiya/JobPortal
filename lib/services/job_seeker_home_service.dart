@@ -23,7 +23,7 @@ class JobSeekerHomeService {
   }
 
   // ============================================================
-  // JOB FEED
+  // JOB FEED (BASE)
   // ============================================================
 
   Future<List<Map<String, dynamic>>> fetchJobs({
@@ -58,6 +58,33 @@ class JobSeekerHomeService {
 
     return List<Map<String, dynamic>>.from(res);
   }
+
+  // ============================================================
+  // LATEST JOBS
+  // ============================================================
+
+  Future<List<Map<String, dynamic>>> fetchLatestJobs({
+    int limit = 40,
+  }) async {
+    // Latest = newest created_at
+    return fetchJobs(limit: limit);
+  }
+
+  // ============================================================
+  // JOBS NEARBY
+  // ============================================================
+
+  Future<List<Map<String, dynamic>>> fetchJobsNearby({
+    int limit = 40,
+  }) async {
+    // REAL nearby requires location + PostGIS distance query.
+    // For now fallback so UI works.
+    return fetchJobs(limit: limit);
+  }
+
+  // ============================================================
+  // PREMIUM JOBS
+  // ============================================================
 
   Future<List<Map<String, dynamic>>> fetchPremiumJobs({
     int limit = 5,
@@ -105,7 +132,6 @@ class JobSeekerHomeService {
     final userId = _userId();
 
     try {
-      // Pull recommendation job_ids for this user
       final rec = await _db
           .from('job_recommendations')
           .select('job_id, match_score')
@@ -116,13 +142,11 @@ class JobSeekerHomeService {
       final recList = List<Map<String, dynamic>>.from(rec);
 
       if (recList.isEmpty) {
-        // fallback
         return fetchJobs(limit: limit);
       }
 
       final ids = recList.map((e) => e['job_id'].toString()).toList();
 
-      // Fetch jobs by those ids
       final jobs = await _db
           .from('job_listings')
           .select('''
@@ -147,7 +171,6 @@ class JobSeekerHomeService {
 
       final list = List<Map<String, dynamic>>.from(jobs);
 
-      // attach match_score into job map
       final scoreMap = <String, int>{};
       for (final r in recList) {
         final id = r['job_id'].toString();
@@ -161,7 +184,6 @@ class JobSeekerHomeService {
         j['match_score'] = scoreMap[id] ?? 0;
       }
 
-      // Sort by match_score desc
       list.sort((a, b) {
         final sa = (a['match_score'] ?? 0) as int;
         final sb = (b['match_score'] ?? 0) as int;
@@ -170,7 +192,6 @@ class JobSeekerHomeService {
 
       return list;
     } catch (_) {
-      // fallback
       return fetchJobs(limit: limit);
     }
   }
@@ -178,7 +199,6 @@ class JobSeekerHomeService {
   Future<List<Map<String, dynamic>>> getJobsBasedOnActivity({
     int limit = 50,
   }) async {
-    // For now, same as recommended
     return getRecommendedJobs(limit: limit);
   }
 
@@ -198,7 +218,7 @@ class JobSeekerHomeService {
         'device_type': 'mobile',
       });
 
-      // Optional activity log (if you want)
+      // Optional activity log
       try {
         await _db.from('user_job_activity').insert({
           'user_id': userId,
@@ -221,7 +241,6 @@ class JobSeekerHomeService {
     final nowIso = DateTime.now().toIso8601String();
 
     try {
-      // get base job
       final base = await _db
           .from('job_listings')
           .select('job_category_id, district, company_id')
@@ -234,7 +253,6 @@ class JobSeekerHomeService {
       final district = base['district'];
       final companyId = base['company_id'];
 
-      // priority: same category + same district
       final res = await _db
           .from('job_listings')
           .select('''
@@ -266,22 +284,21 @@ class JobSeekerHomeService {
     }
   }
 
+  Future<Map<String, dynamic>?> fetchCompanyDetails(String companyId) async {
+    _ensureAuthenticatedSync();
 
+    final res = await _db
+        .from('companies')
+        .select(
+          'id, name, slug, logo_url, website, description, industry, company_size, founded_year, headquarters_city, headquarters_state, rating, total_reviews, total_jobs, is_verified',
+        )
+        .eq('id', companyId)
+        .maybeSingle();
 
-Future<Map<String, dynamic>?> fetchCompanyDetails(String companyId) async {
-  _ensureAuthenticatedSync();
+    if (res == null) return null;
+    return Map<String, dynamic>.from(res);
+  }
 
-  final res = await _db
-      .from('companies')
-      .select(
-        'id, name, slug, logo_url, website, description, industry, company_size, founded_year, headquarters_city, headquarters_state, rating, total_reviews, total_jobs, is_verified',
-      )
-      .eq('id', companyId)
-      .maybeSingle();
-
-  if (res == null) return null;
-  return Map<String, dynamic>.from(res);
-}
   // ============================================================
   // JOBS FILTERED BY SALARY (MONTHLY)
   // ============================================================
@@ -293,7 +310,6 @@ Future<Map<String, dynamic>?> fetchCompanyDetails(String companyId) async {
     _ensureAuthenticatedSync();
 
     final nowIso = DateTime.now().toIso8601String();
-
     final minSalary = minMonthlySalary < 0 ? 0 : minMonthlySalary;
 
     final res = await _db
@@ -343,7 +359,9 @@ Future<Map<String, dynamic>?> fetchCompanyDetails(String companyId) async {
 
     final res = await _db
         .from('saved_jobs')
-        .select('job_listings(*, companies(id,name,logo_url,is_verified,rating,total_reviews))')
+        .select(
+          'job_listings(*, companies(id,name,logo_url,is_verified,rating,total_reviews))',
+        )
         .eq('user_id', userId)
         .order('saved_at', ascending: false);
 
@@ -369,7 +387,6 @@ Future<Map<String, dynamic>?> fetchCompanyDetails(String companyId) async {
           .eq('user_id', userId)
           .eq('job_id', jobId);
 
-      // optional activity log
       try {
         await _db.from('user_job_activity').insert({
           'user_id': userId,
@@ -388,7 +405,6 @@ Future<Map<String, dynamic>?> fetchCompanyDetails(String companyId) async {
       'saved_at': DateTime.now().toIso8601String(),
     });
 
-    // optional activity log
     try {
       await _db.from('user_job_activity').insert({
         'user_id': userId,
@@ -402,10 +418,9 @@ Future<Map<String, dynamic>?> fetchCompanyDetails(String companyId) async {
   }
 
   // ============================================================
-  // APPLY STATUS + APPLY FLOW
+  // APPLY STATUS
   // ============================================================
 
-  /// Checks if current user already applied to job_listings.id
   Future<bool> hasAppliedToJob(String jobId) async {
     _ensureAuthenticatedSync();
 
@@ -497,7 +512,7 @@ Future<Map<String, dynamic>?> fetchCompanyDetails(String companyId) async {
   }
 
   // ============================================================
-  // EXPECTED SALARY (PER MONTH) - USER PROFILE
+  // EXPECTED SALARY (PER MONTH)
   // ============================================================
 
   Future<int> getExpectedSalaryPerMonth() async {
@@ -530,8 +545,6 @@ Future<Map<String, dynamic>?> fetchCompanyDetails(String companyId) async {
     final userId = _userId();
 
     final clean = salary < 0 ? 0 : salary;
-
-    // auto max
     final max = clean + 5000;
 
     await _db.from('user_profiles').update({
