@@ -1,5 +1,3 @@
-// File: lib/services/job_seeker_home_service.dart
-
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -103,6 +101,48 @@ class JobSeekerHomeService {
     } catch (e) {
       debugPrint('trackJobView error: $e');
     }
+  }
+
+  // ============================================================
+  // JOBS FILTERED BY SALARY (MONTHLY)
+  // ============================================================
+
+  /// Returns jobs where:
+  /// - salary_period = Monthly
+  /// - salary_max >= minMonthlySalary
+  /// - active + not expired
+  Future<List<Map<String, dynamic>>> fetchJobsByMinSalaryMonthly({
+    required int minMonthlySalary,
+    int limit = 80,
+  }) async {
+    _ensureAuthenticatedSync();
+
+    final nowIso = DateTime.now().toIso8601String();
+
+    final minSalary = minMonthlySalary < 0 ? 0 : minMonthlySalary;
+
+    final res = await _db
+        .from('job_listings')
+        .select('''
+          *,
+          companies (
+            id,
+            name,
+            logo_url,
+            industry,
+            is_verified,
+            rating,
+            total_reviews
+          )
+        ''')
+        .eq('status', 'active')
+        .gte('expires_at', nowIso)
+        .eq('salary_period', 'Monthly')
+        .gte('salary_max', minSalary)
+        .order('salary_max', ascending: false)
+        .limit(limit);
+
+    return List<Map<String, dynamic>>.from(res);
   }
 
   // ============================================================
@@ -241,9 +281,12 @@ class JobSeekerHomeService {
   }
 
   // ============================================================
-  // EXPECTED SALARY (PER MONTH)
+  // EXPECTED SALARY (PER MONTH) - USER PROFILE
   // ============================================================
 
+  /// We use:
+  /// user_profiles.expected_salary_min (monthly)
+  /// (because your job_listings salary is monthly by default)
   Future<int> getExpectedSalaryPerMonth() async {
     _ensureAuthenticatedSync();
 
@@ -252,13 +295,13 @@ class JobSeekerHomeService {
     try {
       final profile = await _db
           .from('user_profiles')
-          .select('expected_salary_per_month')
+          .select('expected_salary_min')
           .eq('id', userId)
           .maybeSingle();
 
       if (profile == null) return 0;
 
-      final raw = profile['expected_salary_per_month'];
+      final raw = profile['expected_salary_min'];
       if (raw == null) return 0;
 
       if (raw is int) return raw;
@@ -268,6 +311,9 @@ class JobSeekerHomeService {
     }
   }
 
+  /// Updates:
+  /// user_profiles.expected_salary_min
+  /// user_profiles.expected_salary_max (auto = min + 5000)
   Future<void> updateExpectedSalaryPerMonth(int salary) async {
     _ensureAuthenticatedSync();
 
@@ -275,8 +321,12 @@ class JobSeekerHomeService {
 
     final clean = salary < 0 ? 0 : salary;
 
+    // auto max
+    final max = clean + 5000;
+
     await _db.from('user_profiles').update({
-      'expected_salary_per_month': clean,
+      'expected_salary_min': clean,
+      'expected_salary_max': max,
       'last_profile_update': DateTime.now().toIso8601String(),
     }).eq('id', userId);
   }
