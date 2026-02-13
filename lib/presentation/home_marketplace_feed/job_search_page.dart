@@ -28,7 +28,6 @@ class _JobSearchPageState extends State<JobSearchPage> {
   bool _disposed = false;
 
   Set<String> _savedJobIds = {};
-
   List<Map<String, dynamic>> _results = [];
 
   @override
@@ -67,6 +66,7 @@ class _JobSearchPageState extends State<JobSearchPage> {
 
     _debounce = Timer(const Duration(milliseconds: 350), () async {
       if (_disposed) return;
+
       final query = q.trim();
 
       if (query.isEmpty) {
@@ -94,12 +94,8 @@ class _JobSearchPageState extends State<JobSearchPage> {
       //
       // We search:
       // - job_title
-      // - company name
       // - district
-      // - skills_required (text[])
-      //
-      // Note:
-      // Supabase .or() is basic but works.
+      // - company name (via join)
       // ------------------------------------------------------------
       final res = await _db
           .from('job_listings')
@@ -132,14 +128,10 @@ class _JobSearchPageState extends State<JobSearchPage> {
           _results = list;
         });
       }
-    } catch (e) {
-      if (!_disposed) {
-        setState(() => _results = []);
-      }
+    } catch (_) {
+      if (!_disposed) setState(() => _results = []);
     } finally {
-      if (!_disposed) {
-        setState(() => _loading = false);
-      }
+      if (!_disposed) setState(() => _loading = false);
     }
   }
 
