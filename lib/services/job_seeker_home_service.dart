@@ -266,6 +266,22 @@ class JobSeekerHomeService {
     }
   }
 
+
+
+Future<Map<String, dynamic>?> fetchCompanyDetails(String companyId) async {
+  _ensureAuthenticatedSync();
+
+  final res = await _db
+      .from('companies')
+      .select(
+        'id, name, slug, logo_url, website, description, industry, company_size, founded_year, headquarters_city, headquarters_state, rating, total_reviews, total_jobs, is_verified',
+      )
+      .eq('id', companyId)
+      .maybeSingle();
+
+  if (res == null) return null;
+  return Map<String, dynamic>.from(res);
+}
   // ============================================================
   // JOBS FILTERED BY SALARY (MONTHLY)
   // ============================================================
