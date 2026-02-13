@@ -52,6 +52,11 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   int _jobsPostedToday = 0;
 
   // ------------------------------------------------------------
+  // EXPECTED SALARY
+  // ------------------------------------------------------------
+  int _expectedSalaryPerMonth = 0;
+
+  // ------------------------------------------------------------
   // JOBS + SAVED
   // ------------------------------------------------------------
   List<Map<String, dynamic>> _profileJobs = [];
@@ -152,18 +157,23 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
       _jobsPostedToday = jobsCount;
 
       // ------------------------------------------------------------
-      // 2) Saved jobs
+      // 2) Expected salary
+      // ------------------------------------------------------------
+      _expectedSalaryPerMonth = await _homeService.getExpectedSalaryPerMonth();
+
+      // ------------------------------------------------------------
+      // 3) Saved jobs
       // ------------------------------------------------------------
       _savedJobIds = await _homeService.getUserSavedJobs();
 
       // ------------------------------------------------------------
-      // 3) Premium + Recommended jobs
+      // 4) Premium + Recommended jobs
       // ------------------------------------------------------------
       _premiumJobs = await _homeService.fetchPremiumJobs(limit: 8);
       _profileJobs = await _homeService.getRecommendedJobs(limit: 40);
 
       // ------------------------------------------------------------
-      // 4) Top companies
+      // 5) Top companies
       // ------------------------------------------------------------
       _topCompanies = await _homeService.fetchTopCompanies(limit: 8);
     } finally {
@@ -236,6 +246,62 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   }
 
   // ------------------------------------------------------------
+  // EXPECTED SALARY FLOW
+  // ------------------------------------------------------------
+  Future<void> _editExpectedSalary() async {
+    if (!mounted) return;
+
+    final controller = TextEditingController(
+      text: _expectedSalaryPerMonth > 0 ? _expectedSalaryPerMonth.toString() : '',
+    );
+
+    final result = await showDialog<int>(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text("Expected salary (per month)"),
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              hintText: "Example: 15000",
+              prefixText: "₹ ",
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final raw = controller.text.trim();
+                final v = int.tryParse(raw) ?? 0;
+                Navigator.pop(context, v);
+              },
+              child: const Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == null) return;
+
+    final clean = result < 0 ? 0 : result;
+
+    await _homeService.updateExpectedSalaryPerMonth(clean);
+
+    if (!mounted) return;
+    setState(() => _expectedSalaryPerMonth = clean);
+  }
+
+  void _openJobsBySalary() {
+    // NEXT STEP: create page
+    // It will show jobs where salary >= _expectedSalaryPerMonth
+  }
+
+  // ------------------------------------------------------------
   // TOP BAR
   // ------------------------------------------------------------
   Widget _buildTopBar(BuildContext scaffoldContext) {
@@ -257,7 +323,6 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
           ),
           const SizedBox(width: 10),
 
-          // Search pill (REAL)
           Expanded(
             child: InkWell(
               onTap: _openSearchPage,
@@ -310,7 +375,6 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
           const SizedBox(width: 10),
 
-          // Assistant icon (future)
           Container(
             width: 40,
             height: 40,
@@ -328,7 +392,6 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
           const SizedBox(width: 8),
 
-          // Notification (future)
           Stack(
             children: [
               Container(
@@ -391,40 +454,34 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
         AIBannerCard(onTap: _openRecommendedJobsPage),
         const SizedBox(height: 14),
 
-        // REAL (no Supabase inside widget)
         ProfileAndSearchCards(
           profileName: _profileName,
           profileCompletion: _profileCompletion,
           lastUpdatedText: _lastUpdatedText,
           missingDetails: _missingDetails,
           jobsPostedToday: _jobsPostedToday,
-          onProfileTap: () {
-            // TODO: open real profile page later
-          },
-          onMissingDetailsTap: () {
-            // TODO: open missing details page later
-          },
-          onViewAllTap: () {
-            // TODO: open jobs posted today page later
-          },
+          onProfileTap: () {},
+          onMissingDetailsTap: () {},
+          onViewAllTap: () {},
         ),
         const SizedBox(height: 14),
 
-        // NOTE: this is not boost. It is construction homepage banner.
         BoostCard(
           label: "Construction",
           title: "Khilonjiya Construction Service",
           subtitle: "Your trusted construction partner",
-          onTap: () {
-            // TODO: open construction homepage later
-          },
+          onTap: () {},
         ),
         const SizedBox(height: 14),
 
-        ExpectedSalaryCard(onIconTap: () {}),
+        // ✅ REAL expected salary
+        ExpectedSalaryCard(
+          expectedSalaryPerMonth: _expectedSalaryPerMonth,
+          onTap: _editExpectedSalary,
+          onIconTap: _openJobsBySalary,
+        ),
         const SizedBox(height: 18),
 
-        // Recommended jobs horizontal
         SectionHeader(
           title: "Recommended jobs",
           ctaText: "View all",
@@ -451,7 +508,6 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 18),
 
-        // Top companies
         SectionHeader(
           title: "Top companies",
           ctaText: "View all",
@@ -509,7 +565,6 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 18),
 
-        // Jobs based on your profile (vertical)
         SectionHeader(
           title: "Jobs based on your profile",
           ctaText: "View all",
