@@ -1,4 +1,3 @@
-// lib/services/employer_job_service.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EmployerJobService {
@@ -6,19 +5,16 @@ class EmployerJobService {
 
   // ------------------------------------------------------------
   // EMPLOYER JOBS LIST (Dashboard + Jobs list)
-  // FIX: Return real applicants_count from join table
   // ------------------------------------------------------------
   Future<List<Map<String, dynamic>>> fetchEmployerJobs() async {
     final user = _client.auth.currentUser;
     if (user == null) return [];
 
-    // NOTE:
-    // Supabase count() on nested relationship is unreliable unless FK relation is defined.
-    // So we fetch jobs, then fetch counts in one query using join table.
     final jobs = await _client
         .from('job_listings')
         .select('''
           id,
+          company_id,
           job_title,
           district,
           job_type,
@@ -26,9 +22,15 @@ class EmployerJobService {
           salary_max,
           status,
           views_count,
-          created_at
+          created_at,
+
+          companies (
+            id,
+            name,
+            logo_url
+          )
         ''')
-        .eq('user_id', user.id)
+        .eq('employer_id', user.id)
         .order('created_at', ascending: false);
 
     final jobList = List<Map<String, dynamic>>.from(jobs);
@@ -37,7 +39,7 @@ class EmployerJobService {
 
     final jobIds = jobList.map((e) => e['id'].toString()).toList();
 
-    // Fetch counts from job_applications_listings
+    // Real applicants count from join table
     final countsRes = await _client
         .from('job_applications_listings')
         .select('listing_id')
@@ -64,13 +66,12 @@ class EmployerJobService {
 
   // ------------------------------------------------------------
   // DASHBOARD STATS
-  // FIX: Works even if RPC does not exist
   // ------------------------------------------------------------
   Future<Map<String, dynamic>> fetchEmployerDashboardStats() async {
     final user = _client.auth.currentUser;
     if (user == null) return {};
 
-    // Try RPC first (if exists)
+    // Try RPC first (optional)
     try {
       final rpcRes = await _client.rpc(
         'rpc_employer_dashboard_stats',
@@ -80,7 +81,6 @@ class EmployerJobService {
       if (rpcRes != null && rpcRes is Map) {
         final m = Map<String, dynamic>.from(rpcRes);
 
-        // Ensure keys exist
         m.putIfAbsent('total_jobs', () => 0);
         m.putIfAbsent('active_jobs', () => 0);
         m.putIfAbsent('paused_jobs', () => 0);
@@ -94,15 +94,14 @@ class EmployerJobService {
         return m;
       }
     } catch (_) {
-      // Ignore and fallback below
+      // ignore
     }
 
-    // FALLBACK: Compute from tables directly (always works)
-
+    // Fallback: compute directly
     final jobsRes = await _client
         .from('job_listings')
         .select('id,status,views_count,created_at')
-        .eq('user_id', user.id);
+        .eq('employer_id', user.id);
 
     final jobs = List<Map<String, dynamic>>.from(jobsRes);
 
@@ -134,6 +133,7 @@ class EmployerJobService {
           .inFilter('listing_id', jobIds);
 
       final apps = List<Map<String, dynamic>>.from(appsRes);
+
       totalApplicants = apps.length;
 
       final now = DateTime.now();
@@ -158,7 +158,6 @@ class EmployerJobService {
 
   // ------------------------------------------------------------
   // RECENT APPLICANTS (across employer jobs)
-  // FIX: Filter using listing_id list (100% reliable)
   // ------------------------------------------------------------
   Future<List<Map<String, dynamic>>> fetchRecentApplicants({
     int limit = 5,
@@ -166,18 +165,16 @@ class EmployerJobService {
     final user = _client.auth.currentUser;
     if (user == null) return [];
 
-    // Step 1: Get employer job ids
     final jobsRes = await _client
         .from('job_listings')
         .select('id')
-        .eq('user_id', user.id);
+        .eq('employer_id', user.id);
 
     final jobs = List<Map<String, dynamic>>.from(jobsRes);
     final jobIds = jobs.map((e) => e['id'].toString()).toList();
 
     if (jobIds.isEmpty) return [];
 
-    // Step 2: Fetch recent applicants
     final res = await _client
         .from('job_applications_listings')
         .select('''
@@ -213,7 +210,6 @@ class EmployerJobService {
 
   // ------------------------------------------------------------
   // TOP JOBS (by real applicants count)
-  // FIX: uses join table counts, not applications_count column
   // ------------------------------------------------------------
   Future<List<Map<String, dynamic>>> fetchTopJobs({
     int limit = 5,
@@ -230,7 +226,7 @@ class EmployerJobService {
           views_count,
           created_at
         ''')
-        .eq('user_id', user.id);
+        .eq('employer_id', user.id);
 
     final jobs = List<Map<String, dynamic>>.from(jobsRes);
     if (jobs.isEmpty) return [];
@@ -251,7 +247,6 @@ class EmployerJobService {
       countMap[id] = (countMap[id] ?? 0) + 1;
     }
 
-    // Attach applications_count and sort
     final enriched = jobs.map((j) {
       final id = (j['id'] ?? '').toString();
       return {
