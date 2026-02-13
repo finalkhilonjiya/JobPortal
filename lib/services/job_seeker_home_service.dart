@@ -1,3 +1,5 @@
+// File: lib/services/job_seeker_home_service.dart
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -286,7 +288,6 @@ class JobSeekerHomeService {
 
   /// We use:
   /// user_profiles.expected_salary_min (monthly)
-  /// (because your job_listings salary is monthly by default)
   Future<int> getExpectedSalaryPerMonth() async {
     _ensureAuthenticatedSync();
 
@@ -329,6 +330,31 @@ class JobSeekerHomeService {
       'expected_salary_max': max,
       'last_profile_update': DateTime.now().toIso8601String(),
     }).eq('id', userId);
+  }
+
+  // ============================================================
+  // JOB APPLICATIONS
+  // ============================================================
+
+  /// Checks if the logged-in user already applied to a job
+  /// Table: job_applications_listings(user_id, listing_id)
+  Future<bool> hasAppliedToJob(String jobId) async {
+    _ensureAuthenticatedSync();
+
+    final userId = _db.auth.currentUser!.id;
+
+    try {
+      final res = await _db
+          .from('job_applications_listings')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('listing_id', jobId)
+          .maybeSingle();
+
+      return res != null;
+    } catch (_) {
+      return false;
+    }
   }
 
   // ============================================================
