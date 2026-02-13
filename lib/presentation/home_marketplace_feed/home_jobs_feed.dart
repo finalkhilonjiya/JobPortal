@@ -1,3 +1,7 @@
+// File: lib/presentation/home_marketplace_feed/home_jobs_feed.dart
+
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,6 +15,8 @@ import '../common/widgets/cards/company_card.dart';
 import '../common/widgets/cards/job_card_widget.dart';
 
 import 'recommended_jobs_page.dart';
+import 'job_search_page.dart';
+
 import 'widgets/naukri_drawer.dart';
 
 import 'widgets/home_sections/ai_banner_card.dart';
@@ -49,8 +55,20 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
   bool _isLoadingProfile = true;
 
+  // Search hint slider
+  final PageController _searchHintController = PageController();
+  Timer? _searchHintTimer;
+
+  final List<String> _searchHints = const [
+    "Search jobs",
+    "Find employers",
+    "Search by district",
+    "Search electrician jobs",
+    "Search plumber jobs",
+  ];
+
   // Minis (dummy for now)
-  final List<Map<String, dynamic>> _dummyMinis = const [
+  final List<Map<String, dynamic>> _dummyMinis = [
     {
       "title": "Top 10 remote jobs hiring now",
       "source": "Khilonjiya Minis",
@@ -73,26 +91,19 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
     },
   ];
 
-  // Search hint rotation
-  final List<String> _searchHints = const [
-    "Search jobs",
-    "Find employers",
-    "Search by district",
-    "Search by skills",
-    "Search by salary",
-  ];
-  int _searchHintIndex = 0;
-
   @override
   void initState() {
     super.initState();
     _initialize();
-    _startSearchHintRotation();
   }
 
   @override
   void dispose() {
     _isDisposed = true;
+
+    _searchHintTimer?.cancel();
+    _searchHintController.dispose();
+
     super.dispose();
   }
 
@@ -109,21 +120,26 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
       }
 
       await _loadInitialData();
+      _startSearchHintAutoSlide();
     } catch (_) {
       _redirectToStart();
     }
   }
 
-  void _startSearchHintRotation() {
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 2));
-      if (!mounted) return false;
+  void _startSearchHintAutoSlide() {
+    _searchHintTimer?.cancel();
 
-      setState(() {
-        _searchHintIndex = (_searchHintIndex + 1) % _searchHints.length;
-      });
+    _searchHintTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      if (_isDisposed) return;
+      if (!_searchHintController.hasClients) return;
 
-      return true;
+      final next = (_searchHintController.page?.round() ?? 0) + 1;
+
+      _searchHintController.animateToPage(
+        next % _searchHints.length,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeOut,
+      );
     });
   }
 
@@ -133,11 +149,11 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
     setState(() => _isCheckingAuth = false);
 
     try {
-      // Profile completion (from summary)
-      final summary = await _homeService.getHomeProfileSummary();
-      _profileCompletion = (summary['profileCompletion'] ?? 0) as int;
+      // Drawer needs it
+      final profileSummary = await _homeService.getHomeProfileSummary();
+      _profileCompletion =
+          (profileSummary['profileCompletion'] ?? 0) as int;
 
-      // Saved jobs
       _savedJobIds = await _homeService.getUserSavedJobs();
 
       // Premium jobs
@@ -208,6 +224,15 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
     );
   }
 
+  void _openSearchPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const JobSearchPage(),
+      ),
+    );
+  }
+
   // ------------------------------------------------------------
   // TOP BAR
   // ------------------------------------------------------------
@@ -230,13 +255,10 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
           ),
           const SizedBox(width: 10),
 
-          // Search pill (animated placeholder)
+          // Search pill (REAL)
           Expanded(
             child: InkWell(
-              onTap: () {
-                // Step 2: open JobSearchPage
-                // Keeping empty for now to avoid missing file errors.
-              },
+              onTap: _openSearchPage,
               borderRadius: BorderRadius.circular(999),
               child: Container(
                 padding:
@@ -255,29 +277,26 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 350),
-                        transitionBuilder: (child, anim) {
-                          return SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(0, 0.35),
-                              end: Offset.zero,
-                            ).animate(anim),
-                            child: FadeTransition(
-                              opacity: anim,
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: Text(
-                          _searchHints[_searchHintIndex],
-                          key: ValueKey(_searchHintIndex),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: KhilonjiyaUI.sub.copyWith(
-                            fontSize: 13.0,
-                            color: const Color(0xFF94A3B8),
-                          ),
+                      child: SizedBox(
+                        height: 18,
+                        child: PageView.builder(
+                          controller: _searchHintController,
+                          itemCount: _searchHints.length,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemBuilder: (_, i) {
+                            return Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                _searchHints[i],
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: KhilonjiyaUI.sub.copyWith(
+                                  fontSize: 13.0,
+                                  color: const Color(0xFF94A3B8),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -376,7 +395,13 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
         ),
         const SizedBox(height: 14),
 
-        BoostCard(onTap: () {}),
+        // NOTE: this is not boost. It is construction homepage banner.
+        BoostCard(
+          label: "Construction",
+          title: "Khilonjiya Construction Service",
+          subtitle: "Your trusted construction partner",
+          onTap: () {},
+        ),
         const SizedBox(height: 14),
 
         ExpectedSalaryCard(onIconTap: () {}),
@@ -467,7 +492,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 18),
 
-        // minis feed (still dummy)
+        // minis feed (dummy for now)
         SectionHeader(
           title: "Stay informed with minis",
           ctaText: "View feed",
