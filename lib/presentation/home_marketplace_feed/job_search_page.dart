@@ -89,14 +89,6 @@ class _JobSearchPageState extends State<JobSearchPage> {
     try {
       final nowIso = DateTime.now().toIso8601String();
 
-      // ------------------------------------------------------------
-      // REAL SEARCH (Supabase)
-      //
-      // We search:
-      // - job_title
-      // - district
-      // - company name (via join)
-      // ------------------------------------------------------------
       final res = await _db
           .from('job_listings')
           .select('''
@@ -197,7 +189,10 @@ class _JobSearchPageState extends State<JobSearchPage> {
                   autofocus: true,
                   onChanged: _onQueryChanged,
                   textInputAction: TextInputAction.search,
-                  style: KhilonjiyaUI.text.copyWith(fontSize: 14),
+
+                  // ✅ FIX: KhilonjiyaUI.text is a Color, not TextStyle
+                  style: KhilonjiyaUI.body.copyWith(fontSize: 14),
+
                   decoration: InputDecoration(
                     hintText: "Search jobs, employers, district...",
                     hintStyle: KhilonjiyaUI.sub.copyWith(
