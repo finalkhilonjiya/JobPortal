@@ -1,6 +1,5 @@
 // File: lib/services/construction_service.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:io';
 
 class ConstructionService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -8,20 +7,13 @@ class ConstructionService {
   /// Submit construction service request
   Future<void> submitConstructionRequest(Map<String, dynamic> requestData) async {
     try {
-      // Get current user
       final user = _supabase.auth.currentUser;
       if (user != null) {
         requestData['user_id'] = user.id;
       }
 
-      // Add timestamp
-      requestData['created_at'] = DateTime.now().toIso8601String();
-
-      // Insert into database
-      await _supabase
-          .from('construction_service_requests')
-          .insert(requestData);
-
+      // DB already sets created_at = now()
+      await _supabase.from('construction_service_requests').insert(requestData);
     } catch (e) {
       throw Exception('Failed to submit construction request: $e');
     }
@@ -63,7 +55,7 @@ class ConstructionService {
     await submitConstructionRequest(formData);
   }
 
-  /// Get construction requests for admin
+  /// Get construction requests (admin / management)
   Future<List<Map<String, dynamic>>> getConstructionRequests({
     String? serviceType,
     String? status,
@@ -71,58 +63,56 @@ class ConstructionService {
     int offset = 0,
   }) async {
     try {
-      var queryBuilder = _supabase
-          .from('construction_service_requests')
-          .select();
+      var query = _supabase.from('construction_service_requests').select();
 
-      if (serviceType != null) {
-        queryBuilder = queryBuilder.eq('service_type', serviceType);
+      if (serviceType != null && serviceType.trim().isNotEmpty) {
+        query = query.eq('service_type', serviceType.trim());
       }
 
-      if (status != null) {
-        queryBuilder = queryBuilder.eq('status', status);
+      if (status != null && status.trim().isNotEmpty) {
+        query = query.eq('status', status.trim());
       }
 
-      final response = await queryBuilder
+      final response = await query
           .order('created_at', ascending: false)
           .range(offset, offset + limit - 1);
 
       return List<Map<String, dynamic>>.from(response);
-
     } catch (e) {
       throw Exception('Failed to fetch construction requests: $e');
     }
   }
 
-  /// Update construction request status
-  Future<void> updateRequestStatus(String requestId, String status, {String? notes}) async {
+  /// Update construction request status (admin)
+  Future<void> updateRequestStatus(
+    String requestId,
+    String status, {
+    String? notes,
+  }) async {
     try {
-      Map<String, dynamic> updateData = {
+      final updateData = <String, dynamic>{
         'status': status,
         'updated_at': DateTime.now().toIso8601String(),
       };
 
-      if (notes != null) {
-        updateData['admin_notes'] = notes;
+      if (notes != null && notes.trim().isNotEmpty) {
+        updateData['admin_notes'] = notes.trim();
       }
 
       await _supabase
           .from('construction_service_requests')
           .update(updateData)
           .eq('id', requestId);
-
     } catch (e) {
       throw Exception('Failed to update request status: $e');
     }
   }
 
-  /// Get user's construction requests
+  /// Get current user's construction requests
   Future<List<Map<String, dynamic>>> getUserConstructionRequests() async {
     try {
       final user = _supabase.auth.currentUser;
-      if (user == null) {
-        throw Exception('User not authenticated');
-      }
+      if (user == null) throw Exception('User not authenticated');
 
       final response = await _supabase
           .from('construction_service_requests')
@@ -131,55 +121,45 @@ class ConstructionService {
           .order('created_at', ascending: false);
 
       return List<Map<String, dynamic>>.from(response);
-
     } catch (e) {
       throw Exception('Failed to fetch user requests: $e');
     }
   }
 
-  /// Get construction service statistics
+  /// Construction service stats (admin)
+  /// NOTE: This is heavy because it fetches rows and counts locally.
+  /// We'll later replace with a Postgres view/RPC for performance.
   Future<Map<String, dynamic>> getConstructionStats() async {
     try {
-      // Get total requests count by fetching all and counting locally
-      final totalRequestsResponse = await _supabase
-          .from('construction_service_requests')
-          .select('id');
-      final totalRequests = totalRequestsResponse.length;
-
-      // Get pending requests count
-      final pendingRequestsResponse = await _supabase
+      final total = await _supabase.from('construction_service_requests').select('id');
+      final pending = await _supabase
           .from('construction_service_requests')
           .select('id')
           .eq('status', 'pending');
-      final pendingRequests = pendingRequestsResponse.length;
 
-      // Get completed requests count
-      final completedRequestsResponse = await _supabase
+      final completed = await _supabase
           .from('construction_service_requests')
           .select('id')
           .eq('status', 'completed');
-      final completedRequests = completedRequestsResponse.length;
 
-      // Get requests by service type
-      final serviceTypeStats = await _supabase
+      final types = await _supabase
           .from('construction_service_requests')
           .select('service_type')
           .order('service_type');
 
-      // Count by service type
-      Map<String, int> serviceTypeCounts = {};
-      for (var request in serviceTypeStats) {
-        String serviceType = request['service_type'];
-        serviceTypeCounts[serviceType] = (serviceTypeCounts[serviceType] ?? 0) + 1;
+      final Map<String, int> typeCounts = {};
+      for (final row in types) {
+        final t = (row['service_type'] ?? '').toString();
+        if (t.isEmpty) continue;
+        typeCounts[t] = (typeCounts[t] ?? 0) + 1;
       }
 
       return {
-        'total_requests': totalRequests,
-        'pending_requests': pendingRequests,
-        'completed_requests': completedRequests,
-        'service_type_counts': serviceTypeCounts,
+        'total_requests': total.length,
+        'pending_requests': pending.length,
+        'completed_requests': completed.length,
+        'service_type_counts': typeCounts,
       };
-
     } catch (e) {
       throw Exception('Failed to fetch construction stats: $e');
     }
