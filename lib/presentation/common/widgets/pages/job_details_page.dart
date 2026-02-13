@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import 'package:khilonjiya_com/core/ui/khilonjiya_ui.dart';
-import 'package:khilonjiya_com/services/job_service.dart';
+import 'package:khilonjiya_com/services/job_seeker_home_service.dart';
 
 import '../job_application_form.dart';
 
@@ -24,7 +24,7 @@ class JobDetailsPage extends StatefulWidget {
 }
 
 class _JobDetailsPageState extends State<JobDetailsPage> {
-  final JobService _jobService = JobService();
+  final JobSeekerHomeService _homeService = JobSeekerHomeService();
 
   bool _isApplied = false;
   bool _checking = true;
@@ -39,13 +39,15 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
 
   Future<void> _checkApplied() async {
     try {
-      final apps = await _jobService.getUserAppliedJobs();
       final jobId = widget.job['id']?.toString();
-
-      _isApplied = apps.any((row) {
-        final listingId = row['listing_id']?.toString();
-        return listingId == jobId;
-      });
+      if (jobId == null || jobId.trim().isEmpty) {
+        _isApplied = false;
+      } else {
+        // This uses your real table:
+        // job_applications_listings(listing_id, user_id)
+        final applied = await _homeService.hasAppliedToJob(jobId);
+        _isApplied = applied;
+      }
     } catch (_) {
       _isApplied = false;
     }
@@ -86,7 +88,14 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     final job = widget.job;
 
     final title = (job['job_title'] ?? '').toString();
-    final company = (job['company_name'] ?? '').toString();
+
+    // Company: your service returns `companies(...)`
+    final companyObj = job['companies'];
+    final company = (companyObj is Map
+            ? (companyObj['name'] ?? '').toString()
+            : (job['company_name'] ?? '').toString())
+        .trim();
+
     final location = (job['district'] ?? '').toString();
 
     final salaryMin = job['salary_min'];
@@ -98,15 +107,14 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     final skills = _safeSkills(job['skills_required']);
 
     final postedAt = job['created_at']?.toString();
+
     final companyDesc = (job['company_description'] ??
             'Company information not available.')
         .toString();
 
     return Scaffold(
       backgroundColor: KhilonjiyaUI.bg,
-      bottomNavigationBar: _buildApplyBottomBar(
-        salaryText: _salary(salaryMin, salaryMax),
-      ),
+      bottomNavigationBar: _buildApplyBottomBar(),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -338,12 +346,12 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
       {
         "icon": Icons.home_work_outlined,
         "label": "Work mode",
-        "value": (job['work_mode'] ?? 'Onsite').toString(),
+        "value": (job['work_mode'] ?? 'On-site').toString(),
       },
       {
         "icon": Icons.timeline_rounded,
         "label": "Experience",
-        "value": (job['experience'] ?? 'Any').toString(),
+        "value": (job['experience_required'] ?? 'Any').toString(),
       },
     ];
 
@@ -649,7 +657,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   // ------------------------------------------------------------
   // BOTTOM BAR
   // ------------------------------------------------------------
-  Widget _buildApplyBottomBar({required String salaryText}) {
+  Widget _buildApplyBottomBar() {
     return SafeArea(
       top: false,
       child: Container(
@@ -658,47 +666,31 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
           color: Colors.white,
           border: Border(top: BorderSide(color: KhilonjiyaUI.border)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              salaryText,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: KhilonjiyaUI.sub.copyWith(
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF334155),
+        child: SizedBox(
+          height: 40, // ✅ half size compared to old 48
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: (_checking || _isApplied) ? null : _applyNow,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: KhilonjiyaUI.primary,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: const Color(0xFFE2E8F0),
+              disabledForegroundColor: const Color(0xFF64748B),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 48,
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: (_checking || _isApplied) ? null : _applyNow,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: KhilonjiyaUI.primary,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: const Color(0xFFE2E8F0),
-                  disabledForegroundColor: const Color(0xFF64748B),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                ),
-                child: Text(
-                  _checking
-                      ? "Checking..."
-                      : (_isApplied ? "Already Applied" : "Apply Now"),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 15,
-                  ),
-                ),
+            child: Text(
+              _checking
+                  ? "Checking..."
+                  : (_isApplied ? "Already Applied" : "Apply Now"),
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 14.5,
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -750,7 +742,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     final mn = toInt(min);
     final mx = toInt(max);
 
-    String f(int v) => '${(v / 100000).toStringAsFixed(1)} Lacs PA';
+    String f(int v) => '${(v / 1000).toStringAsFixed(0)}k / month';
 
     if (mn != null && mx != null) return '${f(mn)} - ${f(mx)}';
     if (mn != null) return f(mn);
