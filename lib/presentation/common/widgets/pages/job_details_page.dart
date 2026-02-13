@@ -2,10 +2,11 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-import 'package:khilonjiya_com/core/ui/khilonjiya_ui.dart';
-import 'package:khilonjiya_com/services/job_seeker_home_service.dart';
+import '../../../../core/ui/khilonjiya_ui.dart';
+import '../../../../services/job_seeker_home_service.dart';
 
 import '../job_application_form.dart';
+import '../cards/job_card_widget.dart';
 
 class JobDetailsPage extends StatefulWidget {
   final Map<String, dynamic> job;
@@ -27,24 +28,49 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   final JobSeekerHomeService _homeService = JobSeekerHomeService();
 
   bool _isApplied = false;
-  bool _checking = true;
+  bool _checkingApplied = true;
 
   bool _descExpanded = false;
+
+  bool _loadingExtras = true;
+  bool _loadingCompany = true;
+  bool _loadingReviews = true;
+
+  // Company
+  Map<String, dynamic>? _company;
+  bool _isCompanyFollowed = false;
+
+  // Reviews
+  List<Map<String, dynamic>> _reviews = [];
+
+  // Similar jobs
+  List<Map<String, dynamic>> _similarJobs = [];
+  Set<String> _savedJobIds = {};
 
   @override
   void initState() {
     super.initState();
-    _checkApplied();
+    _initAll();
   }
 
+  Future<void> _initAll() async {
+    await Future.wait([
+      _checkApplied(),
+      _loadExtras(),
+    ]);
+  }
+
+  // ------------------------------------------------------------
+  // APPLY STATUS
+  // ------------------------------------------------------------
   Future<void> _checkApplied() async {
+    setState(() => _checkingApplied = true);
+
     try {
       final jobId = widget.job['id']?.toString();
       if (jobId == null || jobId.trim().isEmpty) {
         _isApplied = false;
       } else {
-        // This uses your real table:
-        // job_applications_listings(listing_id, user_id)
         final applied = await _homeService.hasAppliedToJob(jobId);
         _isApplied = applied;
       }
@@ -53,14 +79,98 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     }
 
     if (!mounted) return;
-    setState(() => _checking = false);
+    setState(() => _checkingApplied = false);
+  }
+
+  // ------------------------------------------------------------
+  // LOAD REAL COMPANY + REVIEWS + SIMILAR JOBS + SAVED IDS
+  // ------------------------------------------------------------
+  Future<void> _loadExtras() async {
+    if (!mounted) return;
+    setState(() => _loadingExtras = true);
+
+    final jobId = widget.job['id']?.toString() ?? '';
+    final companyObj = widget.job['companies'];
+
+    String companyId = '';
+    if (companyObj is Map && companyObj['id'] != null) {
+      companyId = companyObj['id'].toString();
+    } else if (widget.job['company_id'] != null) {
+      companyId = widget.job['company_id'].toString();
+    }
+
+    // 1) Saved job ids (for similar jobs cards)
+    try {
+      _savedJobIds = await _homeService.getUserSavedJobs();
+    } catch (_) {
+      _savedJobIds = {};
+    }
+
+    // 2) Similar jobs
+    if (jobId.trim().isNotEmpty) {
+      try {
+        _similarJobs = await _homeService.fetchSimilarJobs(
+          jobId: jobId,
+          limit: 12,
+        );
+      } catch (_) {
+        _similarJobs = [];
+      }
+    }
+
+    // 3) Company details + follow state
+    if (companyId.trim().isNotEmpty) {
+      setState(() => _loadingCompany = true);
+
+      try {
+        _company = await _homeService.fetchCompanyDetails(companyId);
+      } catch (_) {
+        _company = null;
+      }
+
+      try {
+        _isCompanyFollowed = await _homeService.isCompanyFollowed(companyId);
+      } catch (_) {
+        _isCompanyFollowed = false;
+      }
+
+      if (mounted) setState(() => _loadingCompany = false);
+
+      // 4) Company reviews
+      setState(() => _loadingReviews = true);
+
+      try {
+        _reviews = await _homeService.fetchCompanyReviews(
+          companyId: companyId,
+          limit: 10,
+        );
+      } catch (_) {
+        _reviews = [];
+      }
+
+      if (mounted) setState(() => _loadingReviews = false);
+    } else {
+      _company = null;
+      _reviews = [];
+      _isCompanyFollowed = false;
+
+      if (mounted) {
+        setState(() {
+          _loadingCompany = false;
+          _loadingReviews = false;
+        });
+      }
+    }
+
+    if (!mounted) return;
+    setState(() => _loadingExtras = false);
   }
 
   // ------------------------------------------------------------
   // APPLY
   // ------------------------------------------------------------
   Future<void> _applyNow() async {
-    if (_checking || _isApplied) return;
+    if (_checkingApplied || _isApplied) return;
 
     final jobId = widget.job['id']?.toString();
     if (jobId == null || jobId.trim().isEmpty) return;
@@ -72,12 +182,77 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
       ),
     );
 
+    if (!mounted) return;
+
     if (res == true) {
-      if (!mounted) return;
       setState(() => _isApplied = true);
     } else {
       await _checkApplied();
     }
+  }
+
+  // ------------------------------------------------------------
+  // SAVE / UNSAVE
+  // ------------------------------------------------------------
+  Future<void> _toggleSaveJob(String jobId) async {
+    try {
+      final isSaved = await _homeService.toggleSaveJob(jobId);
+      if (!mounted) return;
+
+      setState(() {
+        isSaved ? _savedJobIds.add(jobId) : _savedJobIds.remove(jobId);
+      });
+    } catch (_) {}
+  }
+
+  // ------------------------------------------------------------
+  // FOLLOW COMPANY
+  // ------------------------------------------------------------
+  Future<void> _toggleFollowCompany() async {
+    final companyId = _company?['id']?.toString() ?? '';
+    if (companyId.trim().isEmpty) return;
+
+    try {
+      final followed = await _homeService.toggleFollowCompany(companyId);
+      if (!mounted) return;
+
+      setState(() => _isCompanyFollowed = followed);
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to update follow status")),
+      );
+    }
+  }
+
+  // ------------------------------------------------------------
+  // OPEN ANOTHER JOB DETAILS (SIMILAR JOB)
+  // ------------------------------------------------------------
+  Future<void> _openJobDetails(Map<String, dynamic> job) async {
+    final jobId = job['id']?.toString() ?? '';
+    if (jobId.trim().isEmpty) return;
+
+    _homeService.trackJobView(jobId);
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => JobDetailsPage(
+          job: job,
+          isSaved: _savedJobIds.contains(jobId),
+          onSaveToggle: () => _toggleSaveJob(jobId),
+        ),
+      ),
+    );
+
+    // refresh saved state after return
+    try {
+      _savedJobIds = await _homeService.getUserSavedJobs();
+    } catch (_) {}
+
+    if (!mounted) return;
+    setState(() {});
   }
 
   // ------------------------------------------------------------
@@ -89,9 +264,9 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
 
     final title = (job['job_title'] ?? '').toString();
 
-    // Company: your service returns `companies(...)`
+    // company (fallback safe)
     final companyObj = job['companies'];
-    final company = (companyObj is Map
+    final companyName = (companyObj is Map
             ? (companyObj['name'] ?? '').toString()
             : (job['company_name'] ?? '').toString())
         .trim();
@@ -103,14 +278,11 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
 
     final description = (job['job_description'] ?? '').toString();
 
-    // skills_required may be List OR String OR null
     final skills = _safeSkills(job['skills_required']);
 
     final postedAt = job['created_at']?.toString();
 
-    final companyDesc = (job['company_description'] ??
-            'Company information not available.')
-        .toString();
+    final responsibilities = (job['responsibilities'] ?? '').toString().trim();
 
     return Scaffold(
       backgroundColor: KhilonjiyaUI.bg,
@@ -127,7 +299,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                   children: [
                     _jobHeroCard(
                       title: title,
-                      company: company,
+                      company: companyName,
                       location: location,
                       salary: _salary(salaryMin, salaryMax),
                       postedText: _postedAgo(postedAt),
@@ -135,7 +307,6 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                     const SizedBox(height: 14),
 
                     _quickInfoChips(job),
-
                     const SizedBox(height: 16),
 
                     _sectionCard(
@@ -153,43 +324,48 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
 
                     if (skills.isNotEmpty) const SizedBox(height: 14),
 
+                    // ✅ REAL responsibilities
                     _sectionCard(
                       title: "Roles & Responsibilities",
-                      child: _bulletList([
-                        "Build and maintain high-quality mobile applications",
-                        "Collaborate with design and backend teams",
-                        "Ensure clean UI and good performance",
-                        "Write maintainable code and follow best practices",
-                      ]),
+                      child: responsibilities.isEmpty
+                          ? Text(
+                              "No responsibilities provided for this job.",
+                              style: KhilonjiyaUI.body.copyWith(
+                                color: const Color(0xFF475569),
+                                height: 1.55,
+                              ),
+                            )
+                          : Text(
+                              responsibilities,
+                              style: KhilonjiyaUI.body.copyWith(
+                                color: const Color(0xFF475569),
+                                height: 1.55,
+                              ),
+                            ),
                     ),
 
                     const SizedBox(height: 14),
 
+                    // ✅ REAL company overview + follow button + rating
                     _sectionCard(
                       title: "Company Overview",
-                      child: _companyOverview(
-                        company: company,
-                        companyDesc: companyDesc,
-                      ),
+                      child: _buildCompanyOverview(),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // ✅ REAL company reviews
+                    _sectionCard(
+                      title: "Company Reviews",
+                      child: _buildCompanyReviews(),
                     ),
 
                     const SizedBox(height: 18),
 
-                    Text(
-                      "Similar jobs",
-                      style: KhilonjiyaUI.hTitle,
-                    ),
+                    // ✅ REAL similar jobs
+                    Text("Similar jobs", style: KhilonjiyaUI.hTitle),
                     const SizedBox(height: 10),
-                    SizedBox(
-                      height: 145,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: 6,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(width: 12),
-                        itemBuilder: (_, i) => _similarJobCard(),
-                      ),
-                    ),
+                    _buildSimilarJobs(),
 
                     const SizedBox(height: 18),
                   ],
@@ -334,24 +510,24 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   }
 
   // ------------------------------------------------------------
-  // QUICK INFO CHIPS
+  // QUICK INFO CHIPS (REAL FIELDS)
   // ------------------------------------------------------------
   Widget _quickInfoChips(Map<String, dynamic> job) {
     final chips = [
       {
         "icon": Icons.work_outline_rounded,
         "label": "Job type",
-        "value": (job['job_type'] ?? 'Full-time').toString(),
+        "value": (job['job_type'] ?? 'Not set').toString(),
       },
       {
         "icon": Icons.home_work_outlined,
         "label": "Work mode",
-        "value": (job['work_mode'] ?? 'On-site').toString(),
+        "value": (job['work_mode'] ?? 'Not set').toString(),
       },
       {
         "icon": Icons.timeline_rounded,
         "label": "Experience",
-        "value": (job['experience_required'] ?? 'Any').toString(),
+        "value": (job['experience_required'] ?? 'Not set').toString(),
       },
     ];
 
@@ -494,49 +670,42 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   }
 
   // ------------------------------------------------------------
-  // BULLET LIST
+  // COMPANY OVERVIEW (REAL)
   // ------------------------------------------------------------
-  Widget _bulletList(List<String> items) {
-    return Column(
-      children: items.map((t) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 7,
-                height: 7,
-                margin: const EdgeInsets.only(top: 7),
-                decoration: BoxDecoration(
-                  color: KhilonjiyaUI.primary,
-                  borderRadius: BorderRadius.circular(99),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  t,
-                  style: KhilonjiyaUI.body.copyWith(
-                    color: const Color(0xFF475569),
-                    height: 1.55,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
+  Widget _buildCompanyOverview() {
+    if (_loadingCompany) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 10),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
 
-  // ------------------------------------------------------------
-  // COMPANY OVERVIEW
-  // ------------------------------------------------------------
-  Widget _companyOverview({
-    required String company,
-    required String companyDesc,
-  }) {
+    final company = _company;
+
+    final name = (company?['name'] ?? '').toString().trim();
+    final desc = (company?['description'] ?? '').toString().trim();
+    final industry = (company?['industry'] ?? '').toString().trim();
+    final size = (company?['company_size'] ?? '').toString().trim();
+    final website = (company?['website'] ?? '').toString().trim();
+    final verified = company?['is_verified'] == true;
+
+    final ratingRaw = company?['rating'];
+    final rating = ratingRaw == null
+        ? null
+        : double.tryParse(ratingRaw.toString());
+
+    final totalReviews = _toInt(company?['total_reviews']);
+
+    if (company == null) {
+      return Text(
+        "Company information not available.",
+        style: KhilonjiyaUI.body.copyWith(
+          color: const Color(0xFF475569),
+          height: 1.55,
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -544,98 +713,184 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
           children: [
             Expanded(
               child: Text(
-                company.isEmpty ? "Company" : company,
+                name.isEmpty ? "Company" : name,
                 style: KhilonjiyaUI.body.copyWith(
                   fontWeight: FontWeight.w900,
                   fontSize: 14.5,
                 ),
               ),
             ),
-            Icon(
-              Icons.verified_rounded,
-              size: 18,
-              color: KhilonjiyaUI.primary,
-            ),
+            if (verified)
+              Icon(
+                Icons.verified_rounded,
+                size: 18,
+                color: KhilonjiyaUI.primary,
+              ),
           ],
         ),
         const SizedBox(height: 10),
+
+        if (rating != null && rating > 0) ...[
+          Row(
+            children: [
+              const Icon(Icons.star_rounded, size: 18),
+              const SizedBox(width: 6),
+              Text(
+                "${rating.toStringAsFixed(1)} ($totalReviews reviews)",
+                style: KhilonjiyaUI.body.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+        ],
+
+        if (industry.isNotEmpty || size.isNotEmpty) ...[
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              if (industry.isNotEmpty) _miniChip(industry),
+              if (size.isNotEmpty) _miniChip("Size: $size"),
+            ],
+          ),
+          const SizedBox(height: 12),
+        ],
+
         Text(
-          companyDesc,
+          desc.isEmpty ? "No company description available." : desc,
           style: KhilonjiyaUI.body.copyWith(
             color: const Color(0xFF475569),
             height: 1.55,
           ),
         ),
+
         const SizedBox(height: 14),
-        OutlinedButton(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Company profile coming soon")),
-            );
-          },
-          style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF0F172A),
-            side: BorderSide(color: KhilonjiyaUI.border),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "View Company Profile",
-                style: TextStyle(fontWeight: FontWeight.w800),
+
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: _toggleFollowCompany,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF0F172A),
+                  side: BorderSide(color: KhilonjiyaUI.border),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: Text(
+                  _isCompanyFollowed ? "Following" : "Follow Company",
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
               ),
-              SizedBox(width: 8),
-              Icon(Icons.chevron_right_rounded, size: 18),
+            ),
+            if (website.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              OutlinedButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Website open coming next")),
+                  );
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF0F172A),
+                  side: BorderSide(color: KhilonjiyaUI.border),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: const Icon(Icons.language_rounded, size: 18),
+              ),
             ],
-          ),
+          ],
         ),
       ],
     );
   }
 
-  // ------------------------------------------------------------
-  // SIMILAR JOB CARD (UI only)
-  // ------------------------------------------------------------
-  Widget _similarJobCard() {
+  Widget _miniChip(String text) {
     return Container(
-      width: 280,
-      decoration: KhilonjiyaUI.cardDecoration(radius: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: KhilonjiyaUI.border),
+      ),
+      child: Text(
+        text,
+        style: KhilonjiyaUI.body.copyWith(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: const Color(0xFF0F172A),
+        ),
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------
+  // COMPANY REVIEWS (REAL)
+  // ------------------------------------------------------------
+  Widget _buildCompanyReviews() {
+    if (_loadingReviews) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 10),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_reviews.isEmpty) {
+      return Text(
+        "No reviews yet.",
+        style: KhilonjiyaUI.body.copyWith(
+          color: const Color(0xFF475569),
+          height: 1.55,
+        ),
+      );
+    }
+
+    return Column(
+      children: _reviews.map((r) => _reviewTile(r)).toList(),
+    );
+  }
+
+  Widget _reviewTile(Map<String, dynamic> r) {
+    final rating = _toInt(r['rating']).clamp(1, 5);
+    final text = (r['review_text'] ?? '').toString().trim();
+    final createdAt = (r['created_at'] ?? '').toString();
+    final anon = r['is_anonymous'] == true;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: KhilonjiyaUI.border),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Flutter Developer",
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: KhilonjiyaUI.body.copyWith(fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            "Khilonjiya Verified",
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: KhilonjiyaUI.sub,
-          ),
-          const SizedBox(height: 10),
           Row(
             children: [
-              const Icon(
-                Icons.location_on_outlined,
-                size: 16,
-                color: Color(0xFF64748B),
+              Text(
+                anon ? "Anonymous" : "User",
+                style: KhilonjiyaUI.body.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
               ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  "Guwahati • Hybrid",
-                  style: KhilonjiyaUI.sub.copyWith(
-                    color: const Color(0xFF475569),
-                    fontWeight: FontWeight.w700,
+              const Spacer(),
+              Row(
+                children: List.generate(
+                  5,
+                  (i) => Icon(
+                    i < rating ? Icons.star_rounded : Icons.star_border_rounded,
+                    size: 18,
                   ),
                 ),
               ),
@@ -643,13 +898,67 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            "₹4L - ₹7L",
+            text.isEmpty ? "No review text provided." : text,
             style: KhilonjiyaUI.body.copyWith(
-              fontWeight: FontWeight.w900,
-              color: const Color(0xFF0F172A),
+              color: const Color(0xFF475569),
+              height: 1.55,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            _formatDate(createdAt),
+            style: KhilonjiyaUI.caption.copyWith(
+              color: const Color(0xFF64748B),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------
+  // SIMILAR JOBS (REAL)
+  // ------------------------------------------------------------
+  Widget _buildSimilarJobs() {
+    if (_loadingExtras) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 14),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_similarJobs.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: KhilonjiyaUI.cardDecoration(radius: 20),
+        child: Text(
+          "No similar jobs found right now.",
+          style: KhilonjiyaUI.sub,
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 170,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _similarJobs.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (_, i) {
+          final job = _similarJobs[i];
+          final id = job['id']?.toString() ?? '';
+
+          return SizedBox(
+            width: 320,
+            child: JobCardWidget(
+              job: job,
+              isSaved: _savedJobIds.contains(id),
+              onSaveToggle: () => _toggleSaveJob(id),
+              onTap: () => _openJobDetails(job),
+            ),
+          );
+        },
       ),
     );
   }
@@ -667,10 +976,10 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
           border: Border(top: BorderSide(color: KhilonjiyaUI.border)),
         ),
         child: SizedBox(
-          height: 40, // ✅ half size compared to old 48
+          height: 40,
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: (_checking || _isApplied) ? null : _applyNow,
+            onPressed: (_checkingApplied || _isApplied) ? null : _applyNow,
             style: ElevatedButton.styleFrom(
               backgroundColor: KhilonjiyaUI.primary,
               foregroundColor: Colors.white,
@@ -682,7 +991,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
               ),
             ),
             child: Text(
-              _checking
+              _checkingApplied
                   ? "Checking..."
                   : (_isApplied ? "Already Applied" : "Apply Now"),
               style: const TextStyle(
@@ -699,6 +1008,12 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   // ------------------------------------------------------------
   // UTILS
   // ------------------------------------------------------------
+  int _toInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is int) return v;
+    return int.tryParse(v.toString()) ?? 0;
+  }
+
   List<String> _safeSkills(dynamic raw) {
     if (raw == null) return [];
 
@@ -760,6 +1075,18 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
     if (diff.inHours < 24) return 'Posted today';
     if (diff.inDays == 1) return 'Posted 1 day ago';
     return 'Posted ${diff.inDays} days ago';
+  }
+
+  String _formatDate(String iso) {
+    final d = DateTime.tryParse(iso);
+    if (d == null) return "Recently";
+
+    final diff = DateTime.now().difference(d);
+
+    if (diff.inMinutes < 60) return "${diff.inMinutes} min ago";
+    if (diff.inHours < 24) return "${diff.inHours} hours ago";
+    if (diff.inDays == 1) return "1 day ago";
+    return "${diff.inDays} days ago";
   }
 }
 
