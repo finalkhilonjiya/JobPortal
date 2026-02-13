@@ -17,6 +17,9 @@ import '../common/widgets/cards/job_card_widget.dart';
 import 'recommended_jobs_page.dart';
 import 'job_search_page.dart';
 
+import 'expected_salary_edit_page.dart';
+import 'jobs_by_salary_page.dart';
+
 import 'widgets/naukri_drawer.dart';
 
 import 'widgets/home_sections/ai_banner_card.dart';
@@ -246,59 +249,40 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   }
 
   // ------------------------------------------------------------
-  // EXPECTED SALARY FLOW
+  // EXPECTED SALARY FLOW (REAL PAGES)
   // ------------------------------------------------------------
-  Future<void> _editExpectedSalary() async {
+  Future<void> _openExpectedSalaryEditPage() async {
     if (!mounted) return;
 
-    final controller = TextEditingController(
-      text: _expectedSalaryPerMonth > 0 ? _expectedSalaryPerMonth.toString() : '',
-    );
-
-    final result = await showDialog<int>(
-      context: context,
-      builder: (_) {
-        return AlertDialog(
-          title: const Text("Expected salary (per month)"),
-          content: TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              hintText: "Example: 15000",
-              prefixText: "₹ ",
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final raw = controller.text.trim();
-                final v = int.tryParse(raw) ?? 0;
-                Navigator.pop(context, v);
-              },
-              child: const Text("Save"),
-            ),
-          ],
-        );
-      },
+    final result = await Navigator.push<int>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ExpectedSalaryEditPage(
+          initialSalaryPerMonth: _expectedSalaryPerMonth,
+        ),
+      ),
     );
 
     if (result == null) return;
-
-    final clean = result < 0 ? 0 : result;
-
-    await _homeService.updateExpectedSalaryPerMonth(clean);
-
     if (!mounted) return;
-    setState(() => _expectedSalaryPerMonth = clean);
+
+    setState(() => _expectedSalaryPerMonth = result);
   }
 
   void _openJobsBySalary() {
-    // NEXT STEP: create page
-    // It will show jobs where salary >= _expectedSalaryPerMonth
+    if (_expectedSalaryPerMonth <= 0) {
+      _openExpectedSalaryEditPage();
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => JobsBySalaryPage(
+          minMonthlySalary: _expectedSalaryPerMonth,
+        ),
+      ),
+    );
   }
 
   // ------------------------------------------------------------
@@ -474,10 +458,9 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
         ),
         const SizedBox(height: 14),
 
-        // ✅ REAL expected salary
         ExpectedSalaryCard(
           expectedSalaryPerMonth: _expectedSalaryPerMonth,
-          onTap: _editExpectedSalary,
+          onTap: _openExpectedSalaryEditPage,
           onIconTap: _openJobsBySalary,
         ),
         const SizedBox(height: 18),
@@ -654,7 +637,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
     return Scaffold(
       backgroundColor: KhilonjiyaUI.bg,
       drawer: NaukriDrawer(
-        userName: '',
+        userName: _profileName,
         profileCompletion: _profileCompletion,
         onClose: () => Navigator.pop(context),
       ),
