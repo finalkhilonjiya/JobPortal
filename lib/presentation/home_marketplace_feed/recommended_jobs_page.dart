@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/ui/khilonjiya_ui.dart';
-import '../../services/job_service.dart';
+import '../../services/job_seeker_home_service.dart';
 
 import '../common/widgets/cards/job_card_widget.dart';
 import '../common/widgets/pages/job_details_page.dart';
@@ -14,7 +14,7 @@ class RecommendedJobsPage extends StatefulWidget {
 }
 
 class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
-  final JobService _jobService = JobService();
+  final JobSeekerHomeService _homeService = JobSeekerHomeService();
 
   bool _loading = true;
   bool _disposed = false;
@@ -39,31 +39,14 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
 
     try {
       // 1) load saved jobs (for bookmark UI)
-      _savedJobIds = await _jobService.getUserSavedJobs();
+      _savedJobIds = await _homeService.getUserSavedJobs();
 
       // 2) load recommended jobs
-      final recommended = await _jobService.getRecommendedJobs(limit: 80);
-
-      // 3) keep only match_score >= 50 (if match_score exists)
-      final strongMatches = recommended.where((j) {
-        final ms = j['match_score'];
-        if (ms == null) return false;
-        if (ms is int) return ms >= 50;
-
-        final parsed = int.tryParse(ms.toString());
-        return parsed != null && parsed >= 50;
-      }).toList();
-
-      // 4) fallback to all active jobs if no strong matches
-      if (strongMatches.isEmpty) {
-        _jobs = await _jobService.fetchJobs(limit: 80);
-      } else {
-        _jobs = strongMatches;
-      }
+      _jobs = await _homeService.getRecommendedJobs(limit: 80);
     } catch (_) {
       // fallback
       try {
-        _jobs = await _jobService.fetchJobs(limit: 80);
+        _jobs = await _homeService.fetchJobs(limit: 80);
       } catch (_) {
         _jobs = [];
       }
@@ -75,7 +58,7 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
 
   Future<void> _toggleSaveJob(String jobId) async {
     try {
-      final isSaved = await _jobService.toggleSaveJob(jobId);
+      final isSaved = await _homeService.toggleSaveJob(jobId);
 
       if (_disposed) return;
       setState(() {
@@ -95,7 +78,7 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
     if (jobId.trim().isEmpty) return;
 
     // track view (fire and forget)
-    _jobService.trackJobView(jobId);
+    _homeService.trackJobView(jobId);
 
     await Navigator.push(
       context,
@@ -108,10 +91,9 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
       ),
     );
 
-    // IMPORTANT:
-    // When coming back, refresh saved state so UI stays correct.
+    // refresh saved state when coming back
     try {
-      _savedJobIds = await _jobService.getUserSavedJobs();
+      _savedJobIds = await _homeService.getUserSavedJobs();
     } catch (_) {}
 
     if (_disposed) return;
@@ -191,11 +173,14 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
                                 final job = _jobs[i];
                                 final jobId = job['id']?.toString() ?? '';
 
-                                return JobCardWidget(
-                                  job: job,
-                                  isSaved: _savedJobIds.contains(jobId),
-                                  onSaveToggle: () => _toggleSaveJob(jobId),
-                                  onTap: () => _openJobDetails(job),
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: JobCardWidget(
+                                    job: job,
+                                    isSaved: _savedJobIds.contains(jobId),
+                                    onSaveToggle: () => _toggleSaveJob(jobId),
+                                    onTap: () => _openJobDetails(job),
+                                  ),
                                 );
                               },
                             ),
