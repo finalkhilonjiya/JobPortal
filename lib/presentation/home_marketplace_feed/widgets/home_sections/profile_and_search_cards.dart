@@ -1,17 +1,19 @@
+// File: lib/presentation/home_marketplace_feed/widgets/home_sections/profile_and_search_cards.dart
+
 import 'package:flutter/material.dart';
 import '../../../../core/ui/khilonjiya_ui.dart';
 
 class ProfileAndSearchCards extends StatelessWidget {
-  // LEFT CARD (Profile)
+  // LEFT CARD
   final String profileName;
   final int profileCompletion;
   final String lastUpdatedText;
   final int missingDetails;
 
-  // RIGHT CARD (Jobs posted today)
+  // RIGHT CARD
   final int jobsPostedToday;
 
-  // Navigation callbacks
+  // EVENTS
   final VoidCallback? onProfileTap;
   final VoidCallback? onMissingDetailsTap;
   final VoidCallback? onViewAllTap;
@@ -30,7 +32,8 @@ class ProfileAndSearchCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final value = (profileCompletion.clamp(0, 100)) / 100.0;
+    final completion = profileCompletion.clamp(0, 100);
+    final value = completion / 100.0;
 
     return Row(
       children: [
@@ -63,7 +66,7 @@ class ProfileAndSearchCards extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          "${profileCompletion.clamp(0, 100)}%",
+                          "$completion%",
                           style: KhilonjiyaUI.caption.copyWith(
                             fontWeight: FontWeight.w900,
                             color: KhilonjiyaUI.text,
