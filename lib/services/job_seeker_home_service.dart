@@ -1,10 +1,12 @@
-// File: lib/services/job_seeker_home_service.dart
-
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class JobSeekerHomeService {
   final SupabaseClient _db = Supabase.instance.client;
+
+  // ============================================================
+  // AUTH GUARD
+  // ============================================================
 
   void _ensureAuthenticatedSync() {
     final user = _db.auth.currentUser;
@@ -13,6 +15,11 @@ class JobSeekerHomeService {
     if (user == null || session == null) {
       throw Exception('Authentication required. Please login again.');
     }
+  }
+
+  String _userId() {
+    _ensureAuthenticatedSync();
+    return _db.auth.currentUser!.id;
   }
 
   // ============================================================
@@ -34,11 +41,14 @@ class JobSeekerHomeService {
           companies (
             id,
             name,
+            slug,
             logo_url,
             industry,
             is_verified,
             rating,
-            total_reviews
+            total_reviews,
+            company_size,
+            description
           )
         ''')
         .eq('status', 'active')
@@ -49,7 +59,9 @@ class JobSeekerHomeService {
     return List<Map<String, dynamic>>.from(res);
   }
 
-  Future<List<Map<String, dynamic>>> fetchPremiumJobs({int limit = 5}) async {
+  Future<List<Map<String, dynamic>>> fetchPremiumJobs({
+    int limit = 5,
+  }) async {
     _ensureAuthenticatedSync();
 
     final nowIso = DateTime.now().toIso8601String();
@@ -61,11 +73,14 @@ class JobSeekerHomeService {
           companies (
             id,
             name,
+            slug,
             logo_url,
             industry,
             is_verified,
             rating,
-            total_reviews
+            total_reviews,
+            company_size,
+            description
           )
         ''')
         .eq('status', 'active')
@@ -77,17 +92,99 @@ class JobSeekerHomeService {
     return List<Map<String, dynamic>>.from(res);
   }
 
+  // ============================================================
+  // REAL RECOMMENDED JOBS (job_recommendations table)
+  // ============================================================
+
   Future<List<Map<String, dynamic>>> getRecommendedJobs({
     int limit = 40,
   }) async {
-    return fetchJobs(limit: limit);
+    _ensureAuthenticatedSync();
+
+    final nowIso = DateTime.now().toIso8601String();
+    final userId = _userId();
+
+    try {
+      // Pull recommendation job_ids for this user
+      final rec = await _db
+          .from('job_recommendations')
+          .select('job_id, match_score')
+          .eq('user_id', userId)
+          .order('match_score', ascending: false)
+          .limit(limit);
+
+      final recList = List<Map<String, dynamic>>.from(rec);
+
+      if (recList.isEmpty) {
+        // fallback
+        return fetchJobs(limit: limit);
+      }
+
+      final ids = recList.map((e) => e['job_id'].toString()).toList();
+
+      // Fetch jobs by those ids
+      final jobs = await _db
+          .from('job_listings')
+          .select('''
+            *,
+            companies (
+              id,
+              name,
+              slug,
+              logo_url,
+              industry,
+              is_verified,
+              rating,
+              total_reviews,
+              company_size,
+              description
+            )
+          ''')
+          .inFilter('id', ids)
+          .eq('status', 'active')
+          .gte('expires_at', nowIso)
+          .limit(limit);
+
+      final list = List<Map<String, dynamic>>.from(jobs);
+
+      // attach match_score into job map
+      final scoreMap = <String, int>{};
+      for (final r in recList) {
+        final id = r['job_id'].toString();
+        final ms = r['match_score'];
+        final v = (ms is int) ? ms : int.tryParse(ms.toString()) ?? 0;
+        scoreMap[id] = v;
+      }
+
+      for (final j in list) {
+        final id = j['id'].toString();
+        j['match_score'] = scoreMap[id] ?? 0;
+      }
+
+      // Sort by match_score desc
+      list.sort((a, b) {
+        final sa = (a['match_score'] ?? 0) as int;
+        final sb = (b['match_score'] ?? 0) as int;
+        return sb.compareTo(sa);
+      });
+
+      return list;
+    } catch (_) {
+      // fallback
+      return fetchJobs(limit: limit);
+    }
   }
 
   Future<List<Map<String, dynamic>>> getJobsBasedOnActivity({
     int limit = 50,
   }) async {
+    // For now, same as recommended
     return getRecommendedJobs(limit: limit);
   }
+
+  // ============================================================
+  // JOB DETAILS HELPERS
+  // ============================================================
 
   Future<void> trackJobView(String jobId) async {
     try {
@@ -100,8 +197,72 @@ class JobSeekerHomeService {
         'viewed_at': DateTime.now().toIso8601String(),
         'device_type': 'mobile',
       });
+
+      // Optional activity log (if you want)
+      try {
+        await _db.from('user_job_activity').insert({
+          'user_id': userId,
+          'job_id': jobId,
+          'activity_type': 'viewed',
+          'activity_date': DateTime.now().toIso8601String(),
+        });
+      } catch (_) {}
     } catch (e) {
       debugPrint('trackJobView error: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchSimilarJobs({
+    required String jobId,
+    int limit = 12,
+  }) async {
+    _ensureAuthenticatedSync();
+
+    final nowIso = DateTime.now().toIso8601String();
+
+    try {
+      // get base job
+      final base = await _db
+          .from('job_listings')
+          .select('job_category_id, district, company_id')
+          .eq('id', jobId)
+          .maybeSingle();
+
+      if (base == null) return [];
+
+      final catId = base['job_category_id'];
+      final district = base['district'];
+      final companyId = base['company_id'];
+
+      // priority: same category + same district
+      final res = await _db
+          .from('job_listings')
+          .select('''
+            *,
+            companies (
+              id,
+              name,
+              slug,
+              logo_url,
+              industry,
+              is_verified,
+              rating,
+              total_reviews,
+              company_size
+            )
+          ''')
+          .eq('status', 'active')
+          .gte('expires_at', nowIso)
+          .neq('id', jobId)
+          .neq('company_id', companyId)
+          .eq('job_category_id', catId)
+          .eq('district', district)
+          .order('created_at', ascending: false)
+          .limit(limit);
+
+      return List<Map<String, dynamic>>.from(res);
+    } catch (_) {
+      return [];
     }
   }
 
@@ -109,10 +270,6 @@ class JobSeekerHomeService {
   // JOBS FILTERED BY SALARY (MONTHLY)
   // ============================================================
 
-  /// Returns jobs where:
-  /// - salary_period = Monthly
-  /// - salary_max >= minMonthlySalary
-  /// - active + not expired
   Future<List<Map<String, dynamic>>> fetchJobsByMinSalaryMonthly({
     required int minMonthlySalary,
     int limit = 80,
@@ -130,6 +287,7 @@ class JobSeekerHomeService {
           companies (
             id,
             name,
+            slug,
             logo_url,
             industry,
             is_verified,
@@ -154,7 +312,7 @@ class JobSeekerHomeService {
   Future<Set<String>> getUserSavedJobs() async {
     _ensureAuthenticatedSync();
 
-    final userId = _db.auth.currentUser!.id;
+    final userId = _userId();
 
     final res =
         await _db.from('saved_jobs').select('job_id').eq('user_id', userId);
@@ -165,11 +323,11 @@ class JobSeekerHomeService {
   Future<List<Map<String, dynamic>>> getSavedJobs() async {
     _ensureAuthenticatedSync();
 
-    final userId = _db.auth.currentUser!.id;
+    final userId = _userId();
 
     final res = await _db
         .from('saved_jobs')
-        .select('job_listings(*, companies(id,name,logo_url,is_verified))')
+        .select('job_listings(*, companies(id,name,logo_url,is_verified,rating,total_reviews))')
         .eq('user_id', userId)
         .order('saved_at', ascending: false);
 
@@ -179,7 +337,7 @@ class JobSeekerHomeService {
   Future<bool> toggleSaveJob(String jobId) async {
     _ensureAuthenticatedSync();
 
-    final userId = _db.auth.currentUser!.id;
+    final userId = _userId();
 
     final existing = await _db
         .from('saved_jobs')
@@ -195,6 +353,16 @@ class JobSeekerHomeService {
           .eq('user_id', userId)
           .eq('job_id', jobId);
 
+      // optional activity log
+      try {
+        await _db.from('user_job_activity').insert({
+          'user_id': userId,
+          'job_id': jobId,
+          'activity_type': 'saved',
+          'activity_date': DateTime.now().toIso8601String(),
+        });
+      } catch (_) {}
+
       return false;
     }
 
@@ -204,7 +372,37 @@ class JobSeekerHomeService {
       'saved_at': DateTime.now().toIso8601String(),
     });
 
+    // optional activity log
+    try {
+      await _db.from('user_job_activity').insert({
+        'user_id': userId,
+        'job_id': jobId,
+        'activity_type': 'saved',
+        'activity_date': DateTime.now().toIso8601String(),
+      });
+    } catch (_) {}
+
     return true;
+  }
+
+  // ============================================================
+  // APPLY STATUS + APPLY FLOW
+  // ============================================================
+
+  /// Checks if current user already applied to job_listings.id
+  Future<bool> hasAppliedToJob(String jobId) async {
+    _ensureAuthenticatedSync();
+
+    final userId = _userId();
+
+    final res = await _db
+        .from('job_applications_listings')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('listing_id', jobId)
+        .maybeSingle();
+
+    return res != null;
   }
 
   // ============================================================
@@ -251,7 +449,7 @@ class JobSeekerHomeService {
         "profileName": profileName,
         "profileCompletion": completion,
         "lastUpdatedText": lastUpdatedText,
-        "missingDetails": 0,
+        "missingDetails": completion >= 100 ? 0 : 1,
       };
     } catch (_) {
       return {
@@ -286,12 +484,10 @@ class JobSeekerHomeService {
   // EXPECTED SALARY (PER MONTH) - USER PROFILE
   // ============================================================
 
-  /// We use:
-  /// user_profiles.expected_salary_min (monthly)
   Future<int> getExpectedSalaryPerMonth() async {
     _ensureAuthenticatedSync();
 
-    final userId = _db.auth.currentUser!.id;
+    final userId = _userId();
 
     try {
       final profile = await _db
@@ -312,13 +508,10 @@ class JobSeekerHomeService {
     }
   }
 
-  /// Updates:
-  /// user_profiles.expected_salary_min
-  /// user_profiles.expected_salary_max (auto = min + 5000)
   Future<void> updateExpectedSalaryPerMonth(int salary) async {
     _ensureAuthenticatedSync();
 
-    final userId = _db.auth.currentUser!.id;
+    final userId = _userId();
 
     final clean = salary < 0 ? 0 : salary;
 
@@ -333,31 +526,6 @@ class JobSeekerHomeService {
   }
 
   // ============================================================
-  // JOB APPLICATIONS
-  // ============================================================
-
-  /// Checks if the logged-in user already applied to a job
-  /// Table: job_applications_listings(user_id, listing_id)
-  Future<bool> hasAppliedToJob(String jobId) async {
-    _ensureAuthenticatedSync();
-
-    final userId = _db.auth.currentUser!.id;
-
-    try {
-      final res = await _db
-          .from('job_applications_listings')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('listing_id', jobId)
-          .maybeSingle();
-
-      return res != null;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  // ============================================================
   // TOP COMPANIES
   // ============================================================
 
@@ -369,12 +537,137 @@ class JobSeekerHomeService {
     final res = await _db
         .from('companies')
         .select(
-          'id, name, slug, logo_url, industry, company_size, rating, total_reviews, total_jobs, is_verified',
+          'id, name, slug, logo_url, industry, company_size, rating, total_reviews, total_jobs, is_verified, description, website',
         )
         .order('rating', ascending: false)
         .limit(limit);
 
     return List<Map<String, dynamic>>.from(res);
+  }
+
+  // ============================================================
+  // FOLLOW COMPANY
+  // ============================================================
+
+  Future<bool> isCompanyFollowed(String companyId) async {
+    _ensureAuthenticatedSync();
+
+    final userId = _userId();
+
+    final res = await _db
+        .from('followed_companies')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('company_id', companyId)
+        .maybeSingle();
+
+    return res != null;
+  }
+
+  Future<bool> toggleFollowCompany(String companyId) async {
+    _ensureAuthenticatedSync();
+
+    final userId = _userId();
+
+    final existing = await _db
+        .from('followed_companies')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('company_id', companyId)
+        .maybeSingle();
+
+    if (existing != null) {
+      await _db
+          .from('followed_companies')
+          .delete()
+          .eq('user_id', userId)
+          .eq('company_id', companyId);
+
+      return false;
+    }
+
+    await _db.from('followed_companies').insert({
+      'user_id': userId,
+      'company_id': companyId,
+      'followed_at': DateTime.now().toIso8601String(),
+    });
+
+    return true;
+  }
+
+  // ============================================================
+  // COMPANY REVIEWS
+  // ============================================================
+
+  Future<List<Map<String, dynamic>>> fetchCompanyReviews({
+    required String companyId,
+    int limit = 20,
+  }) async {
+    _ensureAuthenticatedSync();
+
+    final res = await _db
+        .from('company_reviews')
+        .select('id, rating, review_text, created_at, is_anonymous')
+        .eq('company_id', companyId)
+        .order('created_at', ascending: false)
+        .limit(limit);
+
+    return List<Map<String, dynamic>>.from(res);
+  }
+
+  // ============================================================
+  // NOTIFICATIONS
+  // ============================================================
+
+  Future<List<Map<String, dynamic>>> fetchNotifications({
+    int limit = 40,
+  }) async {
+    _ensureAuthenticatedSync();
+
+    final userId = _userId();
+
+    final res = await _db
+        .from('notifications')
+        .select('id, type, title, body, data, is_read, created_at')
+        .eq('user_id', userId)
+        .order('created_at', ascending: false)
+        .limit(limit);
+
+    return List<Map<String, dynamic>>.from(res);
+  }
+
+  Future<int> getUnreadNotificationsCount() async {
+    _ensureAuthenticatedSync();
+
+    final userId = _userId();
+
+    final res = await _db
+        .from('notifications')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('is_read', false);
+
+    return (res as List).length;
+  }
+
+  Future<void> markNotificationRead(String notificationId) async {
+    _ensureAuthenticatedSync();
+
+    await _db
+        .from('notifications')
+        .update({'is_read': true}).eq('id', notificationId);
+  }
+
+  Future<void> markAllNotificationsRead() async {
+    _ensureAuthenticatedSync();
+
+    final userId = _userId();
+
+    await _db
+        .from('notifications')
+        .update({'is_read': true})
+        .eq('user_id', userId)
+        .eq('is_read', false);
   }
 
   // ============================================================
