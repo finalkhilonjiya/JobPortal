@@ -12,13 +12,15 @@ import '../../services/job_seeker_home_service.dart';
 
 import '../common/widgets/pages/job_details_page.dart';
 import '../common/widgets/cards/company_card.dart';
-import '../common/widgets/cards/job_card_widget.dart';
 
 import 'recommended_jobs_page.dart';
 import 'job_search_page.dart';
 
 import 'expected_salary_edit_page.dart';
 import 'jobs_by_salary_page.dart';
+
+import 'latest_jobs_page.dart';
+import 'jobs_nearby_page.dart';
 
 import 'widgets/naukri_drawer.dart';
 
@@ -62,7 +64,9 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   // ------------------------------------------------------------
   // JOBS + SAVED
   // ------------------------------------------------------------
-  List<Map<String, dynamic>> _profileJobs = [];
+  List<Map<String, dynamic>> _recommendedJobs = [];
+  List<Map<String, dynamic>> _latestJobs = [];
+  List<Map<String, dynamic>> _nearbyJobs = [];
   List<Map<String, dynamic>> _premiumJobs = [];
   Set<String> _savedJobIds = {};
 
@@ -170,13 +174,19 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
       _savedJobIds = await _homeService.getUserSavedJobs();
 
       // ------------------------------------------------------------
-      // 4) Premium + Recommended jobs
+      // 4) Premium jobs
       // ------------------------------------------------------------
       _premiumJobs = await _homeService.fetchPremiumJobs(limit: 8);
-      _profileJobs = await _homeService.getRecommendedJobs(limit: 40);
 
       // ------------------------------------------------------------
-      // 5) Top companies
+      // 5) Jobs for sections
+      // ------------------------------------------------------------
+      _recommendedJobs = await _homeService.getRecommendedJobs(limit: 40);
+      _latestJobs = await _homeService.fetchLatestJobs(limit: 40);
+      _nearbyJobs = await _homeService.fetchJobsNearby(limit: 40);
+
+      // ------------------------------------------------------------
+      // 6) Top companies
       // ------------------------------------------------------------
       _topCompanies = await _homeService.fetchTopCompanies(limit: 8);
     } finally {
@@ -235,6 +245,24 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
       context,
       MaterialPageRoute(
         builder: (_) => const RecommendedJobsPage(),
+      ),
+    );
+  }
+
+  void _openLatestJobsPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LatestJobsPage(),
+      ),
+    );
+  }
+
+  void _openJobsNearbyPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const JobsNearbyPage(),
       ),
     );
   }
@@ -427,10 +455,13 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
       );
     }
 
+    // This keeps your original behaviour
     final earlyAccessList =
-        (_premiumJobs.isNotEmpty ? _premiumJobs : _profileJobs);
+        (_premiumJobs.isNotEmpty ? _premiumJobs : _recommendedJobs);
 
-    final jobsForHorizontal = earlyAccessList.take(10).toList();
+    final jobsForRecommendedHorizontal = earlyAccessList.take(10).toList();
+    final jobsForLatestHorizontal = _latestJobs.take(10).toList();
+    final jobsForNearbyHorizontal = _nearbyJobs.take(10).toList();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
@@ -465,6 +496,9 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
         ),
         const SizedBox(height: 18),
 
+        // ============================================================
+        // RECOMMENDED JOBS (Horizontal)
+        // ============================================================
         SectionHeader(
           title: "Recommended jobs",
           ctaText: "View all",
@@ -475,10 +509,11 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
           height: 210,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: jobsForHorizontal.length,
+            itemCount: jobsForRecommendedHorizontal.length,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (_, i) {
-              final job = jobsForHorizontal[i];
+              final job = jobsForRecommendedHorizontal[i];
+
               return JobCardHorizontal(
                 job: job,
                 isSaved: _savedJobIds.contains(job['id'].toString()),
@@ -491,6 +526,69 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 18),
 
+        // ============================================================
+        // LATEST JOBS (Horizontal)
+        // ============================================================
+        SectionHeader(
+          title: "Latest jobs",
+          ctaText: "View all",
+          onTap: _openLatestJobsPage,
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 210,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: jobsForLatestHorizontal.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (_, i) {
+              final job = jobsForLatestHorizontal[i];
+
+              return JobCardHorizontal(
+                job: job,
+                isSaved: _savedJobIds.contains(job['id'].toString()),
+                onSaveToggle: () => _toggleSaveJob(job['id'].toString()),
+                onTap: () => _openJobDetails(job),
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(height: 18),
+
+        // ============================================================
+        // JOBS NEARBY (Horizontal)
+        // ============================================================
+        SectionHeader(
+          title: "Jobs nearby",
+          ctaText: "View all",
+          onTap: _openJobsNearbyPage,
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 210,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: jobsForNearbyHorizontal.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (_, i) {
+              final job = jobsForNearbyHorizontal[i];
+
+              return JobCardHorizontal(
+                job: job,
+                isSaved: _savedJobIds.contains(job['id'].toString()),
+                onSaveToggle: () => _toggleSaveJob(job['id'].toString()),
+                onTap: () => _openJobDetails(job),
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(height: 18),
+
+        // ============================================================
+        // TOP COMPANIES (Grid)
+        // ============================================================
         SectionHeader(
           title: "Top companies",
           ctaText: "View all",
@@ -545,27 +643,6 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
               onTap: () {},
             ),
           ),
-
-        const SizedBox(height: 18),
-
-        SectionHeader(
-          title: "Jobs based on your profile",
-          ctaText: "View all",
-          onTap: _openRecommendedJobsPage,
-        ),
-        const SizedBox(height: 10),
-
-        ..._profileJobs.take(10).map((job) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: JobCardWidget(
-              job: job,
-              isSaved: _savedJobIds.contains(job['id'].toString()),
-              onSaveToggle: () => _toggleSaveJob(job['id'].toString()),
-              onTap: () => _openJobDetails(job),
-            ),
-          );
-        }).toList(),
 
         const SizedBox(height: 10),
       ],
