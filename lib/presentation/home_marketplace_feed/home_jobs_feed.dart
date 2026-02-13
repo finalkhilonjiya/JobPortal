@@ -42,19 +42,33 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
   int _bottomIndex = 0;
 
+  // ------------------------------------------------------------
+  // HOME SUMMARY (REAL)
+  // ------------------------------------------------------------
+  String _profileName = "Your Profile";
   int _profileCompletion = 0;
+  String _lastUpdatedText = "Updated recently";
+  int _missingDetails = 0;
+  int _jobsPostedToday = 0;
 
+  // ------------------------------------------------------------
+  // JOBS + SAVED
+  // ------------------------------------------------------------
   List<Map<String, dynamic>> _profileJobs = [];
   List<Map<String, dynamic>> _premiumJobs = [];
   Set<String> _savedJobIds = {};
 
-  // Companies
+  // ------------------------------------------------------------
+  // COMPANIES
+  // ------------------------------------------------------------
   List<Map<String, dynamic>> _topCompanies = [];
   bool _loadingCompanies = true;
 
   bool _isLoadingProfile = true;
 
+  // ------------------------------------------------------------
   // Search hint slider
+  // ------------------------------------------------------------
   final PageController _searchHintController = PageController();
   Timer? _searchHintTimer;
 
@@ -124,19 +138,33 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
     setState(() => _isCheckingAuth = false);
 
     try {
-      // Drawer needs it
-      final profileSummary = await _homeService.getHomeProfileSummary();
-      _profileCompletion = (profileSummary['profileCompletion'] ?? 0) as int;
+      // ------------------------------------------------------------
+      // 1) Home summary (REAL)
+      // ------------------------------------------------------------
+      final summary = await _homeService.getHomeProfileSummary();
+      final jobsCount = await _homeService.getJobsPostedTodayCount();
 
+      _profileName = (summary['profileName'] ?? "Your Profile").toString();
+      _profileCompletion = (summary['profileCompletion'] ?? 0) as int;
+      _lastUpdatedText =
+          (summary['lastUpdatedText'] ?? "Updated recently").toString();
+      _missingDetails = (summary['missingDetails'] ?? 0) as int;
+      _jobsPostedToday = jobsCount;
+
+      // ------------------------------------------------------------
+      // 2) Saved jobs
+      // ------------------------------------------------------------
       _savedJobIds = await _homeService.getUserSavedJobs();
 
-      // Premium jobs
+      // ------------------------------------------------------------
+      // 3) Premium + Recommended jobs
+      // ------------------------------------------------------------
       _premiumJobs = await _homeService.fetchPremiumJobs(limit: 8);
-
-      // Recommended jobs
       _profileJobs = await _homeService.getRecommendedJobs(limit: 40);
 
-      // Top companies from DB
+      // ------------------------------------------------------------
+      // 4) Top companies
+      // ------------------------------------------------------------
       _topCompanies = await _homeService.fetchTopCompanies(limit: 8);
     } finally {
       if (!_isDisposed) {
@@ -363,9 +391,22 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
         AIBannerCard(onTap: _openRecommendedJobsPage),
         const SizedBox(height: 14),
 
+        // REAL (no Supabase inside widget)
         ProfileAndSearchCards(
-          onMissingDetailsTap: () {},
-          onViewAllTap: () {},
+          profileName: _profileName,
+          profileCompletion: _profileCompletion,
+          lastUpdatedText: _lastUpdatedText,
+          missingDetails: _missingDetails,
+          jobsPostedToday: _jobsPostedToday,
+          onProfileTap: () {
+            // TODO: open real profile page later
+          },
+          onMissingDetailsTap: () {
+            // TODO: open missing details page later
+          },
+          onViewAllTap: () {
+            // TODO: open jobs posted today page later
+          },
         ),
         const SizedBox(height: 14),
 
@@ -374,7 +415,9 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
           label: "Construction",
           title: "Khilonjiya Construction Service",
           subtitle: "Your trusted construction partner",
-          onTap: () {},
+          onTap: () {
+            // TODO: open construction homepage later
+          },
         ),
         const SizedBox(height: 14),
 
