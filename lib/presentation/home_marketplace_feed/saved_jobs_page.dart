@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../core/ui/khilonjiya_ui.dart';
-import '../../services/job_service.dart';
+import '../../services/job_seeker_home_service.dart';
 
 import '../common/widgets/cards/job_card_widget.dart';
+import '../common/widgets/pages/job_details_page.dart';
 
 class SavedJobsPage extends StatefulWidget {
   const SavedJobsPage({Key? key}) : super(key: key);
@@ -13,7 +14,7 @@ class SavedJobsPage extends StatefulWidget {
 }
 
 class _SavedJobsPageState extends State<SavedJobsPage> {
-  final JobService _jobService = JobService();
+  final JobSeekerHomeService _homeService = JobSeekerHomeService();
 
   List<Map<String, dynamic>> _jobs = [];
   bool _loading = true;
@@ -35,7 +36,7 @@ class _SavedJobsPageState extends State<SavedJobsPage> {
     if (!_disposed) setState(() => _loading = true);
 
     try {
-      _jobs = await _jobService.getSavedJobs();
+      _jobs = await _homeService.getSavedJobs();
     } catch (_) {
       _jobs = [];
     }
@@ -44,12 +45,37 @@ class _SavedJobsPageState extends State<SavedJobsPage> {
     setState(() => _loading = false);
   }
 
-  void _openJobDetails(Map<String, dynamic> job) {
-    // You will connect JobDetailsPage later if you want.
-    // For now keep safe.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Job details coming next")),
+  Future<void> _toggleSaveJob(String jobId) async {
+    try {
+      await _homeService.toggleSaveJob(jobId);
+      await _load(); // refresh list after unsave
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to update saved job")),
+      );
+    }
+  }
+
+  Future<void> _openJobDetails(Map<String, dynamic> job) async {
+    final jobId = job['id']?.toString() ?? '';
+    if (jobId.trim().isEmpty) return;
+
+    // track view (fire and forget)
+    _homeService.trackJobView(jobId);
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => JobDetailsPage(
+          job: job,
+          isSaved: true,
+          onSaveToggle: () => _toggleSaveJob(jobId),
+        ),
+      ),
     );
+
+    // refresh saved list when coming back
+    await _load();
   }
 
   @override
@@ -59,7 +85,7 @@ class _SavedJobsPageState extends State<SavedJobsPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top bar (same style as other pages)
+            // Top bar
             Container(
               padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
               decoration: BoxDecoration(
@@ -123,12 +149,16 @@ class _SavedJobsPageState extends State<SavedJobsPage> {
                               itemCount: _jobs.length,
                               itemBuilder: (_, i) {
                                 final job = _jobs[i];
+                                final jobId = job['id']?.toString() ?? '';
 
-                                return JobCardWidget(
-                                  job: job,
-                                  isSaved: true,
-                                  onSaveToggle: _load,
-                                  onTap: () => _openJobDetails(job),
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: JobCardWidget(
+                                    job: job,
+                                    isSaved: true,
+                                    onSaveToggle: () => _toggleSaveJob(jobId),
+                                    onTap: () => _openJobDetails(job),
+                                  ),
                                 );
                               },
                             ),
