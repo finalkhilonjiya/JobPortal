@@ -39,22 +39,31 @@ class EmployerJobService {
 
     final jobIds = jobList.map((e) => e['id'].toString()).toList();
 
-    // Real applicants count from join table
-    final countsRes = await _client
+    // Count applications from join table
+    // (exclude rejected for dashboard usefulness)
+    final appsRes = await _client
         .from('job_applications_listings')
-        .select('listing_id')
+        .select('listing_id, application_status')
         .inFilter('listing_id', jobIds);
 
-    final rows = List<Map<String, dynamic>>.from(countsRes);
+    final rows = List<Map<String, dynamic>>.from(appsRes);
 
     final Map<String, int> countMap = {};
     for (final r in rows) {
-      final id = (r['listing_id'] ?? '').toString();
-      if (id.isEmpty) continue;
-      countMap[id] = (countMap[id] ?? 0) + 1;
+      final listingId = (r['listing_id'] ?? '').toString();
+      if (listingId.isEmpty) continue;
+
+      final status = (r['application_status'] ?? 'applied')
+          .toString()
+          .toLowerCase();
+
+      // exclude rejected
+      if (status == 'rejected') continue;
+
+      countMap[listingId] = (countMap[listingId] ?? 0) + 1;
     }
 
-    // Attach applicants_count
+    // Attach applications_count
     return jobList.map((j) {
       final id = (j['id'] ?? '').toString();
       return {
@@ -129,17 +138,26 @@ class EmployerJobService {
     if (jobIds.isNotEmpty) {
       final appsRes = await _client
           .from('job_applications_listings')
-          .select('listing_id, applied_at')
+          .select('listing_id, applied_at, application_status')
           .inFilter('listing_id', jobIds);
 
       final apps = List<Map<String, dynamic>>.from(appsRes);
 
-      totalApplicants = apps.length;
-
       final now = DateTime.now();
+
       for (final a in apps) {
+        final status = (a['application_status'] ?? 'applied')
+            .toString()
+            .toLowerCase();
+
+        // exclude rejected
+        if (status == 'rejected') continue;
+
+        totalApplicants++;
+
         final d = DateTime.tryParse((a['applied_at'] ?? '').toString());
         if (d == null) continue;
+
         if (now.difference(d).inHours <= 24) applicants24h++;
       }
     }
@@ -186,7 +204,13 @@ class EmployerJobService {
 
           job_listings (
             id,
-            job_title
+            job_title,
+            company_id,
+            companies (
+              id,
+              name,
+              logo_url
+            )
           ),
 
           job_applications (
@@ -198,10 +222,13 @@ class EmployerJobService {
             district,
             education,
             experience_level,
-            expected_salary
+            expected_salary,
+            resume_file_url,
+            photo_file_url
           )
         ''')
         .inFilter('listing_id', jobIds)
+        .neq('application_status', 'rejected')
         .order('applied_at', ascending: false)
         .limit(limit);
 
@@ -221,10 +248,17 @@ class EmployerJobService {
         .from('job_listings')
         .select('''
           id,
+          company_id,
           job_title,
           status,
           views_count,
-          created_at
+          created_at,
+
+          companies (
+            id,
+            name,
+            logo_url
+          )
         ''')
         .eq('employer_id', user.id);
 
@@ -235,7 +269,7 @@ class EmployerJobService {
 
     final appsRes = await _client
         .from('job_applications_listings')
-        .select('listing_id')
+        .select('listing_id, application_status')
         .inFilter('listing_id', jobIds);
 
     final apps = List<Map<String, dynamic>>.from(appsRes);
@@ -244,6 +278,12 @@ class EmployerJobService {
     for (final a in apps) {
       final id = (a['listing_id'] ?? '').toString();
       if (id.isEmpty) continue;
+
+      final status =
+          (a['application_status'] ?? 'applied').toString().toLowerCase();
+
+      if (status == 'rejected') continue;
+
       countMap[id] = (countMap[id] ?? 0) + 1;
     }
 
