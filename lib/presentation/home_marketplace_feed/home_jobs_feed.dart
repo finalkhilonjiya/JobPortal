@@ -24,7 +24,6 @@ import 'widgets/home_sections/profile_and_search_cards.dart';
 import 'widgets/home_sections/boost_card.dart';
 import 'widgets/home_sections/expected_salary_card.dart';
 import 'widgets/home_sections/section_header.dart';
-import 'widgets/home_sections/mini_news_card.dart';
 import 'widgets/home_sections/job_card_horizontal.dart';
 
 class HomeJobsFeed extends StatefulWidget {
@@ -43,20 +42,8 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
   int _bottomIndex = 0;
 
-  // ------------------------------------------------------------
-  // Profile summary (for ProfileAndSearchCards)
-  // ------------------------------------------------------------
-  String _profileName = "Your Profile";
   int _profileCompletion = 0;
-  String _lastUpdatedText = "Updated recently";
-  int _missingDetails = 0;
 
-  // Jobs posted today
-  int _jobsPostedToday = 0;
-
-  // ------------------------------------------------------------
-  // Job feed
-  // ------------------------------------------------------------
   List<Map<String, dynamic>> _profileJobs = [];
   List<Map<String, dynamic>> _premiumJobs = [];
   Set<String> _savedJobIds = {};
@@ -77,30 +64,6 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
     "Search by district",
     "Search electrician jobs",
     "Search plumber jobs",
-  ];
-
-  // Minis (dummy for now)
-  final List<Map<String, dynamic>> _dummyMinis = [
-    {
-      "title": "Top 10 remote jobs hiring now",
-      "source": "Khilonjiya Minis",
-      "time": "2h ago",
-    },
-    {
-      "title": "How to optimize your resume in 2026",
-      "source": "Career Desk",
-      "time": "5h ago",
-    },
-    {
-      "title": "Interview tips for IT roles",
-      "source": "Neo AI",
-      "time": "1d ago",
-    },
-    {
-      "title": "Best companies hiring in Assam",
-      "source": "Jobs Radar",
-      "time": "2d ago",
-    },
   ];
 
   @override
@@ -161,22 +124,10 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
     setState(() => _isCheckingAuth = false);
 
     try {
-      // ------------------------------------------------------------
-      // Profile summary + jobs posted today (for ProfileAndSearchCards)
-      // ------------------------------------------------------------
+      // Drawer needs it
       final profileSummary = await _homeService.getHomeProfileSummary();
-
-      _profileName = (profileSummary['profileName'] ?? "Your Profile").toString();
       _profileCompletion = (profileSummary['profileCompletion'] ?? 0) as int;
-      _lastUpdatedText =
-          (profileSummary['lastUpdatedText'] ?? "Updated recently").toString();
-      _missingDetails = (profileSummary['missingDetails'] ?? 0) as int;
 
-      _jobsPostedToday = await _homeService.getJobsPostedTodayCount();
-
-      // ------------------------------------------------------------
-      // Saved jobs
-      // ------------------------------------------------------------
       _savedJobIds = await _homeService.getUserSavedJobs();
 
       // Premium jobs
@@ -185,7 +136,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
       // Recommended jobs
       _profileJobs = await _homeService.getRecommendedJobs(limit: 40);
 
-      // Top companies
+      // Top companies from DB
       _topCompanies = await _homeService.fetchTopCompanies(limit: 8);
     } finally {
       if (!_isDisposed) {
@@ -284,7 +235,8 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
               onTap: _openSearchPage,
               borderRadius: BorderRadius.circular(999),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(999),
@@ -400,7 +352,9 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
       );
     }
 
-    final earlyAccessList = (_premiumJobs.isNotEmpty ? _premiumJobs : _profileJobs);
+    final earlyAccessList =
+        (_premiumJobs.isNotEmpty ? _premiumJobs : _profileJobs);
+
     final jobsForHorizontal = earlyAccessList.take(10).toList();
 
     return ListView(
@@ -409,18 +363,10 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
         AIBannerCard(onTap: _openRecommendedJobsPage),
         const SizedBox(height: 14),
 
-        // ✅ NO Supabase call inside this widget anymore
         ProfileAndSearchCards(
-          profileName: _profileName,
-          profileCompletion: _profileCompletion,
-          lastUpdatedText: _lastUpdatedText,
-          missingDetails: _missingDetails,
-          jobsPostedToday: _jobsPostedToday,
-          onProfileTap: () {},
           onMissingDetailsTap: () {},
           onViewAllTap: () {},
         ),
-
         const SizedBox(height: 14),
 
         // NOTE: this is not boost. It is construction homepage banner.
@@ -520,28 +466,6 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
         const SizedBox(height: 18),
 
-        // minis feed (dummy for now)
-        SectionHeader(
-          title: "Stay informed with minis",
-          ctaText: "View feed",
-          onTap: () {},
-        ),
-        const SizedBox(height: 10),
-        GridView.builder(
-          itemCount: _dummyMinis.length,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 0.95,
-          ),
-          itemBuilder: (_, i) => MiniNewsCard(news: _dummyMinis[i]),
-        ),
-
-        const SizedBox(height: 18),
-
         // Jobs based on your profile (vertical)
         SectionHeader(
           title: "Jobs based on your profile",
@@ -632,7 +556,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
     return Scaffold(
       backgroundColor: KhilonjiyaUI.bg,
       drawer: NaukriDrawer(
-        userName: _profileName,
+        userName: '',
         profileCompletion: _profileCompletion,
         onClose: () => Navigator.pop(context),
       ),
