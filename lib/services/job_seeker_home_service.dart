@@ -78,8 +78,7 @@ class JobSeekerHomeService {
   Future<List<Map<String, dynamic>>> getRecommendedJobs({
     int limit = 40,
   }) async {
-    // For now: return latest jobs
-    // (Your old match-score logic was fine but not needed now)
+    // For now: latest jobs
     return fetchJobs(limit: limit);
   }
 
@@ -167,7 +166,7 @@ class JobSeekerHomeService {
   }
 
   // ============================================================
-  // HOME SUMMARY
+  // HOME SUMMARY (REAL missingDetails)
   // ============================================================
 
   Future<Map<String, dynamic>> getHomeProfileSummary() async {
@@ -185,15 +184,31 @@ class JobSeekerHomeService {
     try {
       final profile = await _db
           .from('user_profiles')
-          .select(
-            'full_name, profile_completion_percentage, last_profile_update',
-          )
+          .select('''
+            full_name,
+            profile_completion_percentage,
+            last_profile_update,
+
+            email,
+            mobile_number,
+            current_city,
+            current_state,
+            highest_education,
+            skills,
+            preferred_job_types,
+            preferred_locations,
+            expected_salary_min,
+            expected_salary_max,
+            is_open_to_work
+          ''')
           .eq('id', user.id)
           .maybeSingle();
 
       String profileName = "Your Profile";
       int completion = 0;
       String lastUpdatedText = "Updated recently";
+
+      int missingDetails = 0;
 
       if (profile != null) {
         final fullName = (profile['full_name'] ?? '').toString().trim();
@@ -202,14 +217,41 @@ class JobSeekerHomeService {
         completion =
             _toInt(profile['profile_completion_percentage']).clamp(0, 100);
 
-        lastUpdatedText = _formatLastUpdated(profile['last_profile_update']?.toString());
+        lastUpdatedText =
+            _formatLastUpdated(profile['last_profile_update']?.toString());
+
+        // ------------------------------------------------------------
+        // Missing details count (REAL)
+        // ------------------------------------------------------------
+        bool isEmpty(dynamic v) {
+          if (v == null) return true;
+          if (v is String) return v.trim().isEmpty;
+          if (v is List) return v.isEmpty;
+          return false;
+        }
+
+        if (isEmpty(profile['full_name'])) missingDetails++;
+        if (isEmpty(profile['email'])) missingDetails++;
+        if (isEmpty(profile['mobile_number'])) missingDetails++;
+        if (isEmpty(profile['current_city'])) missingDetails++;
+        if (isEmpty(profile['current_state'])) missingDetails++;
+        if (isEmpty(profile['highest_education'])) missingDetails++;
+        if (isEmpty(profile['skills'])) missingDetails++;
+        if (profile['expected_salary_min'] == null) missingDetails++;
+        if (profile['expected_salary_max'] == null) missingDetails++;
+        if (isEmpty(profile['preferred_locations'])) missingDetails++;
+        if (isEmpty(profile['preferred_job_types'])) missingDetails++;
+        if (profile['is_open_to_work'] != true) missingDetails++;
+      } else {
+        // No profile row means everything missing
+        missingDetails = 12;
       }
 
       return {
         "profileName": profileName,
         "profileCompletion": completion,
         "lastUpdatedText": lastUpdatedText,
-        "missingDetails": 0,
+        "missingDetails": missingDetails,
       };
     } catch (_) {
       return {
