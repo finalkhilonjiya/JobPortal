@@ -1,3 +1,5 @@
+// File: lib/services/job_seeker_home_service.dart
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -78,14 +80,12 @@ class JobSeekerHomeService {
   Future<List<Map<String, dynamic>>> getRecommendedJobs({
     int limit = 40,
   }) async {
-    // For now: latest jobs
     return fetchJobs(limit: limit);
   }
 
   Future<List<Map<String, dynamic>>> getJobsBasedOnActivity({
     int limit = 50,
   }) async {
-    // For now: same as recommended
     return getRecommendedJobs(limit: limit);
   }
 
@@ -166,7 +166,7 @@ class JobSeekerHomeService {
   }
 
   // ============================================================
-  // HOME SUMMARY (REAL missingDetails)
+  // HOME SUMMARY
   // ============================================================
 
   Future<Map<String, dynamic>> getHomeProfileSummary() async {
@@ -184,31 +184,15 @@ class JobSeekerHomeService {
     try {
       final profile = await _db
           .from('user_profiles')
-          .select('''
-            full_name,
-            profile_completion_percentage,
-            last_profile_update,
-
-            email,
-            mobile_number,
-            current_city,
-            current_state,
-            highest_education,
-            skills,
-            preferred_job_types,
-            preferred_locations,
-            expected_salary_min,
-            expected_salary_max,
-            is_open_to_work
-          ''')
+          .select(
+            'full_name, profile_completion_percentage, last_profile_update',
+          )
           .eq('id', user.id)
           .maybeSingle();
 
       String profileName = "Your Profile";
       int completion = 0;
       String lastUpdatedText = "Updated recently";
-
-      int missingDetails = 0;
 
       if (profile != null) {
         final fullName = (profile['full_name'] ?? '').toString().trim();
@@ -219,39 +203,13 @@ class JobSeekerHomeService {
 
         lastUpdatedText =
             _formatLastUpdated(profile['last_profile_update']?.toString());
-
-        // ------------------------------------------------------------
-        // Missing details count (REAL)
-        // ------------------------------------------------------------
-        bool isEmpty(dynamic v) {
-          if (v == null) return true;
-          if (v is String) return v.trim().isEmpty;
-          if (v is List) return v.isEmpty;
-          return false;
-        }
-
-        if (isEmpty(profile['full_name'])) missingDetails++;
-        if (isEmpty(profile['email'])) missingDetails++;
-        if (isEmpty(profile['mobile_number'])) missingDetails++;
-        if (isEmpty(profile['current_city'])) missingDetails++;
-        if (isEmpty(profile['current_state'])) missingDetails++;
-        if (isEmpty(profile['highest_education'])) missingDetails++;
-        if (isEmpty(profile['skills'])) missingDetails++;
-        if (profile['expected_salary_min'] == null) missingDetails++;
-        if (profile['expected_salary_max'] == null) missingDetails++;
-        if (isEmpty(profile['preferred_locations'])) missingDetails++;
-        if (isEmpty(profile['preferred_job_types'])) missingDetails++;
-        if (profile['is_open_to_work'] != true) missingDetails++;
-      } else {
-        // No profile row means everything missing
-        missingDetails = 12;
       }
 
       return {
         "profileName": profileName,
         "profileCompletion": completion,
         "lastUpdatedText": lastUpdatedText,
-        "missingDetails": missingDetails,
+        "missingDetails": 0,
       };
     } catch (_) {
       return {
@@ -280,6 +238,47 @@ class JobSeekerHomeService {
     } catch (_) {
       return 0;
     }
+  }
+
+  // ============================================================
+  // EXPECTED SALARY (PER MONTH)
+  // ============================================================
+
+  Future<int> getExpectedSalaryPerMonth() async {
+    _ensureAuthenticatedSync();
+
+    final userId = _db.auth.currentUser!.id;
+
+    try {
+      final profile = await _db
+          .from('user_profiles')
+          .select('expected_salary_per_month')
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (profile == null) return 0;
+
+      final raw = profile['expected_salary_per_month'];
+      if (raw == null) return 0;
+
+      if (raw is int) return raw;
+      return int.tryParse(raw.toString()) ?? 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  Future<void> updateExpectedSalaryPerMonth(int salary) async {
+    _ensureAuthenticatedSync();
+
+    final userId = _db.auth.currentUser!.id;
+
+    final clean = salary < 0 ? 0 : salary;
+
+    await _db.from('user_profiles').update({
+      'expected_salary_per_month': clean,
+      'last_profile_update': DateTime.now().toIso8601String(),
+    }).eq('id', userId);
   }
 
   // ============================================================
