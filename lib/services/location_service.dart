@@ -1,95 +1,135 @@
-// File: services/location_service.dart
+// File: lib/services/location_service.dart
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LocationService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  // Search locations with autocomplete
+  // ------------------------------------------------------------
+  // Search locations with autocomplete (RPC)
+  // RPC: search_locations(search_term, limit_count)
+  // ------------------------------------------------------------
   Future<List<LocationResult>> searchLocations(String query) async {
-    if (query.isEmpty || query.length < 2) {
-      return [];
-    }
+    final q = query.trim();
+    if (q.length < 2) return [];
 
     try {
-      final response = await _supabase
-          .rpc('search_locations', params: {
-            'search_term': query,
-            'limit_count': 10
-          });
+      final response = await _supabase.rpc(
+        'search_locations',
+        params: {
+          'search_term': q,
+          'limit_count': 10,
+        },
+      );
 
       if (response == null) return [];
 
-      return (response as List)
-          .map((location) => LocationResult.fromJson(location))
+      final list = _asList(response);
+
+      return list
+          .map((e) => LocationResult.fromJson(Map<String, dynamic>.from(e)))
           .toList();
     } catch (e) {
-      print('Error searching locations: $e');
+      debugPrint('searchLocations error: $e');
       return [];
     }
   }
-  Future<LocationResult?> findNearestLocation(double latitude, double longitude) async {
+
+  // ------------------------------------------------------------
+  // Find nearest location (RPC)
+  // RPC: find_nearest_location_simple(user_lat, user_lng)
+  // ------------------------------------------------------------
+  Future<LocationResult?> findNearestLocation(
+    double latitude,
+    double longitude,
+  ) async {
     try {
       final response = await _supabase.rpc(
-        'find_nearest_location_simple', // Use the simple version
+        'find_nearest_location_simple',
         params: {
           'user_lat': latitude,
           'user_lng': longitude,
         },
       );
 
-      if (response == null || (response as List).isEmpty) {
-        return null;
-      }
+      if (response == null) return null;
 
-      final location = response[0];
-      
-      // If the nearest location is more than 5km away, 
-      // return a generic "Near [location]" response
-      final distanceKm = location['distance_km'] ?? 0;
-      
+      final list = _asList(response);
+      if (list.isEmpty) return null;
+
+      final location = Map<String, dynamic>.from(list.first);
+
+      final distanceKm = _toDouble(location['distance_km']);
+
+      // If nearest location is far, show "Near ..."
       if (distanceKm > 5) {
         return LocationResult(
-          id: location['id'],
-          city: location['city'],
-          state: location['state'],
-          latitude: latitude, // Use user's actual coordinates
+          id: (location['id'] ?? '').toString(),
+          city: (location['city'] ?? '').toString(),
+          state: (location['state'] ?? '').toString(),
+          latitude: latitude,
           longitude: longitude,
-          displayName: 'Near ${location['name']}, ${location['city']}',
-        );
-      } else {
-        // If within 5km, use the actual location
-        return LocationResult(
-          id: location['id'],
-          city: location['city'],
-          state: location['state'],
-          latitude: location['latitude'],
-          longitude: location['longitude'],
-          displayName: location['display_name'],
+          displayName:
+              'Near ${(location['name'] ?? '').toString()}, ${(location['city'] ?? '').toString()}',
         );
       }
+
+      return LocationResult(
+        id: (location['id'] ?? '').toString(),
+        city: (location['city'] ?? '').toString(),
+        state: (location['state'] ?? '').toString(),
+        latitude: _toDouble(location['latitude']),
+        longitude: _toDouble(location['longitude']),
+        displayName: (location['display_name'] ??
+                '${location['city'] ?? ''}, ${location['state'] ?? ''}')
+            .toString(),
+      );
     } catch (e) {
-      print('Error finding nearest location: $e');
+      debugPrint('findNearestLocation error: $e');
       return null;
     }
   }
 
-  // Get all locations for a specific state
+  // ------------------------------------------------------------
+  // Get locations by state (Table query)
+  // ------------------------------------------------------------
   Future<List<LocationResult>> getLocationsByState(String state) async {
+    final s = state.trim();
+    if (s.isEmpty) return [];
+
     try {
       final response = await _supabase
           .from('locations')
           .select('*')
-          .eq('state', state)
+          .eq('state', s)
           .order('popularity', ascending: false)
           .limit(20);
 
-      return (response as List)
-          .map((location) => LocationResult.fromJson(location))
+      final list = _asList(response);
+
+      return list
+          .map((e) => LocationResult.fromJson(Map<String, dynamic>.from(e)))
           .toList();
     } catch (e) {
-      print('Error fetching locations by state: $e');
+      debugPrint('getLocationsByState error: $e');
       return [];
     }
+  }
+
+  // ------------------------------------------------------------
+  // Helpers
+  // ------------------------------------------------------------
+  List<dynamic> _asList(dynamic response) {
+    if (response is List) return response;
+    if (response is Map) return [response];
+    return [];
+  }
+
+  double _toDouble(dynamic v) {
+    if (v == null) return 0.0;
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    return double.tryParse(v.toString()) ?? 0.0;
   }
 }
 
@@ -112,12 +152,21 @@ class LocationResult {
 
   factory LocationResult.fromJson(Map<String, dynamic> json) {
     return LocationResult(
-      id: json['id'],
-      city: json['city'],
-      state: json['state'],
-      latitude: (json['latitude'] as num).toDouble(),
-      longitude: (json['longitude'] as num).toDouble(),
-      displayName: json['display_name'] ?? '${json['city']}, ${json['state']}',
+      id: (json['id'] ?? '').toString(),
+      city: (json['city'] ?? '').toString(),
+      state: (json['state'] ?? '').toString(),
+      latitude: _toDoubleStatic(json['latitude']),
+      longitude: _toDoubleStatic(json['longitude']),
+      displayName: (json['display_name'] ??
+              '${json['city'] ?? ''}, ${json['state'] ?? ''}')
+          .toString(),
     );
+  }
+
+  static double _toDoubleStatic(dynamic v) {
+    if (v == null) return 0.0;
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    return double.tryParse(v.toString()) ?? 0.0;
   }
 }
