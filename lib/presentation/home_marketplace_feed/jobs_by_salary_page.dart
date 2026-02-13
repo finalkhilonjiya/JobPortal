@@ -7,7 +7,14 @@ import '../common/widgets/cards/job_card_widget.dart';
 import '../common/widgets/pages/job_details_page.dart';
 
 class JobsBySalaryPage extends StatefulWidget {
-  const JobsBySalaryPage({Key? key}) : super(key: key);
+  /// If provided, page will show jobs with salary >= this value
+  /// Otherwise it will auto-load from user_profiles.expected_salary_min
+  final int? minMonthlySalary;
+
+  const JobsBySalaryPage({
+    Key? key,
+    this.minMonthlySalary,
+  }) : super(key: key);
 
   @override
   State<JobsBySalaryPage> createState() => _JobsBySalaryPageState();
@@ -39,25 +46,34 @@ class _JobsBySalaryPageState extends State<JobsBySalaryPage> {
   Future<void> _load() async {
     if (!_disposed) setState(() => _loading = true);
 
+    // 1) saved jobs
     try {
-      // saved jobs (for bookmark state)
       _savedJobIds = await _homeService.getUserSavedJobs();
     } catch (_) {
       _savedJobIds = {};
     }
 
-    try {
-      _expectedSalary = await _homeService.getExpectedSalaryPerMonth();
-    } catch (_) {
-      _expectedSalary = 0;
+    // 2) salary source:
+    //    - if passed from Home -> use it
+    //    - else load from profile
+    if (widget.minMonthlySalary != null && widget.minMonthlySalary! > 0) {
+      _expectedSalary = widget.minMonthlySalary!;
+    } else {
+      try {
+        _expectedSalary = await _homeService.getExpectedSalaryPerMonth();
+      } catch (_) {
+        _expectedSalary = 0;
+      }
     }
 
+    // 3) if salary not set -> no jobs
     if (_expectedSalary <= 0) {
       _jobs = [];
       if (!_disposed) setState(() => _loading = false);
       return;
     }
 
+    // 4) fetch jobs
     try {
       _jobs = await _homeService.fetchJobsByMinSalaryMonthly(
         minMonthlySalary: _expectedSalary,
@@ -120,7 +136,7 @@ class _JobsBySalaryPageState extends State<JobsBySalaryPage> {
   }
 
   // ------------------------------------------------------------
-  // EDIT SALARY
+  // EDIT SALARY (updates profile + refresh)
   // ------------------------------------------------------------
   Future<void> _editExpectedSalary() async {
     final ctrl = TextEditingController(
@@ -231,7 +247,10 @@ class _JobsBySalaryPageState extends State<JobsBySalaryPage> {
 
     try {
       await _homeService.updateExpectedSalaryPerMonth(clean);
-      _expectedSalary = clean;
+
+      if (_disposed) return;
+
+      setState(() => _expectedSalary = clean);
       await _load();
     } catch (_) {
       if (!mounted) return;
