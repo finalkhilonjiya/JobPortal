@@ -4,7 +4,7 @@ import '../core/auth/user_role.dart';
 import '../routes/app_routes.dart';
 import '../services/mobile_auth_service.dart';
 
-import '../presentation/home_marketplace_feed/home_jobs_feed.dart';
+import '../presentation/home_marketplace_feed/job_seeker_main_shell.dart';
 import '../presentation/company/dashboard/company_dashboard.dart';
 
 class HomeRouter extends StatefulWidget {
@@ -71,7 +71,8 @@ class _HomeRouterState extends State<HomeRouter> {
           return const CompanyDashboard();
         }
 
-        return const HomeJobsFeed();
+        // ✅ Job seeker must go into Bottom Navigation shell
+        return const JobSeekerMainShell();
       },
     );
   }
