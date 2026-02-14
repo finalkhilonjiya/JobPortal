@@ -403,6 +403,57 @@ class JobSeekerHomeService {
   }
 
   // ============================================================
+  // APPLIED JOBS (MY JOBS PAGE)
+  // ============================================================
+
+  Future<List<Map<String, dynamic>>> fetchAppliedJobs({
+    int limit = 80,
+  }) async {
+    _ensureAuthenticatedSync();
+
+    final userId = _userId();
+    final nowIso = DateTime.now().toIso8601String();
+
+    final res = await _db
+        .from('job_applications_listings')
+        .select('''
+          applied_at,
+          application_status,
+          listing_id,
+          job_listings($_jobWithCompanySelect)
+        ''')
+        .eq('user_id', userId)
+        .order('applied_at', ascending: false)
+        .limit(limit);
+
+    final rows = List<Map<String, dynamic>>.from(res);
+
+    final jobs = <Map<String, dynamic>>[];
+
+    for (final r in rows) {
+      final j = r['job_listings'];
+      if (j == null) continue;
+
+      final job = Map<String, dynamic>.from(j);
+
+      // Attach application info for UI
+      job['applied_at'] = r['applied_at'];
+      job['application_status'] = r['application_status'];
+
+      // Only show valid jobs
+      final status = (job['status'] ?? '').toString();
+      final expiresAt = (job['expires_at'] ?? '').toString();
+
+      if (status != 'active') continue;
+      if (expiresAt.isNotEmpty && expiresAt.compareTo(nowIso) < 0) continue;
+
+      jobs.add(job);
+    }
+
+    return jobs;
+  }
+
+  // ============================================================
   // HOME SUMMARY
   // ============================================================
 
