@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../common/widgets/khilonjiya_bottom_nav.dart';
+import 'widgets/khilonjiya_bottom_nav.dart';
 
 import 'home_jobs_feed.dart';
 import 'my_jobs_page.dart';
@@ -19,12 +19,12 @@ class _JobSeekerMainShellState extends State<JobSeekerMainShell> {
   int _index = 0;
 
   // Keep pages alive (world-class UX)
-  late final List<Widget> _pages = [
-    const HomeJobsFeed(), // Home
-    const MyJobsPage(), // My Jobs
-    const MessagesPage(), // Messages
-    const SavedJobsPage(), // Saved
-    const ProfilePage(), // Profile
+  late final List<Widget> _pages = const [
+    HomeJobsFeed(), // Home
+    MyJobsPage(), // My Jobs
+    MessagesPage(), // Messages
+    SavedJobsPage(), // Saved
+    ProfilePage(), // Profile
   ];
 
   void _onTap(int i) {
