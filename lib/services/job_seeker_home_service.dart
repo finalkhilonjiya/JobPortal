@@ -23,6 +23,27 @@ class JobSeekerHomeService {
   }
 
   // ============================================================
+  // COMMON SELECT (Job + Company)
+  // ============================================================
+
+  String get _jobWithCompanySelect => '''
+    *,
+    companies (
+      id,
+      name,
+      slug,
+      logo_url,
+      industry,
+      is_verified,
+      rating,
+      total_reviews,
+      company_size,
+      description,
+      website
+    )
+  ''';
+
+  // ============================================================
   // JOB FEED (BASE)
   // ============================================================
 
@@ -36,21 +57,7 @@ class JobSeekerHomeService {
 
     final res = await _db
         .from('job_listings')
-        .select('''
-          *,
-          companies (
-            id,
-            name,
-            slug,
-            logo_url,
-            industry,
-            is_verified,
-            rating,
-            total_reviews,
-            company_size,
-            description
-          )
-        ''')
+        .select(_jobWithCompanySelect)
         .eq('status', 'active')
         .gte('expires_at', nowIso)
         .order('created_at', ascending: false)
@@ -66,7 +73,6 @@ class JobSeekerHomeService {
   Future<List<Map<String, dynamic>>> fetchLatestJobs({
     int limit = 40,
   }) async {
-    // Latest = newest created_at
     return fetchJobs(limit: limit);
   }
 
@@ -77,7 +83,11 @@ class JobSeekerHomeService {
   Future<List<Map<String, dynamic>>> fetchJobsNearby({
     int limit = 40,
   }) async {
-    // REAL nearby requires location + PostGIS distance query.
+    // NOTE:
+    // Real nearby needs:
+    // - user location saved in profile (lat/lng)
+    // - PostGIS + RPC function for distance
+    //
     // For now fallback so UI works.
     return fetchJobs(limit: limit);
   }
@@ -95,21 +105,7 @@ class JobSeekerHomeService {
 
     final res = await _db
         .from('job_listings')
-        .select('''
-          *,
-          companies (
-            id,
-            name,
-            slug,
-            logo_url,
-            industry,
-            is_verified,
-            rating,
-            total_reviews,
-            company_size,
-            description
-          )
-        ''')
+        .select(_jobWithCompanySelect)
         .eq('status', 'active')
         .eq('is_premium', true)
         .gte('expires_at', nowIso)
@@ -120,7 +116,7 @@ class JobSeekerHomeService {
   }
 
   // ============================================================
-  // REAL RECOMMENDED JOBS (job_recommendations table)
+  // RECOMMENDED JOBS (job_recommendations table)
   // ============================================================
 
   Future<List<Map<String, dynamic>>> getRecommendedJobs({
@@ -149,21 +145,7 @@ class JobSeekerHomeService {
 
       final jobs = await _db
           .from('job_listings')
-          .select('''
-            *,
-            companies (
-              id,
-              name,
-              slug,
-              logo_url,
-              industry,
-              is_verified,
-              rating,
-              total_reviews,
-              company_size,
-              description
-            )
-          ''')
+          .select(_jobWithCompanySelect)
           .inFilter('id', ids)
           .eq('status', 'active')
           .gte('expires_at', nowIso)
@@ -171,6 +153,7 @@ class JobSeekerHomeService {
 
       final list = List<Map<String, dynamic>>.from(jobs);
 
+      // attach match_score
       final scoreMap = <String, int>{};
       for (final r in recList) {
         final id = r['job_id'].toString();
@@ -184,6 +167,7 @@ class JobSeekerHomeService {
         j['match_score'] = scoreMap[id] ?? 0;
       }
 
+      // sort
       list.sort((a, b) {
         final sa = (a['match_score'] ?? 0) as int;
         final sb = (b['match_score'] ?? 0) as int;
@@ -255,20 +239,7 @@ class JobSeekerHomeService {
 
       final res = await _db
           .from('job_listings')
-          .select('''
-            *,
-            companies (
-              id,
-              name,
-              slug,
-              logo_url,
-              industry,
-              is_verified,
-              rating,
-              total_reviews,
-              company_size
-            )
-          ''')
+          .select(_jobWithCompanySelect)
           .eq('status', 'active')
           .gte('expires_at', nowIso)
           .neq('id', jobId)
@@ -314,19 +285,7 @@ class JobSeekerHomeService {
 
     final res = await _db
         .from('job_listings')
-        .select('''
-          *,
-          companies (
-            id,
-            name,
-            slug,
-            logo_url,
-            industry,
-            is_verified,
-            rating,
-            total_reviews
-          )
-        ''')
+        .select(_jobWithCompanySelect)
         .eq('status', 'active')
         .gte('expires_at', nowIso)
         .eq('salary_period', 'Monthly')
@@ -360,12 +319,17 @@ class JobSeekerHomeService {
     final res = await _db
         .from('saved_jobs')
         .select(
-          'job_listings(*, companies(id,name,logo_url,is_verified,rating,total_reviews))',
+          'job_listings($_jobWithCompanySelect)',
         )
         .eq('user_id', userId)
         .order('saved_at', ascending: false);
 
-    return res.map<Map<String, dynamic>>((e) => e['job_listings']).toList();
+    // each row = { job_listings: {...} }
+    return res.map<Map<String, dynamic>>((e) {
+      final j = e['job_listings'];
+      if (j is Map<String, dynamic>) return j;
+      return Map<String, dynamic>.from(j);
+    }).toList();
   }
 
   Future<bool> toggleSaveJob(String jobId) async {
@@ -387,11 +351,12 @@ class JobSeekerHomeService {
           .eq('user_id', userId)
           .eq('job_id', jobId);
 
+      // activity log: UNSAVED
       try {
         await _db.from('user_job_activity').insert({
           'user_id': userId,
           'job_id': jobId,
-          'activity_type': 'saved',
+          'activity_type': 'unsaved',
           'activity_date': DateTime.now().toIso8601String(),
         });
       } catch (_) {}
@@ -405,6 +370,7 @@ class JobSeekerHomeService {
       'saved_at': DateTime.now().toIso8601String(),
     });
 
+    // activity log: SAVED
     try {
       await _db.from('user_job_activity').insert({
         'user_id': userId,
@@ -552,6 +518,98 @@ class JobSeekerHomeService {
       'expected_salary_max': max,
       'last_profile_update': DateTime.now().toIso8601String(),
     }).eq('id', userId);
+  }
+
+  // ============================================================
+  // PROFILE (EDIT PAGE)
+  // ============================================================
+
+  Future<Map<String, dynamic>> fetchMyProfile() async {
+    _ensureAuthenticatedSync();
+    final userId = _userId();
+
+    final res = await _db
+        .from('user_profiles')
+        .select('''
+          id,
+          full_name,
+          phone,
+          current_city,
+          current_state,
+          location_text,
+          bio,
+          skills,
+          highest_education,
+          total_experience_years,
+          expected_salary_min,
+          expected_salary_max,
+          notice_period_days,
+          preferred_job_type,
+          preferred_employment_type,
+          profile_completion_percentage,
+          last_profile_update
+        ''')
+        .eq('id', userId)
+        .maybeSingle();
+
+    if (res == null) return {};
+    return Map<String, dynamic>.from(res);
+  }
+
+  Future<void> updateMyProfile(Map<String, dynamic> payload) async {
+    _ensureAuthenticatedSync();
+    final userId = _userId();
+
+    final completion = _calculateProfileCompletion(payload);
+
+    await _db.from('user_profiles').update({
+      ...payload,
+      'profile_completion_percentage': completion,
+      'last_profile_update': DateTime.now().toIso8601String(),
+    }).eq('id', userId);
+  }
+
+  int _calculateProfileCompletion(Map<String, dynamic> p) {
+    // 10 key fields => 100%
+    final fields = [
+      'full_name',
+      'phone',
+      'current_city',
+      'current_state',
+      'highest_education',
+      'total_experience_years',
+      'expected_salary_min',
+      'skills',
+      'bio',
+      'preferred_job_type',
+    ];
+
+    int filled = 0;
+
+    for (final f in fields) {
+      final v = p[f];
+
+      bool ok = false;
+
+      if (v == null) {
+        ok = false;
+      } else if (v is String) {
+        ok = v.trim().isNotEmpty;
+      } else if (v is int) {
+        ok = v > 0;
+      } else if (v is double) {
+        ok = v > 0;
+      } else if (v is List) {
+        ok = v.isNotEmpty;
+      } else {
+        ok = v.toString().trim().isNotEmpty;
+      }
+
+      if (ok) filled++;
+    }
+
+    final pct = ((filled / fields.length) * 100).round();
+    return pct.clamp(0, 100);
   }
 
   // ============================================================
