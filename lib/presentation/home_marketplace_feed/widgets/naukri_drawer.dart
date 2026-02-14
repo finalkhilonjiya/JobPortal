@@ -4,7 +4,12 @@ import '../../../core/ui/khilonjiya_ui.dart';
 import '../../../routes/app_routes.dart';
 import '../../../services/mobile_auth_service.dart';
 
-import '../search_page.dart';
+// Existing pages (your folder)
+import '../job_search_page.dart';
+import '../recommended_jobs_page.dart';
+import '../saved_jobs_page.dart';
+import '../profile_performance_page.dart';
+import '../profile_edit_page.dart';
 
 class NaukriDrawer extends StatelessWidget {
   final String userName;
@@ -17,6 +22,18 @@ class NaukriDrawer extends StatelessWidget {
     required this.profileCompletion,
     required this.onClose,
   }) : super(key: key);
+
+  // ------------------------------------------------------------
+  // NAV HELPERS
+  // ------------------------------------------------------------
+  void _closeDrawer(BuildContext context) {
+    Navigator.pop(context);
+  }
+
+  void _openPage(BuildContext context, Widget page) {
+    _closeDrawer(context);
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+  }
 
   Future<void> _logout(BuildContext context) async {
     try {
@@ -31,21 +48,37 @@ class NaukriDrawer extends StatelessWidget {
     );
   }
 
-  void _goNamed(BuildContext context, String route) {
-    Navigator.pop(context); // close drawer
-    Navigator.pushNamed(context, route);
+  // ------------------------------------------------------------
+  // HEADER ACTIONS
+  // ------------------------------------------------------------
+  void _openUpdateProfile(BuildContext context) {
+    _openPage(context, const ProfileEditPage());
   }
 
-  void _openSearch(BuildContext context) {
-    Navigator.pop(context); // close drawer
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => SearchPage()),
+  void _openUpgrade(BuildContext context) {
+    // TODO: Later (Pro page)
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Khilonjiya Pro coming soon")),
     );
   }
 
-  void _openUpdateProfile(BuildContext context) {
-    _goNamed(context, AppRoutes.profileEdit);
+  // ------------------------------------------------------------
+  // MENU ACTIONS
+  // ------------------------------------------------------------
+  void _openSearch(BuildContext context) {
+    _openPage(context, const JobSearchPage());
+  }
+
+  void _openRecommended(BuildContext context) {
+    _openPage(context, const RecommendedJobsPage());
+  }
+
+  void _openSaved(BuildContext context) {
+    _openPage(context, const SavedJobsPage());
+  }
+
+  void _openProfilePerformance(BuildContext context) {
+    _openPage(context, const ProfilePerformancePage());
   }
 
   @override
@@ -100,7 +133,7 @@ class NaukriDrawer extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
 
-                      // Name + Update profile (clickable)
+                      // Name + Update profile
                       Expanded(
                         child: InkWell(
                           onTap: () => _openUpdateProfile(context),
@@ -138,47 +171,51 @@ class NaukriDrawer extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
 
-                  // Upgrade card (UI only)
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFEFF6FF), Color(0xFFF5F3FF)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: KhilonjiyaUI.r16,
-                      border: Border.all(color: const Color(0xFFDBEAFE)),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: KhilonjiyaUI.border),
-                          ),
-                          child: const Icon(
-                            Icons.workspace_premium_outlined,
-                            color: KhilonjiyaUI.primary,
-                          ),
+                  // Upgrade card
+                  InkWell(
+                    onTap: () => _openUpgrade(context),
+                    borderRadius: KhilonjiyaUI.r16,
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFEFF6FF), Color(0xFFF5F3FF)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            "Upgrade to Khilonjiya Pro",
-                            style: KhilonjiyaUI.body.copyWith(
-                              fontWeight: FontWeight.w800,
+                        borderRadius: KhilonjiyaUI.r16,
+                        border: Border.all(color: const Color(0xFFDBEAFE)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: KhilonjiyaUI.border),
+                            ),
+                            child: const Icon(
+                              Icons.workspace_premium_outlined,
+                              color: KhilonjiyaUI.primary,
                             ),
                           ),
-                        ),
-                        const Icon(
-                          Icons.chevron_right,
-                          color: KhilonjiyaUI.muted,
-                        ),
-                      ],
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              "Upgrade to Khilonjiya Pro",
+                              style: KhilonjiyaUI.body.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          const Icon(
+                            Icons.chevron_right,
+                            color: KhilonjiyaUI.muted,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -192,7 +229,7 @@ class NaukriDrawer extends StatelessWidget {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
 
                   _menuItem(
                     context,
@@ -205,31 +242,31 @@ class NaukriDrawer extends StatelessWidget {
                     context,
                     icon: Icons.star_outline,
                     title: "Recommended jobs",
-                    onTap: () => _goNamed(context, AppRoutes.recommendedJobs),
+                    onTap: () => _openRecommended(context),
                   ),
 
                   _menuItem(
                     context,
                     icon: Icons.bookmark_outline,
                     title: "Saved jobs",
-                    onTap: () => _goNamed(context, AppRoutes.savedJobs),
+                    onTap: () => _openSaved(context),
                   ),
 
                   _menuItem(
                     context,
                     icon: Icons.person_outline,
                     title: "Profile performance",
-                    onTap: () => _goNamed(context, AppRoutes.profilePerformance),
+                    onTap: () => _openProfilePerformance(context),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
 
                   Container(
                     height: 10,
                     color: const Color(0xFFF7F8FA),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
 
                   // ------------------------------------------------------------
                   // LOGOUT
@@ -250,7 +287,7 @@ class NaukriDrawer extends StatelessWidget {
             ),
 
             // ------------------------------------------------------------
-            // FEEDBACK STRIP
+            // FEEDBACK STRIP (UI only)
             // ------------------------------------------------------------
             Container(
               padding: const EdgeInsets.all(16),
