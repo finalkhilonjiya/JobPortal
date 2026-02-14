@@ -10,6 +10,7 @@ import '../presentation/home_marketplace_feed/home_jobs_feed.dart';
 import '../presentation/home_marketplace_feed/saved_jobs_page.dart';
 import '../presentation/home_marketplace_feed/recommended_jobs_page.dart';
 import '../presentation/home_marketplace_feed/profile_performance_page.dart';
+import '../presentation/home_marketplace_feed/profile_edit_page.dart';
 
 import '../presentation/company/dashboard/company_dashboard.dart';
 import '../presentation/company/jobs/create_job_screen.dart';
@@ -52,6 +53,9 @@ class AppRoutes {
   static const String recommendedJobs = '/recommended-jobs';
   static const String profilePerformance = '/profile-performance';
 
+  // NEW
+  static const String profileEdit = '/profile-edit';
+
   // ------------------------------------------------------------
   // EMPLOYER
   // ------------------------------------------------------------
@@ -84,6 +88,9 @@ class AppRoutes {
     savedJobs: (_) => const SavedJobsPage(),
     recommendedJobs: (_) => const RecommendedJobsPage(),
     profilePerformance: (_) => const ProfilePerformancePage(),
+
+    // NEW
+    profileEdit: (_) => const ProfileEditPage(),
 
     // Employer
     companyDashboard: (_) => const CompanyDashboard(),
