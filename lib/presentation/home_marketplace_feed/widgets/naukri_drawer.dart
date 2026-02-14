@@ -45,9 +45,7 @@ class NaukriDrawer extends StatelessWidget {
   }
 
   void _openUpdateProfile(BuildContext context) {
-    // You still don't have a profile edit page route in AppRoutes.
-    // So for now it opens profile performance (best available).
-    _goNamed(context, AppRoutes.profilePerformance);
+    _goNamed(context, AppRoutes.profileEdit);
   }
 
   @override
@@ -102,7 +100,7 @@ class NaukriDrawer extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
 
-                      // Name + Update profile
+                      // Name + Update profile (clickable)
                       Expanded(
                         child: InkWell(
                           onTap: () => _openUpdateProfile(context),
@@ -140,7 +138,7 @@ class NaukriDrawer extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
 
-                  // Upgrade card (UI only for now)
+                  // Upgrade card (UI only)
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
@@ -194,7 +192,7 @@ class NaukriDrawer extends StatelessWidget {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
 
                   _menuItem(
                     context,
@@ -224,18 +222,14 @@ class NaukriDrawer extends StatelessWidget {
                     onTap: () => _goNamed(context, AppRoutes.profilePerformance),
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
 
                   Container(
                     height: 10,
                     color: const Color(0xFFF7F8FA),
                   ),
 
-                  const SizedBox(height: 8),
-
-                  // Settings not available in AppRoutes yet, so removed.
-
-                  // Blog not available in AppRoutes yet, so removed.
+                  const SizedBox(height: 12),
 
                   // ------------------------------------------------------------
                   // LOGOUT
