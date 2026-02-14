@@ -35,7 +35,7 @@ class KhilonjiyaBottomNav extends StatelessWidget {
             label: "Home",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.work_outline_rounded),
+            icon: Icon(Icons.work_outline),
             activeIcon: Icon(Icons.work_rounded),
             label: "My Jobs",
           ),
