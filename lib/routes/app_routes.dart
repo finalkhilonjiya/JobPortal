@@ -6,15 +6,11 @@ import '../presentation/auth/employer_login_screen.dart';
 
 import 'home_router.dart';
 
-// JOB SEEKER PAGES
-import '../presentation/home_marketplace_feed/home_jobs_feed.dart';
-import '../presentation/home_marketplace_feed/saved_jobs_page.dart';
-import '../presentation/home_marketplace_feed/recommended_jobs_page.dart';
-import '../presentation/home_marketplace_feed/profile_performance_page.dart';
-import '../presentation/home_marketplace_feed/profile_edit_page.dart';
-
-// ✅ MAIN SHELL (BOTTOM NAV)
+// JOB SEEKER MAIN SHELL (BOTTOM NAV)
 import '../presentation/home_marketplace_feed/job_seeker_main_shell.dart';
+
+// PROFILE EDIT (PUSH PAGE)
+import '../presentation/home_marketplace_feed/profile_edit_page.dart';
 
 // EMPLOYER
 import '../presentation/company/dashboard/company_dashboard.dart';
@@ -42,23 +38,12 @@ class AppRoutes {
   // ------------------------------------------------------------
   // POST LOGIN (ROLE BASED)
   // ------------------------------------------------------------
-  /// IMPORTANT:
-  /// Many files already use AppRoutes.home.
-  /// So we keep this as the official home route.
   static const String home = '/home';
 
-  /// Backward compatible alias (optional)
-  static const String homeJobsFeed = home;
-
   // ------------------------------------------------------------
-  // JOB SEEKER (DIRECT ROUTES)
+  // JOB SEEKER
   // ------------------------------------------------------------
   static const String jobSeekerHome = '/job-seeker-home';
-  static const String savedJobs = '/saved-jobs';
-  static const String recommendedJobs = '/recommended-jobs';
-  static const String profilePerformance = '/profile-performance';
-
-  // NEW
   static const String profileEdit = '/profile-edit';
 
   // ------------------------------------------------------------
@@ -85,29 +70,16 @@ class AppRoutes {
     jobSeekerLogin: (_) => const JobSeekerLoginScreen(),
     employerLogin: (_) => const EmployerLoginScreen(),
 
-    // Role-based router (final truth)
+    // Role based router (final truth)
     home: (_) => const HomeRouter(),
 
-    // ------------------------------------------------------------
-    // JOB SEEKER
-    // ------------------------------------------------------------
-
-    /// ✅ IMPORTANT CHANGE:
-    /// This must open the bottom navigation shell.
-    /// The shell internally loads HomeJobsFeed as Tab 1.
+    // Job seeker shell
     jobSeekerHome: (_) => const JobSeekerMainShell(),
-
-    /// Keep direct routes also (drawer uses these)
-    savedJobs: (_) => const SavedJobsPage(),
-    recommendedJobs: (_) => const RecommendedJobsPage(),
-    profilePerformance: (_) => const ProfilePerformancePage(),
 
     // Profile edit
     profileEdit: (_) => const ProfileEditPage(),
 
-    // ------------------------------------------------------------
-    // EMPLOYER
-    // ------------------------------------------------------------
+    // Employer
     companyDashboard: (_) => const CompanyDashboard(),
     employerJobs: (_) => const EmployerJobListScreen(),
     createJob: (_) => const CreateJobScreen(),
