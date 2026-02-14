@@ -19,7 +19,6 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _disposed = false;
 
   Map<String, dynamic> _profile = {};
-  int _expectedSalary = 0;
 
   @override
   void initState() {
@@ -33,30 +32,34 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
+  // ============================================================
+  // LOAD
+  // ============================================================
+
   Future<void> _load() async {
     if (!_disposed) setState(() => _loading = true);
 
     try {
-      // NOTE:
-      // We use getHomeProfileSummary for basic.
-      // Then we fetch extra profile fields from Supabase directly inside service later if needed.
-      // For now, we keep it stable and production-safe.
-
-      final summary = await _service.getHomeProfileSummary();
-      _expectedSalary = await _service.getExpectedSalaryPerMonth();
-
-      _profile = {
-        "full_name": summary["profileName"] ?? "Your Profile",
-        "profile_completion_percentage": summary["profileCompletion"] ?? 0,
-        "last_profile_update": summary["lastUpdatedText"] ?? "Updated recently",
-      };
+      final p = await _service.fetchMyProfile();
+      _profile = p;
     } catch (_) {
       _profile = {};
-      _expectedSalary = 0;
     }
 
     if (_disposed) return;
     setState(() => _loading = false);
+  }
+
+  // ============================================================
+  // HELPERS
+  // ============================================================
+
+  String _s(dynamic v) => (v ?? '').toString().trim();
+
+  int _i(dynamic v) {
+    if (v == null) return 0;
+    if (v is int) return v;
+    return int.tryParse(v.toString()) ?? 0;
   }
 
   String _salaryText(int v) {
@@ -66,21 +69,82 @@ class _ProfilePageState extends State<ProfilePage> {
     return "₹$v / month";
   }
 
+  String _experienceText(int years) {
+    if (years <= 0) return "Fresher";
+    if (years == 1) return "1 year";
+    return "$years years";
+  }
+
+  String _skillsText(dynamic skills) {
+    if (skills == null) return "Not set";
+    if (skills is List) {
+      final list = skills.map((e) => e.toString().trim()).where((e) => e.isNotEmpty).toList();
+      if (list.isEmpty) return "Not set";
+      if (list.length <= 3) return list.join(", ");
+      return "${list.take(3).join(", ")} +${list.length - 3} more";
+    }
+    final s = skills.toString().trim();
+    return s.isEmpty ? "Not set" : s;
+  }
+
+  String _locationText() {
+    final city = _s(_profile['current_city']);
+    final state = _s(_profile['current_state']);
+    final locText = _s(_profile['location_text']);
+
+    if (city.isNotEmpty && state.isNotEmpty) return "$city, $state";
+    if (city.isNotEmpty) return city;
+    if (state.isNotEmpty) return state;
+    if (locText.isNotEmpty) return locText;
+
+    return "Not set";
+  }
+
+  String _lastUpdatedText() {
+    // fetchMyProfile returns raw last_profile_update (iso)
+    // but we do not have the formatter here.
+    // So we keep it clean.
+    final raw = _s(_profile['last_profile_update']);
+    if (raw.isEmpty) return "Updated recently";
+
+    final d = DateTime.tryParse(raw);
+    if (d == null) return "Updated recently";
+
+    final diff = DateTime.now().difference(d);
+
+    if (diff.inMinutes < 60) return "Updated just now";
+    if (diff.inHours < 24) return "Updated today";
+    if (diff.inDays == 1) return "Updated 1d ago";
+    if (diff.inDays < 7) return "Updated ${diff.inDays}d ago";
+    if (diff.inDays < 30) return "Updated ${(diff.inDays / 7).floor()}w ago";
+
+    return "Updated ${(diff.inDays / 30).floor()}mo ago";
+  }
+
+  // ============================================================
+  // NAV
+  // ============================================================
+
   Future<void> _openEdit() async {
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const ProfileEditPage()),
     );
 
-    // refresh after edit
     await _load();
   }
+
+  // ============================================================
+  // UI PARTS
+  // ============================================================
 
   Widget _infoTile({
     required IconData icon,
     required String title,
     required String value,
   }) {
+    final v = value.trim().isEmpty ? "—" : value.trim();
+
     return Container(
       decoration: KhilonjiyaUI.cardDecoration(radius: 18),
       padding: const EdgeInsets.all(14),
@@ -104,7 +168,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 Text(title, style: KhilonjiyaUI.caption),
                 const SizedBox(height: 4),
                 Text(
-                  value.trim().isEmpty ? "—" : value,
+                  v,
                   style: KhilonjiyaUI.body.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -118,16 +182,12 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _profileHeader() {
-    final name = (_profile["full_name"] ?? "Your Profile").toString();
-    final completion =
-        int.tryParse((_profile["profile_completion_percentage"] ?? 0).toString())
-                ?.clamp(0, 100) ??
-            0;
-
-    final lastUpdate = (_profile["last_profile_update"] ?? "Updated recently")
-        .toString();
-
+    final fullName = _s(_profile["full_name"]);
+    final completion = _i(_profile["profile_completion_percentage"]).clamp(0, 100);
     final value = completion / 100;
+
+    final name = fullName.isEmpty ? "Your Profile" : fullName;
+    final lastUpdate = _lastUpdatedText();
 
     return Container(
       decoration: KhilonjiyaUI.cardDecoration(radius: 22),
@@ -185,8 +245,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const SizedBox(height: 10),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(999),
@@ -202,6 +261,73 @@ class _ProfilePageState extends State<ProfilePage> {
                       color: completion >= 100
                           ? const Color(0xFF16A34A)
                           : const Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _profileTipsCard() {
+    final bio = _s(_profile['bio']);
+    final skills = _skillsText(_profile['skills']);
+    final exp = _i(_profile['total_experience_years']);
+    final edu = _s(_profile['highest_education']);
+    final salary = _i(_profile['expected_salary_min']);
+
+    final missing = <String>[];
+
+    if (bio.isEmpty) missing.add("Bio");
+    if (skills == "Not set") missing.add("Skills");
+    if (edu.isEmpty) missing.add("Education");
+    if (salary <= 0) missing.add("Expected salary");
+
+    final headline = missing.isEmpty
+        ? "Your profile looks strong"
+        : "Improve your profile score";
+
+    final sub = missing.isEmpty
+        ? "Employers are more likely to shortlist complete profiles."
+        : "Add ${missing.take(3).join(", ")} to get better job matches.";
+
+    return Container(
+      decoration: KhilonjiyaUI.cardDecoration(radius: 22),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(headline, style: KhilonjiyaUI.hTitle),
+          const SizedBox(height: 6),
+          Text(sub, style: KhilonjiyaUI.sub),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: KhilonjiyaUI.border),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  missing.isEmpty ? Icons.verified_outlined : Icons.auto_awesome_rounded,
+                  color: missing.isEmpty ? const Color(0xFF16A34A) : KhilonjiyaUI.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    missing.isEmpty
+                        ? "You’re ready for better recommendations."
+                        : "Tip: Completing profile increases shortlisting chances.",
+                    style: KhilonjiyaUI.body.copyWith(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 13.2,
                     ),
                   ),
                 ),
@@ -246,6 +372,18 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _body() {
+    final salary = _i(_profile['expected_salary_min']);
+    final expYears = _i(_profile['total_experience_years']);
+    final edu = _s(_profile['highest_education']);
+    final jobType = _s(_profile['preferred_job_type']);
+    final employmentType = _s(_profile['preferred_employment_type']);
+    final notice = _i(_profile['notice_period_days']);
+
+    final prefs = <String>[];
+    if (jobType.isNotEmpty) prefs.add(jobType);
+    if (employmentType.isNotEmpty) prefs.add(employmentType);
+    if (notice > 0) prefs.add("$notice days notice");
+
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
@@ -263,82 +401,62 @@ class _ProfilePageState extends State<ProfilePage> {
           _infoTile(
             icon: Icons.currency_rupee_rounded,
             title: "Expected salary",
-            value: _salaryText(_expectedSalary),
+            value: _salaryText(salary),
           ),
 
           const SizedBox(height: 12),
 
           _infoTile(
             icon: Icons.work_outline_rounded,
-            title: "Job preferences",
-            value: "Not set yet",
+            title: "Experience",
+            value: _experienceText(expYears),
+          ),
+
+          const SizedBox(height: 12),
+
+          _infoTile(
+            icon: Icons.school_outlined,
+            title: "Highest education",
+            value: edu.isEmpty ? "Not set" : edu,
           ),
 
           const SizedBox(height: 12),
 
           _infoTile(
             icon: Icons.location_on_outlined,
-            title: "Preferred location",
-            value: "Not set yet",
+            title: "Current location",
+            value: _locationText(),
+          ),
+
+          const SizedBox(height: 12),
+
+          _infoTile(
+            icon: Icons.psychology_alt_outlined,
+            title: "Skills",
+            value: _skillsText(_profile['skills']),
+          ),
+
+          const SizedBox(height: 12),
+
+          _infoTile(
+            icon: Icons.tune_rounded,
+            title: "Job preferences",
+            value: prefs.isEmpty ? "Not set" : prefs.join(" • "),
           ),
 
           const SizedBox(height: 16),
 
-          Container(
-            decoration: KhilonjiyaUI.cardDecoration(radius: 22),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Profile tips", style: KhilonjiyaUI.hTitle),
-                const SizedBox(height: 6),
-                Text(
-                  "A complete profile helps employers trust you and improves job recommendations.",
-                  style: KhilonjiyaUI.sub,
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: KhilonjiyaUI.border),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.verified_user_outlined,
-                              color: Color(0xFF0F172A),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                "Add skills and experience",
-                                style: KhilonjiyaUI.body.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 13.2,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          _profileTipsCard(),
 
           const SizedBox(height: 18),
         ],
       ),
     );
   }
+
+  // ============================================================
+  // BUILD
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
