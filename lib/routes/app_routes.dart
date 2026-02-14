@@ -6,12 +6,17 @@ import '../presentation/auth/employer_login_screen.dart';
 
 import 'home_router.dart';
 
+// JOB SEEKER PAGES
 import '../presentation/home_marketplace_feed/home_jobs_feed.dart';
 import '../presentation/home_marketplace_feed/saved_jobs_page.dart';
 import '../presentation/home_marketplace_feed/recommended_jobs_page.dart';
 import '../presentation/home_marketplace_feed/profile_performance_page.dart';
 import '../presentation/home_marketplace_feed/profile_edit_page.dart';
 
+// ✅ MAIN SHELL (BOTTOM NAV)
+import '../presentation/home_marketplace_feed/job_seeker_main_shell.dart';
+
+// EMPLOYER
 import '../presentation/company/dashboard/company_dashboard.dart';
 import '../presentation/company/jobs/create_job_screen.dart';
 import '../presentation/company/jobs/employer_job_list_screen.dart';
@@ -83,16 +88,26 @@ class AppRoutes {
     // Role-based router (final truth)
     home: (_) => const HomeRouter(),
 
-    // Job seeker
-    jobSeekerHome: (_) => const HomeJobsFeed(),
+    // ------------------------------------------------------------
+    // JOB SEEKER
+    // ------------------------------------------------------------
+
+    /// ✅ IMPORTANT CHANGE:
+    /// This must open the bottom navigation shell.
+    /// The shell internally loads HomeJobsFeed as Tab 1.
+    jobSeekerHome: (_) => const JobSeekerMainShell(),
+
+    /// Keep direct routes also (drawer uses these)
     savedJobs: (_) => const SavedJobsPage(),
     recommendedJobs: (_) => const RecommendedJobsPage(),
     profilePerformance: (_) => const ProfilePerformancePage(),
 
-    // NEW
+    // Profile edit
     profileEdit: (_) => const ProfileEditPage(),
 
-    // Employer
+    // ------------------------------------------------------------
+    // EMPLOYER
+    // ------------------------------------------------------------
     companyDashboard: (_) => const CompanyDashboard(),
     employerJobs: (_) => const EmployerJobListScreen(),
     createJob: (_) => const CreateJobScreen(),
