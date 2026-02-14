@@ -45,8 +45,9 @@ class NaukriDrawer extends StatelessWidget {
   }
 
   void _openUpdateProfile(BuildContext context) {
-    Navigator.pop(context); // close drawer
-    Navigator.pushNamed(context, AppRoutes.profileEdit);
+    // You still don't have a profile edit page route in AppRoutes.
+    // So for now it opens profile performance (best available).
+    _goNamed(context, AppRoutes.profilePerformance);
   }
 
   @override
@@ -139,7 +140,7 @@ class NaukriDrawer extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
 
-                  // Upgrade card (kept UI, no click yet)
+                  // Upgrade card (UI only for now)
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
@@ -195,7 +196,6 @@ class NaukriDrawer extends StatelessWidget {
                 children: [
                   const SizedBox(height: 8),
 
-                  // 3) Search jobs
                   _menuItem(
                     context,
                     icon: Icons.search,
@@ -203,7 +203,6 @@ class NaukriDrawer extends StatelessWidget {
                     onTap: () => _openSearch(context),
                   ),
 
-                  // 4) Recommended jobs
                   _menuItem(
                     context,
                     icon: Icons.star_outline,
@@ -211,7 +210,6 @@ class NaukriDrawer extends StatelessWidget {
                     onTap: () => _goNamed(context, AppRoutes.recommendedJobs),
                   ),
 
-                  // 5) Saved jobs
                   _menuItem(
                     context,
                     icon: Icons.bookmark_outline,
@@ -219,20 +217,11 @@ class NaukriDrawer extends StatelessWidget {
                     onTap: () => _goNamed(context, AppRoutes.savedJobs),
                   ),
 
-                  // 6) Profile performance
                   _menuItem(
                     context,
                     icon: Icons.person_outline,
                     title: "Profile performance",
                     onTap: () => _goNamed(context, AppRoutes.profilePerformance),
-                  ),
-
-                  // 9) Settings
-                  _menuItem(
-                    context,
-                    icon: Icons.settings_outlined,
-                    title: "Settings",
-                    onTap: () => _goNamed(context, AppRoutes.settings),
                   ),
 
                   const SizedBox(height: 8),
@@ -244,15 +233,9 @@ class NaukriDrawer extends StatelessWidget {
 
                   const SizedBox(height: 8),
 
-                  // 13) Khilonjiya blog
-                  _menuItem(
-                    context,
-                    icon: Icons.article_outlined,
-                    title: "Khilonjiya blog",
-                    onTap: () => _goNamed(context, AppRoutes.blog),
-                  ),
+                  // Settings not available in AppRoutes yet, so removed.
 
-                  const SizedBox(height: 8),
+                  // Blog not available in AppRoutes yet, so removed.
 
                   // ------------------------------------------------------------
                   // LOGOUT
