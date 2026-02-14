@@ -44,6 +44,11 @@ class NaukriDrawer extends StatelessWidget {
     );
   }
 
+  void _openUpdateProfile(BuildContext context) {
+    Navigator.pop(context); // close drawer
+    Navigator.pushNamed(context, AppRoutes.profileEdit);
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = profileCompletion.clamp(0, 100);
@@ -76,8 +81,7 @@ class NaukriDrawer extends StatelessWidget {
                                 value: value,
                                 strokeWidth: 4,
                                 backgroundColor: const Color(0xFFE5E7EB),
-                                valueColor:
-                                    const AlwaysStoppedAnimation<Color>(
+                                valueColor: const AlwaysStoppedAnimation<Color>(
                                   KhilonjiyaUI.primary,
                                 ),
                               ),
@@ -96,25 +100,37 @@ class NaukriDrawer extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
+
+                      // Name + Update profile
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              userName.isEmpty ? "User" : userName,
-                              style: KhilonjiyaUI.hTitle.copyWith(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w900,
-                              ),
+                        child: InkWell(
+                          onTap: () => _openUpdateProfile(context),
+                          borderRadius: BorderRadius.circular(14),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  userName.isEmpty ? "User" : userName,
+                                  style: KhilonjiyaUI.hTitle.copyWith(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Update profile",
+                                  style: KhilonjiyaUI.link.copyWith(
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "Update profile",
-                              style: KhilonjiyaUI.link.copyWith(fontSize: 13),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
+
                       IconButton(
                         onPressed: onClose,
                         icon: const Icon(Icons.close),
@@ -123,7 +139,7 @@ class NaukriDrawer extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
 
-                  // Upgrade card
+                  // Upgrade card (kept UI, no click yet)
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
@@ -179,30 +195,7 @@ class NaukriDrawer extends StatelessWidget {
                 children: [
                   const SizedBox(height: 8),
 
-                  _menuItem(
-                    context,
-                    icon: Icons.edit_outlined,
-                    title: "Set your job search status",
-                    trailing: const Icon(
-                      Icons.edit,
-                      size: 18,
-                      color: KhilonjiyaUI.muted,
-                    ),
-                    onTap: () {
-                      // TODO: later (job search status page)
-                    },
-                  ),
-
-                  _menuItem(
-                    context,
-                    icon: Icons.auto_awesome_outlined,
-                    title: "Neo - AI Job Agent",
-                    badge: "New",
-                    onTap: () {
-                      // TODO: later
-                    },
-                  ),
-
+                  // 3) Search jobs
                   _menuItem(
                     context,
                     icon: Icons.search,
@@ -210,6 +203,7 @@ class NaukriDrawer extends StatelessWidget {
                     onTap: () => _openSearch(context),
                   ),
 
+                  // 4) Recommended jobs
                   _menuItem(
                     context,
                     icon: Icons.star_outline,
@@ -217,6 +211,7 @@ class NaukriDrawer extends StatelessWidget {
                     onTap: () => _goNamed(context, AppRoutes.recommendedJobs),
                   ),
 
+                  // 5) Saved jobs
                   _menuItem(
                     context,
                     icon: Icons.bookmark_outline,
@@ -224,39 +219,20 @@ class NaukriDrawer extends StatelessWidget {
                     onTap: () => _goNamed(context, AppRoutes.savedJobs),
                   ),
 
+                  // 6) Profile performance
                   _menuItem(
                     context,
                     icon: Icons.person_outline,
                     title: "Profile performance",
-                    onTap: () =>
-                        _goNamed(context, AppRoutes.profilePerformance),
+                    onTap: () => _goNamed(context, AppRoutes.profilePerformance),
                   ),
 
-                  _menuItem(
-                    context,
-                    icon: Icons.palette_outlined,
-                    title: "Display preferences",
-                    onTap: () {
-                      // TODO: later
-                    },
-                  ),
-
-                  _menuItem(
-                    context,
-                    icon: Icons.chat_outlined,
-                    title: "Chat for help",
-                    onTap: () {
-                      // TODO: later
-                    },
-                  ),
-
+                  // 9) Settings
                   _menuItem(
                     context,
                     icon: Icons.settings_outlined,
                     title: "Settings",
-                    onTap: () {
-                      // TODO: later
-                    },
+                    onTap: () => _goNamed(context, AppRoutes.settings),
                   ),
 
                   const SizedBox(height: 8),
@@ -268,39 +244,12 @@ class NaukriDrawer extends StatelessWidget {
 
                   const SizedBox(height: 8),
 
-                  _menuItem(
-                    context,
-                    icon: Icons.work_outline,
-                    title: "Jobseeker services",
-                    badge: "Paid",
-                    badgeColor: const Color(0xFFFFF7ED),
-                    badgeTextColor: const Color(0xFFEA580C),
-                    badgeBorderColor: const Color(0xFFFED7AA),
-                    onTap: () {
-                      // TODO: later
-                    },
-                  ),
-
-                  _menuItem(
-                    context,
-                    icon: Icons.workspace_premium_outlined,
-                    title: "Khilonjiya Pro",
-                    badge: "Paid",
-                    badgeColor: const Color(0xFFFFF7ED),
-                    badgeTextColor: const Color(0xFFEA580C),
-                    badgeBorderColor: const Color(0xFFFED7AA),
-                    onTap: () {
-                      // TODO: later
-                    },
-                  ),
-
+                  // 13) Khilonjiya blog
                   _menuItem(
                     context,
                     icon: Icons.article_outlined,
                     title: "Khilonjiya blog",
-                    onTap: () {
-                      // TODO: later
-                    },
+                    onTap: () => _goNamed(context, AppRoutes.blog),
                   ),
 
                   const SizedBox(height: 8),
