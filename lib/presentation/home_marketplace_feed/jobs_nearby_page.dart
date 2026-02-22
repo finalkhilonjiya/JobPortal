@@ -1,6 +1,9 @@
+// File: lib/presentation/home_marketplace_feed/jobs_nearby_page.dart
+
 import 'package:flutter/material.dart';
 
 import '../../core/ui/khilonjiya_ui.dart';
+import '../../routes/app_routes.dart'; // ✅ ADDED
 import '../../services/job_seeker_home_service.dart';
 
 import '../common/widgets/cards/job_card_widget.dart';
@@ -55,9 +58,6 @@ class _JobsNearbyPageState extends State<JobsNearbyPage> {
     }
   }
 
-  // ============================================================
-  // LOAD: FIRST PAGE
-  // ============================================================
   Future<void> _loadFirstPage() async {
     if (_disposed) return;
 
@@ -101,9 +101,6 @@ class _JobsNearbyPageState extends State<JobsNearbyPage> {
     }
   }
 
-  // ============================================================
-  // LOAD: MORE
-  // ============================================================
   Future<void> _loadMore() async {
     if (_loadingMore || !_hasMore) return;
     if (_disposed) return;
@@ -139,9 +136,6 @@ class _JobsNearbyPageState extends State<JobsNearbyPage> {
     setState(() => _loadingMore = false);
   }
 
-  // ============================================================
-  // SAVE TOGGLE
-  // ============================================================
   Future<void> _toggleSaveJob(String jobId) async {
     try {
       final isSaved = await _homeService.toggleSaveJob(jobId);
@@ -153,9 +147,6 @@ class _JobsNearbyPageState extends State<JobsNearbyPage> {
     } catch (_) {}
   }
 
-  // ============================================================
-  // OPEN DETAILS
-  // ============================================================
   Future<void> _openJobDetails(Map<String, dynamic> job) async {
     final jobId = job['id']?.toString() ?? '';
     if (jobId.isEmpty) return;
@@ -181,9 +172,6 @@ class _JobsNearbyPageState extends State<JobsNearbyPage> {
     setState(() {});
   }
 
-  // ============================================================
-  // UI
-  // ============================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -218,6 +206,38 @@ class _JobsNearbyPageState extends State<JobsNearbyPage> {
                     icon: const Icon(Icons.refresh_rounded),
                   ),
                 ],
+              ),
+            ),
+
+            // ✅ SEARCH BAR ADDED
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: InkWell(
+                onTap: () =>
+                    Navigator.pushNamed(context, AppRoutes.search),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration:
+                      KhilonjiyaUI.cardDecoration(radius: 20),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.search_rounded,
+                        size: 20,
+                        color: KhilonjiyaUI.muted,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        "Search jobs, companies...",
+                        style: KhilonjiyaUI.sub.copyWith(
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
 
@@ -260,7 +280,8 @@ class _JobsNearbyPageState extends State<JobsNearbyPage> {
                               itemCount: _jobs.length + 1,
                               itemBuilder: (_, i) {
                                 if (i == _jobs.length) {
-                                  if (!_hasMore) return const SizedBox(height: 30);
+                                  if (!_hasMore)
+                                    return const SizedBox(height: 30);
 
                                   return Padding(
                                     padding: const EdgeInsets.only(top: 10),
@@ -268,7 +289,8 @@ class _JobsNearbyPageState extends State<JobsNearbyPage> {
                                       child: _loadingMore
                                           ? const Padding(
                                               padding: EdgeInsets.all(12),
-                                              child: CircularProgressIndicator(),
+                                              child:
+                                                  CircularProgressIndicator(),
                                             )
                                           : const SizedBox(height: 10),
                                     ),
@@ -276,15 +298,20 @@ class _JobsNearbyPageState extends State<JobsNearbyPage> {
                                 }
 
                                 final job = _jobs[i];
-                                final jobId = job['id']?.toString() ?? '';
+                                final jobId =
+                                    job['id']?.toString() ?? '';
 
                                 return Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
+                                  padding:
+                                      const EdgeInsets.only(bottom: 12),
                                   child: JobCardWidget(
                                     job: job,
-                                    isSaved: _savedJobIds.contains(jobId),
-                                    onSaveToggle: () => _toggleSaveJob(jobId),
-                                    onTap: () => _openJobDetails(job),
+                                    isSaved:
+                                        _savedJobIds.contains(jobId),
+                                    onSaveToggle: () =>
+                                        _toggleSaveJob(jobId),
+                                    onTap: () =>
+                                        _openJobDetails(job),
                                   ),
                                 );
                               },
