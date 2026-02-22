@@ -106,16 +106,6 @@ class _NaukriDrawerState extends State<NaukriDrawer> {
     );
   }
 
-  Future<void> _openPlayStore() async {
-    final url = AppLinks.playStoreUrl.trim();
-    if (url.isEmpty) return;
-    final uri = Uri.tryParse(url);
-    if (uri == null) return;
-    try {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {}
-  }
-
   Future<void> _openSubscription() async {
     await _pushPage(const SubscriptionPage());
     await Future.delayed(const Duration(milliseconds: 300));
@@ -133,7 +123,6 @@ class _NaukriDrawerState extends State<NaukriDrawer> {
       child: SafeArea(
         child: Column(
           children: [
-            // HEADER
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
               child: Column(
@@ -246,7 +235,7 @@ class _NaukriDrawerState extends State<NaukriDrawer> {
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 children: [
                   _menuItem(Icons.search, "Search jobs",
-    () => _pushPage(const SearchPage())),
+                      () => _pushPage(const SearchPage())),
                   _menuItem(Icons.star_outline, "Recommended jobs",
                       () => _pushPage(const RecommendedJobsPage())),
                   _menuItem(Icons.bookmark_border, "Saved jobs",
@@ -258,8 +247,6 @@ class _NaukriDrawerState extends State<NaukriDrawer> {
                       () => _pushNamed(AppRoutes.settings)),
                   _menuItem(Icons.help_outline, "Help",
                       () => _pushNamed(AppRoutes.contactSupport)),
-
-                  // NEW ITEMS
                   _menuItem(Icons.play_circle_outline, "How Khilonjiya works",
                       () => _pushPage(const HowKhilonjiyaWorksPage())),
                   _menuItem(Icons.description_outlined, "Terms & Conditions",
@@ -268,35 +255,10 @@ class _NaukriDrawerState extends State<NaukriDrawer> {
                       () => _pushNamed(AppRoutes.privacyPolicy)),
                   _menuItem(Icons.info_outline, "About Us",
                       () => _pushNamed(AppRoutes.aboutApp)),
-
                   const Divider(),
                   _menuItem(Icons.logout_rounded, "Logout", _logout,
                       titleColor: const Color(0xFFEF4444),
                       iconColor: const Color(0xFFEF4444)),
-                ],
-              ),
-            ),
-
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: KhilonjiyaUI.border)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      "Finding this app useful?",
-                      style: KhilonjiyaUI.sub.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: _openPlayStore,
-                    icon: const Icon(Icons.thumb_up_outlined, size: 20),
-                  )
                 ],
               ),
             ),
