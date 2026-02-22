@@ -8,7 +8,7 @@ import '../../../services/mobile_auth_service.dart';
 import '../../../services/subscription_service.dart';
 
 // Pages
-import '../job_search_page.dart';
+import '../search_page.dart';
 import '../recommended_jobs_page.dart';
 import '../saved_jobs_page.dart';
 import '../profile_performance_page.dart';
@@ -246,7 +246,7 @@ class _NaukriDrawerState extends State<NaukriDrawer> {
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 children: [
                   _menuItem(Icons.search, "Search jobs",
-                      () => _pushPage(const JobSearchPage())),
+    () => _pushPage(const SearchPage())),
                   _menuItem(Icons.star_outline, "Recommended jobs",
                       () => _pushPage(const RecommendedJobsPage())),
                   _menuItem(Icons.bookmark_border, "Saved jobs",
