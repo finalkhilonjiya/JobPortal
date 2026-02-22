@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 
 import '../../../core/ui/khilonjiya_ui.dart';
 import '../../../services/job_seeker_home_service.dart';
@@ -252,10 +254,14 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
       return false;
     }
     if (_availability.trim().isEmpty) {
-      _toast("Availability is required");
-      return false;
-    }
-    return true;
+  _toast("Availability is required");
+  return false;
+}
+if (_gender.trim().isEmpty) {
+  _toast("Gender is required");
+  return false;
+}
+return true;
   }
 
   // ------------------------------------------------------------
@@ -484,7 +490,7 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
                         onChanged: (v) => setState(() => _availability = v),
                       ),
                       _dropdown(
-                        label: "Gender (optional)",
+                        label: "Gender *",
                         value: _gender,
                         items: _genderOptions,
                         allowEmpty: true,
@@ -507,7 +513,7 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
                       const SizedBox(height: 16),
 
                       SizedBox(
-                        height: 50,
+                        height: 40,
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: _submitting ? null : _submit,
@@ -587,44 +593,75 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
   }
 
   Widget _attachmentsCard() {
-    final hasResume = _resumeRawPath.trim().isNotEmpty;
-    final hasPhoto = _photoRawPath.trim().isNotEmpty;
+  final hasResume = _resumeRawPath.trim().isNotEmpty;
+  final hasPhoto = _photoRawPath.trim().isNotEmpty;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: KhilonjiyaUI.r16,
-        border: Border.all(color: KhilonjiyaUI.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Attachments (auto)",
-            style: KhilonjiyaUI.body.copyWith(fontWeight: FontWeight.w900),
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: KhilonjiyaUI.r16,
+      border: Border.all(color: KhilonjiyaUI.border),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Attachments",
+          style: KhilonjiyaUI.body.copyWith(fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 8),
+
+        // ---------------- RESUME ----------------
+        _attachRow(
+          label: "Resume",
+          value: hasResume
+              ? (_resumeFileName.isEmpty
+                  ? "Attached"
+                  : _resumeFileName)
+              : "Not uploaded",
+          ok: hasResume,
+        ),
+        if (!hasResume)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: _pickResume,
+              child: const Text(
+                "Upload Resume",
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
           ),
-          const SizedBox(height: 8),
-          _attachRow(
-            label: "Resume",
-            value: hasResume
-                ? (_resumeFileName.isEmpty ? "Attached" : _resumeFileName)
-                : "Not uploaded",
-            ok: hasResume,
+
+        const SizedBox(height: 10),
+
+        // ---------------- PHOTO ----------------
+        _attachRow(
+          label: "Photo",
+          value: hasPhoto
+              ? (_photoFileName.isEmpty
+                  ? "Attached"
+                  : _photoFileName)
+              : "Not uploaded",
+          ok: hasPhoto,
+        ),
+        if (!hasPhoto)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: _pickPhoto,
+              child: const Text(
+                "Upload Photo",
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
           ),
-          const SizedBox(height: 6),
-          _attachRow(
-            label: "Photo",
-            value: hasPhoto
-                ? (_photoFileName.isEmpty ? "Attached" : _photoFileName)
-                : "Not uploaded",
-            ok: hasPhoto,
-          ),
-        ],
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
 
   Widget _attachRow({
     required String label,
@@ -758,6 +795,69 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
   // ------------------------------------------------------------
   // helpers
   // ------------------------------------------------------------
+
+Future<void> _pickResume() async {
+  final result = await FilePicker.platform.pickFiles(
+    type: FileType.custom,
+    allowedExtensions: ['pdf', 'doc', 'docx'],
+  );
+
+  if (result == null) return;
+
+  final file = File(result.files.single.path!);
+  final fileName = result.files.single.name;
+
+  final user = _db.auth.currentUser;
+  if (user == null) return;
+
+  final storagePath = 'resumes/${user.id}/$fileName';
+
+  await _db.storage.from('profile-files').upload(
+        storagePath,
+        file,
+        fileOptions: const FileOptions(upsert: true),
+      );
+
+  setState(() {
+    _resumeRawPath = storagePath;
+    _resumeFileName = fileName;
+  });
+}
+
+
+
+Future<void> _pickPhoto() async {
+  final result = await FilePicker.platform.pickFiles(
+    type: FileType.image,
+  );
+
+  if (result == null) return;
+
+  final file = File(result.files.single.path!);
+  final fileName = result.files.single.name;
+
+  final user = _db.auth.currentUser;
+  if (user == null) return;
+
+  final storagePath = 'photos/${user.id}/$fileName';
+
+  await _db.storage.from('profile-files').upload(
+        storagePath,
+        file,
+        fileOptions: const FileOptions(upsert: true),
+      );
+
+  setState(() {
+    _photoRawPath = storagePath;
+    _photoFileName = fileName;
+  });
+}
+
+
+
+
+
+
   String _fileNameFromPath(String path) {
     final p = path.trim();
     if (p.isEmpty) return '';
