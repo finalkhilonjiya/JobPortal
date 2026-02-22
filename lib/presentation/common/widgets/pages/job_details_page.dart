@@ -183,7 +183,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   if (!isPro) {
     if (!mounted) return;
 
-    Navigator.pushNamed(context, '/subscribe'); // your subscribe route
+    Navigator.pushNamed(context, AppRoutes.subscribe); // your subscribe route
     return;
   }
 
