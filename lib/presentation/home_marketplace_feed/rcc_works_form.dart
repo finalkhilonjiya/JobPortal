@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/construction_service.dart';
 
 class RCCWorksForm extends StatefulWidget {
@@ -11,451 +12,320 @@ class RCCWorksForm extends StatefulWidget {
 
 class _RCCWorksFormState extends State<RCCWorksForm> {
   final _formKey = GlobalKey<FormState>();
-  
-  // Form Controllers
+  final SupabaseClient _db = Supabase.instance.client;
+
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _plotSizeController = TextEditingController();
-  final _additionalDetailsController = TextEditingController();
-  
-  // Dropdown Values
-  String _selectedDistrict = 'Kamrup Metropolitan';
-  String _selectedProjectType = 'Residential Building';
-  String _selectedFloors = '1 Floor (Ground)';
-  String _selectedTimeframe = 'Within 1 Month';
-  String _selectedBudgetRange = '5-10 Lakhs';
-  
-  // Checkbox Values
-  bool _needsDesignPlanning = false;
-  bool _needsMaterialSupply = false;
-  bool _needsSoilTesting = false;
-  bool _hasExistingPlans = false;
-  bool _needsConstruction = false;
-  bool _needsCompleteSolution = false;
+  final _additionalController = TextEditingController();
 
-  // Assam Districts List
-  final List<String> assamDistricts = [
-    'Baksa', 'Barpeta', 'Biswanath', 'Bongaigaon', 'Cachar', 'Charaideo',
-    'Chirang', 'Darrang', 'Dhemaji', 'Dhubri', 'Dibrugarh', 'Dima Hasao',
-    'Goalpara', 'Golaghat', 'Hailakandi', 'Hojai', 'Jorhat', 'Kamrup',
-    'Kamrup Metropolitan', 'Karbi Anglong', 'Karimganj', 'Kokrajhar',
-    'Lakhimpur', 'Majuli', 'Morigaon', 'Nagaon', 'Nalbari', 'Sivasagar',
-    'Sonitpur', 'South Salmara-Mankachar', 'Tinsukia', 'Udalguri',
-    'West Karbi Anglong'
-  ];
+  List<String> _districts = [];
+  String? _selectedDistrict;
+
+  String _projectType = 'Residential';
+  String _floors = '1';
+  String _budget = '5-10 Lakhs';
+  String _timeline = 'Within 1 Month';
+
+  bool _needsDesign = false;
+  bool _needsMaterial = false;
+  bool _needsSoilTest = false;
+  bool _hasPlans = false;
+
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDistricts();
+  }
+
+  Future<void> _loadDistricts() async {
+    final response = await _db
+        .from('assam_districts_master')
+        .select('district_name')
+        .order('district_name');
+
+    setState(() {
+      _districts =
+          List<Map<String, dynamic>>.from(response)
+              .map((e) => e['district_name'] as String)
+              .toList();
+      if (_districts.isNotEmpty) {
+        _selectedDistrict = _districts.first;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: Text('RCC Works - Get Quote'),
-        backgroundColor: Color(0xFF2563EB),
-        foregroundColor: Colors.white,
+        title: const Text('RCC Construction'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(4.w),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Service Description Card
-              _buildServiceDescriptionBanner(),
-              SizedBox(height: 4.w),
-              
-              // Personal Information Section
-              _buildSectionHeader('Personal Information'),
-              _buildPersonalInfoSection(),
-              SizedBox(height: 4.w),
-              
-              // Project Details Section
-              _buildSectionHeader('Project Details'),
-              _buildProjectDetailsSection(),
-              SizedBox(height: 4.w),
-              
-              // Requirements Section
-              _buildSectionHeader('Requirements & Services'),
-              _buildRequirementsSection(),
-              SizedBox(height: 4.w),
-              
-              // Budget & Timeline Section
-              _buildSectionHeader('Budget & Timeline'),
-              _buildBudgetTimelineSection(),
-              SizedBox(height: 4.w),
-              
-              // Additional Information
-              _buildSectionHeader('Additional Information'),
-              _buildAdditionalInfoSection(),
-              SizedBox(height: 6.w),
-              
-              // Submit Button
-              _buildSubmitButton(),
-              SizedBox(height: 4.w),
-            ],
+      body: _selectedDistrict == null
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(4.w),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    _banner(),
+                    SizedBox(height: 4.w),
+                    _section("Personal Details", _personal()),
+                    _section("Project Details", _project()),
+                    _section("Requirements", _requirements()),
+                    _section("Budget & Timeline", _budgetTimeline()),
+                    _section("Additional Details", _additional()),
+                    SizedBox(height: 6.w),
+                    _submitButton(),
+                    SizedBox(height: 4.w),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
+
+  // ===== Banner (Boost Style) =====
+  Widget _banner() {
+    return Container(
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Text(
+            "Professional RCC Construction",
+            style: TextStyle(fontWeight: FontWeight.w600),
           ),
-        ),
+          SizedBox(height: 8),
+          Text("• Foundation, column & slab execution"),
+          Text("• High-strength structural construction"),
+          Text("• Supervised quality material usage"),
+        ],
       ),
     );
   }
 
-  Widget _buildServiceDescriptionBanner() {
-  return Container(
-    width: double.infinity, // Maintains full width alignment
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(12),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 10,
-          offset: Offset(0, 4),
+  Widget _section(String title, Widget child) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 4.w),
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style:
+                  TextStyle(fontWeight: FontWeight.w600, fontSize: 13.sp)),
+          SizedBox(height: 3.w),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _personal() {
+    return Column(
+      children: [
+        _input(_nameController, "Full Name"),
+        SizedBox(height: 3.w),
+        _phoneInput(),
+        SizedBox(height: 3.w),
+        DropdownButtonFormField<String>(
+          value: _selectedDistrict,
+          decoration: _dec("District"),
+          items: _districts
+              .map((e) =>
+                  DropdownMenuItem(value: e, child: Text(e)))
+              .toList(),
+          onChanged: (v) => setState(() => _selectedDistrict = v),
         ),
       ],
-    ),
-    child: AspectRatio(
-      aspectRatio: 1280 / 1098, // Exact ratio of your image (1280 x 1098)
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Image.asset(
-          'assets/images/rccbanner.jpg',
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            // Fallback to gradient container if image not found
-            return Container(
-              padding: EdgeInsets.all(4.w),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFFE8F5E8), Color(0xFFC8E6C9)],
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.construction, size: 6.w, color: Colors.green[700]),
-                      SizedBox(width: 3.w),
-                      Text(
-                        'RCC Works Services',
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green[700],
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 2.w),
-                  Text(
-                    'We provide comprehensive RCC (Reinforced Cement Concrete) construction services including:',
-                    style: TextStyle(fontSize: 12.sp),
-                  ),
-                  SizedBox(height: 2.w),
-                  ...[
-                    '• Foundation work & footing',
-                    '• Column construction',
-                    '• Beam & slab work',
-                    '• Staircase construction',
-                    '• Retaining walls',
-                    '• Quality concrete mixing & pouring',
-                  ].map((service) => Padding(
-                    padding: EdgeInsets.only(left: 3.w, bottom: 1.w),
-                    child: Text(service, style: TextStyle(fontSize: 11.sp)),
-                  )).toList(),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-    ),
-  );
-}
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 3.w),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 14.sp,
-          fontWeight: FontWeight.w600,
-          color: Colors.black87,
-        ),
-      ),
     );
   }
 
-  Widget _buildPersonalInfoSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          _buildTextFormField(_nameController, 'Full Name *', Icons.person),
-          SizedBox(height: 3.w),
-          _buildTextFormField(_phoneController, 'Phone Number *', Icons.phone, keyboardType: TextInputType.phone),
-          SizedBox(height: 3.w),
-          _buildDropdownField(
-            'District *',
-            _selectedDistrict,
-            assamDistricts,
-            (value) => setState(() => _selectedDistrict = value!),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProjectDetailsSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          _buildDropdownField(
-            'Project Type',
-            _selectedProjectType,
-            ['Residential Building', 'Commercial Building', 'Industrial Structure', 'Renovation/Extension'],
-            (value) => setState(() => _selectedProjectType = value!),
-          ),
-          SizedBox(height: 3.w),
-          _buildDropdownField(
-            'Number of Floors',
-            _selectedFloors,
-            ['1 Floor (Ground)', '2 Floors (Ground + 1)', '3 Floors (Ground + 2)', '4+ Floors', 'Basement + Floors'],
-            (value) => setState(() => _selectedFloors = value!),
-          ),
-          SizedBox(height: 3.w),
-          _buildTextFormField(_plotSizeController, 'Plot Size (sq ft)', Icons.straighten, keyboardType: TextInputType.number),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRequirementsSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          _buildCheckboxTile('Complete Solution (Design + Construction)', _needsCompleteSolution, (value) => setState(() => _needsCompleteSolution = value!)),
-          _buildCheckboxTile('Construction Work', _needsConstruction, (value) => setState(() => _needsConstruction = value!)),
-          _buildCheckboxTile('Design & Planning Services', _needsDesignPlanning, (value) => setState(() => _needsDesignPlanning = value!)),
-          _buildCheckboxTile('Material Supply', _needsMaterialSupply, (value) => setState(() => _needsMaterialSupply = value!)),
-          _buildCheckboxTile('Soil Testing Required', _needsSoilTesting, (value) => setState(() => _needsSoilTesting = value!)),
-          _buildCheckboxTile('I have existing architectural plans', _hasExistingPlans, (value) => setState(() => _hasExistingPlans = value!)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBudgetTimelineSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          _buildDropdownField(
-            'Budget Range',
-            _selectedBudgetRange,
-            ['Below 5 Lakhs', '5-10 Lakhs', '10-20 Lakhs', '20-50 Lakhs', '50 Lakhs+', 'Will Discuss'],
-            (value) => setState(() => _selectedBudgetRange = value!),
-          ),
-          SizedBox(height: 3.w),
-          _buildDropdownField(
-            'When do you want to start?',
-            _selectedTimeframe,
-            ['Immediately', 'Within 1 Month', 'Within 3 Months', '3-6 Months', 'Just Planning'],
-            (value) => setState(() => _selectedTimeframe = value!),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAdditionalInfoSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: _buildTextFormField(
-        _additionalDetailsController, 
-        'Additional Details or Specific Requirements', 
-        Icons.notes, 
-        maxLines: 4,
-        required: false,
-      ),
-    );
-  }
-
-  Widget _buildTextFormField(
-    TextEditingController controller,
-    String label,
-    IconData icon, {
-    TextInputType keyboardType = TextInputType.text,
-    int maxLines = 1,
-    bool required = true,
-  }) {
+  Widget _phoneInput() {
     return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      validator: required ? (value) => value?.isEmpty ?? true ? 'This field is required' : null : null,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: Color(0xFF2563EB)),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Color(0xFF2563EB), width: 2),
-        ),
-      ),
+      controller: _phoneController,
+      keyboardType: TextInputType.number,
+      maxLength: 10,
+      validator: (v) {
+        if (v == null || v.isEmpty) return "Required";
+        if (v.length != 10) return "Enter valid 10 digit number";
+        return null;
+      },
+      onChanged: (value) {
+        final clean = value.replaceAll(RegExp(r'[^0-9]'), '');
+        if (value != clean) {
+          _phoneController.value = TextEditingValue(
+              text: clean,
+              selection:
+                  TextSelection.collapsed(offset: clean.length));
+        }
+      },
+      decoration: _dec("Phone Number"),
     );
   }
 
-  Widget _buildDropdownField(
-    String label,
-    String value,
-    List<String> options,
-    Function(String?) onChanged,
-  ) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Color(0xFF2563EB), width: 2),
-        ),
-      ),
-      items: options.map((option) => DropdownMenuItem(value: option, child: Text(option))).toList(),
+  Widget _project() {
+    return Column(
+      children: [
+        _dropdown("Project Type", _projectType,
+            ['Residential', 'Commercial', 'Industrial'],
+            (v) => setState(() => _projectType = v!)),
+        SizedBox(height: 3.w),
+        _dropdown("Number of Floors", _floors,
+            ['1', '2', '3', '4+'],
+            (v) => setState(() => _floors = v!)),
+        SizedBox(height: 3.w),
+        _input(_plotSizeController, "Plot Size (sq ft)",
+            keyboardType: TextInputType.number),
+      ],
     );
   }
 
-  Widget _buildCheckboxTile(String title, bool value, Function(bool?) onChanged) {
-    return CheckboxListTile(
-      title: Text(title, style: TextStyle(fontSize: 12.sp)),
-      value: value,
-      onChanged: onChanged,
-      activeColor: Color(0xFF2563EB),
-      contentPadding: EdgeInsets.zero,
+  Widget _requirements() {
+    return Column(
+      children: [
+        _check("Design & Planning", _needsDesign,
+            (v) => setState(() => _needsDesign = v!)),
+        _check("Material Supply", _needsMaterial,
+            (v) => setState(() => _needsMaterial = v!)),
+        _check("Soil Testing", _needsSoilTest,
+            (v) => setState(() => _needsSoilTest = v!)),
+        _check("Have Existing Plans", _hasPlans,
+            (v) => setState(() => _hasPlans = v!)),
+      ],
     );
   }
 
-  Widget _buildSubmitButton() {
-    return Container(
+  Widget _budgetTimeline() {
+    return Column(
+      children: [
+        _dropdown("Budget Range", _budget,
+            ['Below 5 Lakhs','5-10 Lakhs','10-20 Lakhs','20-50 Lakhs','50 Lakhs+'],
+            (v) => setState(() => _budget = v!)),
+        SizedBox(height: 3.w),
+        _dropdown("Start Timeline", _timeline,
+            ['Immediately','Within 1 Month','Within 3 Months','Planning'],
+            (v) => setState(() => _timeline = v!)),
+      ],
+    );
+  }
+
+  Widget _additional() {
+    return _input(_additionalController,
+        "Additional Requirements",
+        maxLines: 4,
+        required: false);
+  }
+
+  Widget _submitButton() {
+    return SizedBox(
       width: double.infinity,
-      height: 7.h,
+      height: 3.5.h,
       child: ElevatedButton(
-        onPressed: _submitForm,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF2563EB),
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 2,
-        ),
-        child: Text(
-          'Request for Quote',
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
-        ),
+        onPressed: _loading ? null : _submit,
+        child: _loading
+            ? const SizedBox(
+                height: 18,
+                width: 18,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Colors.white))
+            : const Text("Request Quote"),
       ),
     );
   }
 
-  void _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      // Show loading
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => Center(child: CircularProgressIndicator()),
-      );
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      Map<String, dynamic> formData = {
-        'service_type': 'RCC Works',
+    setState(() => _loading = true);
+
+    try {
+      await ConstructionService().submitRCCWorksRequest({
         'name': _nameController.text,
         'phone': _phoneController.text,
         'project_address': _selectedDistrict,
-        'project_type': _selectedProjectType,
-        'number_of_floors': _selectedFloors,
+        'project_type': _projectType,
+        'number_of_floors': _floors,
         'plot_size': _plotSizeController.text,
-        'budget_range': _selectedBudgetRange,
-        'timeframe': _selectedTimeframe,
-        'needs_complete_solution': _needsCompleteSolution,
-        'needs_construction': _needsConstruction,
-        'needs_design_planning': _needsDesignPlanning,
-        'needs_material_supply': _needsMaterialSupply,
-        'needs_soil_testing': _needsSoilTesting,
-        'has_existing_plans': _hasExistingPlans,
-        'additional_details': _additionalDetailsController.text,
-      };
+        'budget_range': _budget,
+        'timeline': _timeline,
+        'needs_design_planning': _needsDesign,
+        'needs_material_supply': _needsMaterial,
+        'needs_soil_testing': _needsSoilTest,
+        'has_existing_plans': _hasPlans,
+        'additional_details': _additionalController.text,
+      });
 
-      try {
-        await ConstructionService().submitConstructionRequest(formData);
-        Navigator.pop(context); // Close loading
-        _showSuccessDialog();
-      } catch (e) {
-        Navigator.pop(context); // Close loading
-        _showErrorDialog('Failed to submit request: ${e.toString()}');
-      }
+      if (!mounted) return;
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.toString())));
     }
+
+    setState(() => _loading = false);
   }
 
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Request Submitted!'),
-        content: Text('Your RCC works request has been submitted successfully. Our team will contact you within 24 hours.'),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Go back to construction services
-            },
-            child: Text('OK'),
-          ),
-        ],
-      ),
+  Widget _input(TextEditingController c, String label,
+      {TextInputType keyboardType = TextInputType.text,
+      int maxLines = 1,
+      bool required = true}) {
+    return TextFormField(
+      controller: c,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      validator:
+          required ? (v) => v == null || v.isEmpty ? "Required" : null : null,
+      decoration: _dec(label),
     );
   }
 
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Error'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('OK'),
-          ),
-        ],
-      ),
+  Widget _dropdown(String label, String value, List<String> options,
+      Function(String?) onChanged) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: _dec(label),
+      items: options
+          .map((e) =>
+              DropdownMenuItem(value: e, child: Text(e)))
+          .toList(),
+      onChanged: onChanged,
+    );
+  }
+
+  Widget _check(String title, bool value, Function(bool?) onChanged) {
+    return CheckboxListTile(
+      value: value,
+      onChanged: onChanged,
+      contentPadding: EdgeInsets.zero,
+      title: Text(title),
+    );
+  }
+
+  InputDecoration _dec(String label) {
+    return InputDecoration(
+      labelText: label,
+      border:
+          OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
     );
   }
 
@@ -464,7 +334,7 @@ class _RCCWorksFormState extends State<RCCWorksForm> {
     _nameController.dispose();
     _phoneController.dispose();
     _plotSizeController.dispose();
-    _additionalDetailsController.dispose();
+    _additionalController.dispose();
     super.dispose();
   }
 }
