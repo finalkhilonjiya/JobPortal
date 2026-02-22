@@ -146,6 +146,18 @@ class JobCardHorizontal extends StatelessWidget {
                     text: salaryText,
                   ),
 
+
+                const SizedBox(height: 6),
+
+_plainRow(
+  icon: Icons.work_outline,
+  iconColor: const Color(0xFF7C3AED),
+  text: (job['experience_required'] ?? '').toString().trim().isEmpty
+      ? "Experience not specified"
+      : job['experience_required'].toString().trim(),
+),
+
+
                   const Spacer(),
 
                   Text(
@@ -159,7 +171,9 @@ class JobCardHorizontal extends StatelessWidget {
                 ],
               ),
             ),
+        
 
+            
             const SizedBox(width: 12),
 
             // RIGHT LOGO
