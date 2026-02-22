@@ -3,12 +3,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/ui/khilonjiya_ui.dart';
-import '../../../core/ui/app_links.dart';
 
 class RefundPolicyPage extends StatelessWidget {
   const RefundPolicyPage({Key? key}) : super(key: key);
 
   static const String _lastUpdated = "18 Feb 2026";
+  static const String _supportEmail = "support@khilonjiya.com";
 
   @override
   Widget build(BuildContext context) {
@@ -17,119 +17,94 @@ class RefundPolicyPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text("Refund & Cancellation"),
+        title: Text(
+          "Refund & Cancellation",
+          style: KhilonjiyaUI.hTitle.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         foregroundColor: const Color(0xFF0F172A),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
           _headerCard(),
           const SizedBox(height: 12),
 
           _card(
             title: "1. Scope",
-            body: """
-This Refund & Cancellation Policy applies to payments made for paid features, subscriptions, or services inside the Khilonjiya mobile application operated by ${AppLinks.companyName}.
-
-Refund eligibility depends on the payment method used (Google Play Billing or direct payments such as Razorpay).
-""",
+            body:
+                "This policy applies to payments made for paid features or subscriptions inside the Khilonjiya app.\n\n"
+                "Refund eligibility depends on the payment method used (Google Play Billing or direct payments such as Razorpay).",
           ),
 
           _card(
-            title: "2. Subscription activation and delivery",
-            body: """
-If you purchase a subscription:
-• Subscription benefits are delivered digitally and usually activate immediately after successful payment.
-• You will see your subscription status inside the App.
-
-Because subscription benefits are delivered instantly, refunds are limited.
-""",
+            title: "2. Subscription activation",
+            body:
+                "• Subscription benefits are delivered digitally and usually activate immediately after successful payment.\n"
+                "• Subscription status is visible inside the App.\n\n"
+                "Because benefits are delivered instantly, refunds are limited.",
           ),
 
           _card(
             title: "3. Cancellation",
-            body: """
-You may cancel your subscription at any time.
-
-Important:
-• Cancellation stops future renewals.
-• Cancellation does NOT automatically refund the current active billing period.
-• You may continue to use benefits until the subscription expiry date.
-""",
+            body:
+                "You may cancel your subscription anytime.\n\n"
+                "• Cancellation stops future renewals.\n"
+                "• It does NOT automatically refund the current billing period.\n"
+                "• Benefits remain active until expiry.",
           ),
 
           _card(
             title: "4. Refund eligibility",
-            body: """
-Refunds may be approved only in limited cases, such as:
-• Payment succeeded but subscription was not activated due to a technical issue
-• Duplicate payment occurred for the same subscription
-• Incorrect amount charged due to a confirmed system error
-
-Refunds are NOT provided for:
-• Change of mind after subscription activation
-• Non-usage of subscription benefits
-• Partial period refunds after activation
-• Network/device issues on the user side
-• Promotional offers / discounted plans (unless legally required)
-""",
+            body:
+                "Refunds may be approved only in limited cases:\n"
+                "• Technical issue after payment\n"
+                "• Duplicate payment\n"
+                "• Confirmed system error\n\n"
+                "Refunds are NOT provided for change of mind, non-usage, or partial period requests.",
           ),
 
           _card(
-            title: "5. Google Play Billing purchases",
-            body: """
-If your subscription is purchased using Google Play Billing:
-• Refunds, cancellations, and renewals are governed by Google Play policies.
-• Refund requests must be made through Google Play.
-
-In such cases, ${AppLinks.companyName} may not be able to override Google’s refund decision.
-""",
+            title: "5. Google Play purchases",
+            body:
+                "Refunds for Google Play purchases are governed by Google Play policies.\n"
+                "Requests must be made directly through Google Play.",
           ),
 
           _card(
-            title: "6. Razorpay / direct payment purchases",
-            body: """
-If your subscription is purchased using Razorpay (or another direct payment method inside the App):
-• Refund decisions are handled by ${AppLinks.companyName}
-• Approved refunds are returned to the original payment method whenever possible
-• We do not provide cash refunds
-""",
+            title: "6. Direct / Razorpay payments",
+            body:
+                "Refund decisions for direct payments are handled by Khilonjiya.\n"
+                "Approved refunds are returned to the original payment method.\n"
+                "Cash refunds are not provided.",
           ),
 
           _card(
             title: "7. How to request a refund",
-            body: """
-To request a refund, go to:
-Settings → Contact & Support
-
-Provide:
-• Razorpay Payment ID / Order ID (if available)
-• Registered phone number / email
-• Date and time of transaction
-• Screenshot of payment success (optional)
-""",
+            body:
+                "Go to: Settings → Contact & Support\n\n"
+                "Provide:\n"
+                "• Payment ID / Order ID\n"
+                "• Registered phone/email\n"
+                "• Date of transaction\n"
+                "• Screenshot (optional)",
           ),
 
           _card(
             title: "8. Processing time",
-            body: """
-If a refund is approved:
-• We typically initiate the refund within 3–7 working days
-• Banks/payment providers may take additional time to credit the amount
-
-Total time may vary depending on your bank/payment method.
-""",
+            body:
+                "If approved:\n"
+                "• Refund initiated within 3–7 working days\n"
+                "• Bank processing time may vary",
           ),
 
           _card(
             title: "9. Contact",
-            body: """
-If you have questions about refunds or cancellations, contact:
-• In-app: Settings → Contact & Support
-• Email: ${AppLinks.supportEmail}
-
-Company: ${AppLinks.companyName}
-""",
+            body:
+                "For refund-related queries:\n"
+                "Email: $_supportEmail\n\n"
+                "Khilonjiya India Pvt. Ltd.",
           ),
 
           const SizedBox(height: 10),
@@ -140,29 +115,28 @@ Company: ${AppLinks.companyName}
 
   Widget _headerCard() {
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: KhilonjiyaUI.cardDecoration(radius: 18),
+      padding: const EdgeInsets.all(16),
+      decoration: KhilonjiyaUI.cardDecoration(radius: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             "Refund & Cancellation Policy",
             style: KhilonjiyaUI.hTitle.copyWith(
-              fontSize: 16.5,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             "Last updated: $_lastUpdated",
             style: KhilonjiyaUI.sub.copyWith(
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Text(
             "This page explains how refunds and cancellations are handled for paid features.",
-            style: KhilonjiyaUI.body.copyWith(height: 1.35),
+            style: KhilonjiyaUI.body,
           ),
         ],
       ),
@@ -175,16 +149,21 @@ Company: ${AppLinks.companyName}
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: KhilonjiyaUI.cardDecoration(radius: 18),
+      padding: const EdgeInsets.all(16),
+      decoration: KhilonjiyaUI.cardDecoration(radius: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: KhilonjiyaUI.hTitle.copyWith(fontSize: 14.8)),
+          Text(
+            title,
+            style: KhilonjiyaUI.body.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 8),
           Text(
             body.trim(),
-            style: KhilonjiyaUI.body.copyWith(height: 1.35),
+            style: KhilonjiyaUI.body,
           ),
         ],
       ),
