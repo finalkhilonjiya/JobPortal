@@ -211,6 +211,25 @@ class JobSeekerHomeService {
     return path;
   }
 
+Future<bool> isUserProSubscribed() async {
+  final user = _supabase.auth.currentUser;
+  if (user == null) return false;
+
+  final res = await _supabase
+      .from('subscriptions')
+      .select('status, expires_at')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+  if (res == null) return false;
+
+  if (res['status'] != 'active') return false;
+
+  final expiresAt = res['expires_at'];
+  if (expiresAt == null) return false;
+
+  return DateTime.parse(expiresAt).isAfter(DateTime.now());
+}
 
 Future<void> updateMyCurrentLocationFromDevice() async {
   _ensureAuthenticatedSync();
