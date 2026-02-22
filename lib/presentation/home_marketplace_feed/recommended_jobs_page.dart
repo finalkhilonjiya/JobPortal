@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/ui/khilonjiya_ui.dart';
-import '../../routes/app_routes.dart';
+import '../../routes/app_routes.dart'; // ✅ ADDED
 import '../../services/job_seeker_home_service.dart';
 
 import '../common/widgets/cards/job_card_widget.dart';
@@ -106,6 +106,7 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
         });
       } catch (_) {
         if (_disposed) return;
+
         setState(() {
           _jobs = [];
           _hasMore = false;
@@ -116,7 +117,8 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
   }
 
   Future<void> _loadMore() async {
-    if (_loadingMore || !_hasMore || _disposed) return;
+    if (_loadingMore || !_hasMore) return;
+    if (_disposed) return;
 
     setState(() => _loadingMore = true);
 
@@ -134,32 +136,63 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
         } else {
           _jobs.addAll(more);
           _offset = _jobs.length;
+
           if (more.length < _pageSize) {
             _hasMore = false;
           }
         }
       });
     } catch (_) {
-      if (!_disposed) setState(() => _hasMore = false);
+      try {
+        final more = await _homeService.fetchJobs(
+          offset: _offset,
+          limit: _pageSize,
+        );
+
+        if (_disposed) return;
+
+        setState(() {
+          if (more.isEmpty) {
+            _hasMore = false;
+          } else {
+            _jobs.addAll(more);
+            _offset = _jobs.length;
+
+            if (more.length < _pageSize) {
+              _hasMore = false;
+            }
+          }
+        });
+      } catch (_) {
+        if (_disposed) return;
+        setState(() => _hasMore = false);
+      }
     }
 
-    if (!_disposed) setState(() => _loadingMore = false);
+    if (_disposed) return;
+    setState(() => _loadingMore = false);
   }
 
   Future<void> _toggleSaveJob(String jobId) async {
     try {
       final isSaved = await _homeService.toggleSaveJob(jobId);
-      if (_disposed) return;
 
+      if (_disposed) return;
       setState(() {
         isSaved ? _savedJobIds.add(jobId) : _savedJobIds.remove(jobId);
       });
-    } catch (_) {}
+    } catch (_) {
+      if (_disposed) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to update saved job")),
+      );
+    }
   }
 
   Future<void> _openJobDetails(Map<String, dynamic> job) async {
     final jobId = job['id']?.toString() ?? '';
-    if (jobId.isEmpty) return;
+    if (jobId.trim().isEmpty) return;
 
     _homeService.trackJobView(jobId);
 
@@ -173,6 +206,13 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
         ),
       ),
     );
+
+    try {
+      _savedJobIds = await _homeService.getUserSavedJobs();
+    } catch (_) {}
+
+    if (_disposed) return;
+    setState(() {});
   }
 
   @override
@@ -182,14 +222,12 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
+            // Top bar
             Container(
               padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border(
-                  bottom: BorderSide(color: KhilonjiyaUI.border),
-                ),
+                border: Border(bottom: BorderSide(color: KhilonjiyaUI.border)),
               ),
               child: Row(
                 children: [
@@ -197,9 +235,12 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.arrow_back_rounded),
                   ),
+                  const SizedBox(width: 2),
                   Expanded(
                     child: Text(
                       "Recommended jobs",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: KhilonjiyaUI.hTitle,
                     ),
                   ),
@@ -211,7 +252,7 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
               ),
             ),
 
-            // Search Bar
+            // ✅ SEARCH BAR ADDED (ONLY THIS BLOCK ADDED)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: InkWell(
@@ -247,45 +288,72 @@ class _RecommendedJobsPageState extends State<RecommendedJobsPage> {
                   ? const Center(child: CircularProgressIndicator())
                   : RefreshIndicator(
                       onRefresh: _loadFirstPage,
-                      child: ListView.builder(
-                        controller: _scrollController,
-                        padding:
-                            const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        itemCount: _jobs.length + 1,
-                        itemBuilder: (_, i) {
-                          if (i == _jobs.length) {
-                            if (!_hasMore) {
-                              return const SizedBox(height: 30);
-                            }
+                      child: _jobs.isEmpty
+                          ? ListView(
+                              padding: const EdgeInsets.all(16),
+                              children: [
+                                const SizedBox(height: 80),
+                                Icon(
+                                  Icons.work_outline_rounded,
+                                  size: 44,
+                                  color: Colors.black.withOpacity(0.35),
+                                ),
+                                const SizedBox(height: 14),
+                                Center(
+                                  child: Text(
+                                    "No jobs found",
+                                    style: KhilonjiyaUI.hTitle,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Center(
+                                  child: Text(
+                                    "Try again later.",
+                                    style: KhilonjiyaUI.sub,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : ListView.builder(
+                              controller: _scrollController,
+                              padding:
+                                  const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                              itemCount: _jobs.length + 1,
+                              itemBuilder: (_, i) {
+                                if (i == _jobs.length) {
+                                  if (!_hasMore) {
+                                    return const SizedBox(height: 30);
+                                  }
 
-                            return Center(
-                              child: _loadingMore
-                                  ? const Padding(
-                                      padding: EdgeInsets.all(12),
-                                      child:
-                                          CircularProgressIndicator(),
-                                    )
-                                  : const SizedBox(height: 10),
-                            );
-                          }
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 10),
+                                    child: Center(
+                                      child: _loadingMore
+                                          ? const Padding(
+                                              padding: EdgeInsets.all(12),
+                                              child:
+                                                  CircularProgressIndicator(),
+                                            )
+                                          : const SizedBox(height: 10),
+                                    ),
+                                  );
+                                }
 
-                          final job = _jobs[i];
-                          final jobId = job['id']?.toString() ?? '';
+                                final job = _jobs[i];
+                                final jobId = job['id']?.toString() ?? '';
 
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: JobCardWidget(
-                              job: job,
-                              isSaved:
-                                  _savedJobIds.contains(jobId),
-                              onSaveToggle: () =>
-                                  _toggleSaveJob(jobId),
-                              onTap: () =>
-                                  _openJobDetails(job),
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: JobCardWidget(
+                                    job: job,
+                                    isSaved: _savedJobIds.contains(jobId),
+                                    onSaveToggle: () => _toggleSaveJob(jobId),
+                                    onTap: () => _openJobDetails(job),
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                        },
-                      ),
                     ),
             ),
           ],
