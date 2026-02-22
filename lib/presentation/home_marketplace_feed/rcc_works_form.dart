@@ -94,28 +94,39 @@ class _RCCWorksFormState extends State<RCCWorksForm> {
 
   // ===== Banner (Boost Style) =====
   Widget _banner() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text(
-            "Professional RCC Construction",
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
-          SizedBox(height: 8),
-          Text("• Foundation, column & slab execution"),
-          Text("• High-strength structural construction"),
-          Text("• Supervised quality material usage"),
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.w),
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        colors: [
+          Color(0xFFE0F2FE),
+          Color(0xFFBAE6FD),
         ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
       ),
-    );
-  }
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Professional RCC Construction",
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 13.sp,
+            color: const Color(0xFF0F172A),
+          ),
+        ),
+        SizedBox(height: 1.5.h),
+        const Text("• Foundation, column & slab execution"),
+        const Text("• High-strength structural construction"),
+        const Text("• Supervised quality material usage"),
+      ],
+    ),
+  );
+}
 
   Widget _section(String title, Widget child) {
     return Container(
@@ -236,54 +247,95 @@ class _RCCWorksFormState extends State<RCCWorksForm> {
   }
 
   Widget _submitButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 3.5.h,
-      child: ElevatedButton(
-        onPressed: _loading ? null : _submit,
-        child: _loading
-            ? const SizedBox(
-                height: 18,
-                width: 18,
-                child: CircularProgressIndicator(
-                    strokeWidth: 2, color: Colors.white))
-            : const Text("Request Quote"),
+  return SizedBox(
+    width: double.infinity,
+    height: 5.5.h,
+    child: ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF2563EB),
+        elevation: 3,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
-    );
-  }
+      onPressed: _loading ? null : _submit,
+      child: _loading
+          ? const SizedBox(
+              height: 18,
+              width: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : Text(
+              "Request Quote",
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+    ),
+  );
+}
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+  if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _loading = true);
+  setState(() => _loading = true);
 
-    try {
-      await ConstructionService().submitRCCWorksRequest({
-        'name': _nameController.text,
-        'phone': _phoneController.text,
-        'project_address': _selectedDistrict,
-        'project_type': _projectType,
-        'number_of_floors': _floors,
-        'plot_size': _plotSizeController.text,
-        'budget_range': _budget,
-        'timeline': _timeline,
-        'needs_design_planning': _needsDesign,
-        'needs_material_supply': _needsMaterial,
-        'needs_soil_testing': _needsSoilTest,
-        'has_existing_plans': _hasPlans,
-        'additional_details': _additionalController.text,
-      });
+  try {
+    await ConstructionService().submitRCCWorksRequest({
+      'name': _nameController.text,
+      'phone': _phoneController.text,
+      'project_address': _selectedDistrict,
+      'project_type': _projectType,
+      'number_of_floors': _floors,
+      'plot_size': _plotSizeController.text,
+      'budget_range': _budget,
+      'timeline': _timeline,
+      'needs_design_planning': _needsDesign,
+      'needs_material_supply': _needsMaterial,
+      'needs_soil_testing': _needsSoilTest,
+      'has_existing_plans': _hasPlans,
+      'additional_details': _additionalController.text,
+    });
 
-      if (!mounted) return;
-      Navigator.pop(context);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
-    }
+    if (!mounted) return;
 
     setState(() => _loading = false);
+
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: const Text("Request Submitted"),
+        content: const Text(
+          "Your RCC construction request has been submitted successfully. Our team will contact you shortly.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return;
+    Navigator.pop(context);
+
+  } catch (e) {
+    if (!mounted) return;
+    setState(() => _loading = false);
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(e.toString())));
   }
+}
 
   Widget _input(TextEditingController c, String label,
       {TextInputType keyboardType = TextInputType.text,
