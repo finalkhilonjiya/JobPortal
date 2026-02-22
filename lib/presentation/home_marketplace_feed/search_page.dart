@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../common/widgets/pages/job_details_page.dart';
 
 import '../../core/ui/khilonjiya_ui.dart';
 import '../../services/search_service.dart';
@@ -100,48 +101,64 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: KhilonjiyaUI.bg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _topBar(),
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _results.isEmpty
-                      ? _emptyState()
-                      : ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                          itemCount: _results.length + (_loadingMore ? 1 : 0),
-                          itemBuilder: (_, index) {
-                            if (index >= _results.length) {
-                              return const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 16),
-                                child: Center(
-                                  child: CircularProgressIndicator(),
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: KhilonjiyaUI.bg,
+    body: SafeArea(
+      child: Column(
+        children: [
+          _topBar(),
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _results.isEmpty
+                    ? _emptyState()
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding:
+                            const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                        itemCount:
+                            _results.length + (_loadingMore ? 1 : 0),
+                        itemBuilder: (_, index) {
+                          if (index >= _results.length) {
+                            return const Padding(
+                              padding:
+                                  EdgeInsets.symmetric(vertical: 16),
+                              child: Center(
+                                child:
+                                    CircularProgressIndicator(),
+                              ),
+                            );
+                          }
+
+                          final job = _results[index];
+
+                          return JobCardWidget(
+                            job: job,
+                            isSaved: false,
+                            onSaveToggle: () {},
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      JobDetailsPage(
+                                    job: job,
+                                    isSaved: false,
+                                    onSaveToggle: () {},
+                                  ),
                                 ),
                               );
-                            }
-
-                            final job = _results[index];
-
-                            return JobCardWidget(
-                              job: job,
-                              isSaved: false,
-                              onSaveToggle: () {},
-                              onTap: () {},
-                            );
-                          },
-                        ),
-            ),
-          ],
-        ),
+                            },
+                          );
+                        },
+                      ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _topBar() {
     return Container(
