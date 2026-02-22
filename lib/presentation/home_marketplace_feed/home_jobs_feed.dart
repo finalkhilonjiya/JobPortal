@@ -241,10 +241,11 @@ void _listenToNotificationChanges() {
       _homeService.fetchTopCompanies(limit: 10),
       _homeService.getUnreadNotificationsCount(),
       _supabase
-          .from('slider')
-          .select()
-          .eq('is_active', true)
-          .order('position', ascending: true),
+  .from('slider')
+  .select()
+  .eq('is_active', true)
+  .eq('slider_type', 'home')
+  .order('display_order', ascending: true),
     ]);
 
     final summary = futures[0] as Map<String, dynamic>;
