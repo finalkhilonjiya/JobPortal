@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
+
 import 'rcc_works_form.dart';
 import 'assam_type_form.dart';
 import 'electrical_works_form.dart';
@@ -13,289 +12,82 @@ class ConstructionServicesHomePage extends StatefulWidget {
   const ConstructionServicesHomePage({Key? key}) : super(key: key);
 
   @override
-  State<ConstructionServicesHomePage> createState() => _ConstructionServicesHomePageState();
+  State<ConstructionServicesHomePage> createState() =>
+      _ConstructionServicesHomePageState();
 }
 
-class _ConstructionServicesHomePageState extends State<ConstructionServicesHomePage> {
-  String _currentLocation = 'Detecting...';
-  bool _isDetectingLocation = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _detectLocation();
-  }
-
-  Future<void> _detectLocation() async {
-    if (_isDetectingLocation) return;
-
-    setState(() {
-      _isDetectingLocation = true;
-      _currentLocation = 'Detecting...';
-    });
-
-    try {
-      // Check permission
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          setState(() {
-            _currentLocation = 'Location denied';
-            _isDetectingLocation = false;
-          });
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        setState(() {
-          _currentLocation = 'Location disabled';
-          _isDetectingLocation = false;
-        });
-        return;
-      }
-
-      // Get current position
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      // Get place name from coordinates
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
-
-      if (placemarks.isNotEmpty) {
-        Placemark place = placemarks[0];
-        setState(() {
-          _currentLocation = '${place.locality ?? place.subAdministrativeArea ?? 'Unknown'}, ${place.administrativeArea ?? ''}';
-          _isDetectingLocation = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _currentLocation = 'Guwahati, Assam'; // Fallback
-        _isDetectingLocation = false;
-      });
-    }
-  }
+class _ConstructionServicesHomePageState
+    extends State<ConstructionServicesHomePage> {
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header Section with Real Location
-            _buildHeader(context),
-
-            // Body Content
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // Search Bar
-                    _buildSearchBar(),
-
-                    // Welcome Banner
-                    _buildWelcomeBanner(),
-
-                    // Services Grid
-                    _buildServicesGrid(context),
-
-                    // ✅ REMOVED: Action Buttons section
-
-                    // Features Section
-                    _buildFeaturesSection(),
-
-                    SizedBox(height: 10.h),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildWelcomeBanner(),
+              _buildServicesGrid(context),
+              _buildFeaturesSection(),
+              SizedBox(height: 10.h),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      padding: EdgeInsets.all(4.w),
-      child: Row(
-        children: [
-          Container(
-            width: 10.w,
-            height: 10.w,
-            child: Image.asset(
-              'assets/images/company_logo.png',
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Color(0xFF2563EB),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'K',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14.sp,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          SizedBox(width: 3.w),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'khilonjiya.com',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              // Real Location Display
-              InkWell(
-                onTap: _detectLocation,
-                child: Row(
-                  children: [
-                    Icon(Icons.location_on, size: 4.w, color: Colors.grey),
-                    SizedBox(width: 1.w),
-                    Text(
-                      _currentLocation,
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    if (_isDetectingLocation) ...[
-                      SizedBox(width: 2.w),
-                      SizedBox(
-                        width: 3.w,
-                        height: 3.w,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 1.5,
-                          color: Color(0xFF2563EB),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-          Spacer(),
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: Icon(Icons.arrow_back, size: 6.w),
-          ),
-        ],
-      ),
-    );
-  }
+  // ================= BANNER =================
 
-  Widget _buildSearchBar() {
+  Widget _buildWelcomeBanner() {
     return Container(
-      margin: EdgeInsets.all(4.w),
+      width: double.infinity,
+      margin: EdgeInsets.fromLTRB(4.w, 4.h, 4.w, 6.w),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: Offset(0, 2),
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
         ],
       ),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: 'Search for services, contractors...',
-          prefixIcon: Icon(Icons.search, color: Colors.grey),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 3.w),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWelcomeBanner() {
-  return Container(
-    width: double.infinity, // Maintains full width alignment
-    margin: EdgeInsets.fromLTRB(4.w, 0, 4.w, 6.w),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 10,
-          offset: Offset(0, 4),
-        ),
-      ],
-    ),
-    child: AspectRatio(
-      aspectRatio: 1280 / 636, // Exact ratio of your image (1280 x 636)
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Image.asset(
-          'assets/images/constructionbanner.jpg',
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            // Fallback to gradient container if image not found
-            return Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+      child: AspectRatio(
+        aspectRatio: 1280 / 636,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Image.asset(
+            'assets/images/constructionbanner.jpg',
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: Color(0xFF2563EB),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              padding: EdgeInsets.all(6.w),
-              child: Column(
-                children: [
-                  Text(
+                padding: EdgeInsets.all(6.w),
+                child: Center(
+                  child: Text(
                     'Khilonjiya Construction Services',
                     style: TextStyle(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
-                      height: 1.2,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  SizedBox(height: 3.w),
-                  Text(
-                    'Professional construction services for your dream home - Quality work with local expertise',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.white,
-                      fontStyle: FontStyle.italic,
-                      height: 1.4,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            );
-          },
+                ),
+              );
+            },
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
+  // ================= SERVICES GRID =================
 
   Widget _buildServicesGrid(BuildContext context) {
     final services = [
@@ -304,42 +96,48 @@ class _ConstructionServicesHomePageState extends State<ConstructionServicesHomeP
         subtitle: 'Reinforced concrete construction',
         icon: Icons.construction,
         colors: [Color(0xFFE8F5E8), Color(0xFFC8E6C9)],
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => RCCWorksForm())),
+        onTap: () =>
+            Navigator.push(context, MaterialPageRoute(builder: (_) => RCCWorksForm())),
       ),
       ServiceItem(
         title: 'Assam Type',
         subtitle: 'Traditional Assamese architecture',
         icon: Icons.home,
         colors: [Color(0xFFFFF3E0), Color(0xFFFFCC02)],
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AssamTypeForm())),
+        onTap: () =>
+            Navigator.push(context, MaterialPageRoute(builder: (_) => AssamTypeForm())),
       ),
       ServiceItem(
         title: 'Electrical Works',
         subtitle: 'Complete electrical solutions',
         icon: Icons.electrical_services,
         colors: [Color(0xFFE3F2FD), Color(0xFF90CAF9)],
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ElectricalWorksForm())),
+        onTap: () =>
+            Navigator.push(context, MaterialPageRoute(builder: (_) => ElectricalWorksForm())),
       ),
       ServiceItem(
         title: 'False Ceiling',
         subtitle: 'Modern ceiling designs',
         icon: Icons.architecture,
         colors: [Color(0xFFF3E5F5), Color(0xFFCE93D8)],
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => FalseCeilingForm())),
+        onTap: () =>
+            Navigator.push(context, MaterialPageRoute(builder: (_) => FalseCeilingForm())),
       ),
       ServiceItem(
         title: 'Plumbing',
         subtitle: 'Complete plumbing solutions',
         icon: Icons.plumbing,
         colors: [Color(0xFFFFF8E1), Color(0xFFFFCC02)],
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => PlumbingForm())),
+        onTap: () =>
+            Navigator.push(context, MaterialPageRoute(builder: (_) => PlumbingForm())),
       ),
       ServiceItem(
         title: 'Interior Design',
         subtitle: 'Custom interior solutions',
         icon: Icons.design_services,
         colors: [Color(0xFFFCE4EC), Color(0xFFF48FB1)],
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => InteriorDesignForm())),
+        onTap: () =>
+            Navigator.push(context, MaterialPageRoute(builder: (_) => InteriorDesignForm())),
       ),
     ];
 
@@ -355,7 +153,7 @@ class _ConstructionServicesHomePageState extends State<ConstructionServicesHomeP
           childAspectRatio: 0.85,
         ),
         itemCount: services.length,
-        itemBuilder: (context, index) {
+        itemBuilder: (_, index) {
           return _buildServiceCard(services[index]);
         },
       ),
@@ -385,11 +183,7 @@ class _ConstructionServicesHomePageState extends State<ConstructionServicesHomeP
               width: 15.w,
               height: 15.w,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: service.colors,
-                ),
+                gradient: LinearGradient(colors: service.colors),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
@@ -414,7 +208,6 @@ class _ConstructionServicesHomePageState extends State<ConstructionServicesHomeP
               style: TextStyle(
                 fontSize: 10.sp,
                 color: Colors.grey,
-                height: 1.3,
               ),
               textAlign: TextAlign.center,
             ),
@@ -423,6 +216,8 @@ class _ConstructionServicesHomePageState extends State<ConstructionServicesHomeP
       ),
     );
   }
+
+  // ================= FEATURES =================
 
   Widget _buildFeaturesSection() {
     return Container(
@@ -463,9 +258,7 @@ class _ConstructionServicesHomePageState extends State<ConstructionServicesHomeP
           width: 10.w,
           height: 10.w,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-            ),
+            color: Color(0xFF2563EB),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: Colors.white, size: 5.w),
