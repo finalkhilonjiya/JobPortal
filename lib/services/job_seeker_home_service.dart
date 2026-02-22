@@ -211,6 +211,21 @@ class JobSeekerHomeService {
   }
 
 
+Future<void> updateMyCurrentLocationFromDevice() async {
+  _ensureAuthenticatedSync();
+  final userId = _userId();
+
+  final position = await Geolocator.getCurrentPosition(
+    desiredAccuracy: LocationAccuracy.high,
+  );
+
+  await _db.from('user_profiles').update({
+    'current_latitude': position.latitude,
+    'current_longitude': position.longitude,
+    'location_updated_at': DateTime.now().toIso8601String(),
+  }).eq('id', userId);
+}
+
 Future<List<Map<String, dynamic>>> fetchPremiumJobs({
   int offset = 0,
   int limit = 20,
