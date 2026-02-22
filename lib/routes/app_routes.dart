@@ -11,6 +11,8 @@ import 'home_router.dart';
 // JOB SEEKER MAIN SHELL
 import '../presentation/home_marketplace_feed/job_seeker_main_shell.dart';
 
+import '../presentation/home_marketplace_feed/subscription_page.dart';
+
 // PROFILE EDIT
 import '../presentation/home_marketplace_feed/profile_edit_page.dart';
 
@@ -74,10 +76,12 @@ class AppRoutes {
   static const String jobApplicants = '/job-applicants';
   static const String jobApplicantsPipeline = '/job-applicants-pipeline';
   static const String employerNotifications = '/employer-notifications';
+static const String subscribe = '/subscribe';
 
   static final Map<String, WidgetBuilder> routes = {
     initial: (_) => const RoleSelectionScreen(),
     roleSelection: (_) => const RoleSelectionScreen(),
+subscribe: (_) => const SubscriptionPage(),
 
     jobSeekerLogin: (_) => const JobSeekerLoginScreen(),
     employerLogin: (_) => const EmployerLoginScreen(),
