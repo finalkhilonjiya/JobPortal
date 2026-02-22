@@ -1,3 +1,5 @@
+// File: lib/presentation/home_marketplace_feed/notifications_settings_page.dart
+
 import 'package:flutter/material.dart';
 
 import '../../../core/ui/khilonjiya_ui.dart';
@@ -71,7 +73,7 @@ class _NotificationsSettingsPageState
         title: Text(
           "Notifications",
           style: KhilonjiyaUI.hTitle.copyWith(
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
           ),
         ),
         foregroundColor: const Color(0xFF0F172A),
@@ -99,7 +101,7 @@ class _NotificationsSettingsPageState
                 const SizedBox(height: 20),
 
                 SizedBox(
-                  height: 40, // smaller button
+                  height: 40,
                   child: ElevatedButton(
                     onPressed: _save,
                     style: ElevatedButton.styleFrom(
@@ -107,7 +109,7 @@ class _NotificationsSettingsPageState
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                     child: Text(
@@ -130,17 +132,23 @@ class _NotificationsSettingsPageState
     required ValueChanged<bool> onChanged,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: KhilonjiyaUI.cardDecoration(radius: 20),
       child: SwitchListTile(
         contentPadding: EdgeInsets.zero,
         value: value,
         onChanged: onChanged,
+        activeColor: KhilonjiyaUI.primary,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: const VisualDensity(
+          horizontal: -2,
+          vertical: -3,
+        ), // smaller toggle
         title: Text(
           title,
           style: KhilonjiyaUI.body.copyWith(
-            fontWeight: FontWeight.w600, // lighter
+            fontWeight: FontWeight.w600,
           ),
         ),
         subtitle: Text(
