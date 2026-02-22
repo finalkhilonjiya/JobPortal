@@ -101,11 +101,11 @@ class _ConstructionServicesHomePageState
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text("Khilonjiya Construction Services"),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        elevation: 0.5,
-      ),
+  backgroundColor: Colors.white,
+  elevation: 0,
+  automaticallyImplyLeading: true, // shows back arrow
+  title: const SizedBox.shrink(),   // removes title
+),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
