@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/construction_service.dart';
 
 class FalseCeilingForm extends StatefulWidget {
@@ -11,421 +12,290 @@ class FalseCeilingForm extends StatefulWidget {
 
 class _FalseCeilingFormState extends State<FalseCeilingForm> {
   final _formKey = GlobalKey<FormState>();
+  final SupabaseClient _db = Supabase.instance.client;
 
-  // Form Controllers
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _areaController = TextEditingController();
-  final _roomHeightController = TextEditingController();
-  final _additionalDetailsController = TextEditingController();
+  final _heightController = TextEditingController();
+  final _additionalController = TextEditingController();
 
-  // Dropdown Values
-  String _selectedDistrict = 'Kamrup Metropolitan';
-  String _selectedCeilingType = 'POP (Plaster of Paris)';
-  String _selectedRoomType = 'Living Room';
-  String _selectedDesignComplexity = 'Simple/Plain';
-  String _selectedLightingType = 'LED Lights';
-  String _selectedTimeframe = 'Within 2 Weeks';
-  String _selectedBudgetRange = '15,000 - 30,000';
+  List<String> _districts = [];
+  String? _selectedDistrict;
 
-  // Checkbox Values
+  String _ceilingType = 'POP (Plaster of Paris)';
+  String _roomType = 'Living Room';
+  String _designComplexity = 'Simple/Plain';
+  String _lightingType = 'LED Lights';
+  String _budget = '15,000 - 30,000';
+  String _timeline = 'Within 2 Weeks';
+
   bool _needsLightingWork = false;
   bool _needsFanPoints = false;
   bool _needsACDucting = false;
   bool _needsPainting = false;
   bool _needsDesign = false;
-  bool _hasExistingCeiling = false;
   bool _needsElectricalWork = false;
+  bool _hasExistingCeiling = false;
   bool _needsMaintenance = false;
 
-  // Assam Districts List
-  final List<String> assamDistricts = [
-    'Baksa', 'Barpeta', 'Biswanath', 'Bongaigaon', 'Cachar', 'Charaideo',
-    'Chirang', 'Darrang', 'Dhemaji', 'Dhubri', 'Dibrugarh', 'Dima Hasao',
-    'Goalpara', 'Golaghat', 'Hailakandi', 'Hojai', 'Jorhat', 'Kamrup',
-    'Kamrup Metropolitan', 'Karbi Anglong', 'Karimganj', 'Kokrajhar',
-    'Lakhimpur', 'Majuli', 'Morigaon', 'Nagaon', 'Nalbari', 'Sivasagar',
-    'Sonitpur', 'South Salmara-Mankachar', 'Tinsukia', 'Udalguri',
-    'West Karbi Anglong'
-  ];
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDistricts();
+  }
+
+  Future<void> _loadDistricts() async {
+    final response = await _db
+        .from('assam_districts_master')
+        .select('district_name')
+        .order('district_name');
+
+    setState(() {
+      _districts = List<Map<String, dynamic>>.from(response)
+          .map((e) => e['district_name'] as String)
+          .toList();
+
+      if (_districts.isNotEmpty) {
+        _selectedDistrict = _districts.first;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: Text('False Ceiling - Get Quote'),
-        backgroundColor: Color(0xFF2563EB),
-        foregroundColor: Colors.white,
+        title: const Text('False Ceiling'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(4.w),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildServiceDescriptionBanner(),
-              SizedBox(height: 4.w),
+      body: _selectedDistrict == null
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(4.w),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    _infoCard(),
+                    SizedBox(height: 4.w),
+                    _section("Personal Details", _personal()),
+                    _section("Ceiling Specifications", _specs()),
+                    _section("Additional Services", _services()),
+                    _section("Budget & Timeline", _budgetTimeline()),
+                    _section("Additional Details", _additional()),
+                    SizedBox(height: 6.w),
+                    _submitButton(),
+                    SizedBox(height: 4.w),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
 
-              _buildSectionHeader('Personal Information'),
-              _buildPersonalInfoSection(),
-              SizedBox(height: 4.w),
-
-              _buildSectionHeader('False Ceiling Specifications'),
-              _buildSpecsSection(),
-              SizedBox(height: 4.w),
-
-              _buildSectionHeader('Additional Services'),
-              _buildServicesSection(),
-              SizedBox(height: 4.w),
-
-              _buildSectionHeader('Budget & Timeline'),
-              _buildBudgetTimelineSection(),
-              SizedBox(height: 4.w),
-
-              _buildSectionHeader('Additional Information'),
-              _buildAdditionalInfoSection(),
-              SizedBox(height: 6.w),
-
-              _buildSubmitButton(),
-              SizedBox(height: 4.w),
-            ],
+  Widget _infoCard() {
+    return Container(
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Professional False Ceiling Solutions",
+            style: TextStyle(fontWeight: FontWeight.w600),
           ),
-        ),
+          SizedBox(height: 8),
+          Text("• POP, Gypsum & PVC ceiling installation"),
+          Text("• Custom lighting & cove integration"),
+          Text("• AC duct concealment & modern finishes"),
+        ],
       ),
     );
   }
 
-  Widget _buildServiceDescriptionBanner() {
-  return Container(
-    width: double.infinity, // Maintains full width alignment
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(12),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 10,
-          offset: Offset(0, 4),
+  Widget _section(String title, Widget child) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 4.w),
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style:
+                  TextStyle(fontWeight: FontWeight.w600, fontSize: 13.sp)),
+          SizedBox(height: 3.w),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _personal() {
+    return Column(
+      children: [
+        _input(_nameController, "Full Name"),
+        SizedBox(height: 3.w),
+        _phoneInput(),
+        SizedBox(height: 3.w),
+        DropdownButtonFormField<String>(
+          value: _selectedDistrict,
+          decoration: _dec("District"),
+          items: _districts
+              .map((e) =>
+                  DropdownMenuItem(value: e, child: Text(e)))
+              .toList(),
+          onChanged: (v) => setState(() => _selectedDistrict = v),
         ),
       ],
-    ),
-    child: AspectRatio(
-      aspectRatio: 1200 / 800, // Exact ratio of your image (1200 x 800) = 3:2
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Image.asset(
-          'assets/images/falsebanner.jpg',
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            // Fallback to gradient container if image not found
-            return Container(
-              padding: EdgeInsets.all(4.w),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFFF3E5F5), Color(0xFFCE93D8)],
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.architecture, size: 6.w, color: Colors.purple[700]),
-                      SizedBox(width: 3.w),
-                      Expanded(
-                        child: Text(
-                          'False Ceiling Services',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.purple[700],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 2.w),
-                  Text(
-                    'Professional false ceiling installation & design:',
-                    style: TextStyle(fontSize: 12.sp),
-                  ),
-                  SizedBox(height: 2.w),
-                  ...[
-                    '• POP, Gypsum, PVC ceiling work',
-                    '• Custom lighting integration',
-                    '• AC duct concealment',
-                    '• Decorative designs & patterns',
-                    '• Fan mounting & electrical work',
-                    '• Maintenance & repair services',
-                  ].map((service) => Padding(
-                    padding: EdgeInsets.only(left: 3.w, bottom: 1.w),
-                    child: Text(service, style: TextStyle(fontSize: 11.sp)),
-                  )).toList(),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-    ),
-  );
-}
-
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 3.w),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 14.sp,
-          fontWeight: FontWeight.w600,
-          color: Colors.black87,
-        ),
-      ),
     );
   }
 
-  Widget _buildPersonalInfoSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          _buildTextFormField(_nameController, 'Full Name *', Icons.person),
-          SizedBox(height: 3.w),
-          _buildTextFormField(_phoneController, 'Phone Number *', Icons.phone, keyboardType: TextInputType.phone),
-          SizedBox(height: 3.w),
-          _buildDropdownField(
-            'District *',
-            _selectedDistrict,
-            assamDistricts,
-            (value) => setState(() => _selectedDistrict = value!),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSpecsSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          _buildDropdownField(
-            'Ceiling Material Type',
-            _selectedCeilingType,
-            ['POP (Plaster of Paris)', 'Gypsum Board', 'PVC Panels', 'Wooden Panels', 'Metal Ceiling', 'Fiber Cement'],
-            (value) => setState(() => _selectedCeilingType = value!),
-          ),
-          SizedBox(height: 3.w),
-          _buildDropdownField(
-            'Room Type',
-            _selectedRoomType,
-            ['Living Room', 'Bedroom', 'Kitchen', 'Bathroom', 'Office', 'Shop/Commercial', 'Hall/Reception', 'Dining Room'],
-            (value) => setState(() => _selectedRoomType = value!),
-          ),
-          SizedBox(height: 3.w),
-          _buildDropdownField(
-            'Design Complexity',
-            _selectedDesignComplexity,
-            ['Simple/Plain', 'Step/Tray Ceiling', 'Cove Lighting', 'Decorative Patterns', 'Custom Design', 'Curved/Artistic'],
-            (value) => setState(() => _selectedDesignComplexity = value!),
-          ),
-          SizedBox(height: 3.w),
-          _buildDropdownField(
-            'Lighting Type',
-            _selectedLightingType,
-            ['LED Lights', 'Tube Lights', 'Cove Lighting', 'Spot Lights', 'Chandelier Points', 'No Lighting', 'Mixed Lighting'],
-            (value) => setState(() => _selectedLightingType = value!),
-          ),
-          SizedBox(height: 3.w),
-          _buildTextFormField(_areaController, 'Room Area (sq ft) *', Icons.straighten, keyboardType: TextInputType.number),
-          SizedBox(height: 3.w),
-          _buildTextFormField(_roomHeightController, 'Current Room Height (ft)', Icons.height, keyboardType: TextInputType.number, required: false),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildServicesSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          _buildCheckboxTile('Lighting Installation', _needsLightingWork, (value) => setState(() => _needsLightingWork = value!)),
-          _buildCheckboxTile('Fan Mounting Points', _needsFanPoints, (value) => setState(() => _needsFanPoints = value!)),
-          _buildCheckboxTile('AC Duct Concealment', _needsACDucting, (value) => setState(() => _needsACDucting = value!)),
-          _buildCheckboxTile('Painting/Finishing Work', _needsPainting, (value) => setState(() => _needsPainting = value!)),
-          _buildCheckboxTile('Custom Design Service', _needsDesign, (value) => setState(() => _needsDesign = value!)),
-          _buildCheckboxTile('Electrical Work Required', _needsElectricalWork, (value) => setState(() => _needsElectricalWork = value!)),
-          _buildCheckboxTile('Existing False Ceiling (Repair/Modify)', _hasExistingCeiling, (value) => setState(() => _hasExistingCeiling = value!)),
-          _buildCheckboxTile('Maintenance Service Required', _needsMaintenance, (value) => setState(() => _needsMaintenance = value!)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBudgetTimelineSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          _buildDropdownField(
-            'Budget Range (per sq ft)',
-            _selectedBudgetRange,
-            ['10,000 - 15,000', '15,000 - 30,000', '30,000 - 50,000', '50,000 - 1,00,000', '1,00,000+', 'Will Discuss'],
-            (value) => setState(() => _selectedBudgetRange = value!),
-          ),
-          SizedBox(height: 3.w),
-          _buildDropdownField(
-            'When do you want to start?',
-            _selectedTimeframe,
-            ['Immediately', 'Within 1 Week', 'Within 2 Weeks', 'Within 1 Month', 'Flexible'],
-            (value) => setState(() => _selectedTimeframe = value!),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAdditionalInfoSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: _buildTextFormField(
-        _additionalDetailsController, 
-        'Specific Design Requirements or Additional Details', 
-        Icons.notes, 
-        maxLines: 4,
-        required: false,
-      ),
-    );
-  }
-
-  Widget _buildTextFormField(
-    TextEditingController controller,
-    String label,
-    IconData icon, {
-    TextInputType keyboardType = TextInputType.text,
-    int maxLines = 1,
-    bool required = true,
-  }) {
+  Widget _phoneInput() {
     return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      validator: required ? (value) => value?.isEmpty ?? true ? 'This field is required' : null : null,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: Color(0xFF2563EB)),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Color(0xFF2563EB), width: 2),
-        ),
-      ),
+      controller: _phoneController,
+      keyboardType: TextInputType.number,
+      maxLength: 10,
+      validator: (v) {
+        if (v == null || v.isEmpty) return "Required";
+        if (v.length != 10) return "Enter valid 10 digit number";
+        return null;
+      },
+      onChanged: (value) {
+        final clean = value.replaceAll(RegExp(r'[^0-9]'), '');
+        if (value != clean) {
+          _phoneController.value = TextEditingValue(
+              text: clean,
+              selection:
+                  TextSelection.collapsed(offset: clean.length));
+        }
+      },
+      decoration: _dec("Phone Number"),
     );
   }
 
-  Widget _buildDropdownField(
-    String label,
-    String value,
-    List<String> options,
-    Function(String?) onChanged,
-  ) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Color(0xFF2563EB), width: 2),
-        ),
-      ),
-      items: options.map((option) => DropdownMenuItem(value: option, child: Text(option))).toList(),
+  Widget _specs() {
+    return Column(
+      children: [
+        _dropdown("Ceiling Material", _ceilingType,
+            ['POP (Plaster of Paris)','Gypsum Board','PVC Panels','Wooden Panels','Metal Ceiling'],
+            (v) => setState(() => _ceilingType = v!)),
+        SizedBox(height: 3.w),
+        _dropdown("Room Type", _roomType,
+            ['Living Room','Bedroom','Kitchen','Office','Hall'],
+            (v) => setState(() => _roomType = v!)),
+        SizedBox(height: 3.w),
+        _dropdown("Design Complexity", _designComplexity,
+            ['Simple/Plain','Step/Tray Ceiling','Cove Lighting','Decorative','Custom'],
+            (v) => setState(() => _designComplexity = v!)),
+        SizedBox(height: 3.w),
+        _dropdown("Lighting Type", _lightingType,
+            ['LED Lights','Spot Lights','Cove Lighting','Chandelier','Mixed'],
+            (v) => setState(() => _lightingType = v!)),
+        SizedBox(height: 3.w),
+        _input(_areaController, "Room Area (sq ft)",
+            keyboardType: TextInputType.number),
+        SizedBox(height: 3.w),
+        _input(_heightController, "Room Height (ft)",
+            keyboardType: TextInputType.number,
+            required: false),
+      ],
     );
   }
 
-  Widget _buildCheckboxTile(String title, bool value, Function(bool?) onChanged) {
-    return CheckboxListTile(
-      title: Text(title, style: TextStyle(fontSize: 12.sp)),
-      value: value,
-      onChanged: onChanged,
-      activeColor: Color(0xFF2563EB),
-      contentPadding: EdgeInsets.zero,
+  Widget _services() {
+    return Column(
+      children: [
+        _check("Lighting Installation", _needsLightingWork,
+            (v) => setState(() => _needsLightingWork = v!)),
+        _check("Fan Mounting Points", _needsFanPoints,
+            (v) => setState(() => _needsFanPoints = v!)),
+        _check("AC Duct Concealment", _needsACDucting,
+            (v) => setState(() => _needsACDucting = v!)),
+        _check("Painting/Finishing Work", _needsPainting,
+            (v) => setState(() => _needsPainting = v!)),
+        _check("Custom Design Service", _needsDesign,
+            (v) => setState(() => _needsDesign = v!)),
+        _check("Electrical Work Required", _needsElectricalWork,
+            (v) => setState(() => _needsElectricalWork = v!)),
+        _check("Existing Ceiling Repair", _hasExistingCeiling,
+            (v) => setState(() => _hasExistingCeiling = v!)),
+        _check("Maintenance Service", _needsMaintenance,
+            (v) => setState(() => _needsMaintenance = v!)),
+      ],
     );
   }
 
-  Widget _buildSubmitButton() {
-    return Container(
+  Widget _budgetTimeline() {
+    return Column(
+      children: [
+        _dropdown("Budget Range", _budget,
+            ['10,000 - 15,000','15,000 - 30,000','30,000 - 50,000','50,000+'],
+            (v) => setState(() => _budget = v!)),
+        SizedBox(height: 3.w),
+        _dropdown("Start Timeline", _timeline,
+            ['Immediately','Within 1 Week','Within 2 Weeks','Within 1 Month','Flexible'],
+            (v) => setState(() => _timeline = v!)),
+      ],
+    );
+  }
+
+  Widget _additional() {
+    return _input(_additionalController,
+        "Specific Design Requirements",
+        maxLines: 4,
+        required: false);
+  }
+
+  Widget _submitButton() {
+    return SizedBox(
       width: double.infinity,
-      height: 7.h,
+      height: 3.5.h,
       child: ElevatedButton(
-        onPressed: _submitForm,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF2563EB),
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 2,
-        ),
-        child: Text(
-          'Request for Quote',
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
-        ),
+        onPressed: _loading ? null : _submit,
+        child: _loading
+            ? const SizedBox(
+                height: 18,
+                width: 18,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Colors.white))
+            : const Text("Request Quote"),
       ),
     );
   }
 
-  void _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      // Show loading
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => Center(child: CircularProgressIndicator()),
-      );
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      Map<String, dynamic> formData = {
-        'service_type': 'False Ceiling',
+    setState(() => _loading = true);
+
+    try {
+      await ConstructionService().submitFalseCeilingRequest({
         'name': _nameController.text,
         'phone': _phoneController.text,
         'project_address': _selectedDistrict,
-        'ceiling_type': _selectedCeilingType,
-        'room_type': _selectedRoomType,
-        'design_complexity': _selectedDesignComplexity,
-        'lighting_type': _selectedLightingType,
+        'ceiling_type': _ceilingType,
+        'room_type': _roomType,
+        'design_complexity': _designComplexity,
+        'lighting_type': _lightingType,
         'area_size': _areaController.text,
-        'room_height': _roomHeightController.text,
-        'budget_range': _selectedBudgetRange,
-        'timeline': _selectedTimeframe,
+        'room_height': _heightController.text,
+        'budget_range': _budget,
+        'timeline': _timeline,
         'needs_lighting_work': _needsLightingWork,
         'needs_fan_points': _needsFanPoints,
         'needs_ac_ducting': _needsACDucting,
@@ -434,53 +304,61 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
         'needs_electrical_work': _needsElectricalWork,
         'has_existing_ceiling': _hasExistingCeiling,
         'needs_maintenance': _needsMaintenance,
-        'additional_details': _additionalDetailsController.text,
-        'status': 'pending',
-      };
+        'additional_details': _additionalController.text,
+      });
 
-      try {
-        await ConstructionService().submitFalseCeilingRequest(formData);
-        Navigator.pop(context); // Close loading
-        _showSuccessDialog();
-      } catch (e) {
-        Navigator.pop(context); // Close loading
-        _showErrorDialog('Failed to submit request: ${e.toString()}');
-      }
+      if (!mounted) return;
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.toString())));
     }
+
+    setState(() => _loading = false);
   }
 
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Request Submitted!'),
-        content: Text('Your false ceiling request has been submitted successfully. Our design team will contact you within 24 hours.'),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Go back to construction services
-            },
-            child: Text('OK'),
-          ),
-        ],
-      ),
+  Widget _input(TextEditingController c, String label,
+      {TextInputType keyboardType = TextInputType.text,
+      int maxLines = 1,
+      bool required = true}) {
+    return TextFormField(
+      controller: c,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      validator:
+          required ? (v) => v == null || v.isEmpty ? "Required" : null : null,
+      decoration: _dec(label),
     );
   }
 
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Error'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('OK'),
-          ),
-        ],
-      ),
+  Widget _dropdown(String label, String value, List<String> options,
+      Function(String?) onChanged) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: _dec(label),
+      items: options
+          .map((e) =>
+              DropdownMenuItem(value: e, child: Text(e)))
+              .toList(),
+      onChanged: onChanged,
+    );
+  }
+
+  Widget _check(String title, bool value, Function(bool?) onChanged) {
+    return CheckboxListTile(
+      value: value,
+      onChanged: onChanged,
+      contentPadding: EdgeInsets.zero,
+      title: Text(title),
+    );
+  }
+
+  InputDecoration _dec(String label) {
+    return InputDecoration(
+      labelText: label,
+      border:
+          OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
     );
   }
 
@@ -489,8 +367,8 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
     _nameController.dispose();
     _phoneController.dispose();
     _areaController.dispose();
-    _roomHeightController.dispose();
-    _additionalDetailsController.dispose();
+    _heightController.dispose();
+    _additionalController.dispose();
     super.dispose();
   }
 }
