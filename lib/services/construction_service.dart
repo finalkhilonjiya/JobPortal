@@ -4,58 +4,132 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class ConstructionService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  /// Submit construction service request
-  Future<void> submitConstructionRequest(Map<String, dynamic> requestData) async {
+  /// Core submit method (production safe)
+  Future<void> submitConstructionRequest(
+    Map<String, dynamic> requestData,
+  ) async {
     try {
       final user = _supabase.auth.currentUser;
-      if (user != null) {
-        requestData['user_id'] = user.id;
+      if (user == null) {
+        throw Exception("User not authenticated");
       }
 
-      // DB already sets created_at = now()
-      await _supabase.from('construction_service_requests').insert(requestData);
+      // Attach user_id
+      requestData['user_id'] = user.id;
+
+      // ============================
+      // 1️⃣ Rate limit (5 minutes)
+      // ============================
+      final recent = await _supabase
+          .from('construction_service_requests')
+          .select('created_at')
+          .eq('user_id', user.id)
+          .order('created_at', ascending: false)
+          .limit(1);
+
+      if (recent.isNotEmpty) {
+        final lastTime = DateTime.parse(recent.first['created_at']);
+        final diff = DateTime.now().difference(lastTime);
+        if (diff.inMinutes < 5) {
+          throw Exception(
+              "Please wait 5 minutes before submitting another request.");
+        }
+      }
+
+      // ======================================
+      // 2️⃣ Prevent duplicate pending requests
+      // ======================================
+      if (requestData['service_type'] != null) {
+        final duplicate = await _supabase
+            .from('construction_service_requests')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('service_type', requestData['service_type'])
+            .eq('status', 'pending')
+            .limit(1);
+
+        if (duplicate.isNotEmpty) {
+          throw Exception(
+              "You already have a pending request for this service.");
+        }
+      }
+
+      // ======================================
+      // 3️⃣ Attach district geo coordinates
+      // ======================================
+      if (requestData['project_address'] != null) {
+        final districtData = await _supabase
+            .from('assam_districts_master')
+            .select('latitude, longitude')
+            .eq('district_name', requestData['project_address'])
+            .maybeSingle();
+
+        if (districtData != null) {
+          requestData['latitude'] = districtData['latitude'];
+          requestData['longitude'] = districtData['longitude'];
+        }
+      }
+
+      requestData['status'] ??= 'pending';
+
+      await _supabase
+          .from('construction_service_requests')
+          .insert(requestData);
     } catch (e) {
       throw Exception('Failed to submit construction request: $e');
     }
   }
 
-  /// Submit RCC Works request
-  Future<void> submitRCCWorksRequest(Map<String, dynamic> formData) async {
-    formData['service_type'] = 'RCC Works';
+  /// ============================
+  /// Service Specific Wrappers
+  /// ============================
+
+  Future<void> submitRCCWorksRequest(
+      Map<String, dynamic> formData) async {
+    formData['service_type'] = 'rcc';
+    formData['service_type_detail'] = 'RCC Works';
     await submitConstructionRequest(formData);
   }
 
-  /// Submit Assam Type house request
-  Future<void> submitAssamTypeRequest(Map<String, dynamic> formData) async {
-    formData['service_type'] = 'Assam Type';
+  Future<void> submitAssamTypeRequest(
+      Map<String, dynamic> formData) async {
+    formData['service_type'] = 'assam_type';
+    formData['service_type_detail'] = 'Assam Type';
     await submitConstructionRequest(formData);
   }
 
-  /// Submit Electrical Works request
-  Future<void> submitElectricalWorksRequest(Map<String, dynamic> formData) async {
-    formData['service_type'] = 'Electrical Works';
+  Future<void> submitElectricalWorksRequest(
+      Map<String, dynamic> formData) async {
+    formData['service_type'] = 'electrical';
+    formData['service_type_detail'] = 'Electrical Works';
     await submitConstructionRequest(formData);
   }
 
-  /// Submit False Ceiling request
-  Future<void> submitFalseCeilingRequest(Map<String, dynamic> formData) async {
-    formData['service_type'] = 'False Ceiling';
+  Future<void> submitFalseCeilingRequest(
+      Map<String, dynamic> formData) async {
+    formData['service_type'] = 'false_ceiling';
+    formData['service_type_detail'] = 'False Ceiling';
     await submitConstructionRequest(formData);
   }
 
-  /// Submit Plumbing request
-  Future<void> submitPlumbingRequest(Map<String, dynamic> formData) async {
-    formData['service_type'] = 'Plumbing';
+  Future<void> submitPlumbingRequest(
+      Map<String, dynamic> formData) async {
+    formData['service_type'] = 'plumbing';
+    formData['service_type_detail'] = 'Plumbing';
     await submitConstructionRequest(formData);
   }
 
-  /// Submit Interior Design request
-  Future<void> submitInteriorDesignRequest(Map<String, dynamic> formData) async {
-    formData['service_type'] = 'Interior Design';
+  Future<void> submitInteriorDesignRequest(
+      Map<String, dynamic> formData) async {
+    formData['service_type'] = 'interior';
+    formData['service_type_detail'] = 'Interior Design';
     await submitConstructionRequest(formData);
   }
 
-  /// Get construction requests (admin / management)
+  /// ============================
+  /// Admin / Management
+  /// ============================
+
   Future<List<Map<String, dynamic>>> getConstructionRequests({
     String? serviceType,
     String? status,
@@ -63,7 +137,8 @@ class ConstructionService {
     int offset = 0,
   }) async {
     try {
-      var query = _supabase.from('construction_service_requests').select();
+      var query =
+          _supabase.from('construction_service_requests').select();
 
       if (serviceType != null && serviceType.trim().isNotEmpty) {
         query = query.eq('service_type', serviceType.trim());
@@ -83,11 +158,11 @@ class ConstructionService {
     }
   }
 
-  /// Update construction request status (admin)
   Future<void> updateRequestStatus(
     String requestId,
     String status, {
     String? notes,
+    num? quoteAmount,
   }) async {
     try {
       final updateData = <String, dynamic>{
@@ -99,6 +174,10 @@ class ConstructionService {
         updateData['admin_notes'] = notes.trim();
       }
 
+      if (quoteAmount != null) {
+        updateData['quote_amount'] = quoteAmount;
+      }
+
       await _supabase
           .from('construction_service_requests')
           .update(updateData)
@@ -108,7 +187,10 @@ class ConstructionService {
     }
   }
 
-  /// Get current user's construction requests
+  /// ============================
+  /// User Requests
+  /// ============================
+
   Future<List<Map<String, dynamic>>> getUserConstructionRequests() async {
     try {
       final user = _supabase.auth.currentUser;
@@ -126,12 +208,15 @@ class ConstructionService {
     }
   }
 
-  /// Construction service stats (admin)
-  /// NOTE: This is heavy because it fetches rows and counts locally.
-  /// We'll later replace with a Postgres view/RPC for performance.
+  /// ============================
+  /// Stats (Temporary Heavy Version)
+  /// ============================
+
   Future<Map<String, dynamic>> getConstructionStats() async {
     try {
-      final total = await _supabase.from('construction_service_requests').select('id');
+      final total =
+          await _supabase.from('construction_service_requests').select('id');
+
       final pending = await _supabase
           .from('construction_service_requests')
           .select('id')
@@ -142,23 +227,10 @@ class ConstructionService {
           .select('id')
           .eq('status', 'completed');
 
-      final types = await _supabase
-          .from('construction_service_requests')
-          .select('service_type')
-          .order('service_type');
-
-      final Map<String, int> typeCounts = {};
-      for (final row in types) {
-        final t = (row['service_type'] ?? '').toString();
-        if (t.isEmpty) continue;
-        typeCounts[t] = (typeCounts[t] ?? 0) + 1;
-      }
-
       return {
         'total_requests': total.length,
         'pending_requests': pending.length,
         'completed_requests': completed.length,
-        'service_type_counts': typeCounts,
       };
     } catch (e) {
       throw Exception('Failed to fetch construction stats: $e');
