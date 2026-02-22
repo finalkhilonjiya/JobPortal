@@ -35,6 +35,7 @@ import 'widgets/home_sections/boost_card.dart';
 import 'widgets/home_sections/expected_salary_card.dart';
 import 'widgets/home_sections/section_header.dart';
 import 'widgets/home_sections/job_card_horizontal.dart';
+import 'notifications_page.dart';
 
 // ✅ NEW IMPORT
 import '../common/widgets/cards/company_card_horizontal.dart';
@@ -100,6 +101,9 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   int _currentSliderIndex = 0;
   Timer? _sliderTimer;
 
+
+RealtimeChannel? _notificationChannel;
+
   // ------------------------------------------------------------
   // Search hint slider
   // ------------------------------------------------------------
@@ -128,6 +132,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
     _searchHintController.dispose();
     _sliderTimer?.cancel();
 _sliderController.dispose();
+_notificationChannel?.unsubscribe();
 
     super.dispose();
   }
@@ -147,6 +152,7 @@ _sliderController.dispose();
       await _loadInitialData();
       _startSearchHintAutoSlide();
       _startSliderAutoSlide();
+      _listenToNotificationChanges();
     } catch (_) {
       _redirectToStart();
     }
@@ -169,6 +175,33 @@ _sliderController.dispose();
     });
   }
 
+
+void _listenToNotificationChanges() {
+  final user = _supabase.auth.currentUser;
+  if (user == null) return;
+
+  _notificationChannel = _supabase.channel('notifications_channel')
+    ..onPostgresChanges(
+      event: PostgresChangeEvent.all,
+      schema: 'public',
+      table: 'notifications',
+      filter: PostgresChangeFilter(
+        type: PostgresChangeFilterType.eq,
+        column: 'user_id',
+        value: user.id,
+      ),
+      callback: (_) async {
+        try {
+          final count =
+              await _homeService.getUnreadNotificationsCount();
+          if (!_isDisposed && mounted) {
+            setState(() => _unreadNotifications = count);
+          }
+        } catch (_) {}
+      },
+    )
+    ..subscribe();
+}
  void _startSliderAutoSlide() {
   _sliderTimer?.cancel();
 
@@ -347,6 +380,23 @@ try {
     );
   }
 
+void _openNotificationsPage() async {
+  await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const NotificationsPage(),
+    ),
+  );
+
+  // Refresh unread count after returning
+  try {
+    final count = await _homeService.getUnreadNotificationsCount();
+    if (!_isDisposed && mounted) {
+      setState(() => _unreadNotifications = count);
+    }
+  } catch (_) {}
+}
+
   void _openCompanyDetails(String companyId) {
     if (companyId.trim().isEmpty) return;
 
@@ -432,128 +482,146 @@ try {
   // TOP BAR
   // ------------------------------------------------------------
   Widget _buildTopBar(BuildContext scaffoldContext) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: KhilonjiyaUI.border)),
-      ),
-      child: Row(
-        children: [
-          InkWell(
-            onTap: () => Scaffold.of(scaffoldContext).openDrawer(),
-            borderRadius: BorderRadius.circular(999),
-            child: const Padding(
-              padding: EdgeInsets.all(10),
-              child: Icon(Icons.menu, size: 22),
-            ),
+  return Container(
+    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border(bottom: BorderSide(color: KhilonjiyaUI.border)),
+    ),
+    child: Row(
+      children: [
+        InkWell(
+          onTap: () => Scaffold.of(scaffoldContext).openDrawer(),
+          borderRadius: BorderRadius.circular(999),
+          child: const Padding(
+            padding: EdgeInsets.all(10),
+            child: Icon(Icons.menu, size: 22),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: InkWell(
-              onTap: _openSearchPage,
-              borderRadius: BorderRadius.circular(999),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: KhilonjiyaUI.border),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: Color(0xFF64748B),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: SizedBox(
-                        height: 18,
-                        child: PageView.builder(
-                          controller: _searchHintController,
-                          itemCount: _searchHints.length,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemBuilder: (_, i) {
-                            return Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                _searchHints[i],
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: KhilonjiyaUI.sub.copyWith(
-                                  fontSize: 13.0,
-                                  color: const Color(0xFF94A3B8),
-                                ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: InkWell(
+            onTap: _openSearchPage,
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: KhilonjiyaUI.border),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.search,
+                    size: 18,
+                    color: Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SizedBox(
+                      height: 18,
+                      child: PageView.builder(
+                        controller: _searchHintController,
+                        itemCount: _searchHints.length,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemBuilder: (_, i) {
+                          return Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              _searchHints[i],
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: KhilonjiyaUI.sub.copyWith(
+                                fontSize: 13.0,
+                                color: const Color(0xFF94A3B8),
                               ),
-                            );
-                          },
-                        ),
+                            ),
+                          );
+                        },
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(width: 10),
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: const Color(0xFFDBEAFE)),
-            ),
-            child: const Icon(
-              Icons.auto_awesome_outlined,
-              size: 20,
-              color: KhilonjiyaUI.primary,
-            ),
-          ),
-          const SizedBox(width: 8),
-
-          InkWell(
-            onTap: () {},
+        ),
+        const SizedBox(width: 10),
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF),
             borderRadius: BorderRadius.circular(999),
-            child: Stack(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: KhilonjiyaUI.border),
-                  ),
-                  child: const Icon(
-                    Icons.notifications_none_outlined,
-                    size: 22,
-                    color: Color(0xFF334155),
-                  ),
+            border: Border.all(color: const Color(0xFFDBEAFE)),
+          ),
+          child: const Icon(
+            Icons.auto_awesome_outlined,
+            size: 20,
+            color: KhilonjiyaUI.primary,
+          ),
+        ),
+        const SizedBox(width: 8),
+
+        // 🔔 Notifications
+        InkWell(
+          onTap: _openNotificationsPage,
+          borderRadius: BorderRadius.circular(999),
+          child: Stack(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: KhilonjiyaUI.border),
                 ),
-                if (_unreadNotifications > 0)
-                  Positioned(
-                    right: 9,
-                    top: 9,
-                    child: Container(
-                      width: 9,
-                      height: 9,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFEF4444),
-                        shape: BoxShape.circle,
+                child: const Icon(
+                  Icons.notifications_none_outlined,
+                  size: 22,
+                  color: Color(0xFF334155),
+                ),
+              ),
+
+              if (_unreadNotifications > 0)
+                Positioned(
+                  right: 6,
+                  top: 6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 5, vertical: 2),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFEF4444),
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
+                    child: Center(
+                      child: Text(
+                        _unreadNotifications > 9
+                            ? '9+'
+                            : _unreadNotifications.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   // ------------------------------------------------------------
   // HOME FEED
