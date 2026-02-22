@@ -1,3 +1,5 @@
+// File: lib/routes/app_routes.dart
+
 import 'package:flutter/material.dart';
 
 import '../presentation/role_selection/role_selection_screen.dart';
@@ -15,6 +17,9 @@ import '../presentation/home_marketplace_feed/profile_edit_page.dart';
 // SETTINGS
 import '../presentation/home_marketplace_feed/settings_page.dart';
 
+// SEARCH PAGE ✅ ADDED
+import '../presentation/home_marketplace_feed/search_page.dart';
+
 // LEGAL + ABOUT + SUPPORT
 import '../presentation/home_marketplace_feed/legal/privacy_policy_page.dart';
 import '../presentation/home_marketplace_feed/legal/terms_and_conditions_page.dart';
@@ -26,7 +31,7 @@ import '../presentation/home_marketplace_feed/support/contact_support_page.dart'
 import '../presentation/home_marketplace_feed/settings/notifications_settings_page.dart';
 import '../presentation/home_marketplace_feed/settings/language_settings_page.dart';
 
-// EMPLOYER (KEPT FOR COMPILATION)
+// EMPLOYER
 import '../presentation/company/dashboard/company_dashboard.dart';
 import '../presentation/company/dashboard/create_organization_screen.dart';
 import '../presentation/company/jobs/create_job_screen.dart';
@@ -51,6 +56,9 @@ class AppRoutes {
   static const String notificationsSettings = '/settings-notifications';
   static const String languageSettings = '/settings-language';
 
+  // ✅ SEARCH ROUTE ADDED
+  static const String search = '/search';
+
   static const String privacyPolicy = '/privacy-policy';
   static const String termsAndConditions = '/terms-and-conditions';
   static const String refundPolicy = '/refund-policy';
@@ -58,9 +66,7 @@ class AppRoutes {
   static const String aboutApp = '/about';
   static const String contactSupport = '/contact-support';
 
-  // ------------------------------------------------------------
-  // EMPLOYER ROUTES (RESTORED FOR BUILD)
-  // ------------------------------------------------------------
+  // EMPLOYER
   static const String companyDashboard = '/company-dashboard';
   static const String createOrganization = '/create-organization';
   static const String employerJobs = '/employer-jobs';
@@ -85,6 +91,9 @@ class AppRoutes {
     notificationsSettings: (_) => const NotificationsSettingsPage(),
     languageSettings: (_) => const LanguageSettingsPage(),
 
+    // ✅ SEARCH MAPPING ADDED
+    search: (_) => const SearchPage(),
+
     privacyPolicy: (_) => const PrivacyPolicyPage(),
     termsAndConditions: (_) => const TermsAndConditionsPage(),
     refundPolicy: (_) => const RefundPolicyPage(),
@@ -92,7 +101,7 @@ class AppRoutes {
     aboutApp: (_) => const AboutAppPage(),
     contactSupport: (_) => const ContactSupportPage(),
 
-    // EMPLOYER (kept but not linked from UI)
+    // EMPLOYER
     companyDashboard: (_) => const CompanyDashboard(),
     createOrganization: (_) => const CreateOrganizationScreen(),
     employerJobs: (_) => const EmployerJobListScreen(),
