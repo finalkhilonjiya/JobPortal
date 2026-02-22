@@ -1,14 +1,13 @@
 // File: lib/presentation/home_marketplace_feed/legal/terms_and_conditions_page.dart
 
 import 'package:flutter/material.dart';
-
 import '../../../core/ui/khilonjiya_ui.dart';
-import '../../../core/ui/app_links.dart';
 
 class TermsAndConditionsPage extends StatelessWidget {
   const TermsAndConditionsPage({Key? key}) : super(key: key);
 
   static const String _lastUpdated = "18 Feb 2026";
+  static const String _supportEmail = "support@khilonjiya.com";
 
   @override
   Widget build(BuildContext context) {
@@ -17,193 +16,125 @@ class TermsAndConditionsPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text("Terms & Conditions"),
+        title: Text(
+          "Terms & Conditions",
+          style: KhilonjiyaUI.hTitle.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         foregroundColor: const Color(0xFF0F172A),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
           _headerCard(),
           const SizedBox(height: 12),
 
           _card(
             title: "1. Company and service",
-            body: """
-${AppLinks.companyName} (“we”, “our”, “us”) operates the Khilonjiya mobile application (“App”).
-
-The App is a marketplace platform that connects job seekers and employers. We do not act as an employer, recruiter, or staffing agency unless explicitly stated.
-""",
+            body:
+                "Khilonjiya India Pvt. Ltd. operates the Khilonjiya mobile application (“App”).\n\n"
+                "The App connects job seekers and employers. We do not act as an employer or staffing agency unless explicitly stated.",
           ),
 
           _card(
-            title: "2. Acceptance of these Terms",
-            body: """
-By creating an account, accessing, or using the App, you agree to these Terms & Conditions.
-
-If you do not agree, do not use the App.
-""",
+            title: "2. Acceptance of Terms",
+            body:
+                "By creating an account or using the App, you agree to these Terms.\n\n"
+                "If you do not agree, do not use the App.",
           ),
 
           _card(
             title: "3. Eligibility",
-            body: """
-You must be at least 18 years old to use this App.
-
-You agree that all information you provide is accurate, complete, and up to date.
-""",
+            body:
+                "You must be at least 18 years old to use this App.\n\n"
+                "You agree that the information you provide is accurate and up to date.",
           ),
 
           _card(
             title: "4. Account and security",
-            body: """
-You are responsible for:
-• Keeping your login credentials secure
-• All activity performed under your account
-• Updating your profile information when it changes
-
-We may suspend or terminate accounts that are compromised, fraudulent, or violate these Terms.
-""",
+            body:
+                "You are responsible for:\n"
+                "• Keeping login credentials secure\n"
+                "• All activity under your account\n"
+                "• Updating profile information when it changes",
           ),
 
           _card(
-            title: "5. User responsibilities (Job seekers)",
-            body: """
-You agree NOT to:
-• Create fake profiles or impersonate any person or organization
-• Upload false or misleading resumes, certificates, or details
-• Spam employers or misuse employer contact details
-• Upload illegal, abusive, hateful, or sexually explicit content
-• Attempt to bypass platform security or scrape data
-
-You agree that employers may view your profile/application details when you apply.
-""",
+            title: "5. Job seeker responsibilities",
+            body:
+                "You agree NOT to:\n"
+                "• Create fake profiles\n"
+                "• Upload false documents\n"
+                "• Spam employers\n"
+                "• Upload illegal or abusive content\n"
+                "• Attempt to bypass security",
           ),
 
           _card(
             title: "6. Employer responsibilities",
-            body: """
-Employers agree NOT to:
-• Post fake jobs, scams, or misleading job listings
-• Misrepresent salary, job type, or location
-• Collect user data for illegal purposes
-• Discriminate unlawfully based on protected characteristics
-• Request money from job seekers for recruitment
-
-Employers are solely responsible for their job listings and hiring decisions.
-""",
+            body:
+                "Employers must not:\n"
+                "• Post fake or misleading jobs\n"
+                "• Collect data illegally\n"
+                "• Discriminate unlawfully\n"
+                "• Request money from job seekers",
           ),
 
           _card(
-            title: "7. Prohibited content and behavior",
-            body: """
-The following are strictly prohibited:
-• Fraud, scams, or pyramid schemes
-• Content promoting violence or illegal activity
-• Harassment, threats, or hate speech
-• Sexual exploitation content
-• Uploading malware or harmful files
-• Any activity that violates Indian law or applicable regulations
-""",
+            title: "7. Prohibited behavior",
+            body:
+                "Strictly prohibited:\n"
+                "• Fraud or scams\n"
+                "• Violence or illegal content\n"
+                "• Harassment or hate speech\n"
+                "• Uploading harmful files",
           ),
 
           _card(
-            title: "8. Job listings and applications disclaimer",
-            body: """
-We do not guarantee:
-• Employment
-• Interview calls
-• Job accuracy
-• Employer authenticity in every case
-
-We provide a platform. You must perform your own verification before sharing sensitive information or accepting an offer.
-""",
+            title: "8. Disclaimer",
+            body:
+                "We do not guarantee employment, interviews, or job accuracy.\n\n"
+                "Users must perform their own verification before accepting offers.",
           ),
 
           _card(
-            title: "9. Payments, subscriptions and billing",
-            body: """
-Some features may require payment (for example, subscriptions).
-
-Important:
-• Prices, duration, and benefits are shown inside the App before purchase
-• Subscription charges are processed through the payment method shown in the App
-• Refund and cancellation rules are described in the Refund & Cancellation Policy page
-
-If Google Play Billing is used, Google’s billing terms also apply.
-""",
+            title: "9. Payments and subscriptions",
+            body:
+                "Some features may require payment.\n"
+                "Pricing and benefits are shown inside the App before purchase.\n\n"
+                "Refund rules are described in the Refund Policy page.",
           ),
 
           _card(
-            title: "10. Refunds and cancellations",
-            body: """
-Refund rules are defined in:
-Settings → Refund & Cancellation Policy.
-
-If there is a conflict between this page and the Refund Policy page, the Refund Policy page will apply for payment-related matters.
-""",
+            title: "10. Suspension and termination",
+            body:
+                "We may suspend or terminate accounts that:\n"
+                "• Violate these Terms\n"
+                "• Engage in fraud or spam\n"
+                "• Upload prohibited content",
           ),
 
           _card(
-            title: "11. Intellectual property",
-            body: """
-The App, design, branding, logos, UI, and content created by us are owned by ${AppLinks.companyName}.
-
-You may not copy, modify, reverse engineer, or distribute the App or its content without permission.
-""",
+            title: "11. Limitation of liability",
+            body:
+                "We are not responsible for job outcomes, employer conduct, or third-party links.\n\n"
+                "Use of the App is at your own risk.",
           ),
 
           _card(
-            title: "12. Suspension and termination",
-            body: """
-We may suspend or terminate your account if:
-• You violate these Terms
-• You misuse the platform
-• You engage in fraud or spam
-• You upload prohibited content
-
-We may also remove job listings or user content that violates policies.
-""",
+            title: "12. Governing law",
+            body:
+                "These Terms are governed by the laws of India.\n\n"
+                "Disputes are subject to Indian jurisdiction.",
           ),
 
           _card(
-            title: "13. Limitation of liability",
-            body: """
-To the maximum extent permitted by law:
-• We are not responsible for job outcomes, hiring decisions, or employer conduct
-• We are not responsible for losses caused by third-party links or communications
-• We are not responsible for indirect or consequential damages
-
-Your use of the App is at your own risk.
-""",
-          ),
-
-          _card(
-            title: "14. Changes to the App and Terms",
-            body: """
-We may update the App and these Terms from time to time.
-
-We will update the “Last updated” date at the top of this page. Continued use means you accept the updated Terms.
-""",
-          ),
-
-          _card(
-            title: "15. Governing law",
-            body: """
-These Terms are governed by the laws of India.
-
-Any disputes will be subject to the jurisdiction of courts in India, as applicable.
-""",
-          ),
-
-          _card(
-            title: "16. Contact",
-            body: """
-For questions or support:
-• In the App: Settings → Contact & Support
-• Email: ${AppLinks.supportEmail}
-
-Company: ${AppLinks.companyName}
-""",
+            title: "13. Contact",
+            body:
+                "For support:\n"
+                "Email: $_supportEmail\n\n"
+                "Khilonjiya India Pvt. Ltd.",
           ),
 
           const SizedBox(height: 10),
@@ -214,29 +145,28 @@ Company: ${AppLinks.companyName}
 
   Widget _headerCard() {
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: KhilonjiyaUI.cardDecoration(radius: 18),
+      padding: const EdgeInsets.all(16),
+      decoration: KhilonjiyaUI.cardDecoration(radius: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             "Terms & Conditions",
             style: KhilonjiyaUI.hTitle.copyWith(
-              fontSize: 16.5,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             "Last updated: $_lastUpdated",
             style: KhilonjiyaUI.sub.copyWith(
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Text(
             "These Terms apply to your use of the Khilonjiya mobile application.",
-            style: KhilonjiyaUI.body.copyWith(height: 1.35),
+            style: KhilonjiyaUI.body,
           ),
         ],
       ),
@@ -249,16 +179,21 @@ Company: ${AppLinks.companyName}
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: KhilonjiyaUI.cardDecoration(radius: 18),
+      padding: const EdgeInsets.all(16),
+      decoration: KhilonjiyaUI.cardDecoration(radius: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: KhilonjiyaUI.hTitle.copyWith(fontSize: 14.8)),
+          Text(
+            title,
+            style: KhilonjiyaUI.body.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 8),
           Text(
             body.trim(),
-            style: KhilonjiyaUI.body.copyWith(height: 1.35),
+            style: KhilonjiyaUI.body,
           ),
         ],
       ),
