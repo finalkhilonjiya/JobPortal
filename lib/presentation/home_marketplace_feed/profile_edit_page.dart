@@ -1088,7 +1088,7 @@ const SizedBox(height: 12),
           top: false,
           child: SizedBox(
             width: double.infinity,
-            height: 46,
+            height: 40,
             child: ElevatedButton(
               onPressed:
                   (_saving || _uploadingPhoto || _uploadingResume) ? null : _save,
