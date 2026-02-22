@@ -58,42 +58,43 @@ class _ConstructionServicesHomePageState
   }
 
   Future<void> _loadInitial() async {
-    final res = await _supabase
-        .from('slider')
-        .select('image_url')
-        .eq('type', 'construction')
-        .order('created_at', ascending: false)
-        .range(_offset, _offset + _limit - 1);
+  final res = await _supabase
+      .from('slider')
+      .select('image_url')
+      .eq('slider_type', 'construction')
+      .eq('is_active', true)
+      .order('display_order', ascending: true)
+      .range(_offset, _offset + _limit - 1);
 
-    setState(() {
-      _sliderImages =
-          List<String>.from(res.map((e) => e['image_url'] ?? ''));
-      _offset += _sliderImages.length;
-      _hasMore = res.length == _limit;
-      _loading = false;
-    });
-  }
-
+  setState(() {
+    _sliderImages =
+        List<String>.from(res.map((e) => e['image_url'] ?? ''));
+    _offset += _sliderImages.length;
+    _hasMore = res.length == _limit;
+    _loading = false;
+  });
+}
   Future<void> _loadMore() async {
-    if (!_hasMore) return;
+  if (!_hasMore) return;
 
-    setState(() => _loadingMore = true);
+  setState(() => _loadingMore = true);
 
-    final res = await _supabase
-        .from('slider')
-        .select('image_url')
-        .eq('type', 'construction')
-        .order('created_at', ascending: false)
-        .range(_offset, _offset + _limit - 1);
+  final res = await _supabase
+      .from('slider')
+      .select('image_url')
+      .eq('slider_type', 'construction')
+      .eq('is_active', true)
+      .order('display_order', ascending: true)
+      .range(_offset, _offset + _limit - 1);
 
-    setState(() {
-      _sliderImages.addAll(
-          List<String>.from(res.map((e) => e['image_url'] ?? '')));
-      _offset += res.length;
-      _hasMore = res.length == _limit;
-      _loadingMore = false;
-    });
-  }
+  setState(() {
+    _sliderImages.addAll(
+        List<String>.from(res.map((e) => e['image_url'] ?? '')));
+    _offset += res.length;
+    _hasMore = res.length == _limit;
+    _loadingMore = false;
+  });
+}
 
   @override
   Widget build(BuildContext context) {
