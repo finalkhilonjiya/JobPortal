@@ -148,6 +148,7 @@ _notificationChannel?.unsubscribe();
         _redirectToStart();
         return;
       }
+      await _homeService.updateMyCurrentLocationFromDevice();
 
       await _loadInitialData();
       _startSearchHintAutoSlide();
@@ -221,68 +222,70 @@ void _listenToNotificationChanges() {
 }
 
   Future<void> _loadInitialData() async {
-    if (_isDisposed) return;
+  if (_isDisposed) return;
 
-    setState(() => _isCheckingAuth = false);
+  setState(() => _isCheckingAuth = false);
 
-    try {
-      // 1) Home summary
-      final summary = await _homeService.getHomeProfileSummary();
-      final jobsCount = await _homeService.getJobsPostedTodayCount();
+  try {
+    final nowIso = DateTime.now().toIso8601String();
 
-      _profileName = (summary['profileName'] ?? "Your Profile").toString();
-      _profileCompletion = (summary['profileCompletion'] ?? 0) as int;
-      _lastUpdatedText =
-          (summary['lastUpdatedText'] ?? "Updated recently").toString();
-      _missingDetails = (summary['missingDetails'] ?? 0) as int;
-      _jobsPostedToday = jobsCount;
+    final futures = await Future.wait([
+      _homeService.getHomeProfileSummary(),
+      _homeService.getJobsPostedTodayCount(),
+      _homeService.getExpectedSalaryPerMonth(),
+      _homeService.getUserSavedJobs(),
+      _homeService.fetchPremiumJobs(limit: 8),
+      _homeService.getRecommendedJobs(limit: 40),
+      _homeService.fetchLatestJobs(limit: 40),
+      _homeService.fetchJobsNearby(limit: 40),
+      _homeService.fetchTopCompanies(limit: 10),
+      _homeService.getUnreadNotificationsCount(),
+      _supabase
+          .from('slider')
+          .select()
+          .eq('is_active', true)
+          .order('position', ascending: true),
+    ]);
 
-      // 2) Expected salary
-      _expectedSalaryPerMonth = await _homeService.getExpectedSalaryPerMonth();
+    final summary = futures[0] as Map<String, dynamic>;
+    final jobsCount = futures[1] as int;
+    _expectedSalaryPerMonth = futures[2] as int;
+    _savedJobIds = futures[3] as Set<String>;
+    _premiumJobs =
+        List<Map<String, dynamic>>.from(futures[4] as List);
+    _recommendedJobs =
+        List<Map<String, dynamic>>.from(futures[5] as List);
+    _latestJobs =
+        List<Map<String, dynamic>>.from(futures[6] as List);
+    _nearbyJobs =
+        List<Map<String, dynamic>>.from(futures[7] as List);
+    _topCompanies =
+        List<Map<String, dynamic>>.from(futures[8] as List);
+    _unreadNotifications = futures[9] as int;
+    _sliders =
+        List<Map<String, dynamic>>.from(futures[10] as List);
 
-      // 3) Saved jobs
-      _savedJobIds = await _homeService.getUserSavedJobs();
-
-      // 4) Premium jobs
-      _premiumJobs = await _homeService.fetchPremiumJobs(limit: 8);
-
-      // 5) Jobs for sections
-      _recommendedJobs = await _homeService.getRecommendedJobs(limit: 40);
-      _latestJobs = await _homeService.fetchLatestJobs(limit: 40);
-      _nearbyJobs = await _homeService.fetchJobsNearby(limit: 40);
-
-      // 6) Top companies
-      _topCompanies = await _homeService.fetchTopCompanies(limit: 10);
-
-
- // ------------------------------------------------------------
-// LOAD SLIDER
-// ------------------------------------------------------------
-try {
-  _sliders = await _supabase
-      .from('slider')
-      .select()
-      .eq('is_active', true)
-      .order('position', ascending: true);
-} catch (_) {
-  _sliders = [];
-}
-
-      // 7) Notifications count
-      try {
-        _unreadNotifications = await _homeService.getUnreadNotificationsCount();
-      } catch (_) {
-        _unreadNotifications = 0;
-      }
-    } finally {
-      if (!_isDisposed) {
-        setState(() {
-          _isLoadingProfile = false;
-          _loadingCompanies = false;
-        });
-      }
+    _profileName =
+        (summary['profileName'] ?? "Your Profile").toString();
+    _profileCompletion =
+        (summary['profileCompletion'] ?? 0) as int;
+    _lastUpdatedText =
+        (summary['lastUpdatedText'] ?? "Updated recently")
+            .toString();
+    _missingDetails =
+        (summary['missingDetails'] ?? 0) as int;
+    _jobsPostedToday = jobsCount;
+  } catch (_) {
+    // silent fail
+  } finally {
+    if (!_isDisposed && mounted) {
+      setState(() {
+        _isLoadingProfile = false;
+        _loadingCompanies = false;
+      });
     }
   }
+}
 
   Future<void> _refreshHome() async {
     if (_isDisposed) return;
