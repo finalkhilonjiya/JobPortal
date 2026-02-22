@@ -13,6 +13,7 @@ import '../recommended_jobs_page.dart';
 import '../saved_jobs_page.dart';
 import '../profile_performance_page.dart';
 import '../subscription_page.dart';
+import 'how_khilonjiya_works_page.dart';
 
 class NaukriDrawer extends StatefulWidget {
   final String userName;
@@ -132,7 +133,7 @@ class _NaukriDrawerState extends State<NaukriDrawer> {
       child: SafeArea(
         child: Column(
           children: [
-            // ================= HEADER =================
+            // HEADER
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
               child: Column(
@@ -201,7 +202,6 @@ class _NaukriDrawerState extends State<NaukriDrawer> {
                   ),
                   const SizedBox(height: 12),
 
-                  // PRO SECTION (SLIM)
                   if (!_loadingPro)
                     InkWell(
                       onTap: _openSubscription,
@@ -241,7 +241,6 @@ class _NaukriDrawerState extends State<NaukriDrawer> {
 
             const Divider(height: 1),
 
-            // ================= MENU =================
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 6),
@@ -259,6 +258,17 @@ class _NaukriDrawerState extends State<NaukriDrawer> {
                       () => _pushNamed(AppRoutes.settings)),
                   _menuItem(Icons.help_outline, "Help",
                       () => _pushNamed(AppRoutes.contactSupport)),
+
+                  // NEW ITEMS
+                  _menuItem(Icons.play_circle_outline, "How Khilonjiya works",
+                      () => _pushPage(const HowKhilonjiyaWorksPage())),
+                  _menuItem(Icons.description_outlined, "Terms & Conditions",
+                      () => _pushNamed(AppRoutes.termsAndConditions)),
+                  _menuItem(Icons.lock_outline, "Privacy Policy",
+                      () => _pushNamed(AppRoutes.privacyPolicy)),
+                  _menuItem(Icons.info_outline, "About Us",
+                      () => _pushNamed(AppRoutes.aboutApp)),
+
                   const Divider(),
                   _menuItem(Icons.logout_rounded, "Logout", _logout,
                       titleColor: const Color(0xFFEF4444),
@@ -267,9 +277,9 @@ class _NaukriDrawerState extends State<NaukriDrawer> {
               ),
             ),
 
-            // ================= FOOTER =================
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: const BoxDecoration(
                 border: Border(top: BorderSide(color: KhilonjiyaUI.border)),
               ),
