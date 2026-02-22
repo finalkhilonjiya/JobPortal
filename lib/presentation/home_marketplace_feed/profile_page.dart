@@ -111,10 +111,6 @@ class _ProfilePageState extends State<ProfilePage> {
     await _load();
   }
 
-  // ============================================================
-  // SLIM TILE (Like Job Card Feel)
-  // ============================================================
-
   Widget _infoTile({
     required IconData icon,
     required String title,
@@ -159,10 +155,6 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
-
-  // ============================================================
-  // HEADER
-  // ============================================================
 
   Widget _profileHeader() {
     final fullName = _s(_profile["full_name"]);
@@ -217,10 +209,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ============================================================
-  // BODY
-  // ============================================================
-
   Widget _body() {
     final salary = _i(_profile['expected_salary_min']);
     final expYears = _i(_profile['total_experience_years']);
@@ -235,7 +223,6 @@ class _ProfilePageState extends State<ProfilePage> {
         children: [
           _profileHeader(),
           const SizedBox(height: 14),
-
           _infoTile(
             icon: Icons.currency_rupee_rounded,
             title: "Expected salary",
@@ -277,10 +264,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ============================================================
-  // SLIM BUTTON
-  // ============================================================
-
   Widget _updateButton() {
     return SafeArea(
       top: false,
@@ -289,11 +272,12 @@ class _ProfilePageState extends State<ProfilePage> {
         color: Colors.white,
         child: SizedBox(
           width: double.infinity,
-          height: 40, // slimmer
+          height: 40,
           child: ElevatedButton(
             onPressed: _openEdit,
             style: ElevatedButton.styleFrom(
               backgroundColor: KhilonjiyaUI.primary,
+              foregroundColor: Colors.white, // FIXED HERE
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -311,10 +295,6 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
-
-  // ============================================================
-  // BUILD
-  // ============================================================
 
   @override
   Widget build(BuildContext context) {
