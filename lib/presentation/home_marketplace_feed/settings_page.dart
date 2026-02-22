@@ -32,27 +32,8 @@ class SettingsPage extends StatelessWidget {
             title: "Notifications",
             subtitle: "Manage job alerts & updates",
             onTap: () {
-              Navigator.pushNamed(context, AppRoutes.notificationsSettings);
-            },
-          ),
-
-          _tile(
-            context,
-            icon: Icons.lock_outline,
-            title: "Privacy Policy",
-            subtitle: "How we handle your data",
-            onTap: () {
-              Navigator.pushNamed(context, AppRoutes.privacyPolicy);
-            },
-          ),
-
-          _tile(
-            context,
-            icon: Icons.description_outlined,
-            title: "Terms & Conditions",
-            subtitle: "Rules for using the app",
-            onTap: () {
-              Navigator.pushNamed(context, AppRoutes.termsAndConditions);
+              Navigator.pushNamed(
+                  context, AppRoutes.notificationsSettings);
             },
           ),
 
@@ -62,7 +43,8 @@ class SettingsPage extends StatelessWidget {
             title: "Refund & Cancellation Policy",
             subtitle: "For subscriptions & payments",
             onTap: () {
-              Navigator.pushNamed(context, AppRoutes.refundPolicy);
+              Navigator.pushNamed(
+                  context, AppRoutes.refundPolicy);
             },
           ),
 
@@ -72,17 +54,8 @@ class SettingsPage extends StatelessWidget {
             title: "Language",
             subtitle: "English / Assamese (later)",
             onTap: () {
-              Navigator.pushNamed(context, AppRoutes.languageSettings);
-            },
-          ),
-
-          _tile(
-            context,
-            icon: Icons.info_outline,
-            title: "About",
-            subtitle: "Company details & app info",
-            onTap: () {
-              Navigator.pushNamed(context, AppRoutes.aboutApp);
+              Navigator.pushNamed(
+                  context, AppRoutes.languageSettings);
             },
           ),
 
@@ -92,7 +65,8 @@ class SettingsPage extends StatelessWidget {
             title: "Contact & Support",
             subtitle: "Help, email, report issues",
             onTap: () {
-              Navigator.pushNamed(context, AppRoutes.contactSupport);
+              Navigator.pushNamed(
+                  context, AppRoutes.contactSupport);
             },
           ),
         ],
@@ -112,7 +86,8 @@ class SettingsPage extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: KhilonjiyaUI.cardDecoration(radius: 20),
         child: Row(
           children: [
@@ -120,7 +95,8 @@ class SettingsPage extends StatelessWidget {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: KhilonjiyaUI.primary.withOpacity(0.08),
+                color:
+                    KhilonjiyaUI.primary.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(
@@ -132,12 +108,13 @@ class SettingsPage extends StatelessWidget {
             const SizedBox(width: 14),
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
                     style: KhilonjiyaUI.body.copyWith(
-                      fontWeight: FontWeight.w600, // lighter but same size
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 4),
