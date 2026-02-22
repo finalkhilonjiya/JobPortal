@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import 'rcc_works_form.dart';
 import 'assam_type_form.dart';
@@ -19,38 +22,190 @@ class ConstructionServicesHomePage extends StatefulWidget {
 class _ConstructionServicesHomePageState
     extends State<ConstructionServicesHomePage> {
 
+  final SupabaseClient _supabase = Supabase.instance.client;
+  final ScrollController _scrollController = ScrollController();
+
+  List<String> _sliderImages = [];
+  int _currentIndex = 0;
+
+  bool _loading = true;
+  bool _loadingMore = false;
+  bool _hasMore = true;
+
+  int _offset = 0;
+  final int _limit = 6;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInitial();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_loadingMore || !_hasMore) return;
+
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _loadMore();
+    }
+  }
+
+  Future<void> _loadInitial() async {
+    final res = await _supabase
+        .from('slider')
+        .select('image_url')
+        .eq('type', 'construction')
+        .order('created_at', ascending: false)
+        .range(_offset, _offset + _limit - 1);
+
+    setState(() {
+      _sliderImages =
+          List<String>.from(res.map((e) => e['image_url'] ?? ''));
+      _offset += _sliderImages.length;
+      _hasMore = res.length == _limit;
+      _loading = false;
+    });
+  }
+
+  Future<void> _loadMore() async {
+    if (!_hasMore) return;
+
+    setState(() => _loadingMore = true);
+
+    final res = await _supabase
+        .from('slider')
+        .select('image_url')
+        .eq('type', 'construction')
+        .order('created_at', ascending: false)
+        .range(_offset, _offset + _limit - 1);
+
+    setState(() {
+      _sliderImages.addAll(
+          List<String>.from(res.map((e) => e['image_url'] ?? '')));
+      _offset += res.length;
+      _hasMore = res.length == _limit;
+      _loadingMore = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _buildWelcomeBanner(),
-              _buildServicesGrid(context),
-              _buildFeaturesSection(),
-              SizedBox(height: 10.h),
-            ],
+      appBar: AppBar(
+        title: const Text("Khilonjiya Construction Services"),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        elevation: 0.5,
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              controller: _scrollController,
+              child: Column(
+                children: [
+                  _buildSliderSection(),
+                  _buildWelcomeBanner(),
+                  _buildServicesGrid(context),
+                  _buildFeaturesSection(),
+                  if (_loadingMore)
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 4.h),
+                      child: const CircularProgressIndicator(),
+                    ),
+                  SizedBox(height: 10.h),
+                ],
+              ),
+            ),
+    );
+  }
+
+  // ================= SLIDER =================
+
+  Widget _buildSliderSection() {
+    if (_sliderImages.isEmpty) return const SizedBox();
+
+    return Container(
+      margin: EdgeInsets.fromLTRB(4.w, 4.h, 4.w, 6.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Ongoing Projects",
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
           ),
-        ),
+          SizedBox(height: 3.w),
+          CarouselSlider(
+            options: CarouselOptions(
+              height: 25.h,
+              autoPlay: true,
+              enlargeCenterPage: true,
+              viewportFraction: 0.9,
+              onPageChanged: (index, reason) {
+                setState(() => _currentIndex = index);
+              },
+            ),
+            items: _sliderImages.map((url) {
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: CachedNetworkImage(
+                  imageUrl: url,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  placeholder: (_, __) =>
+                      Container(color: Colors.grey[300]),
+                  errorWidget: (_, __, ___) =>
+                      Container(color: Colors.grey[300]),
+                ),
+              );
+            }).toList(),
+          ),
+          SizedBox(height: 2.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(_sliderImages.length, (index) {
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: _currentIndex == index ? 10 : 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: _currentIndex == index
+                      ? Colors.blue
+                      : Colors.grey[400],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              );
+            }),
+          ),
+        ],
       ),
     );
   }
 
-  // ================= BANNER =================
+  // ================= ORIGINAL BANNER =================
 
   Widget _buildWelcomeBanner() {
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.fromLTRB(4.w, 4.h, 4.w, 6.w),
+      margin: EdgeInsets.fromLTRB(4.w, 0, 4.w, 6.w),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -61,33 +216,13 @@ class _ConstructionServicesHomePageState
           child: Image.asset(
             'assets/images/constructionbanner.jpg',
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                decoration: BoxDecoration(
-                  color: Color(0xFF2563EB),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                padding: EdgeInsets.all(6.w),
-                child: Center(
-                  child: Text(
-                    'Khilonjiya Construction Services',
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              );
-            },
           ),
         ),
       ),
     );
   }
 
-  // ================= SERVICES GRID =================
+  // ================= ORIGINAL GRID =================
 
   Widget _buildServicesGrid(BuildContext context) {
     final services = [
@@ -145,7 +280,7 @@ class _ConstructionServicesHomePageState
       margin: EdgeInsets.fromLTRB(4.w, 0, 4.w, 6.w),
       child: GridView.builder(
         shrinkWrap: true,
-        physics: NeverScrollableScrollPhysics(),
+        physics: const NeverScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 4.w,
@@ -171,7 +306,7 @@ class _ConstructionServicesHomePageState
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
               blurRadius: 12,
-              offset: Offset(0, 4),
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -217,7 +352,7 @@ class _ConstructionServicesHomePageState
     );
   }
 
-  // ================= FEATURES =================
+  // ================= ORIGINAL FEATURES =================
 
   Widget _buildFeaturesSection() {
     return Container(
@@ -257,7 +392,7 @@ class _ConstructionServicesHomePageState
         Container(
           width: 10.w,
           height: 10.w,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Color(0xFF2563EB),
             shape: BoxShape.circle,
           ),
