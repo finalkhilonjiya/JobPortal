@@ -79,7 +79,6 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
   void _validateMobile() {
     final value = _mobileController.text.trim();
     final valid = MobileAuthService.isValidMobileNumber(value);
-
     if (valid == _isMobileValid && _error == null) return;
 
     setState(() {
@@ -124,13 +123,9 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
 
   void _startResendTimer() {
     _timer?.cancel();
+    setState(() => _resendSeconds = 30);
 
-    setState(() {
-      _resendSeconds = 30;
-    });
-
-    _timer =
-        Timer.periodic(const Duration(seconds: 1), (t) {
+    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) return;
       if (_resendSeconds <= 0) {
         t.cancel();
@@ -147,12 +142,10 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
   }
 
   Future<void> _handleVerifyOtp() async {
-    final otp =
-        _otpControllers.map((c) => c.text).join();
+    final otp = _otpControllers.map((c) => c.text).join();
 
     if (otp.length != 6) {
-      setState(() =>
-          _error = 'Please enter the full 6-digit OTP');
+      setState(() => _error = 'Please enter the full 6-digit OTP');
       return;
     }
 
@@ -172,13 +165,12 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
         role: UserRole.jobSeeker,
       );
 
-      // 🔥 Collect GPS and save in profile
+      // 🔥 SAVE GPS
       await LocationService.collectAndSaveLocation();
 
       if (!mounted) return;
 
-      Navigator.pushReplacementNamed(
-          context, AppRoutes.home);
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -199,12 +191,9 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
           _otpControllers[i].text = digits[i];
         }
         _otpFocusNodes.last.requestFocus();
-        Future.delayed(
-            const Duration(milliseconds: 250),
-            _handleVerifyOtp);
+        Future.delayed(const Duration(milliseconds: 250), _handleVerifyOtp);
       } else {
-        _otpControllers[index].text =
-            digits.isNotEmpty ? digits[0] : '';
+        _otpControllers[index].text = digits.isNotEmpty ? digits[0] : '';
       }
       return;
     }
@@ -213,25 +202,18 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
       _otpFocusNodes[index + 1].requestFocus();
     }
 
-    final fullOtp =
-        _otpControllers.map((c) => c.text).join();
+    final fullOtp = _otpControllers.map((c) => c.text).join();
     if (fullOtp.length == 6) {
-      Future.delayed(
-          const Duration(milliseconds: 250),
-          _handleVerifyOtp);
+      Future.delayed(const Duration(milliseconds: 250), _handleVerifyOtp);
     }
   }
 
-  void _handleOtpBackspace(
-      int index, RawKeyEvent event) {
+  void _handleOtpBackspace(int index, RawKeyEvent event) {
     if (event is RawKeyDownEvent &&
-        event.logicalKey ==
-            LogicalKeyboardKey.backspace) {
-      if (_otpControllers[index].text.isEmpty &&
-          index > 0) {
+        event.logicalKey == LogicalKeyboardKey.backspace) {
+      if (_otpControllers[index].text.isEmpty && index > 0) {
         _otpControllers[index - 1].clear();
-        _otpFocusNodes[index - 1]
-            .requestFocus();
+        _otpFocusNodes[index - 1].requestFocus();
       }
     }
   }
@@ -244,40 +226,76 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
     );
   }
 
+  Widget _header() {
+    return Column(
+      children: const [
+        Text(
+          'Khilonjiya Login', // renamed
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF2563EB),
+            letterSpacing: -0.4,
+          ),
+        ),
+        SizedBox(height: 8),
+        Text(
+          'Find nearby jobs and apply instantly',
+          style: TextStyle(
+            fontSize: 14.5,
+            color: Color(0xFF64748B),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: FadeTransition(
           opacity: _animController,
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(
-                    horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               children: [
                 const SizedBox(height: 12),
-
-                const SizedBox(height: 26),
-
-                const Text(
-                  'Khilonjiya Login',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF2563EB),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    onPressed: _goBackToRoleSelection,
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                    color: const Color(0xFF0F172A),
+                    splashRadius: 22,
                   ),
                 ),
-
+                const SizedBox(height: 26),
+                _header(),
                 const SizedBox(height: 38),
-
                 Expanded(
-                  child: _showOtpStep
-                      ? _otpStep()
-                      : _mobileStep(),
+                  child: _showOtpStep ? _otpStep() : _mobileStep(),
                 ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Made in Assam',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF475569),
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  '© Khilonjiya India Pvt. Ltd.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
+                const SizedBox(height: 18),
               ],
             ),
           ),
@@ -288,28 +306,31 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
 
   Widget _mobileStep() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const Text(
+          'Mobile number',
+          style: TextStyle(
+            fontSize: 14.5,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+        const SizedBox(height: 10),
         TextField(
           controller: _mobileController,
-          keyboardType:
-              TextInputType.phone,
+          keyboardType: TextInputType.phone,
           inputFormatters: [
-            FilteringTextInputFormatter
-                .digitsOnly,
-            LengthLimitingTextInputFormatter(
-                10),
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(10),
           ],
         ),
         const SizedBox(height: 26),
         SizedBox(
           width: double.infinity,
-          height: 40,
+          height: 40, // changed from 52
           child: ElevatedButton(
-            onPressed:
-                _isMobileValid &&
-                        !_isLoading
-                    ? _handleSendOtp
-                    : null,
+            onPressed: _isMobileValid && !_isLoading ? _handleSendOtp : null,
             child: _isLoading
                 ? const CircularProgressIndicator()
                 : const Text('Send OTP'),
@@ -323,28 +344,18 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
     return Column(
       children: [
         Row(
-          mainAxisAlignment:
-              MainAxisAlignment
-                  .spaceBetween,
-          children: List.generate(
-              6, (i) {
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(6, (i) {
             return SizedBox(
               width: 46,
               height: 56,
               child: TextField(
-                controller:
-                    _otpControllers[i],
-                focusNode:
-                    _otpFocusNodes[i],
+                controller: _otpControllers[i],
+                focusNode: _otpFocusNodes[i],
                 maxLength: 1,
-                textAlign:
-                    TextAlign.center,
-                keyboardType:
-                    TextInputType
-                        .number,
-                onChanged: (v) =>
-                    _handleOtpChange(
-                        i, v),
+                textAlign: TextAlign.center,
+                keyboardType: TextInputType.number,
+                onChanged: (v) => _handleOtpChange(i, v),
               ),
             );
           }),
@@ -352,16 +363,12 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
         const SizedBox(height: 22),
         SizedBox(
           width: double.infinity,
-          height: 40,
+          height: 40, // changed from 52
           child: ElevatedButton(
-            onPressed:
-                _isLoading
-                    ? null
-                    : _handleVerifyOtp,
+            onPressed: _isLoading ? null : _handleVerifyOtp,
             child: _isLoading
                 ? const CircularProgressIndicator()
-                : const Text(
-                    'Verify & Continue'),
+                : const Text('Verify & Continue'),
           ),
         ),
       ],
