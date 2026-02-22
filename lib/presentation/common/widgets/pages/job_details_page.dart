@@ -172,27 +172,36 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   // APPLY
   // ------------------------------------------------------------
   Future<void> _applyNow() async {
-    if (_checkingApplied || _isApplied) return;
+  if (_checkingApplied || _isApplied) return;
 
-    final jobId = widget.job['id']?.toString();
-    if (jobId == null || jobId.trim().isEmpty) return;
+  final jobId = widget.job['id']?.toString();
+  if (jobId == null || jobId.trim().isEmpty) return;
 
-    final res = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => JobApplicationForm(jobId: jobId),
-      ),
-    );
+  // ✅ CHECK PRO SUBSCRIPTION
+  final isPro = await _homeService.isUserProSubscribed();
 
+  if (!isPro) {
     if (!mounted) return;
 
-    if (res == true) {
-      setState(() => _isApplied = true);
-    } else {
-      await _checkApplied();
-    }
+    Navigator.pushNamed(context, '/subscribe'); // your subscribe route
+    return;
   }
 
+  final res = await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => JobApplicationForm(jobId: jobId),
+    ),
+  );
+
+  if (!mounted) return;
+
+  if (res == true) {
+    setState(() => _isApplied = true);
+  } else {
+    await _checkApplied();
+  }
+}
   // ------------------------------------------------------------
   // SAVE / UNSAVE
   // ------------------------------------------------------------
@@ -210,53 +219,11 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   // ------------------------------------------------------------
   // FOLLOW COMPANY
   // ------------------------------------------------------------
-  Future<void> _toggleFollowCompany() async {
-    final companyId = _company?['id']?.toString() ?? '';
-    if (companyId.trim().isEmpty) return;
-
-    try {
-      final followed = await _homeService.toggleFollowCompany(companyId);
-      if (!mounted) return;
-
-      setState(() => _isCompanyFollowed = followed);
-    } catch (_) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to update follow status")),
-      );
-    }
-  }
-
+  
   // ------------------------------------------------------------
   // OPEN ANOTHER JOB DETAILS (SIMILAR JOB)
   // ------------------------------------------------------------
-  Future<void> _openJobDetails(Map<String, dynamic> job) async {
-    final jobId = job['id']?.toString() ?? '';
-    if (jobId.trim().isEmpty) return;
-
-    _homeService.trackJobView(jobId);
-
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => JobDetailsPage(
-          job: job,
-          isSaved: _savedJobIds.contains(jobId),
-          onSaveToggle: () => _toggleSaveJob(jobId),
-        ),
-      ),
-    );
-
-    // refresh saved state after return
-    try {
-      _savedJobIds = await _homeService.getUserSavedJobs();
-    } catch (_) {}
-
-    if (!mounted) return;
-    setState(() {});
-  }
-
+  
   // ------------------------------------------------------------
   // BUILD
   // ------------------------------------------------------------
@@ -357,20 +324,8 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                       child: _buildCompanyOverview(),
                     ),
 
-                    const SizedBox(height: 16),
-
-                    _sectionCard(
-                      title: "Company Reviews",
-                      child: _buildCompanyReviews(),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    Text("Similar jobs", style: KhilonjiyaUI.hTitle),
-                    const SizedBox(height: 10),
-                    _buildSimilarJobs(),
-
-                    const SizedBox(height: 18),
+                    
+                    
                   ],
                 ),
               ),
@@ -774,23 +729,7 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
 
         Row(
           children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _toggleFollowCompany,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF0F172A),
-                  side: BorderSide(color: KhilonjiyaUI.border),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: Text(
-                  _isCompanyFollowed ? "Following" : "Follow Company",
-                  style: const TextStyle(fontWeight: FontWeight.w900),
-                ),
-              ),
-            ),
+            
             if (website.isNotEmpty) ...[
               const SizedBox(width: 10),
               OutlinedButton(
@@ -839,174 +778,52 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   // ------------------------------------------------------------
   // COMPANY REVIEWS (REAL)
   // ------------------------------------------------------------
-  Widget _buildCompanyReviews() {
-    if (_loadingReviews) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 10),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (_reviews.isEmpty) {
-      return Text(
-        "No reviews yet.",
-        style: KhilonjiyaUI.body.copyWith(
-          color: const Color(0xFF475569),
-          height: 1.55,
-        ),
-      );
-    }
-
-    return Column(
-      children: _reviews.map((r) => _reviewTile(r)).toList(),
-    );
-  }
-
-  Widget _reviewTile(Map<String, dynamic> r) {
-    final rating = _toInt(r['rating']).clamp(1, 5);
-    final text = (r['review_text'] ?? '').toString().trim();
-    final createdAt = (r['created_at'] ?? '').toString();
-    final anon = r['is_anonymous'] == true;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: KhilonjiyaUI.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                anon ? "Anonymous" : "User",
-                style: KhilonjiyaUI.body.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const Spacer(),
-              Row(
-                children: List.generate(
-                  5,
-                  (i) => Icon(
-                    i < rating ? Icons.star_rounded : Icons.star_border_rounded,
-                    size: 18,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            text.isEmpty ? "No review text provided." : text,
-            style: KhilonjiyaUI.body.copyWith(
-              color: const Color(0xFF475569),
-              height: 1.55,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            _formatDate(createdAt),
-            style: KhilonjiyaUI.caption.copyWith(
-              color: const Color(0xFF64748B),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
+  
   // ------------------------------------------------------------
   // SIMILAR JOBS (REAL)
   // ------------------------------------------------------------
-  Widget _buildSimilarJobs() {
-    if (_loadingExtras) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 14),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (_similarJobs.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: KhilonjiyaUI.cardDecoration(radius: 20),
-        child: Text(
-          "No similar jobs found right now.",
-          style: KhilonjiyaUI.sub,
-        ),
-      );
-    }
-
-    return SizedBox(
-      height: 170,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: _similarJobs.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (_, i) {
-          final job = _similarJobs[i];
-          final id = job['id']?.toString() ?? '';
-
-          return SizedBox(
-            width: 320,
-            child: JobCardWidget(
-              job: job,
-              isSaved: _savedJobIds.contains(id),
-              onSaveToggle: () => _toggleSaveJob(id),
-              onTap: () => _openJobDetails(job),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
+  
   // ------------------------------------------------------------
   // BOTTOM BAR
   // ------------------------------------------------------------
   Widget _buildApplyBottomBar() {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: KhilonjiyaUI.border)),
-        ),
-        child: SizedBox(
-          height: 40,
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: (_checkingApplied || _isApplied) ? null : _applyNow,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: KhilonjiyaUI.primary,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: const Color(0xFFE2E8F0),
-              disabledForegroundColor: const Color(0xFF64748B),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+  return SafeArea(
+    top: false,
+    child: Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: KhilonjiyaUI.border)),
+      ),
+      child: SizedBox(
+        height: 40, // ✅ EXACT 40 HEIGHT
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: (_checkingApplied || _isApplied) ? null : _applyNow,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: KhilonjiyaUI.primary,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: const Color(0xFFE2E8F0),
+            disabledForegroundColor: const Color(0xFF64748B),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: Text(
-              _checkingApplied
-                  ? "Checking..."
-                  : (_isApplied ? "Already Applied" : "Apply Now"),
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 14.5,
-              ),
+          ),
+          child: Text(
+            _checkingApplied
+                ? "Checking..."
+                : (_isApplied ? "Already Applied" : "Apply Now"),
+            style: const TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 14.5,
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   // ------------------------------------------------------------
   // UTILS
