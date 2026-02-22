@@ -100,28 +100,39 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
   }
 
   Widget _infoCard() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Professional False Ceiling Solutions",
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
-          SizedBox(height: 8),
-          Text("• POP, Gypsum & PVC ceiling installation"),
-          Text("• Custom lighting & cove integration"),
-          Text("• AC duct concealment & modern finishes"),
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.w),
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        colors: [
+          Color(0xFFE0F2FE),
+          Color(0xFFBAE6FD),
         ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
       ),
-    );
-  }
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Professional False Ceiling Solutions",
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 13.sp,
+            color: const Color(0xFF0F172A),
+          ),
+        ),
+        SizedBox(height: 1.5.h),
+        const Text("• POP, Gypsum & PVC ceiling installation"),
+        const Text("• Custom lighting & cove integration"),
+        const Text("• AC duct concealment & modern finishes"),
+      ],
+    ),
+  );
+}
 
   Widget _section(String title, Widget child) {
     return Container(
@@ -262,61 +273,101 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
   }
 
   Widget _submitButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 3.5.h,
-      child: ElevatedButton(
-        onPressed: _loading ? null : _submit,
-        child: _loading
-            ? const SizedBox(
-                height: 18,
-                width: 18,
-                child: CircularProgressIndicator(
-                    strokeWidth: 2, color: Colors.white))
-            : const Text("Request Quote"),
+  return SizedBox(
+    width: double.infinity,
+    height: 5.5.h,
+    child: ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF2563EB),
+        elevation: 3,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
-    );
-  }
-
+      onPressed: _loading ? null : _submit,
+      child: _loading
+          ? const SizedBox(
+              height: 18,
+              width: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : Text(
+              "Request Quote",
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+    ),
+  );
+}
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+  if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _loading = true);
+  setState(() => _loading = true);
 
-    try {
-      await ConstructionService().submitFalseCeilingRequest({
-        'name': _nameController.text,
-        'phone': _phoneController.text,
-        'project_address': _selectedDistrict,
-        'ceiling_type': _ceilingType,
-        'room_type': _roomType,
-        'design_complexity': _designComplexity,
-        'lighting_type': _lightingType,
-        'area_size': _areaController.text,
-        'room_height': _heightController.text,
-        'budget_range': _budget,
-        'timeline': _timeline,
-        'needs_lighting_work': _needsLightingWork,
-        'needs_fan_points': _needsFanPoints,
-        'needs_ac_ducting': _needsACDucting,
-        'needs_painting': _needsPainting,
-        'needs_design': _needsDesign,
-        'needs_electrical_work': _needsElectricalWork,
-        'has_existing_ceiling': _hasExistingCeiling,
-        'needs_maintenance': _needsMaintenance,
-        'additional_details': _additionalController.text,
-      });
+  try {
+    await ConstructionService().submitFalseCeilingRequest({
+      'name': _nameController.text,
+      'phone': _phoneController.text,
+      'project_address': _selectedDistrict,
+      'ceiling_type': _ceilingType,
+      'room_type': _roomType,
+      'design_complexity': _designComplexity,
+      'lighting_type': _lightingType,
+      'area_size': _areaController.text,
+      'room_height': _heightController.text,
+      'budget_range': _budget,
+      'timeline': _timeline,
+      'needs_lighting_work': _needsLightingWork,
+      'needs_fan_points': _needsFanPoints,
+      'needs_ac_ducting': _needsACDucting,
+      'needs_painting': _needsPainting,
+      'needs_design': _needsDesign,
+      'needs_electrical_work': _needsElectricalWork,
+      'has_existing_ceiling': _hasExistingCeiling,
+      'needs_maintenance': _needsMaintenance,
+      'additional_details': _additionalController.text,
+    });
 
-      if (!mounted) return;
-      Navigator.pop(context);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
-    }
+    if (!mounted) return;
 
     setState(() => _loading = false);
+
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: const Text("Request Submitted"),
+        content: const Text(
+          "Your false ceiling request has been submitted successfully. Our team will contact you shortly.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return;
+    Navigator.pop(context);
+
+  } catch (e) {
+    if (!mounted) return;
+    setState(() => _loading = false);
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(e.toString())));
   }
+}
 
   Widget _input(TextEditingController c, String label,
       {TextInputType keyboardType = TextInputType.text,
