@@ -958,27 +958,31 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             controller: _experienceYearsCtrl,
             keyboardType: TextInputType.number,
             decoration:
-                _dec("Total experience (years)", icon: Icons.work_outline),
+                _dec("Total experience (years)", icon: Icons.work_outline)
+  .copyWith(labelText: "Total experience (years)"),
           ),
           const SizedBox(height: 12),
           TextField(
-            controller: _expectedSalaryMinCtrl,
-            keyboardType: TextInputType.number,
-            decoration: _dec(
-              "Expected salary per month",
-              icon: Icons.currency_rupee_rounded,
-            ),
-          ),
-          const SizedBox(height: 12),
+  controller: _expectedSalaryMinCtrl,
+  keyboardType: TextInputType.number,
+  decoration: _dec(
+    "Expected salary per month",
+    icon: Icons.currency_rupee_rounded,
+  ).copyWith(
+    labelText: "Expected salary per month",
+  ),
+),
+const SizedBox(height: 12),
           TextField(
-            controller: _noticeDaysCtrl,
-            keyboardType: TextInputType.number,
-            decoration: _dec(
-              "Notice period (days)",
-              icon: Icons.calendar_today_outlined,
-            ),
-          ),
-
+  controller: _noticeDaysCtrl,
+  keyboardType: TextInputType.number,
+  decoration: _dec(
+    "Notice period (days)",
+    icon: Icons.calendar_today_outlined,
+  ).copyWith(
+    labelText: "Notice period (days)",
+  ),
+),
           _sectionTitle("Preferences"),
           _dropdownBox(
             value: _jobType,
