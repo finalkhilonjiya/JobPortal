@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/construction_service.dart';
 
 class AssamTypeForm extends StatefulWidget {
@@ -11,473 +12,348 @@ class AssamTypeForm extends StatefulWidget {
 
 class _AssamTypeFormState extends State<AssamTypeForm> {
   final _formKey = GlobalKey<FormState>();
+  final SupabaseClient _db = Supabase.instance.client;
 
-  // Form Controllers
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _addressController = TextEditingController();
   final _plotSizeController = TextEditingController();
-  final _additionalDetailsController = TextEditingController();
+  final _additionalController = TextEditingController();
 
-  // Dropdown Values
-  String _selectedDistrict = 'Kamrup Metropolitan';
-  String _selectedHouseType = 'Traditional Assam House';
-  String _selectedFloors = 'Single Story';
-  String _selectedRoofType = 'Tin Roof';
-  String _selectedFoundationType = 'Pillar Foundation';
-  String _selectedTimeframe = 'Within 3 Months';
-  String _selectedBudgetRange = '10-20 Lakhs';
+  List<String> _districts = [];
+  String? _selectedDistrict;
 
-  // Checkbox Values
+  String _houseType = 'Traditional Assam House';
+  String _floors = 'Single Story';
+  String _roofType = 'Tin Roof';
+  String _foundationType = 'Pillar Foundation';
+  String _budget = '10-20 Lakhs';
+  String _timeline = 'Within 3 Months';
+
   bool _needsDesign = false;
-  bool _needsMaterialSupply = false;
-  bool _needsTraditionalCarpentry = false;
-  bool _needsModernAmenities = false;
-  bool _needsElectricalWork = false;
-  bool _needsPlumbingWork = false;
-  bool _hasLandReady = false;
+  bool _needsMaterial = false;
+  bool _needsCarpentry = false;
+  bool _needsModern = false;
+  bool _needsElectrical = false;
+  bool _needsPlumbing = false;
+  bool _landReady = false;
   bool _needsPermits = false;
 
-  // Assam Districts List
-  final List<String> assamDistricts = [
-    'Baksa', 'Barpeta', 'Biswanath', 'Bongaigaon', 'Cachar', 'Charaideo',
-    'Chirang', 'Darrang', 'Dhemaji', 'Dhubri', 'Dibrugarh', 'Dima Hasao',
-    'Goalpara', 'Golaghat', 'Hailakandi', 'Hojai', 'Jorhat', 'Kamrup',
-    'Kamrup Metropolitan', 'Karbi Anglong', 'Karimganj', 'Kokrajhar',
-    'Lakhimpur', 'Majuli', 'Morigaon', 'Nagaon', 'Nalbari', 'Sivasagar',
-    'Sonitpur', 'South Salmara-Mankachar', 'Tinsukia', 'Udalguri',
-    'West Karbi Anglong'
-  ];
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDistricts();
+  }
+
+  Future<void> _loadDistricts() async {
+    final response = await _db
+        .from('assam_districts_master')
+        .select('district_name')
+        .order('district_name');
+
+    setState(() {
+      _districts = List<Map<String, dynamic>>.from(response)
+          .map((e) => e['district_name'] as String)
+          .toList();
+
+      if (_districts.isNotEmpty) {
+        _selectedDistrict = _districts.first;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: Text('Assam Type House - Get Quote'),
-        backgroundColor: Color(0xFF2563EB),
-        foregroundColor: Colors.white,
+        title: const Text('Assam Type Construction'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(4.w),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildServiceDescriptionBanner(),
-              SizedBox(height: 4.w),
-
-              _buildSectionHeader('Personal Information'),
-              _buildPersonalInfoSection(),
-              SizedBox(height: 4.w),
-
-              _buildSectionHeader('House Specifications'),
-              _buildHouseSpecsSection(),
-              SizedBox(height: 4.w),
-
-              _buildSectionHeader('Services Required'),
-              _buildServicesSection(),
-              SizedBox(height: 4.w),
-
-              _buildSectionHeader('Budget & Timeline'),
-              _buildBudgetTimelineSection(),
-              SizedBox(height: 4.w),
-
-              _buildSectionHeader('Additional Information'),
-              _buildAdditionalInfoSection(),
-              SizedBox(height: 6.w),
-
-              _buildSubmitButton(),
-              SizedBox(height: 4.w),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildServiceDescriptionBanner() {
-    return Container(
-      width: double.infinity, // Maintains full width alignment
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: AspectRatio(
-        aspectRatio: 1280 / 961, // Exact ratio of your image (1280 x 961)
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Image.asset(
-            'assets/images/assamtypebanner.jpg',
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              // Fallback to gradient container if image not found
-              return Container(
-                padding: EdgeInsets.all(4.w),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFFFF3E0), Color(0xFFFFCC02)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
+      body: _selectedDistrict == null
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(4.w),
+              child: Form(
+                key: _formKey,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Icon(Icons.home, size: 6.w, color: Colors.orange[800]),
-                        SizedBox(width: 3.w),
-                        Expanded(
-                          child: Text(
-                            'Traditional Assam Type House',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.orange[800],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 2.w),
-                    Text(
-                      'Authentic Assamese architecture with modern comfort:',
-                      style: TextStyle(fontSize: 12.sp),
-                    ),
-                    SizedBox(height: 2.w),
-                    ...[
-                      '• Traditional wooden structure',
-                      '• Raised foundation with pillars',
-                      '• Sloped tin or tile roofing',
-                      '• Spacious verandas (dol)',
-                      '• Natural ventilation design',
-                      '• Modern amenities integration',
-                    ].map((service) => Padding(
-                      padding: EdgeInsets.only(left: 3.w, bottom: 1.w),
-                      child: Text(service, style: TextStyle(fontSize: 11.sp)),
-                    )).toList(),
+                    _infoCard(),
+                    SizedBox(height: 4.w),
+                    _section("Personal Details", _personal()),
+                    _section("House Specifications", _houseSpecs()),
+                    _section("Services Required", _services()),
+                    _section("Budget & Timeline", _budgetTimeline()),
+                    _section("Additional Details", _additional()),
+                    SizedBox(height: 6.w),
+                    _submitButton(),
+                    SizedBox(height: 4.w),
                   ],
                 ),
-              );
-            },
+              ),
+            ),
+    );
+  }
+
+  // ===== Info Card =====
+  Widget _infoCard() {
+    return Container(
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Traditional Assam Type House",
+            style: TextStyle(fontWeight: FontWeight.w600),
           ),
+          SizedBox(height: 8),
+          Text("• Elevated pillar foundation structure"),
+          Text("• Sloped roofing for heavy rainfall"),
+          Text("• Traditional wood craftsmanship"),
+        ],
+      ),
+    );
+  }
+
+  Widget _section(String title, Widget child) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 4.w),
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style:
+                  TextStyle(fontWeight: FontWeight.w600, fontSize: 13.sp)),
+          SizedBox(height: 3.w),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _personal() {
+    return Column(
+      children: [
+        _input(_nameController, "Full Name"),
+        SizedBox(height: 3.w),
+        _phoneInput(),
+        SizedBox(height: 3.w),
+        DropdownButtonFormField<String>(
+          value: _selectedDistrict,
+          decoration: _dec("District"),
+          items: _districts
+              .map((e) =>
+                  DropdownMenuItem(value: e, child: Text(e)))
+              .toList(),
+          onChanged: (v) => setState(() => _selectedDistrict = v),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 3.w),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 14.sp,
-          fontWeight: FontWeight.w600,
-          color: Colors.black87,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPersonalInfoSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          _buildTextFormField(_nameController, 'Full Name *', Icons.person),
-          SizedBox(height: 3.w),
-          _buildTextFormField(_phoneController, 'Phone Number *', Icons.phone, keyboardType: TextInputType.phone),
-          SizedBox(height: 3.w),
-          _buildDropdownField(
-            'District *',
-            _selectedDistrict,
-            assamDistricts,
-            (value) => setState(() => _selectedDistrict = value!),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHouseSpecsSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          _buildDropdownField(
-            'House Type',
-            _selectedHouseType,
-            ['Traditional Assam House', 'Modern Assam Style', 'Heritage Style', 'Contemporary Fusion'],
-            (value) => setState(() => _selectedHouseType = value!),
-          ),
-          SizedBox(height: 3.w),
-          _buildDropdownField(
-            'Number of Stories',
-            _selectedFloors,
-            ['Single Story', 'Double Story', 'Ground + First Floor'],
-            (value) => setState(() => _selectedFloors = value!),
-          ),
-          SizedBox(height: 3.w),
-          _buildDropdownField(
-            'Roof Type',
-            _selectedRoofType,
-            ['Tin Roof', 'Tile Roof', 'Concrete Slab', 'Mixed (Tin + Concrete)'],
-            (value) => setState(() => _selectedRoofType = value!),
-          ),
-          SizedBox(height: 3.w),
-          _buildDropdownField(
-            'Foundation Type',
-            _selectedFoundationType,
-            ['Pillar Foundation', 'Combined Foundation', 'Concrete Foundation', 'Traditional Wooden Posts'],
-            (value) => setState(() => _selectedFoundationType = value!),
-          ),
-          SizedBox(height: 3.w),
-          _buildTextFormField(_plotSizeController, 'Plot Size (sq ft)', Icons.straighten, keyboardType: TextInputType.number),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildServicesSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          _buildCheckboxTile('Architectural Design & Planning', _needsDesign, (value) => setState(() => _needsDesign = value!)),
-          _buildCheckboxTile('Material Supply (Wood, Tin, etc.)', _needsMaterialSupply, (value) => setState(() => _needsMaterialSupply = value!)),
-          _buildCheckboxTile('Traditional Carpentry Work', _needsTraditionalCarpentry, (value) => setState(() => _needsTraditionalCarpentry = value!)),
-          _buildCheckboxTile('Modern Amenities Integration', _needsModernAmenities, (value) => setState(() => _needsModernAmenities = value!)),
-          _buildCheckboxTile('Electrical Work', _needsElectricalWork, (value) => setState(() => _needsElectricalWork = value!)),
-          _buildCheckboxTile('Plumbing Work', _needsPlumbingWork, (value) => setState(() => _needsPlumbingWork = value!)),
-          _buildCheckboxTile('Land is ready for construction', _hasLandReady, (value) => setState(() => _hasLandReady = value!)),
-          _buildCheckboxTile('Need help with permits/approvals', _needsPermits, (value) => setState(() => _needsPermits = value!)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBudgetTimelineSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          _buildDropdownField(
-            'Budget Range',
-            _selectedBudgetRange,
-            ['5-10 Lakhs', '10-20 Lakhs', '20-35 Lakhs', '35-50 Lakhs', '50 Lakhs+', 'Will Discuss'],
-            (value) => setState(() => _selectedBudgetRange = value!),
-          ),
-          SizedBox(height: 3.w),
-          _buildDropdownField(
-            'When do you want to start?',
-            _selectedTimeframe,
-            ['Immediately', 'Within 1 Month', 'Within 3 Months', '3-6 Months', 'Just Planning'],
-            (value) => setState(() => _selectedTimeframe = value!),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAdditionalInfoSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: _buildTextFormField(
-        _additionalDetailsController, 
-        'Special Requirements or Traditional Features Needed', 
-        Icons.notes, 
-        maxLines: 4,
-        required: false,
-      ),
-    );
-  }
-
-  Widget _buildTextFormField(
-    TextEditingController controller,
-    String label,
-    IconData icon, {
-    TextInputType keyboardType = TextInputType.text,
-    int maxLines = 1,
-    bool required = true,
-  }) {
+  Widget _phoneInput() {
     return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      validator: required ? (value) => value?.isEmpty ?? true ? 'This field is required' : null : null,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: Color(0xFF2563EB)),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Color(0xFF2563EB), width: 2),
-        ),
-      ),
+      controller: _phoneController,
+      keyboardType: TextInputType.number,
+      maxLength: 10,
+      validator: (v) {
+        if (v == null || v.isEmpty) return "Required";
+        if (v.length != 10) return "Enter valid 10 digit number";
+        return null;
+      },
+      onChanged: (value) {
+        final clean = value.replaceAll(RegExp(r'[^0-9]'), '');
+        if (value != clean) {
+          _phoneController.value = TextEditingValue(
+              text: clean,
+              selection:
+                  TextSelection.collapsed(offset: clean.length));
+        }
+      },
+      decoration: _dec("Phone Number"),
     );
   }
 
-  Widget _buildDropdownField(
-    String label,
-    String value,
-    List<String> options,
-    Function(String?) onChanged,
-  ) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Color(0xFF2563EB), width: 2),
-        ),
-      ),
-      items: options.map((option) => DropdownMenuItem(value: option, child: Text(option))).toList(),
+  Widget _houseSpecs() {
+    return Column(
+      children: [
+        _dropdown("House Type", _houseType,
+            ['Traditional Assam House','Modern Assam Style','Heritage Style','Fusion Style'],
+            (v) => setState(() => _houseType = v!)),
+        SizedBox(height: 3.w),
+        _dropdown("Stories", _floors,
+            ['Single Story','Double Story','Ground + First'],
+            (v) => setState(() => _floors = v!)),
+        SizedBox(height: 3.w),
+        _dropdown("Roof Type", _roofType,
+            ['Tin Roof','Tile Roof','Concrete Slab','Mixed'],
+            (v) => setState(() => _roofType = v!)),
+        SizedBox(height: 3.w),
+        _dropdown("Foundation Type", _foundationType,
+            ['Pillar Foundation','Concrete Foundation','Wooden Posts'],
+            (v) => setState(() => _foundationType = v!)),
+        SizedBox(height: 3.w),
+        _input(_plotSizeController, "Plot Size (sq ft)",
+            keyboardType: TextInputType.number),
+      ],
     );
   }
 
-  Widget _buildCheckboxTile(String title, bool value, Function(bool?) onChanged) {
-    return CheckboxListTile(
-      title: Text(title, style: TextStyle(fontSize: 12.sp)),
-      value: value,
-      onChanged: onChanged,
-      activeColor: Color(0xFF2563EB),
-      contentPadding: EdgeInsets.zero,
+  Widget _services() {
+    return Column(
+      children: [
+        _check("Architectural Design", _needsDesign,
+            (v) => setState(() => _needsDesign = v!)),
+        _check("Material Supply", _needsMaterial,
+            (v) => setState(() => _needsMaterial = v!)),
+        _check("Traditional Carpentry", _needsCarpentry,
+            (v) => setState(() => _needsCarpentry = v!)),
+        _check("Modern Amenities", _needsModern,
+            (v) => setState(() => _needsModern = v!)),
+        _check("Electrical Work", _needsElectrical,
+            (v) => setState(() => _needsElectrical = v!)),
+        _check("Plumbing Work", _needsPlumbing,
+            (v) => setState(() => _needsPlumbing = v!)),
+        _check("Land Ready", _landReady,
+            (v) => setState(() => _landReady = v!)),
+        _check("Need Permits Help", _needsPermits,
+            (v) => setState(() => _needsPermits = v!)),
+      ],
     );
   }
 
-  Widget _buildSubmitButton() {
-    return Container(
+  Widget _budgetTimeline() {
+    return Column(
+      children: [
+        _dropdown("Budget Range", _budget,
+            ['5-10 Lakhs','10-20 Lakhs','20-35 Lakhs','35-50 Lakhs','50 Lakhs+'],
+            (v) => setState(() => _budget = v!)),
+        SizedBox(height: 3.w),
+        _dropdown("Start Timeline", _timeline,
+            ['Immediately','Within 1 Month','Within 3 Months','Planning'],
+            (v) => setState(() => _timeline = v!)),
+      ],
+    );
+  }
+
+  Widget _additional() {
+    return _input(_additionalController,
+        "Special Requirements",
+        maxLines: 4,
+        required: false);
+  }
+
+  Widget _submitButton() {
+    return SizedBox(
       width: double.infinity,
-      height: 7.h,
+      height: 3.5.h,
       child: ElevatedButton(
-        onPressed: _submitForm,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF2563EB),
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 2,
-        ),
-        child: Text(
-          'Request for Quote',
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
-        ),
+        onPressed: _loading ? null : _submit,
+        child: _loading
+            ? const SizedBox(
+                height: 18,
+                width: 18,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Colors.white))
+            : const Text("Request Quote"),
       ),
     );
   }
 
-  void _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      // Show loading
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => Center(child: CircularProgressIndicator()),
-      );
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      Map<String, dynamic> formData = {
-        'service_type': 'Assam Type',
+    setState(() => _loading = true);
+
+    try {
+      await ConstructionService().submitAssamTypeRequest({
         'name': _nameController.text,
         'phone': _phoneController.text,
         'project_address': _selectedDistrict,
-        'house_type': _selectedHouseType,
-        'number_of_floors': _selectedFloors,
-        'roof_type': _selectedRoofType,
-        'foundation_type': _selectedFoundationType,
+        'house_type': _houseType,
+        'number_of_floors': _floors,
+        'roof_type': _roofType,
+        'foundation_type': _foundationType,
         'plot_size': _plotSizeController.text,
-        'budget_range': _selectedBudgetRange,
-        'timeline': _selectedTimeframe,
+        'budget_range': _budget,
+        'timeline': _timeline,
         'needs_design': _needsDesign,
-        'needs_material_supply': _needsMaterialSupply,
-        'needs_traditional_carpentry': _needsTraditionalCarpentry,
-        'needs_modern_amenities': _needsModernAmenities,
-        'needs_electrical_work': _needsElectricalWork,
-        'needs_plumbing_work': _needsPlumbingWork,
-        'has_land_ready': _hasLandReady,
+        'needs_material_supply': _needsMaterial,
+        'needs_traditional_carpentry': _needsCarpentry,
+        'needs_modern_amenities': _needsModern,
+        'needs_electrical_work': _needsElectrical,
+        'needs_plumbing_work': _needsPlumbing,
+        'has_land_ready': _landReady,
         'needs_permits': _needsPermits,
-        'additional_details': _additionalDetailsController.text,
-        'status': 'pending',
-      };
+        'additional_details': _additionalController.text,
+      });
 
-      try {
-        await ConstructionService().submitAssamTypeRequest(formData);
-        Navigator.pop(context); // Close loading
-        _showSuccessDialog();
-      } catch (e) {
-        Navigator.pop(context); // Close loading
-        _showErrorDialog('Failed to submit request: ${e.toString()}');
-      }
+      if (!mounted) return;
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.toString())));
     }
+
+    setState(() => _loading = false);
   }
 
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Request Submitted!'),
-        content: Text('Your Assam Type house request has been submitted successfully. Our traditional construction experts will contact you within 24 hours.'),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Go back to construction services
-            },
-            child: Text('OK'),
-          ),
-        ],
-      ),
+  Widget _input(TextEditingController c, String label,
+      {TextInputType keyboardType = TextInputType.text,
+      int maxLines = 1,
+      bool required = true}) {
+    return TextFormField(
+      controller: c,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      validator:
+          required ? (v) => v == null || v.isEmpty ? "Required" : null : null,
+      decoration: _dec(label),
     );
   }
 
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Error'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('OK'),
-          ),
-        ],
-      ),
+  Widget _dropdown(String label, String value, List<String> options,
+      Function(String?) onChanged) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: _dec(label),
+      items: options
+          .map((e) =>
+              DropdownMenuItem(value: e, child: Text(e)))
+          .toList(),
+      onChanged: onChanged,
+    );
+  }
+
+  Widget _check(String title, bool value, Function(bool?) onChanged) {
+    return CheckboxListTile(
+      value: value,
+      onChanged: onChanged,
+      contentPadding: EdgeInsets.zero,
+      title: Text(title),
+    );
+  }
+
+  InputDecoration _dec(String label) {
+    return InputDecoration(
+      labelText: label,
+      border:
+          OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
     );
   }
 
@@ -485,9 +361,8 @@ class _AssamTypeFormState extends State<AssamTypeForm> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _addressController.dispose();
     _plotSizeController.dispose();
-    _additionalDetailsController.dispose();
+    _additionalController.dispose();
     super.dispose();
   }
 }
