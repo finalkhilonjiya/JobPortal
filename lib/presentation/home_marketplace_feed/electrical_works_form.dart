@@ -99,28 +99,39 @@ class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
 
   // ===== Info Card =====
   Widget _infoCard() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Professional Electrical Services",
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
-          SizedBox(height: 8),
-          Text("• Complete home & office wiring"),
-          Text("• MCB panel & load setup"),
-          Text("• Safe earthing & compliance work"),
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.w),
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        colors: [
+          Color(0xFFE0F2FE),
+          Color(0xFFBAE6FD),
         ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
       ),
-    );
-  }
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Professional Electrical Services",
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 13.sp,
+            color: const Color(0xFF0F172A),
+          ),
+        ),
+        SizedBox(height: 1.5.h),
+        const Text("• Complete home & office wiring"),
+        const Text("• MCB panel & load setup"),
+        const Text("• Safe earthing & compliance work"),
+      ],
+    ),
+  );
+}
 
   Widget _section(String title, Widget child) {
     return Container(
@@ -254,59 +265,99 @@ class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
   }
 
   Widget _submitButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 3.5.h,
-      child: ElevatedButton(
-        onPressed: _loading ? null : _submit,
-        child: _loading
-            ? const SizedBox(
-                height: 18,
-                width: 18,
-                child: CircularProgressIndicator(
-                    strokeWidth: 2, color: Colors.white))
-            : const Text("Request Quote"),
+  return SizedBox(
+    width: double.infinity,
+    height: 5.5.h,
+    child: ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF2563EB),
+        elevation: 3,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
-    );
-  }
-
+      onPressed: _loading ? null : _submit,
+      child: _loading
+          ? const SizedBox(
+              height: 18,
+              width: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : Text(
+              "Request Quote",
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+    ),
+  );
+}
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+  if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _loading = true);
+  setState(() => _loading = true);
 
-    try {
-      await ConstructionService().submitElectricalWorksRequest({
-        'name': _nameController.text,
-        'phone': _phoneController.text,
-        'project_address': _selectedDistrict,
-        'work_type': _workType,
-        'property_type': _propertyType,
-        'load_requirement': _loadRequirement,
-        'area_size': _areaController.text,
-        'budget_range': _budget,
-        'timeline': _timeline,
-        'needs_wiring': _needsWiring,
-        'needs_switch_board': _needsSwitchBoard,
-        'needs_fan_installation': _needsFanInstallation,
-        'needs_light_installation': _needsLightInstallation,
-        'needs_ac_points': _needsACPoints,
-        'needs_stabilizer': _needsStabilizer,
-        'needs_earthing': _needsEarthing,
-        'needs_mcb': _needsMCB,
-        'additional_details': _additionalController.text,
-      });
+  try {
+    await ConstructionService().submitElectricalWorksRequest({
+      'name': _nameController.text,
+      'phone': _phoneController.text,
+      'project_address': _selectedDistrict,
+      'work_type': _workType,
+      'property_type': _propertyType,
+      'load_requirement': _loadRequirement,
+      'area_size': _areaController.text,
+      'budget_range': _budget,
+      'timeline': _timeline,
+      'needs_wiring': _needsWiring,
+      'needs_switch_board': _needsSwitchBoard,
+      'needs_fan_installation': _needsFanInstallation,
+      'needs_light_installation': _needsLightInstallation,
+      'needs_ac_points': _needsACPoints,
+      'needs_stabilizer': _needsStabilizer,
+      'needs_earthing': _needsEarthing,
+      'needs_mcb': _needsMCB,
+      'additional_details': _additionalController.text,
+    });
 
-      if (!mounted) return;
-      Navigator.pop(context);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
-    }
+    if (!mounted) return;
 
     setState(() => _loading = false);
+
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: const Text("Request Submitted"),
+        content: const Text(
+          "Your electrical work request has been submitted successfully. Our team will contact you shortly.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return;
+    Navigator.pop(context);
+
+  } catch (e) {
+    if (!mounted) return;
+    setState(() => _loading = false);
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(e.toString())));
   }
+}
 
   Widget _input(TextEditingController c, String label,
       {TextInputType keyboardType = TextInputType.text,
