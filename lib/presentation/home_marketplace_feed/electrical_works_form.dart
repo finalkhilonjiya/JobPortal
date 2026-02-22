@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/construction_service.dart';
 
 class ElectricalWorksForm extends StatefulWidget {
@@ -11,22 +12,22 @@ class ElectricalWorksForm extends StatefulWidget {
 
 class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
   final _formKey = GlobalKey<FormState>();
+  final SupabaseClient _db = Supabase.instance.client;
 
-  // Form Controllers
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _areaController = TextEditingController();
-  final _additionalDetailsController = TextEditingController();
+  final _additionalController = TextEditingController();
 
-  // Dropdown Values
-  String _selectedDistrict = 'Kamrup Metropolitan';
-  String _selectedWorkType = 'New Installation';
-  String _selectedPropertyType = 'Residential';
-  String _selectedLoadRequirement = '5 KW';
-  String _selectedTimeframe = 'Within 1 Week';
-  String _selectedBudgetRange = '10,000 - 25,000';
+  List<String> _districts = [];
+  String? _selectedDistrict;
 
-  // Checkbox Values
+  String _workType = 'New Installation';
+  String _propertyType = 'Residential';
+  String _loadRequirement = '5 KW';
+  String _budget = '10,000 - 25,000';
+  String _timeline = 'Within 1 Week';
+
   bool _needsWiring = false;
   bool _needsSwitchBoard = false;
   bool _needsFanInstallation = false;
@@ -36,388 +37,255 @@ class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
   bool _needsEarthing = false;
   bool _needsMCB = false;
 
-  // Assam Districts List
-  final List<String> assamDistricts = [
-    'Baksa', 'Barpeta', 'Biswanath', 'Bongaigaon', 'Cachar', 'Charaideo',
-    'Chirang', 'Darrang', 'Dhemaji', 'Dhubri', 'Dibrugarh', 'Dima Hasao',
-    'Goalpara', 'Golaghat', 'Hailakandi', 'Hojai', 'Jorhat', 'Kamrup',
-    'Kamrup Metropolitan', 'Karbi Anglong', 'Karimganj', 'Kokrajhar',
-    'Lakhimpur', 'Majuli', 'Morigaon', 'Nagaon', 'Nalbari', 'Sivasagar',
-    'Sonitpur', 'South Salmara-Mankachar', 'Tinsukia', 'Udalguri',
-    'West Karbi Anglong'
-  ];
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDistricts();
+  }
+
+  Future<void> _loadDistricts() async {
+    final response = await _db
+        .from('assam_districts_master')
+        .select('district_name')
+        .order('district_name');
+
+    setState(() {
+      _districts = List<Map<String, dynamic>>.from(response)
+          .map((e) => e['district_name'] as String)
+          .toList();
+
+      if (_districts.isNotEmpty) {
+        _selectedDistrict = _districts.first;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: Text('Electrical Works - Get Quote'),
-        backgroundColor: Color(0xFF2563EB),
-        foregroundColor: Colors.white,
+        title: const Text('Electrical Works'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(4.w),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Service Description Card
-              _buildServiceDescriptionBanner(),
-              SizedBox(height: 4.w),
+      body: _selectedDistrict == null
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(4.w),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    _infoCard(),
+                    SizedBox(height: 4.w),
+                    _section("Personal Details", _personal()),
+                    _section("Electrical Work Details", _project()),
+                    _section("Services Required", _services()),
+                    _section("Budget & Timeline", _budgetTimeline()),
+                    _section("Additional Details", _additional()),
+                    SizedBox(height: 6.w),
+                    _submitButton(),
+                    SizedBox(height: 4.w),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
 
-              // Personal Information Section
-              _buildSectionHeader('Personal Information'),
-              _buildPersonalInfoSection(),
-              SizedBox(height: 4.w),
-
-              // Project Details Section
-              _buildSectionHeader('Electrical Work Details'),
-              _buildProjectDetailsSection(),
-              SizedBox(height: 4.w),
-
-              // Services Required Section
-              _buildSectionHeader('Services Required'),
-              _buildServicesSection(),
-              SizedBox(height: 4.w),
-
-              // Budget & Timeline Section
-              _buildSectionHeader('Budget & Timeline'),
-              _buildBudgetTimelineSection(),
-              SizedBox(height: 4.w),
-
-              // Additional Information
-              _buildSectionHeader('Additional Information'),
-              _buildAdditionalInfoSection(),
-              SizedBox(height: 6.w),
-
-              // Submit Button
-              _buildSubmitButton(),
-              SizedBox(height: 4.w),
-            ],
+  // ===== Info Card =====
+  Widget _infoCard() {
+    return Container(
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Professional Electrical Services",
+            style: TextStyle(fontWeight: FontWeight.w600),
           ),
-        ),
+          SizedBox(height: 8),
+          Text("• Complete home & office wiring"),
+          Text("• MCB panel & load setup"),
+          Text("• Safe earthing & compliance work"),
+        ],
       ),
     );
   }
 
-  Widget _buildServiceDescriptionBanner() {
-  return Container(
-    width: double.infinity, // Maintains full width alignment
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(12),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 10,
-          offset: Offset(0, 4),
+  Widget _section(String title, Widget child) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 4.w),
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style:
+                  TextStyle(fontWeight: FontWeight.w600, fontSize: 13.sp)),
+          SizedBox(height: 3.w),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _personal() {
+    return Column(
+      children: [
+        _input(_nameController, "Full Name"),
+        SizedBox(height: 3.w),
+        _phoneInput(),
+        SizedBox(height: 3.w),
+        DropdownButtonFormField<String>(
+          value: _selectedDistrict,
+          decoration: _dec("District"),
+          items: _districts
+              .map((e) =>
+                  DropdownMenuItem(value: e, child: Text(e)))
+              .toList(),
+          onChanged: (v) => setState(() => _selectedDistrict = v),
         ),
       ],
-    ),
-    child: AspectRatio(
-      aspectRatio: 1280 / 1063, // Exact ratio of your image (1280 x 1063)
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Image.asset(
-          'assets/images/electricalbanner.jpg',
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            // Fallback to gradient container if image not found
-            return Container(
-              padding: EdgeInsets.all(4.w),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFFE3F2FD), Color(0xFF90CAF9)],
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.electrical_services, size: 6.w, color: Colors.blue[700]),
-                      SizedBox(width: 3.w),
-                      Text(
-                        'Electrical Works Services',
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue[700],
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 2.w),
-                  Text(
-                    'Professional electrical installation and maintenance services:',
-                    style: TextStyle(fontSize: 12.sp),
-                  ),
-                  SizedBox(height: 2.w),
-                  ...[
-                    '• Complete home/office wiring',
-                    '• Switch board installation',
-                    '• Fan & light installation', 
-                    '• AC point installation',
-                    '• MCB & earthing work',
-                    '• Electrical maintenance & repair',
-                  ].map((service) => Padding(
-                    padding: EdgeInsets.only(left: 3.w, bottom: 1.w),
-                    child: Text(service, style: TextStyle(fontSize: 11.sp)),
-                  )).toList(),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-    ),
-  );
-}
-
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 3.w),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 14.sp,
-          fontWeight: FontWeight.w600,
-          color: Colors.black87,
-        ),
-      ),
     );
   }
 
-  Widget _buildPersonalInfoSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          _buildTextFormField(_nameController, 'Full Name *', Icons.person),
-          SizedBox(height: 3.w),
-          _buildTextFormField(_phoneController, 'Phone Number *', Icons.phone, keyboardType: TextInputType.phone),
-          SizedBox(height: 3.w),
-          _buildDropdownField(
-            'District *',
-            _selectedDistrict,
-            assamDistricts,
-            (value) => setState(() => _selectedDistrict = value!),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProjectDetailsSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          _buildDropdownField(
-            'Type of Work',
-            _selectedWorkType,
-            ['New Installation', 'Repair/Maintenance', 'Upgrade/Extension', 'Complete Rewiring'],
-            (value) => setState(() => _selectedWorkType = value!),
-          ),
-          SizedBox(height: 3.w),
-          _buildDropdownField(
-            'Property Type',
-            _selectedPropertyType,
-            ['Residential', 'Commercial', 'Industrial', 'Office'],
-            (value) => setState(() => _selectedPropertyType = value!),
-          ),
-          SizedBox(height: 3.w),
-          _buildDropdownField(
-            'Load Requirement',
-            _selectedLoadRequirement,
-            ['2 KW', '5 KW', '10 KW', '15 KW', '20 KW+', 'Not Sure'],
-            (value) => setState(() => _selectedLoadRequirement = value!),
-          ),
-          SizedBox(height: 3.w),
-          _buildTextFormField(_areaController, 'Area Size (sq ft)', Icons.straighten, keyboardType: TextInputType.number, required: false),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildServicesSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          _buildCheckboxTile('Wiring Work', _needsWiring, (value) => setState(() => _needsWiring = value!)),
-          _buildCheckboxTile('Switch Board Installation', _needsSwitchBoard, (value) => setState(() => _needsSwitchBoard = value!)),
-          _buildCheckboxTile('Fan Installation', _needsFanInstallation, (value) => setState(() => _needsFanInstallation = value!)),
-          _buildCheckboxTile('Light Installation', _needsLightInstallation, (value) => setState(() => _needsLightInstallation = value!)),
-          _buildCheckboxTile('AC Points', _needsACPoints, (value) => setState(() => _needsACPoints = value!)),
-          _buildCheckboxTile('Stabilizer Installation', _needsStabilizer, (value) => setState(() => _needsStabilizer = value!)),
-          _buildCheckboxTile('Earthing Work', _needsEarthing, (value) => setState(() => _needsEarthing = value!)),
-          _buildCheckboxTile('MCB Installation', _needsMCB, (value) => setState(() => _needsMCB = value!)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBudgetTimelineSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          _buildDropdownField(
-            'Budget Range',
-            _selectedBudgetRange,
-            ['5,000 - 10,000', '10,000 - 25,000', '25,000 - 50,000', '50,000 - 1,00,000', '1,00,000+', 'Will Discuss'],
-            (value) => setState(() => _selectedBudgetRange = value!),
-          ),
-          SizedBox(height: 3.w),
-          _buildDropdownField(
-            'When do you want to start?',
-            _selectedTimeframe,
-            ['Immediately', 'Within 1 Week', 'Within 2 Weeks', 'Within 1 Month', 'Flexible'],
-            (value) => setState(() => _selectedTimeframe = value!),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAdditionalInfoSection() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 2))],
-      ),
-      child: _buildTextFormField(
-        _additionalDetailsController, 
-        'Additional Details or Specific Requirements', 
-        Icons.notes, 
-        maxLines: 4,
-        required: false,
-      ),
-    );
-  }
-
-  Widget _buildTextFormField(
-    TextEditingController controller,
-    String label,
-    IconData icon, {
-    TextInputType keyboardType = TextInputType.text,
-    int maxLines = 1,
-    bool required = true,
-  }) {
+  Widget _phoneInput() {
     return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      validator: required ? (value) => value?.isEmpty ?? true ? 'This field is required' : null : null,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: Color(0xFF2563EB)),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Color(0xFF2563EB), width: 2),
-        ),
-      ),
+      controller: _phoneController,
+      keyboardType: TextInputType.number,
+      maxLength: 10,
+      validator: (v) {
+        if (v == null || v.isEmpty) return "Required";
+        if (v.length != 10) return "Enter valid 10 digit number";
+        return null;
+      },
+      onChanged: (value) {
+        final clean = value.replaceAll(RegExp(r'[^0-9]'), '');
+        if (value != clean) {
+          _phoneController.value = TextEditingValue(
+              text: clean,
+              selection:
+                  TextSelection.collapsed(offset: clean.length));
+        }
+      },
+      decoration: _dec("Phone Number"),
     );
   }
 
-  Widget _buildDropdownField(
-    String label,
-    String value,
-    List<String> options,
-    Function(String?) onChanged,
-  ) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Color(0xFF2563EB), width: 2),
-        ),
-      ),
-      items: options.map((option) => DropdownMenuItem(value: option, child: Text(option))).toList(),
+  Widget _project() {
+    return Column(
+      children: [
+        _dropdown("Type of Work", _workType,
+            ['New Installation','Repair/Maintenance','Upgrade','Complete Rewiring'],
+            (v) => setState(() => _workType = v!)),
+        SizedBox(height: 3.w),
+        _dropdown("Property Type", _propertyType,
+            ['Residential','Commercial','Industrial','Office'],
+            (v) => setState(() => _propertyType = v!)),
+        SizedBox(height: 3.w),
+        _dropdown("Load Requirement", _loadRequirement,
+            ['2 KW','5 KW','10 KW','15 KW','20 KW+','Not Sure'],
+            (v) => setState(() => _loadRequirement = v!)),
+        SizedBox(height: 3.w),
+        _input(_areaController, "Area Size (sq ft)",
+            keyboardType: TextInputType.number,
+            required: false),
+      ],
     );
   }
 
-  Widget _buildCheckboxTile(String title, bool value, Function(bool?) onChanged) {
-    return CheckboxListTile(
-      title: Text(title, style: TextStyle(fontSize: 12.sp)),
-      value: value,
-      onChanged: onChanged,
-      activeColor: Color(0xFF2563EB),
-      contentPadding: EdgeInsets.zero,
+  Widget _services() {
+    return Column(
+      children: [
+        _check("Wiring Work", _needsWiring,
+            (v) => setState(() => _needsWiring = v!)),
+        _check("Switch Board Installation", _needsSwitchBoard,
+            (v) => setState(() => _needsSwitchBoard = v!)),
+        _check("Fan Installation", _needsFanInstallation,
+            (v) => setState(() => _needsFanInstallation = v!)),
+        _check("Light Installation", _needsLightInstallation,
+            (v) => setState(() => _needsLightInstallation = v!)),
+        _check("AC Points", _needsACPoints,
+            (v) => setState(() => _needsACPoints = v!)),
+        _check("Stabilizer Installation", _needsStabilizer,
+            (v) => setState(() => _needsStabilizer = v!)),
+        _check("Earthing Work", _needsEarthing,
+            (v) => setState(() => _needsEarthing = v!)),
+        _check("MCB Installation", _needsMCB,
+            (v) => setState(() => _needsMCB = v!)),
+      ],
     );
   }
 
-  Widget _buildSubmitButton() {
-    return Container(
+  Widget _budgetTimeline() {
+    return Column(
+      children: [
+        _dropdown("Budget Range", _budget,
+            ['5,000 - 10,000','10,000 - 25,000','25,000 - 50,000','50,000 - 1,00,000','1,00,000+'],
+            (v) => setState(() => _budget = v!)),
+        SizedBox(height: 3.w),
+        _dropdown("Start Timeline", _timeline,
+            ['Immediately','Within 1 Week','Within 2 Weeks','Within 1 Month','Flexible'],
+            (v) => setState(() => _timeline = v!)),
+      ],
+    );
+  }
+
+  Widget _additional() {
+    return _input(_additionalController,
+        "Additional Requirements",
+        maxLines: 4,
+        required: false);
+  }
+
+  Widget _submitButton() {
+    return SizedBox(
       width: double.infinity,
-      height: 7.h,
+      height: 3.5.h,
       child: ElevatedButton(
-        onPressed: _submitForm,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF2563EB),
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 2,
-        ),
-        child: Text(
-          'Request for Quote',
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
-        ),
+        onPressed: _loading ? null : _submit,
+        child: _loading
+            ? const SizedBox(
+                height: 18,
+                width: 18,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Colors.white))
+            : const Text("Request Quote"),
       ),
     );
   }
 
-  void _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      // Show loading
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => Center(child: CircularProgressIndicator()),
-      );
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      Map<String, dynamic> formData = {
-        'service_type': 'Electrical Works',
+    setState(() => _loading = true);
+
+    try {
+      await ConstructionService().submitElectricalWorksRequest({
         'name': _nameController.text,
         'phone': _phoneController.text,
         'project_address': _selectedDistrict,
-        'work_type': _selectedWorkType,
-        'property_type': _selectedPropertyType,
-        'load_requirement': _selectedLoadRequirement,
+        'work_type': _workType,
+        'property_type': _propertyType,
+        'load_requirement': _loadRequirement,
         'area_size': _areaController.text,
-        'budget_range': _selectedBudgetRange,
-        'timeline': _selectedTimeframe,
+        'budget_range': _budget,
+        'timeline': _timeline,
         'needs_wiring': _needsWiring,
         'needs_switch_board': _needsSwitchBoard,
         'needs_fan_installation': _needsFanInstallation,
@@ -426,53 +294,61 @@ class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
         'needs_stabilizer': _needsStabilizer,
         'needs_earthing': _needsEarthing,
         'needs_mcb': _needsMCB,
-        'additional_details': _additionalDetailsController.text,
-        'status': 'pending',
-      };
+        'additional_details': _additionalController.text,
+      });
 
-      try {
-        await ConstructionService().submitElectricalWorksRequest(formData);
-        Navigator.pop(context); // Close loading
-        _showSuccessDialog();
-      } catch (e) {
-        Navigator.pop(context); // Close loading
-        _showErrorDialog('Failed to submit request: ${e.toString()}');
-      }
+      if (!mounted) return;
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.toString())));
     }
+
+    setState(() => _loading = false);
   }
 
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Request Submitted!'),
-        content: Text('Your electrical works request has been submitted successfully. Our team will contact you within 24 hours.'),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Go back to construction services
-            },
-            child: Text('OK'),
-          ),
-        ],
-      ),
+  Widget _input(TextEditingController c, String label,
+      {TextInputType keyboardType = TextInputType.text,
+      int maxLines = 1,
+      bool required = true}) {
+    return TextFormField(
+      controller: c,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      validator:
+          required ? (v) => v == null || v.isEmpty ? "Required" : null : null,
+      decoration: _dec(label),
     );
   }
 
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Error'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('OK'),
-          ),
-        ],
-      ),
+  Widget _dropdown(String label, String value, List<String> options,
+      Function(String?) onChanged) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: _dec(label),
+      items: options
+          .map((e) =>
+              DropdownMenuItem(value: e, child: Text(e)))
+              .toList(),
+      onChanged: onChanged,
+    );
+  }
+
+  Widget _check(String title, bool value, Function(bool?) onChanged) {
+    return CheckboxListTile(
+      value: value,
+      onChanged: onChanged,
+      contentPadding: EdgeInsets.zero,
+      title: Text(title),
+    );
+  }
+
+  InputDecoration _dec(String label) {
+    return InputDecoration(
+      labelText: label,
+      border:
+          OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
     );
   }
 
@@ -481,7 +357,7 @@ class _ElectricalWorksFormState extends State<ElectricalWorksForm> {
     _nameController.dispose();
     _phoneController.dispose();
     _areaController.dispose();
-    _additionalDetailsController.dispose();
+    _additionalController.dispose();
     super.dispose();
   }
 }
