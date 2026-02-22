@@ -15,7 +15,7 @@ import 'company_details_page.dart';
 import 'top_companies_page.dart';
 
 import 'recommended_jobs_page.dart';
-import 'job_search_page.dart';
+import 'search_page.dart';
 
 import 'expected_salary_edit_page.dart';
 import 'jobs_by_salary_page.dart';
@@ -93,6 +93,14 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   bool _isLoadingProfile = true;
 
   // ------------------------------------------------------------
+  // AUTO SLIDER (DB)
+  // ------------------------------------------------------------
+  List<Map<String, dynamic>> _sliders = [];
+  final PageController _sliderController = PageController();
+  int _currentSliderIndex = 0;
+  Timer? _sliderTimer;
+
+  // ------------------------------------------------------------
   // Search hint slider
   // ------------------------------------------------------------
   final PageController _searchHintController = PageController();
@@ -102,8 +110,8 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
     "Search jobs",
     "Find employers",
     "Search by district",
-    "Search electrician jobs",
-    "Search plumber jobs",
+    "Search nearby jobs",
+    "Search jobs by skills",
   ];
 
   @override
@@ -118,6 +126,8 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
     _searchHintTimer?.cancel();
     _searchHintController.dispose();
+    _sliderTimer?.cancel();
+_sliderController.dispose();
 
     super.dispose();
   }
@@ -136,6 +146,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
       await _loadInitialData();
       _startSearchHintAutoSlide();
+      _startSliderAutoSlide();
     } catch (_) {
       _redirectToStart();
     }
@@ -157,6 +168,24 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
       );
     });
   }
+
+ void _startSliderAutoSlide() {
+  _sliderTimer?.cancel();
+
+  _sliderTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    if (_isDisposed) return;
+    if (!_sliderController.hasClients) return;
+    if (_sliders.isEmpty) return;
+
+    final next = (_currentSliderIndex + 1) % _sliders.length;
+
+    _sliderController.animateToPage(
+      next,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOut,
+    );
+  });
+}
 
   Future<void> _loadInitialData() async {
     if (_isDisposed) return;
@@ -191,6 +220,20 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
       // 6) Top companies
       _topCompanies = await _homeService.fetchTopCompanies(limit: 10);
+
+
+ // ------------------------------------------------------------
+// LOAD SLIDER
+// ------------------------------------------------------------
+try {
+  _sliders = await _supabase
+      .from('slider')
+      .select()
+      .eq('is_active', true)
+      .order('position', ascending: true);
+} catch (_) {
+  _sliders = [];
+}
 
       // 7) Notifications count
       try {
@@ -288,14 +331,13 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   }
 
   void _openSearchPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const JobSearchPage(),
-      ),
-    );
-  }
-
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const SearchPage(),
+    ),
+  );
+}
   void _openTopCompaniesPage() {
     Navigator.push(
       context,
@@ -629,7 +671,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
           const SizedBox(height: 18),
 
           SectionHeader(
-            title: "Jobs nearby",
+            title: "Nearby Jobs",
             ctaText: "View all",
             onTap: _openJobsNearbyPage,
           ),
@@ -659,6 +701,59 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
             onTap: _openTopCompaniesPage,
           ),
           const SizedBox(height: 10),
+          // ------------------------------------------------------------
+// AUTO SLIDER SECTION
+// ------------------------------------------------------------
+if (_sliders.isNotEmpty) ...[
+  const SizedBox(height: 20),
+
+  SizedBox(
+    height: 150,
+    child: PageView.builder(
+      controller: _sliderController,
+      itemCount: _sliders.length,
+      onPageChanged: (index) {
+        setState(() => _currentSliderIndex = index);
+      },
+      itemBuilder: (_, i) {
+        final imageUrl =
+            _sliders[i]['image_url']?.toString() ?? '';
+
+        return Container(
+          decoration: KhilonjiyaUI.cardDecoration(radius: 18),
+          clipBehavior: Clip.antiAlias,
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.cover,
+          ),
+        );
+      },
+    ),
+  ),
+
+  const SizedBox(height: 8),
+
+  Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: List.generate(
+      _sliders.length,
+      (i) => AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        width: _currentSliderIndex == i ? 18 : 6,
+        height: 6,
+        decoration: BoxDecoration(
+          color: _currentSliderIndex == i
+              ? KhilonjiyaUI.primary
+              : KhilonjiyaUI.border,
+          borderRadius: BorderRadius.circular(999),
+        ),
+      ),
+    ),
+  ),
+
+  const SizedBox(height: 24),
+],
 
           if (_loadingCompanies)
             SizedBox(
