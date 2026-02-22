@@ -800,57 +800,62 @@ Future<void> _pickResume() async {
   final result = await FilePicker.platform.pickFiles(
     type: FileType.custom,
     allowedExtensions: ['pdf', 'doc', 'docx'],
+    withData: true,
   );
 
   if (result == null) return;
 
-  final file = File(result.files.single.path!);
-  final fileName = result.files.single.name;
+  final file = result.files.single;
+  final bytes = file.bytes;
+  final fileName = file.name;
+  final ext = file.extension ?? '';
 
-  final user = _db.auth.currentUser;
-  if (user == null) return;
+  if (bytes == null) return;
 
-  final storagePath = 'resumes/${user.id}/$fileName';
+  try {
+    final path = await _service.uploadMyResume(
+      bytes: bytes,
+      fileExtension: ext,
+    );
 
-  await _db.storage.from('profile-files').upload(
-        storagePath,
-        file,
-        fileOptions: const FileOptions(upsert: true),
-      );
-
-  setState(() {
-    _resumeRawPath = storagePath;
-    _resumeFileName = fileName;
-  });
+    setState(() {
+      _resumeRawPath = path;
+      _resumeFileName = fileName;
+    });
+  } catch (e) {
+    _toast("Resume upload failed");
+  }
 }
-
 
 
 Future<void> _pickPhoto() async {
   final result = await FilePicker.platform.pickFiles(
     type: FileType.image,
+    withData: true,
   );
 
   if (result == null) return;
 
-  final file = File(result.files.single.path!);
-  final fileName = result.files.single.name;
+  final file = result.files.single;
+  final bytes = file.bytes;
+  final fileName = file.name;
+  final ext = file.extension ?? '';
 
-  final user = _db.auth.currentUser;
-  if (user == null) return;
+  if (bytes == null) return;
 
-  final storagePath = 'photos/${user.id}/$fileName';
+  try {
+    final path = await _service.uploadMyProfilePhoto(
+      bytes: bytes,
+      fileExtension: ext,
+    );
 
-  await _db.storage.from('profile-files').upload(
-        storagePath,
-        file,
-        fileOptions: const FileOptions(upsert: true),
-      );
-
-  setState(() {
-    _photoRawPath = storagePath;
-    _photoFileName = fileName;
-  });
+    setState(() {
+      _photoRawPath = path;
+      _photoFileName = fileName;
+    });
+  } catch (e) {
+    _toast("Photo upload failed");
+  }
 }
 
 
