@@ -736,76 +736,59 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
   // ============================================================
 
   Future<List<Map<String, dynamic>>> fetchJobsNearby({
-    int offset = 0,
-    int limit = 20,
-  }) async {
-    _ensureAuthenticatedSync();
+  int offset = 0,
+  int limit = 20,
+}) async {
+  _ensureAuthenticatedSync();
 
-    final inAssam = await isUserInAssam();
-    if (!inAssam) {
-      return fetchLatestJobs(offset: offset, limit: limit);
-    }
+  // Get stored GPS from user profile
+  final gps = await getMyCurrentLatLngFromProfile();
 
-    final gps = await getMyCurrentLatLngFromProfile();
-    if (gps == null) {
-      return fetchLatestJobs(offset: offset, limit: limit);
-    }
-
-    final userLat = gps['lat']!;
-    final userLng = gps['lng']!;
-
-    final districtsOrdered = await getAssamDistrictsByDistance(
-      userLat: userLat,
-      userLng: userLng,
-    );
-
-    if (districtsOrdered.isEmpty) {
-      return fetchLatestJobs(offset: offset, limit: limit);
-    }
-
-    final nowIso = DateTime.now().toIso8601String();
-
-    final res = await _db
-        .from('job_listings')
-        .select(_jobWithCompanySelect)
-        .eq('status', 'active')
-        .gte('expires_at', nowIso)
-        .inFilter('district', districtsOrdered)
-        .order('created_at', ascending: false)
-        .limit(800);
-
-    final all = List<Map<String, dynamic>>.from(res);
-
-    final districtRank = <String, int>{};
-    for (int i = 0; i < districtsOrdered.length; i++) {
-      districtRank[districtsOrdered[i].toLowerCase()] = i;
-    }
-
-    all.sort((a, b) {
-      final da = (a['district'] ?? '').toString().trim().toLowerCase();
-      final db = (b['district'] ?? '').toString().trim().toLowerCase();
-
-      final ra = districtRank[da] ?? 9999;
-      final rb = districtRank[db] ?? 9999;
-
-      if (ra != rb) return ra.compareTo(rb);
-
-      final ca = DateTime.tryParse((a['created_at'] ?? '').toString());
-      final cb = DateTime.tryParse((b['created_at'] ?? '').toString());
-
-      if (ca == null && cb == null) return 0;
-      if (ca == null) return 1;
-      if (cb == null) return -1;
-
-      return cb.compareTo(ca);
-    });
-
-    if (offset >= all.length) return [];
-
-    final end = (offset + limit) > all.length ? all.length : (offset + limit);
-    return all.sublist(offset, end);
+  // If no GPS → fallback to latest jobs
+  if (gps == null) {
+    return fetchLatestJobs(offset: offset, limit: limit);
   }
 
+  final userLat = gps['lat']!;
+  final userLng = gps['lng']!;
+
+  final nowIso = DateTime.now().toIso8601String();
+
+  // Fetch active jobs that have coordinates
+  final res = await _db
+      .from('job_listings')
+      .select(_jobWithCompanySelect)
+      .eq('status', 'active')
+      .gte('expires_at', nowIso)
+      .not('latitude', 'is', null)
+      .not('longitude', 'is', null)
+      .limit(1000);
+
+  final jobs = List<Map<String, dynamic>>.from(res);
+
+  // Sort by real GPS distance (nearest first)
+  jobs.sort((a, b) {
+    final latA = double.tryParse(a['latitude'].toString()) ?? 0;
+    final lngA = double.tryParse(a['longitude'].toString()) ?? 0;
+
+    final latB = double.tryParse(b['latitude'].toString()) ?? 0;
+    final lngB = double.tryParse(b['longitude'].toString()) ?? 0;
+
+    final distA = _haversineKm(userLat, userLng, latA, lngA);
+    final distB = _haversineKm(userLat, userLng, latB, lngB);
+
+    return distA.compareTo(distB);
+  });
+
+  // Pagination
+  if (offset >= jobs.length) return [];
+
+  final end = (offset + limit) > jobs.length
+      ? jobs.length
+      : offset + limit;
+
+  return jobs.sublist(offset, end);
+}
   // ============================================================
   // RAW PATH FETCH (useful for edit screens)
   // ============================================================
