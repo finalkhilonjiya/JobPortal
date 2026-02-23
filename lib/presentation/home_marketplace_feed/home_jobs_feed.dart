@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/ui/khilonjiya_ui.dart';
 import '../../routes/app_routes.dart';
 import '../../services/job_seeker_home_service.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../common/widgets/pages/job_details_page.dart';
 
@@ -227,7 +228,32 @@ void _listenToNotificationChanges() {
   setState(() => _isCheckingAuth = false);
 
   try {
-    final nowIso = DateTime.now().toIso8601String();
+    // 1️⃣ Get device location first
+    Position? position;
+
+    try {
+      LocationPermission permission =
+          await Geolocator.checkPermission();
+
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission != LocationPermission.denied &&
+          permission != LocationPermission.deniedForever) {
+        position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
+
+        // Save to profile
+        await _supabase.from('user_profiles').update({
+          'current_latitude': position.latitude,
+          'current_longitude': position.longitude,
+          'location_updated_at':
+              DateTime.now().toIso8601String(),
+        }).eq('id', _supabase.auth.currentUser!.id);
+      }
+    } catch (_) {}
 
     final futures = await Future.wait([
       _homeService.getHomeProfileSummary(),
@@ -237,15 +263,24 @@ void _listenToNotificationChanges() {
       _homeService.fetchPremiumJobs(limit: 8),
       _homeService.getRecommendedJobs(limit: 40),
       _homeService.fetchLatestJobs(limit: 40),
-      _homeService.fetchJobsNearby(limit: 40),
+
+      // ✅ Nearby using live GPS
+      position == null
+          ? _homeService.fetchLatestJobs(limit: 40)
+          : _homeService.fetchJobsNearbyWithLatLng(
+              userLat: position.latitude,
+              userLng: position.longitude,
+              limit: 40,
+            ),
+
       _homeService.fetchTopCompanies(limit: 10),
       _homeService.getUnreadNotificationsCount(),
       _supabase
-  .from('slider')
-  .select()
-  .eq('is_active', true)
-  .eq('slider_type', 'home')
-  .order('display_order', ascending: true),
+          .from('slider')
+          .select()
+          .eq('is_active', true)
+          .eq('slider_type', 'home')
+          .order('display_order', ascending: true),
     ]);
 
     final summary = futures[0] as Map<String, dynamic>;
