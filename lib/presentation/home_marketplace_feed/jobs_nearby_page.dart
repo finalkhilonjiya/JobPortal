@@ -26,6 +26,7 @@ class _JobsNearbyPageState extends State<JobsNearbyPage> {
 
   bool _hasMore = true;
   int _offset = 0;
+  final int _limit = 20;
 
   static const int _pageSize = 20;
 
