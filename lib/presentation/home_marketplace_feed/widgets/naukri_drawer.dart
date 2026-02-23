@@ -101,9 +101,9 @@ class _NaukriDrawerState extends State<NaukriDrawer> {
     } catch (_) {}
     if (!mounted) return;
     Navigator.of(context).pushNamedAndRemoveUntil(
-      AppRoutes.roleSelection,
-      (_) => false,
-    );
+  AppRoutes.jobSeekerLogin,
+  (_) => false,
+);
   }
 
   Future<void> _openSubscription() async {
