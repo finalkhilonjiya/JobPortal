@@ -23,7 +23,7 @@ android {
     defaultConfig {
         applicationId "com.khilonjiya.marketplace"
         minSdk 23
-        targetSdk 34
+        targetSdk 35   // ✅ Updated to meet Play requirement
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
 
@@ -47,8 +47,6 @@ android {
 
     buildTypes {
         release {
-            // Codemagic injects release signing automatically
-
             minifyEnabled true
             shrinkResources true
             debuggable false
