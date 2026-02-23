@@ -769,26 +769,16 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
   // JOBS NEARBY (PAGINATED + Assam logic)
   // ============================================================
 
-  Future<List<Map<String, dynamic>>> fetchJobsNearby({
+  Future<List<Map<String, dynamic>>> fetchJobsNearbyWithLatLng({
+  required double userLat,
+  required double userLng,
   int offset = 0,
   int limit = 20,
 }) async {
   _ensureAuthenticatedSync();
 
-  // Get stored GPS from user profile
-  final gps = await getMyCurrentLatLngFromProfile();
-
-  // If no GPS → fallback to latest jobs
-  if (gps == null) {
-    return fetchLatestJobs(offset: offset, limit: limit);
-  }
-
-  final userLat = gps['lat']!;
-  final userLng = gps['lng']!;
-
   final nowIso = DateTime.now().toIso8601String();
 
-  // Fetch active jobs that have coordinates
   final res = await _db
       .from('job_listings')
       .select(_jobWithCompanySelect)
@@ -800,7 +790,6 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
 
   final jobs = List<Map<String, dynamic>>.from(res);
 
-  // Sort by real GPS distance (nearest first)
   jobs.sort((a, b) {
     final latA = double.tryParse(a['latitude'].toString()) ?? 0;
     final lngA = double.tryParse(a['longitude'].toString()) ?? 0;
@@ -814,7 +803,6 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
     return distA.compareTo(distB);
   });
 
-  // Pagination
   if (offset >= jobs.length) return [];
 
   final end = (offset + limit) > jobs.length
