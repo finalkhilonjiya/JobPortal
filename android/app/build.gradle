@@ -47,8 +47,7 @@ android {
 
     buildTypes {
         release {
-            // DO NOT set signingConfig here.
-            // Codemagic will inject release signing automatically.
+            // Codemagic injects release signing automatically
 
             minifyEnabled true
             shrinkResources true
@@ -62,15 +61,6 @@ android {
             debuggable true
             minifyEnabled false
             shrinkResources false
-        }
-    }
-
-    splits {
-        abi {
-            enable true
-            reset()
-            include "armeabi-v7a", "arm64-v8a", "x86_64"
-            universalApk true
         }
     }
 
