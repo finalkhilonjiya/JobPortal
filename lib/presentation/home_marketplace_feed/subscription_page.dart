@@ -1,7 +1,6 @@
 // File: lib/presentation/home_marketplace_feed/subscription_page.dart
 
 import 'package:flutter/material.dart';
-import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/ui/khilonjiya_ui.dart';
@@ -19,8 +18,6 @@ class SubscriptionPage extends StatefulWidget {
 class _SubscriptionPageState extends State<SubscriptionPage> {
   final SubscriptionService _subscriptionService = SubscriptionService();
 
-  Razorpay? _razorpay;
-
   bool _loading = true;
   bool _paying = false;
 
@@ -32,20 +29,11 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
 
   String _prefillEmail = "";
   String _prefillPhone = "";
-  String? _transactionId;
 
   @override
   void initState() {
     super.initState();
-    _initRazorpay();
     _bootstrap();
-  }
-
-  @override
-  void dispose() {
-    _razorpay?.clear();
-    _razorpay = null;
-    super.dispose();
   }
 
   Future<void> _bootstrap() async {
@@ -72,13 +60,6 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             (profile['mobile_number'] ?? "").toString().trim();
       }
     } catch (_) {}
-  }
-
-  void _initRazorpay() {
-    _razorpay = Razorpay();
-    _razorpay!.on(Razorpay.EVENT_PAYMENT_SUCCESS, _onPaymentSuccess);
-    _razorpay!.on(Razorpay.EVENT_PAYMENT_ERROR, _onPaymentError);
-    _razorpay!.on(Razorpay.EVENT_EXTERNAL_WALLET, _onExternalWallet);
   }
 
   Future<void> _loadSubscription() async {
@@ -141,75 +122,23 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
 
   Future<void> _startPayment() async {
     if (_paying) return;
+
     setState(() => _paying = true);
 
-    try {
-      _transactionId = null;
+    await Future.delayed(const Duration(milliseconds: 400));
 
-      final order = await _subscriptionService.createOrder(
-        amountRupees: SubscriptionPage.price,
-        planKey: "pro_monthly",
-      );
+    if (!mounted) return;
 
-      _transactionId = order['transaction_id']?.toString();
-      final razorpayOrderId = order['order_id']?.toString();
-
-      if (_transactionId == null || razorpayOrderId == null) {
-        throw Exception("Invalid order response");
-      }
-
-      final options = {
-        "key": "rzp_test_SGkM8xnibeJDru",
-        "amount": order['amount'],
-        "currency": "INR",
-        "name": "Khilonjiya Pro",
-        "description": "Pro subscription (30 days)",
-        "order_id": razorpayOrderId,
-        "prefill": {
-          "contact": _prefillPhone,
-          "email": _prefillEmail,
-        },
-      };
-
-      _razorpay!.open(options);
-    } catch (e) {
-      setState(() => _paying = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Payment start failed")),
-      );
-    }
-  }
-
-  Future<void> _onPaymentSuccess(
-      PaymentSuccessResponse response) async {
-    try {
-      await _subscriptionService.verifyPayment(
-        transactionId: _transactionId!,
-        razorpayOrderId: response.orderId!,
-        razorpayPaymentId: response.paymentId!,
-        razorpaySignature: response.signature!,
-      );
-
-      await _loadSubscription();
-      setState(() => _paying = false);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Subscription Activated")),
-      );
-    } catch (_) {
-      setState(() => _paying = false);
-    }
-  }
-
-  void _onPaymentError(PaymentFailureResponse response) {
     setState(() => _paying = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          "Google Play Billing integration required for Play Store release.",
+        ),
+      ),
+    );
   }
-
-  void _onExternalWallet(ExternalWalletResponse response) {}
-
-  // ============================================================
-  // UI
-  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -237,10 +166,6 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             ),
     );
   }
-
-  // ============================================================
-  // HERO (Slim like Job Card)
-  // ============================================================
 
   Widget _heroCard() {
     final buttonText = _isActive
@@ -324,10 +249,6 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       ),
     );
   }
-
-  // ============================================================
-  // FEATURES (Slim Cards)
-  // ============================================================
 
   Widget _featuresSection() {
     return Column(
