@@ -774,6 +774,51 @@ void _openNotificationsPage() async {
           ),
           const SizedBox(height: 10),
           // ------------------------------------------------------------
+
+
+          if (_loadingCompanies)
+            SizedBox(
+              height: 120,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: 4,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (_, __) {
+                  return Container(
+                    width: 320,
+                    decoration: KhilonjiyaUI.cardDecoration(radius: 16),
+                  );
+                },
+              ),
+            )
+          else if (_topCompanies.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                "No companies found",
+                style: KhilonjiyaUI.sub,
+              ),
+            )
+          else
+            SizedBox(
+              height: 120,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _topCompanies.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (_, i) {
+                  final c = _topCompanies[i];
+                  final companyId = c['id']?.toString() ?? '';
+
+                  return CompanyCardHorizontal(
+                    company: c,
+                    onTap: () => _openCompanyDetails(companyId),
+                  );
+                },
+              ),
+            ),
+
+          const SizedBox(height: 10),
 // AUTO SLIDER SECTION
 // ------------------------------------------------------------
 if (_sliders.isNotEmpty) ...[
@@ -826,50 +871,6 @@ if (_sliders.isNotEmpty) ...[
 
   const SizedBox(height: 24),
 ],
-
-          if (_loadingCompanies)
-            SizedBox(
-              height: 120,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: 4,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
-                itemBuilder: (_, __) {
-                  return Container(
-                    width: 320,
-                    decoration: KhilonjiyaUI.cardDecoration(radius: 16),
-                  );
-                },
-              ),
-            )
-          else if (_topCompanies.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Text(
-                "No companies found",
-                style: KhilonjiyaUI.sub,
-              ),
-            )
-          else
-            SizedBox(
-              height: 120,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _topCompanies.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
-                itemBuilder: (_, i) {
-                  final c = _topCompanies[i];
-                  final companyId = c['id']?.toString() ?? '';
-
-                  return CompanyCardHorizontal(
-                    company: c,
-                    onTap: () => _openCompanyDetails(companyId),
-                  );
-                },
-              ),
-            ),
-
-          const SizedBox(height: 10),
         ],
       ),
     );
