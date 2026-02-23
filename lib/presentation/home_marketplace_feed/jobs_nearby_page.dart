@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/ui/khilonjiya_ui.dart';
 import '../../routes/app_routes.dart'; // ✅ ADDED
 import '../../services/job_seeker_home_service.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../common/widgets/cards/job_card_widget.dart';
 import '../common/widgets/pages/job_details_page.dart';
@@ -76,9 +77,31 @@ class _JobsNearbyPageState extends State<JobsNearbyPage> {
     }
 
     try {
-      final first = await _homeService.fetchJobsNearby(
+      Position? position;
+
+try {
+  LocationPermission permission =
+      await Geolocator.checkPermission();
+
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+  }
+
+  if (permission != LocationPermission.denied &&
+      permission != LocationPermission.deniedForever) {
+    position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+  }
+} catch (_) {}
+
+final first = position == null
+    ? await _homeService.fetchLatestJobs(limit: _limit)
+    : await _homeService.fetchJobsNearbyWithLatLng(
+        userLat: position.latitude,
+        userLng: position.longitude,
+        limit: _limit,
         offset: 0,
-        limit: _pageSize,
       );
 
       if (_disposed) return;
@@ -108,11 +131,32 @@ class _JobsNearbyPageState extends State<JobsNearbyPage> {
     setState(() => _loadingMore = true);
 
     try {
-      final more = await _homeService.fetchJobsNearby(
-        offset: _offset,
-        limit: _pageSize,
-      );
+      Position? position;
 
+try {
+  LocationPermission permission =
+      await Geolocator.checkPermission();
+
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+  }
+
+  if (permission != LocationPermission.denied &&
+      permission != LocationPermission.deniedForever) {
+    position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+  }
+} catch (_) {}
+
+final more = position == null
+    ? await _homeService.fetchLatestJobs(limit: _limit)
+    : await _homeService.fetchJobsNearbyWithLatLng(
+        userLat: position.latitude,
+        userLng: position.longitude,
+        limit: _limit,
+        offset: _offset,
+      );
       if (_disposed) return;
 
       setState(() {
