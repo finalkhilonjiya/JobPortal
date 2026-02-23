@@ -279,6 +279,7 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
     child: ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFF2563EB),
+        foregroundColor: Colors.white, // ✅ Force white text
         elevation: 3,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -291,12 +292,13 @@ class _FalseCeilingFormState extends State<FalseCeilingForm> {
               width: 18,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Colors.white,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
               ),
             )
           : Text(
               "Request Quote",
               style: TextStyle(
+                color: Colors.white, // ✅ Explicit white text
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.5,
