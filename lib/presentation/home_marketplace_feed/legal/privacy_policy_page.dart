@@ -1,13 +1,12 @@
 // File: lib/presentation/home_marketplace_feed/legal/privacy_policy_page.dart
 
 import 'package:flutter/material.dart';
-
 import '../../../core/ui/khilonjiya_ui.dart';
 
 class PrivacyPolicyPage extends StatelessWidget {
   const PrivacyPolicyPage({Key? key}) : super(key: key);
 
-  static const String _lastUpdated = "18 Feb 2026";
+  static const String _lastUpdated = "24 Feb 2026";
   static const String _supportEmail = "support@khilonjiya.com";
 
   @override
@@ -34,8 +33,8 @@ class PrivacyPolicyPage extends StatelessWidget {
           _card(
             title: "1. Who we are",
             body:
-                "Khilonjiya (“we”, “our”, “us”) operates the Khilonjiya mobile application (“App”).\n\n"
-                "This Privacy Policy explains how we collect, use, store, and share information when you use the App.",
+                "Khilonjiya India Pvt. Ltd. (“we”, “our”, “us”) operates the Khilonjiya mobile application (“App”).\n\n"
+                "This Privacy Policy explains how we collect, use, store, process, and share information when you use the App.",
           ),
 
           _card(
@@ -44,91 +43,147 @@ class PrivacyPolicyPage extends StatelessWidget {
                 "A) Account & Profile Information\n"
                 "• Full name\n"
                 "• Mobile number\n"
-                "• Email address (optional)\n"
+                "• Email address\n"
                 "• Education, skills, experience, job preferences\n\n"
-                "B) Uploaded Files\n"
+                "B) Uploaded Content\n"
                 "• Resume\n"
-                "• Profile photo (optional)\n\n"
-                "C) Job Activity Data\n"
-                "• Jobs viewed, saved, applied\n\n"
+                "• Profile photo\n"
+                "• Documents or images selected from your device\n\n"
+                "C) Job & App Activity\n"
+                "• Jobs viewed, saved, applied\n"
+                "• Employer interactions\n\n"
                 "D) Location Data (Optional)\n"
-                "• Location only if permission granted\n\n"
+                "• Approximate or precise location (only if permission granted)\n\n"
                 "E) Device & Technical Data\n"
-                "• Usage logs\n"
-                "• Crash reports (platform enabled)",
+                "• Device information\n"
+                "• Log data\n"
+                "• Crash reports\n"
+                "• Network information",
           ),
 
           _card(
-            title: "3. Why we collect your data",
+            title: "3. Permissions we request",
             body:
-                "• Manage your account\n"
-                "• Show relevant jobs\n"
-                "• Enable applications\n"
-                "• Improve service quality\n"
-                "• Prevent misuse and fraud",
+                "The App may request the following permissions:\n\n"
+                "• Internet – to connect to our servers\n"
+                "• Network state – to detect connectivity\n"
+                "• Location (coarse & fine) – to show nearby jobs (optional)\n"
+                "• Camera – to capture profile photo or documents\n"
+                "• Media/Storage – to upload resumes or images\n"
+                "• Phone – to enable direct job-related calls (only when initiated by you)\n"
+                "• SMS (if OTP auto-read enabled) – to automatically detect verification codes\n"
+                "• Boot completed – to enable notification services\n"
+                "• Vibration & wake lock – for notifications\n\n"
+                "Permissions are requested only when required for specific features.",
           ),
 
           _card(
-            title: "4. Employer visibility",
+            title: "4. Why we collect your data",
+            body:
+                "• Create and manage your account\n"
+                "• Match you with relevant jobs\n"
+                "• Enable job applications\n"
+                "• Enable employer communication\n"
+                "• Process payments (if applicable)\n"
+                "• Improve app performance and security\n"
+                "• Prevent fraud and misuse",
+          ),
+
+          _card(
+            title: "5. Employer visibility",
             body:
                 "When you apply for a job, employers may see:\n"
-                "• Your name & contact\n"
-                "• Skills & experience\n"
-                "• Resume (if uploaded)\n\n"
-                "Employers are independent entities responsible for their own data handling.",
+                "• Your name and contact details\n"
+                "• Skills and experience\n"
+                "• Resume and uploaded documents\n\n"
+                "Employers are independent entities and are responsible for their own data practices.",
           ),
 
           _card(
-            title: "5. Payments",
+            title: "6. Payments",
             body:
-                "Payments (if enabled) are processed via Google Play Billing.\n\n"
-                "We do not store full card details.\n"
-                "We may store limited metadata such as order ID and subscription status.",
+                "If payments or subscriptions are enabled:\n\n"
+                "• Payments may be processed via Google Play Billing or third-party providers (e.g., Razorpay/UPI).\n"
+                "• We do not store full debit/credit card details.\n"
+                "• We may store limited transaction data such as order ID, subscription status, or payment reference.",
           ),
 
           _card(
-            title: "6. Notifications",
+            title: "7. Authentication & Login",
             body:
-                "If enabled, we may send job alerts and updates.\n"
-                "You can disable notifications anytime from settings.",
+                "We may support:\n"
+                "• Mobile OTP verification\n"
+                "• Google Sign-In\n"
+                "• Email authentication\n\n"
+                "If OTP auto-read is enabled, SMS permission is used only to detect verification codes and not to read personal messages.",
           ),
 
           _card(
-            title: "7. Data security",
+            title: "8. Data storage & security",
             body:
-                "Data is stored securely using Supabase.\n"
-                "We use authentication, RLS policies and restricted access.\n\n"
-                "No system is 100% secure. Protect your credentials.",
+                "Data is securely stored using Supabase infrastructure.\n\n"
+                "We implement:\n"
+                "• Authentication controls\n"
+                "• Role-based access policies (RLS)\n"
+                "• Restricted internal access\n\n"
+                "While we follow industry-standard practices, no digital system is 100% secure.",
           ),
 
           _card(
-            title: "8. Data sharing",
+            title: "9. Data sharing",
             body:
                 "We do not sell personal data.\n\n"
                 "Data may be shared:\n"
                 "• With employers when you apply\n"
-                "• With infrastructure providers\n"
-                "• When required by law",
+                "• With infrastructure and hosting providers\n"
+                "• With payment processors\n"
+                "• When required by law or legal process",
           ),
 
           _card(
-            title: "9. Data retention",
+            title: "10. Data retention",
             body:
-                "We retain data while your account is active or required legally.\n"
-                "You may request deletion via Support.",
+                "We retain data while your account is active or as required by law.\n\n"
+                "You may request deletion of your account and associated data by contacting Support.",
           ),
 
           _card(
-            title: "10. Your rights",
+            title: "11. Notifications",
             body:
-                "You can update profile info anytime.\n"
-                "You may request account deletion from Support.",
+                "We may send:\n"
+                "• Job alerts\n"
+                "• Application updates\n"
+                "• Service notifications\n\n"
+                "You can disable notifications from device settings at any time.",
           ),
 
           _card(
-            title: "11. Contact",
+            title: "12. Your rights",
             body:
-                "For privacy questions:\n"
+                "You may:\n"
+                "• Access and update your profile information\n"
+                "• Request account deletion\n"
+                "• Withdraw optional permissions via device settings",
+          ),
+
+          _card(
+            title: "13. Children’s privacy",
+            body:
+                "The App is not intended for individuals under 18 years of age.\n"
+                "We do not knowingly collect data from minors.",
+          ),
+
+          _card(
+            title: "14. Changes to this policy",
+            body:
+                "We may update this Privacy Policy from time to time.\n"
+                "Updates will be reflected by revising the 'Last updated' date.",
+          ),
+
+          _card(
+            title: "15. Contact",
+            body:
+                "For privacy-related questions or data requests:\n\n"
                 "Email: $_supportEmail\n\n"
                 "Khilonjiya India Pvt. Ltd.",
           ),
