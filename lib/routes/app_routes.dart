@@ -8,32 +8,21 @@ import '../presentation/auth/employer_login_screen.dart';
 
 import 'home_router.dart';
 
-// JOB SEEKER MAIN SHELL
 import '../presentation/home_marketplace_feed/job_seeker_main_shell.dart';
-
 import '../presentation/home_marketplace_feed/subscription_page.dart';
-
-// PROFILE EDIT
 import '../presentation/home_marketplace_feed/profile_edit_page.dart';
-
-// SETTINGS
 import '../presentation/home_marketplace_feed/settings_page.dart';
-
-// SEARCH PAGE ✅ ADDED
 import '../presentation/home_marketplace_feed/search_page.dart';
 
-// LEGAL + ABOUT + SUPPORT
 import '../presentation/home_marketplace_feed/legal/privacy_policy_page.dart';
 import '../presentation/home_marketplace_feed/legal/terms_and_conditions_page.dart';
 import '../presentation/home_marketplace_feed/legal/refund_policy_page.dart';
 import '../presentation/home_marketplace_feed/about/about_app_page.dart';
 import '../presentation/home_marketplace_feed/support/contact_support_page.dart';
 
-// SETTINGS CHILD PAGES
 import '../presentation/home_marketplace_feed/settings/notifications_settings_page.dart';
 import '../presentation/home_marketplace_feed/settings/language_settings_page.dart';
 
-// EMPLOYER
 import '../presentation/company/dashboard/company_dashboard.dart';
 import '../presentation/company/dashboard/create_organization_screen.dart';
 import '../presentation/company/jobs/create_job_screen.dart';
@@ -43,7 +32,7 @@ import '../presentation/company/jobs/job_applicants_pipeline_page.dart';
 import '../presentation/company/notifications/employer_notifications_page.dart';
 
 class AppRoutes {
-  static const String initial = '/';
+  // ❌ REMOVED '/'
   static const String roleSelection = '/role-selection';
 
   static const String jobSeekerLogin = '/job-seeker-login';
@@ -58,7 +47,6 @@ class AppRoutes {
   static const String notificationsSettings = '/settings-notifications';
   static const String languageSettings = '/settings-language';
 
-  // ✅ SEARCH ROUTE ADDED
   static const String search = '/search';
 
   static const String privacyPolicy = '/privacy-policy';
@@ -68,7 +56,6 @@ class AppRoutes {
   static const String aboutApp = '/about';
   static const String contactSupport = '/contact-support';
 
-  // EMPLOYER
   static const String companyDashboard = '/company-dashboard';
   static const String createOrganization = '/create-organization';
   static const String employerJobs = '/employer-jobs';
@@ -76,12 +63,11 @@ class AppRoutes {
   static const String jobApplicants = '/job-applicants';
   static const String jobApplicantsPipeline = '/job-applicants-pipeline';
   static const String employerNotifications = '/employer-notifications';
-static const String subscribe = '/subscribe';
+  static const String subscribe = '/subscribe';
 
   static final Map<String, WidgetBuilder> routes = {
-    initial: (_) => const RoleSelectionScreen(),
     roleSelection: (_) => const RoleSelectionScreen(),
-subscribe: (_) => const SubscriptionPage(),
+    subscribe: (_) => const SubscriptionPage(),
 
     jobSeekerLogin: (_) => const JobSeekerLoginScreen(),
     employerLogin: (_) => const EmployerLoginScreen(),
@@ -95,7 +81,6 @@ subscribe: (_) => const SubscriptionPage(),
     notificationsSettings: (_) => const NotificationsSettingsPage(),
     languageSettings: (_) => const LanguageSettingsPage(),
 
-    // ✅ SEARCH MAPPING ADDED
     search: (_) => const SearchPage(),
 
     privacyPolicy: (_) => const PrivacyPolicyPage(),
@@ -105,7 +90,6 @@ subscribe: (_) => const SubscriptionPage(),
     aboutApp: (_) => const AboutAppPage(),
     contactSupport: (_) => const ContactSupportPage(),
 
-    // EMPLOYER
     companyDashboard: (_) => const CompanyDashboard(),
     createOrganization: (_) => const CreateOrganizationScreen(),
     employerJobs: (_) => const EmployerJobListScreen(),
