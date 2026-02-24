@@ -19,7 +19,9 @@ class AppConfig {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
 
   try {
     await dotenv.load(fileName: '.env');
@@ -58,9 +60,13 @@ class MyApp extends StatelessWidget {
         navigatorKey: NavigationService.navigatorKey,
         theme: KhilonjiyaUI.theme(),
         themeMode: ThemeMode.light,
+
+        // ✅ KEEP ONLY home (DO NOT define "/" in routes)
         home: const AppInitializer(),
+
         routes: AppRoutes.routes,
         onGenerateRoute: AppRoutes.onGenerateRoute,
+
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context)
               .copyWith(textScaler: const TextScaler.linear(1.0)),
@@ -74,7 +80,7 @@ class MyApp extends StatelessWidget {
 /// ------------------------------------------------------------
 /// AppInitializer
 /// - Shows splash for MINIMUM 3 seconds
-/// - Routes directly to:
+/// - Routes:
 ///     Logged in -> Home
 ///     Not logged in -> JobSeekerLogin
 /// ------------------------------------------------------------
