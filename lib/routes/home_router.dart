@@ -24,12 +24,14 @@ class _HomeRouterState extends State<HomeRouter> {
   }
 
   Future<UserRole?> _resolveRoleOrNull() async {
-    // 1) Ensure session exists
-    final ok = await _auth.refreshSession();
-    if (!ok) return null;
+    // ✅ FIX: Avoid race condition by not calling refreshSession()
+    final user = _auth.currentUser;
+    if (user == null) return null;
 
-    // 2) DB is final truth
-    return await _auth.syncRoleFromDbStrict(fallback: UserRole.jobSeeker);
+    // DB is final truth
+    return await _auth.syncRoleFromDbStrict(
+      fallback: UserRole.jobSeeker,
+    );
   }
 
   void _goToRoleSelection() {
@@ -45,9 +47,6 @@ class _HomeRouterState extends State<HomeRouter> {
 
   @override
   Widget build(BuildContext context) {
-    // IMPORTANT:
-    // Do NOT store the future in initState.
-    // We must resolve role again after login.
     return FutureBuilder<UserRole?>(
       future: _resolveRoleOrNull(),
       builder: (context, snap) {
