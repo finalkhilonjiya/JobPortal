@@ -18,7 +18,6 @@ class SubscriptionPage extends StatefulWidget {
 }
 
 class _SubscriptionPageState extends State<SubscriptionPage> {
-
   final SubscriptionService _subscriptionService =
       SubscriptionService();
 
@@ -30,12 +29,16 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
 
   bool _loading = true;
   bool _paying = false;
+  bool _restoring = false;
 
   bool _isActive = false;
-  bool _isExpired = false;
 
   DateTime? _expiresAt;
   int _daysLeft = 0;
+
+  // ============================================================
+  // INIT
+  // ============================================================
 
   @override
   void initState() {
@@ -50,24 +53,19 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     super.dispose();
   }
 
-  // ============================================================
-  // INITIAL LOAD
-  // ============================================================
-
   Future<void> _bootstrap() async {
     await _loadSubscription();
   }
 
   // ============================================================
-  // GOOGLE PLAY BILLING INIT
+  // BILLING INIT
   // ============================================================
 
   Future<void> _initBilling() async {
-
     final available = await _iap.isAvailable();
 
     if (!available) {
-      debugPrint("Play Billing unavailable");
+      debugPrint("Billing unavailable");
       return;
     }
 
@@ -86,14 +84,16 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       onDone: () => _purchaseSub?.cancel(),
       onError: (_) {},
     );
+
+    /// ✅ AUTO RESTORE ON APP OPEN
+    await _restorePurchases();
   }
 
   // ============================================================
-  // PURCHASE FLOW
+  // PURCHASE START
   // ============================================================
 
   Future<void> _startPayment() async {
-
     if (_product == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -114,6 +114,20 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   }
 
   // ============================================================
+  // RESTORE PURCHASES
+  // ============================================================
+
+  Future<void> _restorePurchases() async {
+    setState(() => _restoring = true);
+
+    try {
+      await _iap.restorePurchases();
+    } catch (_) {}
+
+    setState(() => _restoring = false);
+  }
+
+  // ============================================================
   // PURCHASE LISTENER
   // ============================================================
 
@@ -129,19 +143,20 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
 
         try {
 
-          /// --------------------------------------------------
-          /// SECURE BACKEND VALIDATION
-          /// --------------------------------------------------
+          /// ✅ SECURE SERVER VALIDATION
           await _subscriptionService
               .verifyPlayStorePurchase(
             purchaseToken:
-                purchase.verificationData.serverVerificationData,
+                purchase.verificationData
+                    .serverVerificationData,
             productId: purchase.productID,
-            orderId: purchase.purchaseID ?? "",
+            orderId:
+                purchase.purchaseID ?? "",
           );
 
           if (purchase.pendingCompletePurchase) {
-            await _iap.completePurchase(purchase);
+            await _iap.completePurchase(
+                purchase);
           }
 
           await _loadSubscription();
@@ -157,14 +172,13 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           }
 
         } catch (e) {
-          debugPrint("Verification failed $e");
+          debugPrint(
+              "Purchase verification failed $e");
         }
       }
 
       if (purchase.status ==
           PurchaseStatus.error) {
-
-        setState(() => _paying = false);
 
         ScaffoldMessenger.of(context)
             .showSnackBar(
@@ -182,7 +196,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   }
 
   // ============================================================
-  // LOAD SUBSCRIPTION FROM DB
+  // LOAD FROM DB
   // ============================================================
 
   Future<void> _loadSubscription() async {
@@ -192,7 +206,6 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     setState(() => _loading = true);
 
     try {
-
       final sub =
           await _subscriptionService
               .getMySubscription();
@@ -207,7 +220,8 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
 
       final expires =
           DateTime.tryParse(
-              sub['expires_at'].toString());
+              sub['expires_at']
+                  .toString());
 
       final now = DateTime.now();
 
@@ -219,7 +233,8 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
 
       if (expires != null) {
         days =
-            expires.difference(now).inDays;
+            expires.difference(now)
+                .inDays;
       }
 
       setState(() {
@@ -254,19 +269,24 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       body: _loading
           ? const Center(
               child:
-                  CircularProgressIndicator(),
-            )
+                  CircularProgressIndicator())
           : ListView(
               padding:
                   const EdgeInsets.all(16),
               children: [
                 _heroCard(),
                 const SizedBox(height: 18),
+                _restoreButton(),
+                const SizedBox(height: 18),
                 _features(),
               ],
             ),
     );
   }
+
+  // ============================================================
+  // HERO
+  // ============================================================
 
   Widget _heroCard() {
 
@@ -294,13 +314,15 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
 
           Text(
             subtitle,
-            style: KhilonjiyaUI.sub,
+            style:
+                KhilonjiyaUI.sub,
           ),
 
           const SizedBox(height: 14),
 
+          /// ✅ PRICE CHANGED
           Text(
-            "₹999 / month",
+            "₹9 / month",
             style:
                 KhilonjiyaUI.cardTitle
                     .copyWith(
@@ -328,8 +350,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               child: _paying
                   ? const CircularProgressIndicator(
                       color:
-                          Colors.white,
-                    )
+                          Colors.white)
                   : const Text(
                       "Subscribe Now"),
             ),
@@ -339,12 +360,37 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     );
   }
 
+  // ============================================================
+  // RESTORE BUTTON
+  // ============================================================
+
+  Widget _restoreButton() {
+    return SizedBox(
+      height: 44,
+      child: OutlinedButton(
+        onPressed:
+            _restoring
+                ? null
+                : _restorePurchases,
+        child: _restoring
+            ? const CircularProgressIndicator()
+            : const Text(
+                "Restore Purchase"),
+      ),
+    );
+  }
+
+  // ============================================================
+  // FEATURES
+  // ============================================================
+
   Widget _features() {
 
     Widget item(
         IconData icon,
         String title,
         String sub) {
+
       return Container(
         margin:
             const EdgeInsets.only(
