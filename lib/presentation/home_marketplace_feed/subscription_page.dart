@@ -3,7 +3,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/ui/khilonjiya_ui.dart';
 import '../../services/subscription_service.dart';
@@ -14,22 +13,26 @@ class SubscriptionPage extends StatefulWidget {
   static const String productId = "khilonjiya_pro_monthly";
 
   @override
-  State<SubscriptionPage> createState() => _SubscriptionPageState();
+  State<SubscriptionPage> createState() =>
+      _SubscriptionPageState();
 }
 
-class _SubscriptionPageState extends State<SubscriptionPage> {
+class _SubscriptionPageState
+    extends State<SubscriptionPage> {
+
   final SubscriptionService _subscriptionService =
       SubscriptionService();
 
-  final InAppPurchase _iap = InAppPurchase.instance;
+  final InAppPurchase _iap =
+      InAppPurchase.instance;
 
-  StreamSubscription<List<PurchaseDetails>>? _purchaseSub;
+  StreamSubscription<List<PurchaseDetails>>?
+      _purchaseSub;
 
   ProductDetails? _product;
 
   bool _loading = true;
   bool _paying = false;
-  bool _restoring = false;
 
   bool _isActive = false;
 
@@ -58,16 +61,15 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   }
 
   // ============================================================
-  // BILLING INIT
+  // BILLING INIT + SILENT RESTORE
   // ============================================================
 
   Future<void> _initBilling() async {
-    final available = await _iap.isAvailable();
 
-    if (!available) {
-      debugPrint("Billing unavailable");
-      return;
-    }
+    final available =
+        await _iap.isAvailable();
+
+    if (!available) return;
 
     final response =
         await _iap.queryProductDetails(
@@ -75,29 +77,35 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     );
 
     if (response.productDetails.isNotEmpty) {
-      _product = response.productDetails.first;
+      _product =
+          response.productDetails.first;
     }
 
     _purchaseSub =
         _iap.purchaseStream.listen(
       _handlePurchaseUpdates,
-      onDone: () => _purchaseSub?.cancel(),
-      onError: (_) {},
+      onDone: () =>
+          _purchaseSub?.cancel(),
     );
 
-    /// ✅ AUTO RESTORE ON APP OPEN
-    await _restorePurchases();
+    /// ✅ Silent restore (Netflix style)
+    await _iap.restorePurchases();
   }
 
   // ============================================================
-  // PURCHASE START
+  // START PAYMENT
   // ============================================================
 
   Future<void> _startPayment() async {
+
+    if (_isActive) return;
+
     if (_product == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
         const SnackBar(
-          content: Text("Subscription not ready"),
+          content:
+              Text("Subscription not ready"),
         ),
       );
       return;
@@ -106,25 +114,11 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     setState(() => _paying = true);
 
     final purchaseParam =
-        PurchaseParam(productDetails: _product!);
+        PurchaseParam(
+            productDetails: _product!);
 
     _iap.buyNonConsumable(
-      purchaseParam: purchaseParam,
-    );
-  }
-
-  // ============================================================
-  // RESTORE PURCHASES
-  // ============================================================
-
-  Future<void> _restorePurchases() async {
-    setState(() => _restoring = true);
-
-    try {
-      await _iap.restorePurchases();
-    } catch (_) {}
-
-    setState(() => _restoring = false);
+        purchaseParam: purchaseParam);
   }
 
   // ============================================================
@@ -132,10 +126,12 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   // ============================================================
 
   Future<void> _handlePurchaseUpdates(
-      List<PurchaseDetails> purchases) async {
+      List<PurchaseDetails>
+          purchases) async {
 
     for (final purchase in purchases) {
 
+      /// ✅ SUCCESS / RESTORE
       if (purchase.status ==
               PurchaseStatus.purchased ||
           purchase.status ==
@@ -143,52 +139,49 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
 
         try {
 
-          /// ✅ SECURE SERVER VALIDATION
           await _subscriptionService
               .verifyPlayStorePurchase(
             purchaseToken:
-                purchase.verificationData
+                purchase
+                    .verificationData
                     .serverVerificationData,
-            productId: purchase.productID,
+            productId:
+                purchase.productID,
             orderId:
-                purchase.purchaseID ?? "",
+                purchase.purchaseID ??
+                    "",
           );
 
-          if (purchase.pendingCompletePurchase) {
-            await _iap.completePurchase(
-                purchase);
+          if (purchase
+              .pendingCompletePurchase) {
+            await _iap
+                .completePurchase(
+                    purchase);
           }
 
           await _loadSubscription();
 
-          if (mounted) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(
-              const SnackBar(
-                content:
-                    Text("Khilonjiya Pro Activated"),
-              ),
-            );
-          }
-
-        } catch (e) {
-          debugPrint(
-              "Purchase verification failed $e");
-        }
+        } catch (_) {}
       }
 
+      /// ✅ ALREADY SUBSCRIBED FIX
       if (purchase.status ==
           PurchaseStatus.error) {
 
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-          SnackBar(
-            content: Text(
-              purchase.error?.message ??
-                  "Payment failed",
-            ),
-          ),
-        );
+        final msg =
+            purchase.error?.message
+                    ?.toLowerCase() ??
+                "";
+
+        if (msg.contains(
+                "already") ||
+            msg.contains(
+                "subscribed")) {
+
+          /// silent restore
+          await _iap
+              .restorePurchases();
+        }
       }
     }
 
@@ -196,16 +189,18 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   }
 
   // ============================================================
-  // LOAD FROM DB
+  // LOAD SUBSCRIPTION
   // ============================================================
 
-  Future<void> _loadSubscription() async {
+  Future<void> _loadSubscription()
+      async {
 
     if (!mounted) return;
 
     setState(() => _loading = true);
 
     try {
+
       final sub =
           await _subscriptionService
               .getMySubscription();
@@ -233,7 +228,8 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
 
       if (expires != null) {
         days =
-            expires.difference(now)
+            expires
+                .difference(now)
                 .inDays;
       }
 
@@ -257,13 +253,16 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      backgroundColor: KhilonjiyaUI.bg,
+      backgroundColor:
+          KhilonjiyaUI.bg,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor:
+            Colors.white,
         elevation: 0,
         title: Text(
           "Subscription",
-          style: KhilonjiyaUI.cardTitle,
+          style:
+              KhilonjiyaUI.cardTitle,
         ),
       ),
       body: _loading
@@ -272,12 +271,12 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                   CircularProgressIndicator())
           : ListView(
               padding:
-                  const EdgeInsets.all(16),
+                  const EdgeInsets.all(
+                      16),
               children: [
                 _heroCard(),
-                const SizedBox(height: 18),
-                _restoreButton(),
-                const SizedBox(height: 18),
+                const SizedBox(
+                    height: 18),
                 _features(),
               ],
             ),
@@ -285,7 +284,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   }
 
   // ============================================================
-  // HERO
+  // HERO CARD
   // ============================================================
 
   Widget _heroCard() {
@@ -296,18 +295,22 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
 
     return Container(
       padding:
-          const EdgeInsets.all(16),
+          const EdgeInsets.all(
+              16),
       decoration:
-          KhilonjiyaUI.cardDecoration(),
+          KhilonjiyaUI
+              .cardDecoration(),
       child: Column(
         crossAxisAlignment:
-            CrossAxisAlignment.start,
+            CrossAxisAlignment
+                .start,
         children: [
 
           Text(
             "Khilonjiya Pro",
             style:
-                KhilonjiyaUI.cardTitle,
+                KhilonjiyaUI
+                    .cardTitle,
           ),
 
           const SizedBox(height: 6),
@@ -320,11 +323,11 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
 
           const SizedBox(height: 14),
 
-          /// ✅ PRICE CHANGED
           Text(
             "₹9 / month",
             style:
-                KhilonjiyaUI.cardTitle
+                KhilonjiyaUI
+                    .cardTitle
                     .copyWith(
               fontSize: 22,
             ),
@@ -333,11 +336,14 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           const SizedBox(height: 14),
 
           SizedBox(
-            width: double.infinity,
+            width:
+                double.infinity,
             height: 46,
-            child: ElevatedButton(
+            child:
+                ElevatedButton(
               onPressed:
-                  _paying
+                  (_paying ||
+                          _isActive)
                       ? null
                       : _startPayment,
               style:
@@ -350,32 +356,24 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               child: _paying
                   ? const CircularProgressIndicator(
                       color:
-                          Colors.white)
-                  : const Text(
-                      "Subscribe Now"),
+                          Colors
+                              .white)
+                  : Text(
+                      _isActive
+                          ? "Already Subscribed"
+                          : "Subscribe Now",
+                      style:
+                          const TextStyle(
+                        color: Colors
+                            .white,
+                        fontWeight:
+                            FontWeight
+                                .w600,
+                      ),
+                    ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // RESTORE BUTTON
-  // ============================================================
-
-  Widget _restoreButton() {
-    return SizedBox(
-      height: 44,
-      child: OutlinedButton(
-        onPressed:
-            _restoring
-                ? null
-                : _restorePurchases,
-        child: _restoring
-            ? const CircularProgressIndicator()
-            : const Text(
-                "Restore Purchase"),
       ),
     );
   }
@@ -438,7 +436,8 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
         Text(
           "What you get",
           style:
-              KhilonjiyaUI.cardTitle,
+              KhilonjiyaUI
+                  .cardTitle,
         ),
         const SizedBox(height: 10),
         item(Icons.bolt,
