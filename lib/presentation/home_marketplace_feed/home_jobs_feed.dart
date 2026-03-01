@@ -1,6 +1,7 @@
 // File: lib/presentation/home_marketplace_feed/home_jobs_feed.dart
 
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -151,7 +152,7 @@ _notificationChannel?.unsubscribe();
       }
       await _homeService.updateMyCurrentLocationFromDevice();
 
-      await _loadInitialData();
+      Future.microtask(_loadInitialData);
       _startSearchHintAutoSlide();
       _startSliderAutoSlide();
       _listenToNotificationChanges();
@@ -714,6 +715,23 @@ void _openNotificationsPage() async {
   );
 }
 
+
+Widget _fastImage(String url) {
+  if (url.isEmpty) {
+    return Container(color: Colors.grey.shade200);
+  }
+
+  return CachedNetworkImage(
+    imageUrl: url,
+    fit: BoxFit.cover,
+    memCacheWidth: 600,
+    fadeInDuration: const Duration(milliseconds: 120),
+    placeholder: (_, __) =>
+        Container(color: Colors.grey.shade200),
+    errorWidget: (_, __, ___) =>
+        const Icon(Icons.image_not_supported),
+  );
+}
   // ------------------------------------------------------------
   // HOME FEED
   // ------------------------------------------------------------
@@ -926,10 +944,7 @@ if (_sliders.isNotEmpty) ...[
         return Container(
           decoration: KhilonjiyaUI.cardDecoration(radius: 18),
           clipBehavior: Clip.antiAlias,
-          child: Image.network(
-            imageUrl,
-            fit: BoxFit.cover,
-          ),
+          child: _fastImage(imageUrl),
         );
       },
     ),
