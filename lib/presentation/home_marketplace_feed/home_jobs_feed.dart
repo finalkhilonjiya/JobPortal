@@ -948,33 +948,34 @@ else
   ),
 
 const SizedBox(height: 10),
+
 // AUTO SLIDER SECTION
-// ------------------------------------------------------------
 if (_sliders.isNotEmpty) ...[
   const SizedBox(height: 20),
 
   RepaintBoundary(
-  child: SizedBox(
-    height: 150,
-    child: PageView.builder(
-      controller: _sliderController,
-      itemCount: _sliders.length,
-      onPageChanged: (index) {
-        setState(() => _currentSliderIndex = index);
-      },
-      itemBuilder: (_, i) {
-        final imageUrl =
-            _sliders[i]['image_url']?.toString() ?? '';
+    child: SizedBox(
+      height: 150,
+      child: PageView.builder(
+        controller: _sliderController,
+        itemCount: _sliders.length,
+        onPageChanged: (index) {
+          setState(() => _currentSliderIndex = index);
+        },
+        itemBuilder: (_, i) {
+          final imageUrl =
+              _sliders[i]['image_url']?.toString() ?? '';
 
-        return Container(
-          decoration: KhilonjiyaUI.cardDecoration(radius: 18),
-          clipBehavior: Clip.antiAlias,
-          child: _fastImage(imageUrl),
-        );
-      },
+          return Container(
+            decoration:
+                KhilonjiyaUI.cardDecoration(radius: 18),
+            clipBehavior: Clip.antiAlias,
+            child: _fastImage(imageUrl),
+          );
+        },
+      ),
     ),
   ),
- ),
 
   const SizedBox(height: 8),
 
@@ -984,25 +985,30 @@ if (_sliders.isNotEmpty) ...[
       _sliders.length,
       (i) => AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        width: _currentSliderIndex == i ? 18 : 6,
+        margin:
+            const EdgeInsets.symmetric(horizontal: 4),
+        width:
+            _currentSliderIndex == i ? 18 : 6,
         height: 6,
         decoration: BoxDecoration(
-          color: _currentSliderIndex == i
-              ? KhilonjiyaUI.primary
-              : KhilonjiyaUI.border,
-          borderRadius: BorderRadius.circular(999),
+          color:
+              _currentSliderIndex == i
+                  ? KhilonjiyaUI.primary
+                  : KhilonjiyaUI.border,
+          borderRadius:
+              BorderRadius.circular(999),
         ),
       ),
     ),
   ),
 
   const SizedBox(height: 24),
-const SizedBox(height: 24),
 ],
-      ),
+
+      ],
     ),
-  );
+  ),
+);
 }
 
   // ------------------------------------------------------------
