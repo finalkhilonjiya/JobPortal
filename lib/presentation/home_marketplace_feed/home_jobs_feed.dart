@@ -737,18 +737,18 @@ Widget _fastImage(String url) {
   // ------------------------------------------------------------
   Widget _buildHomeFeed() {
     if (_isLoadingProfile) {
-      return ListView.builder(
-        child: ListView(
-  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-        itemCount: 6,
-        itemBuilder: (_, __) => Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          height: 90,
-          decoration: KhilonjiyaUI.cardDecoration(radius: 16),
-        ),
+  return ListView.builder(
+    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+    itemCount: 6,
+    itemBuilder: (_, __) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        height: 90,
+        decoration: KhilonjiyaUI.cardDecoration(radius: 16),
       );
-    }
-
+    },
+  );
+}
     final earlyAccessList =
         (_premiumJobs.isNotEmpty ? _premiumJobs : _recommendedJobs);
 
@@ -758,44 +758,47 @@ Widget _fastImage(String url) {
 
     return RepaintBoundary(
   child: RefreshIndicator(
-      onRefresh: _refreshHome,
-        child: ListView(
-  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-  cacheExtent: 1200,
-  addAutomaticKeepAlives: true,
-  addRepaintBoundaries: true,
-        children: [
-          AIBannerCard(onTap: _openRecommendedJobsPage),
-          const SizedBox(height: 14),
+    onRefresh: _refreshHome,
+    child: ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      cacheExtent: 1200,
+      addAutomaticKeepAlives: true,
+      addRepaintBoundaries: true,
+      children: [
+        AIBannerCard(onTap: _openRecommendedJobsPage),
+        const SizedBox(height: 14),
 
-          ProfileAndSearchCards(
-            profileName: _profileName,
-            profileCompletion: _profileCompletion,
-            lastUpdatedText: _lastUpdatedText,
-            missingDetails: _missingDetails,
-            jobsPostedToday: _jobsPostedToday,
-            onProfileTap: _openProfileEditPage,
-            onMissingDetailsTap: _openProfileEditPage,
-            onProfileViewAllTap: _openProfileEditPage,
-            onJobsPostedTodayViewAllTap: _openJobsPostedTodayPage,
-          ),
-          const SizedBox(height: 14),
+        ProfileAndSearchCards(
+          profileName: _profileName,
+          profileCompletion: _profileCompletion,
+          lastUpdatedText: _lastUpdatedText,
+          missingDetails: _missingDetails,
+          jobsPostedToday: _jobsPostedToday,
+          onProfileTap: _openProfileEditPage,
+          onMissingDetailsTap: _openProfileEditPage,
+          onProfileViewAllTap: _openProfileEditPage,
+          onJobsPostedTodayViewAllTap:
+              _openJobsPostedTodayPage,
+        ),
 
-          BoostCard(
-            label: "Construction",
-            title: "Khilonjiya Construction Service",
-            subtitle: "Your trusted construction partner",
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const ConstructionServicesHomePage(),
-                ),
-              );
-            },
-          ),
-         ),
-          const SizedBox(height: 14),
+        const SizedBox(height: 14),
+
+        BoostCard(
+          label: "Construction",
+          title: "Khilonjiya Construction Service",
+          subtitle: "Your trusted construction partner",
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    const ConstructionServicesHomePage(),
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 14),
 
           // ✅ FIXED: ExpectedSalaryCard only supports onTap
           ExpectedSalaryCard(
@@ -891,50 +894,57 @@ Widget _fastImage(String url) {
 
 
           if (_loadingCompanies)
-            RepaintBoundary(
-  child: SizedBox(
-    height: 170,
-    child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: 4,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
-                itemBuilder: (_, __) {
-                  return Container(
-                    width: 320,
-                    decoration: KhilonjiyaUI.cardDecoration(radius: 16),
-                  );
-                },
-              ),
-             ),
-            )
-          else if (_topCompanies.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Text(
-                "No companies found",
-                style: KhilonjiyaUI.sub,
-              ),
-            )
-          else
-            SizedBox(
-              height: 120,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _topCompanies.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
-                itemBuilder: (_, i) {
-                  final c = _topCompanies[i];
-                  final companyId = c['id']?.toString() ?? '';
+  RepaintBoundary(
+    child: SizedBox(
+      height: 170,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: 4,
+        separatorBuilder: (_, __) =>
+            const SizedBox(width: 12),
+        itemBuilder: (_, __) {
+          return Container(
+            width: 320,
+            decoration:
+                KhilonjiyaUI.cardDecoration(radius: 16),
+          );
+        },
+      ),
+    ),
+  )
+else if (_topCompanies.isEmpty)
+  Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text(
+      "No companies found",
+      style: KhilonjiyaUI.sub,
+    ),
+  )
+else
+  RepaintBoundary(
+    child: SizedBox(
+      height: 120,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _topCompanies.length,
+        separatorBuilder: (_, __) =>
+            const SizedBox(width: 12),
+        itemBuilder: (_, i) {
+          final c = _topCompanies[i];
+          final companyId =
+              c['id']?.toString() ?? '';
 
-                  return CompanyCardHorizontal(
-                    company: c,
-                    onTap: () => _openCompanyDetails(companyId),
-                  );
-                },
-              ),
-            ),
+          return CompanyCardHorizontal(
+            company: c,
+            onTap: () =>
+                _openCompanyDetails(companyId),
+          );
+        },
+      ),
+    ),
+  ),
 
-          const SizedBox(height: 10),
+const SizedBox(height: 10),
 // AUTO SLIDER SECTION
 // ------------------------------------------------------------
 if (_sliders.isNotEmpty) ...[
