@@ -765,6 +765,7 @@ Widget _fastImage(String url) {
       addAutomaticKeepAlives: true,
       addRepaintBoundaries: true,
       children: [
+
         AIBannerCard(onTap: _openRecommendedJobsPage),
         const SizedBox(height: 14),
 
@@ -785,8 +786,10 @@ Widget _fastImage(String url) {
 
         BoostCard(
           label: "Construction",
-          title: "Khilonjiya Construction Service",
-          subtitle: "Your trusted construction partner",
+          title:
+              "Khilonjiya Construction Service",
+          subtitle:
+              "Your trusted construction partner",
           onTap: () {
             Navigator.push(
               context,
@@ -995,11 +998,12 @@ if (_sliders.isNotEmpty) ...[
   ),
 
   const SizedBox(height: 24),
+const SizedBox(height: 24),
 ],
-        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   // ------------------------------------------------------------
   // BUILD
