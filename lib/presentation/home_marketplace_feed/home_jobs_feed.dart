@@ -228,91 +228,95 @@ void _listenToNotificationChanges() {
   setState(() => _isCheckingAuth = false);
 
   try {
-    // 1️⃣ Get device location first
-    Position? position;
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
 
-    try {
-      LocationPermission permission =
-          await Geolocator.checkPermission();
+    // --------------------------------------------------
+    // ✅ CALL SINGLE RPC (FAST LOAD)
+    // --------------------------------------------------
+    final rpc = await _supabase
+        .rpc('get_home_feed');
 
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
+    if (rpc == null) return;
 
-      if (permission != LocationPermission.denied &&
-          permission != LocationPermission.deniedForever) {
-        position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-        );
+    final data =
+        Map<String, dynamic>.from(rpc);
 
-        // Save to profile
-        await _supabase.from('user_profiles').update({
-          'current_latitude': position.latitude,
-          'current_longitude': position.longitude,
-          'location_updated_at':
-              DateTime.now().toIso8601String(),
-        }).eq('id', _supabase.auth.currentUser!.id);
-      }
-    } catch (_) {}
-
-    final futures = await Future.wait([
-      _homeService.getHomeProfileSummary(),
-      _homeService.getJobsPostedTodayCount(),
-      _homeService.getExpectedSalaryPerMonth(),
-      _homeService.getUserSavedJobs(),
-      _homeService.fetchPremiumJobs(limit: 8),
-      _homeService.getRecommendedJobs(limit: 40),
-      _homeService.fetchLatestJobs(limit: 40),
-
-      // ✅ Nearby using live GPS
-      position == null
-          ? _homeService.fetchLatestJobs(limit: 40)
-          : _homeService.fetchJobsNearbyWithLatLng(
-              userLat: position.latitude,
-              userLng: position.longitude,
-              limit: 40,
-            ),
-
-      _homeService.fetchTopCompanies(limit: 10),
-      _homeService.getUnreadNotificationsCount(),
-      _supabase
-          .from('slider')
-          .select()
-          .eq('is_active', true)
-          .eq('slider_type', 'home')
-          .order('display_order', ascending: true),
-    ]);
-
-    final summary = futures[0] as Map<String, dynamic>;
-    final jobsCount = futures[1] as int;
-    _expectedSalaryPerMonth = futures[2] as int;
-    _savedJobIds = futures[3] as Set<String>;
-    _premiumJobs =
-        List<Map<String, dynamic>>.from(futures[4] as List);
-    _recommendedJobs =
-        List<Map<String, dynamic>>.from(futures[5] as List);
-    _latestJobs =
-        List<Map<String, dynamic>>.from(futures[6] as List);
-    _nearbyJobs =
-        List<Map<String, dynamic>>.from(futures[7] as List);
-    _topCompanies =
-        List<Map<String, dynamic>>.from(futures[8] as List);
-    _unreadNotifications = futures[9] as int;
-    _sliders =
-        List<Map<String, dynamic>>.from(futures[10] as List);
+    // --------------------------------------------------
+    // PROFILE
+    // --------------------------------------------------
+    final summary =
+        data['profile_summary'] ?? {};
 
     _profileName =
-        (summary['profileName'] ?? "Your Profile").toString();
-    _profileCompletion =
-        (summary['profileCompletion'] ?? 0) as int;
-    _lastUpdatedText =
-        (summary['lastUpdatedText'] ?? "Updated recently")
+        (summary['full_name'] ??
+                "Your Profile")
             .toString();
-    _missingDetails =
-        (summary['missingDetails'] ?? 0) as int;
-    _jobsPostedToday = jobsCount;
-  } catch (_) {
-    // silent fail
+
+    _profileCompletion =
+        summary['profile_completion_percentage'] ??
+            0;
+
+    _lastUpdatedText =
+        "Updated recently";
+
+    _jobsPostedToday =
+        data['jobs_posted_today'] ?? 0;
+
+    // --------------------------------------------------
+    // SAVED
+    // --------------------------------------------------
+    final saved =
+        data['saved_job_ids'];
+
+    _savedJobIds =
+        saved == null
+            ? {}
+            : Set<String>.from(saved);
+
+    // --------------------------------------------------
+    // JOBS
+    // --------------------------------------------------
+    _premiumJobs =
+        List<Map<String, dynamic>>.from(
+            data['premium_jobs'] ?? []);
+
+    _latestJobs =
+        List<Map<String, dynamic>>.from(
+            data['latest_jobs'] ?? []);
+
+    _nearbyJobs =
+        List<Map<String, dynamic>>.from(
+            data['nearby_jobs'] ?? []);
+
+    _recommendedJobs =
+        _premiumJobs.isNotEmpty
+            ? _premiumJobs
+            : _latestJobs;
+
+    // --------------------------------------------------
+    // COMPANIES
+    // --------------------------------------------------
+    _topCompanies =
+        List<Map<String, dynamic>>.from(
+            data['top_companies'] ?? []);
+
+    // --------------------------------------------------
+    // NOTIFICATIONS
+    // --------------------------------------------------
+    _unreadNotifications =
+        data['unread_notifications'] ??
+            0;
+
+    // --------------------------------------------------
+    // SLIDERS
+    // --------------------------------------------------
+    _sliders =
+        List<Map<String, dynamic>>.from(
+            data['sliders'] ?? []);
+
+  } catch (e) {
+    debugPrint("HOME RPC ERROR: $e");
   } finally {
     if (!_isDisposed && mounted) {
       setState(() {
@@ -321,7 +325,55 @@ void _listenToNotificationChanges() {
       });
     }
   }
+
+  // --------------------------------------------------
+  // ✅ GPS UPDATE SILENTLY (NON-BLOCKING)
+  // --------------------------------------------------
+  _updateLocationSilently();
 }
+
+
+Future<void> _updateLocationSilently() async {
+  try {
+    LocationPermission permission =
+        await Geolocator.checkPermission();
+
+    if (permission ==
+        LocationPermission.denied) {
+      permission =
+          await Geolocator.requestPermission();
+    }
+
+    if (permission ==
+            LocationPermission.denied ||
+        permission ==
+            LocationPermission.deniedForever) {
+      return;
+    }
+
+    final pos =
+        await Geolocator.getCurrentPosition(
+      desiredAccuracy:
+          LocationAccuracy.high,
+    );
+
+    await _supabase
+        .from('user_profiles')
+        .update({
+      'current_latitude':
+          pos.latitude,
+      'current_longitude':
+          pos.longitude,
+      'location_updated_at':
+          DateTime.now()
+              .toIso8601String(),
+    }).eq(
+            'id',
+            _supabase
+                .auth.currentUser!.id);
+  } catch (_) {}
+}
+
 
   Future<void> _refreshHome() async {
     if (_isDisposed) return;
