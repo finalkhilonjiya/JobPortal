@@ -738,7 +738,8 @@ Widget _fastImage(String url) {
   Widget _buildHomeFeed() {
     if (_isLoadingProfile) {
       return ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+        child: ListView(
+  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
         itemCount: 6,
         itemBuilder: (_, __) => Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -755,10 +756,14 @@ Widget _fastImage(String url) {
     final jobsForLatestHorizontal = _latestJobs.take(10).toList();
     final jobsForNearbyHorizontal = _nearbyJobs.take(10).toList();
 
-    return RefreshIndicator(
+    return RepaintBoundary(
+  child: RefreshIndicator(
       onRefresh: _refreshHome,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+        child: ListView(
+  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+  cacheExtent: 1200,
+  addAutomaticKeepAlives: true,
+  addRepaintBoundaries: true,
         children: [
           AIBannerCard(onTap: _openRecommendedJobsPage),
           const SizedBox(height: 14),
@@ -789,6 +794,7 @@ Widget _fastImage(String url) {
               );
             },
           ),
+         ),
           const SizedBox(height: 14),
 
           // ✅ FIXED: ExpectedSalaryCard only supports onTap
@@ -802,9 +808,9 @@ Widget _fastImage(String url) {
             ctaText: "View all",
             onTap: _openRecommendedJobsPage,
           ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 170,
+          RepaintBoundary(
+  child: SizedBox(
+    height: 170,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: jobsForRecommendedHorizontal.length,
@@ -819,6 +825,7 @@ Widget _fastImage(String url) {
               },
             ),
           ),
+        ),
 
           const SizedBox(height: 18),
 
@@ -827,10 +834,10 @@ Widget _fastImage(String url) {
             ctaText: "View all",
             onTap: _openLatestJobsPage,
           ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 170,
-            child: ListView.separated(
+          RepaintBoundary(
+  child: SizedBox(
+    height: 170,
+    child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: jobsForLatestHorizontal.length,
               separatorBuilder: (_, __) => const SizedBox(width: 12),
@@ -844,6 +851,7 @@ Widget _fastImage(String url) {
               },
             ),
           ),
+        ),
 
           const SizedBox(height: 18),
 
@@ -852,10 +860,10 @@ Widget _fastImage(String url) {
             ctaText: "View all",
             onTap: _openJobsNearbyPage,
           ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 170,
-            child: ListView.separated(
+          RepaintBoundary(
+  child: SizedBox(
+    height: 170,
+    child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: jobsForNearbyHorizontal.length,
               separatorBuilder: (_, __) => const SizedBox(width: 12),
@@ -869,6 +877,7 @@ Widget _fastImage(String url) {
               },
             ),
           ),
+        ),
 
           const SizedBox(height: 18),
 
@@ -882,9 +891,10 @@ Widget _fastImage(String url) {
 
 
           if (_loadingCompanies)
-            SizedBox(
-              height: 120,
-              child: ListView.separated(
+            RepaintBoundary(
+  child: SizedBox(
+    height: 170,
+    child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: 4,
                 separatorBuilder: (_, __) => const SizedBox(width: 12),
@@ -895,6 +905,7 @@ Widget _fastImage(String url) {
                   );
                 },
               ),
+             ),
             )
           else if (_topCompanies.isEmpty)
             Padding(
@@ -929,7 +940,8 @@ Widget _fastImage(String url) {
 if (_sliders.isNotEmpty) ...[
   const SizedBox(height: 20),
 
-  SizedBox(
+  RepaintBoundary(
+  child: SizedBox(
     height: 150,
     child: PageView.builder(
       controller: _sliderController,
@@ -949,6 +961,7 @@ if (_sliders.isNotEmpty) ...[
       },
     ),
   ),
+ ),
 
   const SizedBox(height: 8),
 
