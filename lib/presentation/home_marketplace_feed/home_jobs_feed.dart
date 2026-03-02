@@ -100,7 +100,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   // ------------------------------------------------------------
   List<Map<String, dynamic>> _sliders = [];
   final PageController _sliderController = PageController();
-  int _currentSliderIndex = 0;
+  final ValueNotifier<int> _sliderIndex = ValueNotifier(0);
   Timer? _sliderTimer;
 
 
@@ -135,6 +135,7 @@ RealtimeChannel? _notificationChannel;
     _sliderTimer?.cancel();
 _sliderController.dispose();
 _notificationChannel?.unsubscribe();
+ _sliderIndex.dispose();
 
     super.dispose();
   }
@@ -1042,6 +1043,7 @@ else
 const SizedBox(height: 10),
 
 // AUTO SLIDER SECTION
+// AUTO SLIDER SECTION
 if (_sliders.isNotEmpty) ...[
   const SizedBox(height: 20),
 
@@ -1052,7 +1054,7 @@ if (_sliders.isNotEmpty) ...[
         controller: _sliderController,
         itemCount: _sliders.length,
         onPageChanged: (index) {
-          setState(() => _currentSliderIndex = index);
+          _sliderIndex.value = index;
         },
         itemBuilder: (_, i) {
           final imageUrl =
@@ -1071,27 +1073,30 @@ if (_sliders.isNotEmpty) ...[
 
   const SizedBox(height: 8),
 
-  Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: List.generate(
-      _sliders.length,
-      (i) => AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        margin:
-            const EdgeInsets.symmetric(horizontal: 4),
-        width:
-            _currentSliderIndex == i ? 18 : 6,
-        height: 6,
-        decoration: BoxDecoration(
-          color:
-              _currentSliderIndex == i
+  ValueListenableBuilder<int>(
+    valueListenable: _sliderIndex,
+    builder: (_, current, __) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(
+          _sliders.length,
+          (i) => AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            margin:
+                const EdgeInsets.symmetric(horizontal: 4),
+            width: current == i ? 18 : 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: current == i
                   ? KhilonjiyaUI.primary
                   : KhilonjiyaUI.border,
-          borderRadius:
-              BorderRadius.circular(999),
+              borderRadius:
+                  BorderRadius.circular(999),
+            ),
+          ),
         ),
-      ),
-    ),
+      );
+    },
   ),
 
   const SizedBox(height: 24),
