@@ -1071,11 +1071,16 @@ class _HomeTopBar extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
-          bottom: BorderSide(color: KhilonjiyaUI.border),
+          bottom: BorderSide(
+            color: KhilonjiyaUI.border,
+          ),
         ),
       ),
       child: Row(
         children: [
+          // --------------------------------------------------
+          // MENU
+          // --------------------------------------------------
           InkWell(
             onTap: () =>
                 Scaffold.of(context).openDrawer(),
@@ -1089,6 +1094,9 @@ class _HomeTopBar extends StatelessWidget {
 
           const SizedBox(width: 10),
 
+          // --------------------------------------------------
+          // SEARCH BAR
+          // --------------------------------------------------
           Expanded(
             child: InkWell(
               onTap: state._openSearchPage,
@@ -1097,15 +1105,19 @@ class _HomeTopBar extends StatelessWidget {
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12),
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color:
+                      const Color(0xFFF8FAFC),
                   borderRadius:
-                      BorderRadius.circular(999),
+                      BorderRadius.circular(
+                          999),
                   border: Border.all(
-                      color:
-                          KhilonjiyaUI.border),
+                    color:
+                        KhilonjiyaUI.border,
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -1116,6 +1128,7 @@ class _HomeTopBar extends StatelessWidget {
                           Color(0xFF64748B),
                     ),
                     const SizedBox(width: 8),
+
                     Expanded(
                       child: SizedBox(
                         height: 18,
@@ -1128,7 +1141,8 @@ class _HomeTopBar extends StatelessWidget {
                           itemCount: state
                               ._searchHints
                               .length,
-                          itemBuilder: (_, i) {
+                          itemBuilder:
+                              (_, i) {
                             return Align(
                               alignment:
                                   Alignment
@@ -1145,8 +1159,9 @@ class _HomeTopBar extends StatelessWidget {
                                         .copyWith(
                                   fontSize:
                                       13,
-                                  color: const Color(
-                                      0xFF94A3B8),
+                                  color:
+                                      const Color(
+                                          0xFF94A3B8),
                                 ),
                               ),
                             );
@@ -1162,10 +1177,16 @@ class _HomeTopBar extends StatelessWidget {
 
           const SizedBox(width: 10),
 
+          // --------------------------------------------------
+          // AI ICON
+          // --------------------------------------------------
           const _AITopIcon(),
 
           const SizedBox(width: 8),
 
+          // --------------------------------------------------
+          // NOTIFICATIONS (ULTRA OPTIMIZED)
+          // --------------------------------------------------
           InkWell(
             onTap:
                 state._openNotificationsPage,
@@ -1184,9 +1205,10 @@ class _HomeTopBar extends StatelessWidget {
                             .circular(
                                 999),
                     border: Border.all(
-                        color:
-                            KhilonjiyaUI
-                                .border),
+                      color:
+                          KhilonjiyaUI
+                              .border,
+                    ),
                   ),
                   child: const Icon(
                     Icons
@@ -1197,56 +1219,70 @@ class _HomeTopBar extends StatelessWidget {
                   ),
                 ),
 
-                if (state
-                        ._unreadNotifications >
-                    0)
-                  Positioned(
-                    right: 6,
-                    top: 6,
-                    child: Container(
-                      padding:
-                          const EdgeInsets
-                              .symmetric(
-                        horizontal: 5,
-                        vertical: 2,
-                      ),
-                      decoration:
-                          const BoxDecoration(
-                        color:
-                            Color(
-                                0xFFEF4444),
-                        shape:
-                            BoxShape.circle,
-                      ),
-                      constraints:
-                          const BoxConstraints(
-                        minWidth: 18,
-                        minHeight: 18,
-                      ),
-                      child: Center(
-                        child: Text(
-                          state
-                                      ._unreadNotifications >
-                                  9
-                              ? '9+'
-                              : state
-                                  ._unreadNotifications
-                                  .toString(),
-                          style:
-                              const TextStyle(
-                            color:
-                                Colors
-                                    .white,
-                            fontSize:
-                                10,
-                            fontWeight:
-                                FontWeight
-                                    .w600,
+                /// ✅ ONLY BADGE REBUILDS
+                ValueListenableBuilder<int>(
+                  valueListenable:
+                      state
+                          ._notificationCount,
+                  builder:
+                      (_, count, __) {
+                    if (count <= 0) {
+                      return const SizedBox();
+                    }
+
+                    return Positioned(
+                      right: 6,
+                      top: 6,
+                      child:
+                          Container(
+                        padding:
+                            const EdgeInsets
+                                .symmetric(
+                          horizontal:
+                              5,
+                          vertical:
+                              2,
+                        ),
+                        decoration:
+                            const BoxDecoration(
+                          color: Color(
+                              0xFFEF4444),
+                          shape:
+                              BoxShape
+                                  .circle,
+                        ),
+                        constraints:
+                            const BoxConstraints(
+                          minWidth:
+                              18,
+                          minHeight:
+                              18,
+                        ),
+                        child:
+                            Center(
+                          child:
+                              Text(
+                            count > 9
+                                ? '9+'
+                                : count
+                                    .toString(),
+                            style:
+                                const TextStyle(
+                              color:
+                                  Colors
+                                      .white,
+                              fontSize:
+                                  10,
+                              fontWeight:
+                                  FontWeight
+                                      .w600,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
+                ),
               ],
             ),
           ),
