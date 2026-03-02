@@ -56,7 +56,7 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   final JobSeekerHomeService _homeService = JobSeekerHomeService();
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  bool _isCheckingAuth = true;
+  bool _isCheckingAuth = false;
   bool _isDisposed = false;
 
   // ------------------------------------------------------------
@@ -309,59 +309,48 @@ void _listenToNotificationChanges() {
   Future<void> _loadInitialData() async {
   if (_isDisposed) return;
 
-  setState(() => _isCheckingAuth = false);
-
   try {
     final user = _supabase.auth.currentUser;
     if (user == null) return;
 
     // --------------------------------------------------
-    // ✅ CALL SINGLE RPC (FAST LOAD)
+    // ✅ FAST HOME RPC
     // --------------------------------------------------
-    final rpc = await _supabase
-        .rpc('get_home_feed');
+    final rpc = await _supabase.rpc('get_home_feed');
 
     if (rpc == null) return;
 
-    final data =
-        Map<String, dynamic>.from(rpc);
+    final data = Map<String, dynamic>.from(rpc);
 
-      await _homeService.cacheHomeFeed(data);
+    /// ✅ CACHE HOME DATA
+    await _homeService.cacheHomeFeed(data);
 
     // --------------------------------------------------
     // PROFILE
     // --------------------------------------------------
-    final summary =
-        data['profile_summary'] ?? {};
+    final summary = data['profile_summary'] ?? {};
 
     _profileName =
-        (summary['full_name'] ??
-                "Your Profile")
-            .toString();
+        (summary['full_name'] ?? "Your Profile").toString();
 
     _profileCompletion =
-        summary['profile_completion_percentage'] ??
-            0;
+        summary['profile_completion_percentage'] ?? 0;
 
-    _lastUpdatedText =
-        "Updated recently";
+    _lastUpdatedText = "Updated recently";
 
     _jobsPostedToday =
         data['jobs_posted_today'] ?? 0;
 
     // --------------------------------------------------
-    // SAVED
+    // SAVED JOBS
     // --------------------------------------------------
-    final saved =
-        data['saved_job_ids'];
+    final saved = data['saved_job_ids'];
 
     _savedJobIds =
-        saved == null
-            ? {}
-            : Set<String>.from(saved);
+        saved == null ? {} : Set<String>.from(saved);
 
     // --------------------------------------------------
-    // JOBS
+    // JOB LISTS
     // --------------------------------------------------
     _premiumJobs =
         List<Map<String, dynamic>>.from(
@@ -381,18 +370,30 @@ void _listenToNotificationChanges() {
             : _latestJobs;
 
     // --------------------------------------------------
-    // COMPANIES
+    // TOP COMPANIES (RPC DATA)
     // --------------------------------------------------
     _topCompanies =
         List<Map<String, dynamic>>.from(
             data['top_companies'] ?? []);
 
     // --------------------------------------------------
+    // ✅ CRITICAL FALLBACK FIX
+    // (RPC sometimes returns empty)
+    // --------------------------------------------------
+    if (_topCompanies.isEmpty) {
+      try {
+        final companies =
+            await _homeService.fetchTopCompanies();
+
+        _topCompanies = companies;
+      } catch (_) {}
+    }
+
+    // --------------------------------------------------
     // NOTIFICATIONS
     // --------------------------------------------------
     _unreadNotifications =
-        data['unread_notifications'] ??
-            0;
+        data['unread_notifications'] ?? 0;
 
     // --------------------------------------------------
     // SLIDERS
@@ -400,7 +401,6 @@ void _listenToNotificationChanges() {
     _sliders =
         List<Map<String, dynamic>>.from(
             data['sliders'] ?? []);
-
   } catch (e) {
     debugPrint("HOME RPC ERROR: $e");
   } finally {
@@ -408,9 +408,16 @@ void _listenToNotificationChanges() {
       setState(() {
         _isLoadingProfile = false;
         _loadingCompanies = false;
+        _isCheckingAuth = false;
       });
     }
   }
+
+  // --------------------------------------------------
+  // ✅ NON-BLOCKING LOCATION UPDATE
+  // --------------------------------------------------
+  Future.microtask(_updateLocationSilently);
+}
 
   // --------------------------------------------------
   // ✅ GPS UPDATE SILENTLY (NON-BLOCKING)
@@ -1101,11 +1108,7 @@ if (_sliders.isNotEmpty) ...[
   // ------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
-    if (_isCheckingAuth) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
+    
 
     return Scaffold(
       backgroundColor: KhilonjiyaUI.bg,
