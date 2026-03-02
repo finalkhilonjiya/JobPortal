@@ -13,7 +13,7 @@ class JobSeekerHomeService {
   // ============================================================
   // STORAGE
   // ============================================================
-
+  DateTime? _lastLocationUpdate;
   static const String _bucketJobFiles = 'job-files';
   static const String _folderPhotos = 'photos';
   static const String _folderResumes = 'resumes';
@@ -270,7 +270,7 @@ Future<bool> isUserProSubscribed() async {
 Future<void> updateMyCurrentLocationFromDevice() async {
   _ensureAuthenticatedSync();
 
-  static DateTime? _lastLocationUpdate;
+  
 
   if (_lastLocationUpdate != null &&
       DateTime.now()
