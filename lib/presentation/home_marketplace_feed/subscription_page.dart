@@ -8,7 +8,6 @@ import '../../services/subscription_service.dart';
 class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({Key? key}) : super(key: key);
 
-  /// ✅ MUST MATCH PLAY CONSOLE PRODUCT ID
   static const String productId = "khilonjiya_pro_access";
 
   @override
@@ -19,7 +18,7 @@ class SubscriptionPage extends StatefulWidget {
 class _SubscriptionPageState
     extends State<SubscriptionPage> {
 
-  final SubscriptionService _subscriptionService =
+  final SubscriptionService _service =
       SubscriptionService();
 
   final InAppPurchase _iap =
@@ -34,9 +33,14 @@ class _SubscriptionPageState
   bool _paying = false;
   bool _isActive = false;
 
-  // ============================================================
+  bool _agreed = false;
+
+  DateTime? _expiry;
+  int _daysLeft = 0;
+
+  // ======================================================
   // INIT
-  // ============================================================
+  // ======================================================
 
   @override
   void initState() {
@@ -55,18 +59,17 @@ class _SubscriptionPageState
     await _initBilling();
   }
 
-  // ============================================================
-  // GOOGLE BILLING INIT
-  // ============================================================
+  // ======================================================
+  // BILLING
+  // ======================================================
 
   Future<void> _initBilling() async {
 
-    final available = await _iap.isAvailable();
-    if (!available) return;
+    if (!await _iap.isAvailable()) return;
 
     final response =
         await _iap.queryProductDetails({
-      SubscriptionPage.productId,
+      SubscriptionPage.productId
     });
 
     if (response.productDetails.isNotEmpty) {
@@ -79,36 +82,38 @@ class _SubscriptionPageState
     );
   }
 
-  // ============================================================
-  // START PAYMENT
-  // ============================================================
+  // ======================================================
+  // PAYMENT
+  // ======================================================
 
   Future<void> _startPayment() async {
 
-    if (_isActive) return;
-
-    if (_product == null) {
+    if (!_agreed) {
       ScaffoldMessenger.of(context)
           .showSnackBar(
         const SnackBar(
             content:
-                Text("Product not ready")),
+                Text("Accept terms first")),
       );
       return;
     }
 
+    if (_product == null || _isActive)
+      return;
+
     setState(() => _paying = true);
 
-    final param =
-        PurchaseParam(productDetails: _product!);
-
     _iap.buyNonConsumable(
-        purchaseParam: param);
+      purchaseParam:
+          PurchaseParam(
+              productDetails:
+                  _product!),
+    );
   }
 
-  // ============================================================
+  // ======================================================
   // PURCHASE LISTENER
-  // ============================================================
+  // ======================================================
 
   Future<void> _handlePurchaseUpdates(
       List<PurchaseDetails> purchases) async {
@@ -118,73 +123,85 @@ class _SubscriptionPageState
       if (purchase.status ==
           PurchaseStatus.purchased) {
 
-        try {
+        await _service
+            .verifyPlayStorePurchase(
+          purchaseToken:
+              purchase
+                  .verificationData
+                  .serverVerificationData,
+          productId:
+              purchase.productID,
+          orderId:
+              purchase.purchaseID ??
+                  "",
+        );
 
-          /// ✅ VERIFY WITH YOUR BACKEND
-          await _subscriptionService
-              .verifyOneTimePurchase(
-            purchaseToken:
-                purchase.verificationData
-                    .serverVerificationData,
-            productId: purchase.productID,
-            orderId:
-                purchase.purchaseID ?? "",
-          );
+        if (purchase
+            .pendingCompletePurchase) {
+          await _iap
+              .completePurchase(
+                  purchase);
+        }
 
-          if (purchase
-              .pendingCompletePurchase) {
-            await _iap
-                .completePurchase(purchase);
-          }
-
-          await _loadSubscription();
-
-        } catch (_) {}
+        await _loadSubscription();
       }
     }
 
     setState(() => _paying = false);
   }
 
-  // ============================================================
-  // LOAD USER SUBSCRIPTION
-  // ============================================================
+  // ======================================================
+  // LOAD SUBSCRIPTION
+  // ======================================================
 
   Future<void> _loadSubscription() async {
 
     setState(() => _loading = true);
 
-    try {
+    final sub =
+        await _service.getMySubscription();
 
-      final active =
-          await _subscriptionService
-              .isProActive();
+    if (sub != null) {
 
-      setState(() {
-        _isActive = active;
-        _loading = false;
-      });
+      final exp =
+          DateTime.tryParse(
+              sub['expires_at']
+                  .toString());
 
-    } catch (_) {
-      setState(() => _loading = false);
+      final now = DateTime.now();
+
+      if (exp != null &&
+          exp.isAfter(now)) {
+
+        _expiry = exp;
+        _daysLeft =
+            exp.difference(now).inDays;
+
+        _isActive = true;
+      }
     }
+
+    setState(() => _loading = false);
   }
 
-  // ============================================================
+  // ======================================================
   // UI
-  // ============================================================
+  // ======================================================
 
   @override
   Widget build(BuildContext context) {
 
     return Scaffold(
-      backgroundColor: KhilonjiyaUI.bg,
+      backgroundColor:
+          KhilonjiyaUI.bg,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor:
+            Colors.white,
         elevation: 0,
         title: Text(
           "Khilonjiya Pro",
-          style: KhilonjiyaUI.cardTitle,
+          style:
+              KhilonjiyaUI.cardTitle,
         ),
       ),
       body: _loading
@@ -193,91 +210,97 @@ class _SubscriptionPageState
                   CircularProgressIndicator())
           : ListView(
               padding:
-                  const EdgeInsets.all(16),
+                  const EdgeInsets.all(
+                      16),
               children: [
                 _heroCard(),
-                const SizedBox(height: 18),
+                const SizedBox(
+                    height: 16),
+                _terms(),
+                const SizedBox(
+                    height: 16),
                 _features(),
               ],
             ),
     );
   }
 
-  // ============================================================
-  // HERO CARD
-  // ============================================================
+  // ======================================================
+  // HERO
+  // ======================================================
 
   Widget _heroCard() {
 
     final subtitle = _isActive
-        ? "Pro Activated"
-        : "Unlock premium features";
+        ? "Activated • $_daysLeft days remaining"
+        : "30 Days Pro Access";
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding:
+          const EdgeInsets.all(
+              16),
       decoration:
-          KhilonjiyaUI.cardDecoration(),
+          KhilonjiyaUI
+              .cardDecoration(),
       child: Column(
         crossAxisAlignment:
-            CrossAxisAlignment.start,
+            CrossAxisAlignment
+                .start,
         children: [
 
-          Text(
-            "Khilonjiya Pro",
-            style:
-                KhilonjiyaUI.cardTitle,
-          ),
+          Text("Khilonjiya Pro",
+              style:
+                  KhilonjiyaUI
+                      .cardTitle),
 
           const SizedBox(height: 6),
 
-          Text(
-            subtitle,
-            style:
-                KhilonjiyaUI.sub,
-          ),
+          Text(subtitle,
+              style:
+                  KhilonjiyaUI.sub),
+
+          if (_expiry != null)
+            Text(
+              "Valid till: ${_expiry!.toLocal().toString().split(' ')[0]}",
+              style:
+                  KhilonjiyaUI.sub,
+            ),
 
           const SizedBox(height: 14),
 
           Text(
-            "₹9 • Lifetime Access",
+            _product?.price ??
+                "₹19",
             style:
-                KhilonjiyaUI.cardTitle
+                KhilonjiyaUI
+                    .cardTitle
                     .copyWith(
-              fontSize: 22,
-            ),
+                        fontSize:
+                            22),
           ),
 
           const SizedBox(height: 14),
 
           SizedBox(
-            width: double.infinity,
+            width:
+                double.infinity,
             height: 46,
-            child: ElevatedButton(
+            child:
+                ElevatedButton(
               onPressed:
-                  (_paying || _isActive)
+                  (_paying ||
+                          _isActive)
                       ? null
                       : _startPayment,
-              style:
-                  ElevatedButton
-                      .styleFrom(
-                backgroundColor:
-                    KhilonjiyaUI.primary,
-              ),
               child: _paying
                   ? const CircularProgressIndicator(
                       color:
-                          Colors.white)
+                          Colors
+                              .white)
                   : Text(
                       _isActive
                           ? "Subscribed"
-                          : "Unlock Pro",
-                      style:
-                          const TextStyle(
-                        color:
-                            Colors.white,
-                        fontWeight:
-                            FontWeight.w600,
-                      ),
+                          : "Activate Pro",
                     ),
             ),
           ),
@@ -286,66 +309,95 @@ class _SubscriptionPageState
     );
   }
 
-  // ============================================================
+  // ======================================================
+  // TERMS + AGREEMENT
+  // ======================================================
+
+  Widget _terms() {
+
+    return Container(
+      padding:
+          const EdgeInsets.all(
+              14),
+      decoration:
+          KhilonjiyaUI
+              .cardDecoration(),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment
+                .start,
+        children: [
+
+          Text(
+            "Terms & Conditions",
+            style:
+                KhilonjiyaUI
+                    .cardTitle,
+          ),
+
+          const SizedBox(height: 10),
+
+          const Text(
+"""
+• Khilonjiya is a job discovery platform only.
+• Subscription DOES NOT guarantee a job.
+• Employers independently shortlist candidates.
+• Calls, interviews and hiring decisions are made only by employers.
+• Application status updates will be notified inside the app.
+• Subscription validity is 30 days from purchase.
+• Payment once completed is non-refundable.
+• Misuse or fraudulent activity may terminate access.
+"""),
+
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Checkbox(
+                value: _agreed,
+                onChanged: (v) =>
+                    setState(() =>
+                        _agreed =
+                            v ?? false),
+              ),
+              const Expanded(
+                child: Text(
+                    "I agree to the terms and conditions"),
+              )
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  // ======================================================
   // FEATURES
-  // ============================================================
+  // ======================================================
 
   Widget _features() {
-
     Widget item(
-        IconData icon,
-        String title,
-        String sub) {
-
-      return Container(
-        margin:
-            const EdgeInsets.only(
-                bottom: 10),
-        padding:
-            const EdgeInsets.all(12),
-        decoration:
-            KhilonjiyaUI
-                .cardDecoration(),
-        child: Row(
-          children: [
-            Icon(icon,
-                color:
-                    KhilonjiyaUI
-                        .primary),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment
-                        .start,
-                children: [
-                  Text(title,
-                      style:
-                          KhilonjiyaUI
-                              .body),
-                  Text(sub,
-                      style:
-                          KhilonjiyaUI
-                              .sub),
-                ],
-              ),
-            )
-          ],
-        ),
-      );
-    }
+        IconData i,
+        String t,
+        String s) =>
+        ListTile(
+          leading: Icon(i,
+              color:
+                  KhilonjiyaUI
+                      .primary),
+          title: Text(t),
+          subtitle: Text(s),
+        );
 
     return Column(
       crossAxisAlignment:
-          CrossAxisAlignment.start,
+          CrossAxisAlignment
+              .start,
       children: [
-        Text(
-          "What you get",
-          style:
-              KhilonjiyaUI
-                  .cardTitle,
-        ),
-        const SizedBox(height: 10),
+        Text("Benefits",
+            style:
+                KhilonjiyaUI
+                    .cardTitle),
         item(Icons.bolt,
             "Priority Applications",
             "Higher visibility"),
@@ -353,8 +405,8 @@ class _SubscriptionPageState
             "Premium Jobs",
             "Exclusive listings"),
         item(Icons.verified,
-            "Verified Access",
-            "Trusted employers"),
+            "Verified Employers",
+            "Trusted hiring"),
       ],
     );
   }
