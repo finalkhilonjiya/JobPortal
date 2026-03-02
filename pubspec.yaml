@@ -138,7 +138,7 @@ flutter:
 # ✅ NATIVE SPLASH SCREEN CONFIGURATION
 flutter_native_splash:
   color: "#ffffff"
-  image: assets/icons/splash_logo.png
+  image: assets/icons/spash_logo.png
   android: true
   ios: false
   web: false
