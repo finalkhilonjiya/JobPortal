@@ -1280,4 +1280,3 @@ class _HomeTopBar extends StatelessWidget {
     );
   }
 }
-}
