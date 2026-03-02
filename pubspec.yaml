@@ -138,14 +138,16 @@ flutter:
 # ✅ NATIVE SPLASH SCREEN CONFIGURATION
 flutter_native_splash:
   color: "#ffffff"
-  image: assets/icons/spash_logo.png
+  image: assets/icons/splash_logo.png
   android: true
   ios: false
   web: false
   fullscreen: true
+
   android_12:
     color: "#ffffff"
     image: assets/icons/app_icon.png
+    icon_background_color: "#ffffff"
 
 # ✅ APP LAUNCHER ICON CONFIGURATION
 flutter_launcher_icons:
