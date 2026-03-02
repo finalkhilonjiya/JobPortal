@@ -299,16 +299,23 @@ void _listenToNotificationChanges() {
  void _startSliderAutoSlide() {
   _sliderTimer?.cancel();
 
-  _sliderTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+  _sliderTimer =
+      Timer.periodic(const Duration(seconds: 4), (_) {
     if (_isDisposed) return;
+
     if (!_sliderController.hasClients) return;
     if (_sliders.isEmpty) return;
 
-    final next = (_currentSliderIndex + 1) % _sliders.length;
+    final next =
+        (_sliderIndex.value + 1) %
+            _sliders.length;
+
+    _sliderIndex.value = next;
 
     _sliderController.animateToPage(
       next,
-      duration: const Duration(milliseconds: 400),
+      duration:
+          const Duration(milliseconds: 450),
       curve: Curves.easeOut,
     );
   });
