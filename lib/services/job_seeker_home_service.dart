@@ -1,5 +1,7 @@
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -15,6 +17,7 @@ class JobSeekerHomeService {
   static const String _bucketJobFiles = 'job-files';
   static const String _folderPhotos = 'photos';
   static const String _folderResumes = 'resumes';
+ static const _homeCacheKey = "home_feed_cache";
 
   // how long signed URLs should live
   static const int _signedUrlExpirySeconds = 60 * 60; // 1 hour
@@ -210,6 +213,31 @@ class JobSeekerHomeService {
 
     return path;
   }
+
+
+
+Future<void> cacheHomeFeed(Map<String, dynamic> data) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(
+    _homeCacheKey,
+    jsonEncode(data),
+  );
+}
+
+Future<Map<String, dynamic>?> getCachedHomeFeed() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final raw = prefs.getString(_homeCacheKey);
+  if (raw == null) return null;
+
+  try {
+    return jsonDecode(raw);
+  } catch (_) {
+    return null;
+  }
+}
+
+
 
 Future<bool> isUserProSubscribed() async {
   final client = Supabase.instance.client;
