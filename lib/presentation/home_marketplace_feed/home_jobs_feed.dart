@@ -594,6 +594,16 @@ void _openNotificationsPage() async {
     ),
   );
 
+  try {
+    final count =
+        await _homeService
+            .getUnreadNotificationsCount();
+
+    if (!_isDisposed) {
+      _notificationCount.value = count;
+    }
+  } catch (_) {}
+}
   // Refresh unread count after returning
   try {
     final count = await _homeService.getUnreadNotificationsCount();
