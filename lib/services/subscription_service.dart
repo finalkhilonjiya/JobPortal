@@ -11,16 +11,16 @@ class SubscriptionService {
   /// ============================================================
   /// GOOGLE VERIFY EDGE FUNCTION
   /// ============================================================
+
   static const String _googleVerifyUrl =
       "https://rsskivonmfqrzxbmxrkl.supabase.co/functions/v1/verify-google-subscription";
 
   // ============================================================
-  // AUTH HELPERS
+  // AUTH
   // ============================================================
 
   void _ensureAuth() {
-    final user = _db.auth.currentUser;
-    if (user == null) {
+    if (_db.auth.currentUser == null) {
       throw Exception("Login required");
     }
   }
@@ -31,7 +31,7 @@ class SubscriptionService {
   }
 
   // ============================================================
-  // ✅ SUBSCRIPTION STATUS (FIXED)
+  // ✅ GET ACTIVE SUBSCRIPTION
   // ============================================================
 
   Future<Map<String, dynamic>?> getMySubscription() async {
@@ -39,9 +39,16 @@ class SubscriptionService {
     final uid = _uid();
 
     final res = await _db
-        .from('user_subscriptions') // ✅ CORRECT TABLE
+        .from('user_subscriptions')
         .select(
-          'user_id,status,plan_name,start_at,end_at,purchase_token'
+          '''
+          user_id,
+          status,
+          plan_name,
+          started_at,
+          expires_at,
+          purchase_token
+          '''
         )
         .eq('user_id', uid)
         .eq('status', 'active')
@@ -61,7 +68,8 @@ class SubscriptionService {
     final sub = await getMySubscription();
     if (sub == null) return false;
 
-    final expiresRaw = sub['end_at'];
+    final expiresRaw = sub['expires_at'];
+
     if (expiresRaw == null) return false;
 
     final expires =
@@ -108,76 +116,19 @@ class SubscriptionService {
 
     if (response.statusCode != 200 ||
         body["success"] != true) {
+
       throw Exception(
         body["error"] ??
-        "Google subscription verification failed",
+        "Purchase verification failed",
       );
     }
   }
 
   // ============================================================
-  // RAZORPAY CREATE ORDER
+  // ✅ FORCE REFRESH AFTER PAYMENT
   // ============================================================
 
-  Future<Map<String, dynamic>> createOrder({
-    int amountRupees = 999,
-    String planKey = "pro_monthly",
-  }) async {
-
-    final uid = _uid();
-
-    final res = await _db.functions.invoke(
-      'create-razorpay-order',
-      body: {
-        "user_id": uid,
-        "plan_key": planKey,
-        "amount_rupees": amountRupees,
-      },
-    );
-
-    if (res.data == null) {
-      throw Exception("Create order failed");
-    }
-
-    return Map<String, dynamic>.from(
-        res.data as Map);
-  }
-
-  // ============================================================
-  // RAZORPAY VERIFY
-  // ============================================================
-
-  Future<void> verifyPayment({
-    required String transactionId,
-    required String razorpayOrderId,
-    required String razorpayPaymentId,
-    required String razorpaySignature,
-  }) async {
-
-    final uid = _uid();
-
-    final res = await _db.functions.invoke(
-      'verify-razorpay-payment',
-      body: {
-        "transaction_id": transactionId,
-        "razorpay_order_id": razorpayOrderId,
-        "razorpay_payment_id": razorpayPaymentId,
-        "razorpay_signature": razorpaySignature,
-        "user_id": uid,
-      },
-    );
-
-    if (res.data == null) {
-      throw Exception("Payment verification failed");
-    }
-
-    final data =
-        Map<String, dynamic>.from(res.data as Map);
-
-    if (data['success'] != true) {
-      throw Exception(
-          data['error'] ??
-          "Payment verification failed");
-    }
+  Future<void> refreshSubscription() async {
+    await getMySubscription();
   }
 }
