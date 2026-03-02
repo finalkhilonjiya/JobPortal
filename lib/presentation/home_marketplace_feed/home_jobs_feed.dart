@@ -440,12 +440,6 @@ void _listenToNotificationChanges() {
   Future.microtask(_updateLocationSilently);
 }
 
-  // --------------------------------------------------
-  // ✅ GPS UPDATE SILENTLY (NON-BLOCKING)
-  // --------------------------------------------------
-  _updateLocationSilently();
-}
-
 
 Future<void> _updateLocationSilently() async {
   try {
