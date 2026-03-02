@@ -1188,3 +1188,28 @@ if (_sliders.isNotEmpty) ...[
     );
   }
 }
+
+
+class _AITopIcon extends StatelessWidget {
+  const _AITopIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        borderRadius:
+            BorderRadius.circular(999),
+        border: Border.all(
+            color: const Color(0xFFDBEAFE)),
+      ),
+      child: const Icon(
+        Icons.auto_awesome_outlined,
+        size: 20,
+        color: KhilonjiyaUI.primary,
+      ),
+    );
+  }
+}
