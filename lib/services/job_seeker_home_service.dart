@@ -18,6 +18,7 @@ class JobSeekerHomeService {
   static const String _folderPhotos = 'photos';
   static const String _folderResumes = 'resumes';
  static const _homeCacheKey = "home_feed_cache";
+ SharedPreferences? _prefs;
 
   // how long signed URLs should live
   static const int _signedUrlExpirySeconds = 60 * 60; // 1 hour
@@ -217,27 +218,35 @@ class JobSeekerHomeService {
 
 
 Future<void> cacheHomeFeed(Map<String, dynamic> data) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString(
-    _homeCacheKey,
-    jsonEncode(data),
-  );
+  final prefs = await _getPrefs();
+
+  try {
+    await prefs.setString(
+      _homeCacheKey,
+      jsonEncode(data),
+    );
+  } catch (_) {}
 }
 
 Future<Map<String, dynamic>?> getCachedHomeFeed() async {
-  final prefs = await SharedPreferences.getInstance();
+  final prefs = await _getPrefs();
 
   final raw = prefs.getString(_homeCacheKey);
   if (raw == null) return null;
 
   try {
-    return jsonDecode(raw);
+    return Map<String, dynamic>.from(
+      jsonDecode(raw),
+    );
   } catch (_) {
     return null;
   }
 }
 
-
+Future<SharedPreferences> _getPrefs() async {
+  _prefs ??= await SharedPreferences.getInstance();
+  return _prefs!;
+}
 
 Future<bool> isUserProSubscribed() async {
   final client = Supabase.instance.client;
@@ -260,19 +269,36 @@ Future<bool> isUserProSubscribed() async {
 
 Future<void> updateMyCurrentLocationFromDevice() async {
   _ensureAuthenticatedSync();
+
+  static DateTime? _lastLocationUpdate;
+
+  if (_lastLocationUpdate != null &&
+      DateTime.now()
+              .difference(_lastLocationUpdate!)
+              .inMinutes <
+          10) {
+    return;
+  }
+
+  _lastLocationUpdate = DateTime.now();
+
   final userId = _userId();
 
-  final position = await Geolocator.getCurrentPosition(
-    desiredAccuracy: LocationAccuracy.high,
-  );
+  try {
+    final position =
+        await Geolocator.getCurrentPosition(
+      desiredAccuracy:
+          LocationAccuracy.high,
+    );
 
-  await _db.from('user_profiles').update({
-    'current_latitude': position.latitude,
-    'current_longitude': position.longitude,
-    'location_updated_at': DateTime.now().toIso8601String(),
-  }).eq('id', userId);
+    await _db.from('user_profiles').update({
+      'current_latitude': position.latitude,
+      'current_longitude': position.longitude,
+      'location_updated_at':
+          DateTime.now().toIso8601String(),
+    }).eq('id', userId);
+  } catch (_) {}
 }
-
 Future<List<Map<String, dynamic>>> fetchPremiumJobs({
   int offset = 0,
   int limit = 20,
@@ -805,7 +831,8 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
 }) async {
   _ensureAuthenticatedSync();
 
-  final nowIso = DateTime.now().toIso8601String();
+  final nowIso =
+      DateTime.now().toIso8601String();
 
   final res = await _db
       .from('job_listings')
@@ -816,26 +843,43 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
       .not('longitude', 'is', null)
       .limit(1000);
 
-  final jobs = List<Map<String, dynamic>>.from(res);
+  final jobs =
+      List<Map<String, dynamic>>.from(res);
 
-  jobs.sort((a, b) {
-    final latA = double.tryParse(a['latitude'].toString()) ?? 0;
-    final lngA = double.tryParse(a['longitude'].toString()) ?? 0;
+  /// ✅ PRECOMPUTE DISTANCE (FAST SORT)
+  for (final j in jobs) {
+    final lat =
+        double.tryParse(
+                j['latitude'].toString()) ??
+            0;
 
-    final latB = double.tryParse(b['latitude'].toString()) ?? 0;
-    final lngB = double.tryParse(b['longitude'].toString()) ?? 0;
+    final lng =
+        double.tryParse(
+                j['longitude'].toString()) ??
+            0;
 
-    final distA = _haversineKm(userLat, userLng, latA, lngA);
-    final distB = _haversineKm(userLat, userLng, latB, lngB);
+    j['_dist'] =
+        _haversineKm(
+            userLat, userLng, lat, lng);
+  }
 
-    return distA.compareTo(distB);
-  });
+  jobs.sort(
+    (a, b) =>
+        (a['_dist'] as double)
+            .compareTo(
+                b['_dist'] as double),
+  );
+
+  for (final j in jobs) {
+    j.remove('_dist');
+  }
 
   if (offset >= jobs.length) return [];
 
-  final end = (offset + limit) > jobs.length
-      ? jobs.length
-      : offset + limit;
+  final end =
+      (offset + limit) > jobs.length
+          ? jobs.length
+          : offset + limit;
 
   return jobs.sublist(offset, end);
 }
