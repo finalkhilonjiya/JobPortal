@@ -1015,7 +1015,7 @@ if (_sliders.isNotEmpty) ...[
     );
   }
 }
-}
+
 
 class _AITopIcon extends StatelessWidget {
   const _AITopIcon();
@@ -1279,4 +1279,5 @@ class _HomeTopBar extends StatelessWidget {
       ),
     );
   }
+}
 }
