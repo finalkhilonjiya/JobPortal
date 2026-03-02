@@ -40,16 +40,14 @@ class SubscriptionService {
 
     final res = await _db
         .from('user_subscriptions')
-        .select(
-          '''
+        .select('''
           user_id,
           status,
           plan_name,
           started_at,
           expires_at,
           purchase_token
-          '''
-        )
+        ''')
         .eq('user_id', uid)
         .eq('status', 'active')
         .maybeSingle();
@@ -60,7 +58,7 @@ class SubscriptionService {
   }
 
   // ============================================================
-  // ✅ CHECK PRO ACTIVE
+  // ✅ CHECK ACTIVE ACCESS
   // ============================================================
 
   Future<bool> isProActive() async {
@@ -69,7 +67,6 @@ class SubscriptionService {
     if (sub == null) return false;
 
     final expiresRaw = sub['expires_at'];
-
     if (expiresRaw == null) return false;
 
     final expires =
@@ -81,10 +78,10 @@ class SubscriptionService {
   }
 
   // ============================================================
-  // ✅ GOOGLE PLAY VERIFY
+  // ✅ GOOGLE PLAY ONE-TIME PURCHASE VERIFY
   // ============================================================
 
-  Future<void> verifyPlayStorePurchase({
+  Future<void> verifyOneTimePurchase({
     required String purchaseToken,
     required String productId,
     required String orderId,
@@ -109,6 +106,7 @@ class SubscriptionService {
         "product_id": productId,
         "purchase_token": purchaseToken,
         "order_id": orderId,
+        "purchase_type": "one_time"
       }),
     );
 
@@ -119,13 +117,30 @@ class SubscriptionService {
 
       throw Exception(
         body["error"] ??
-        "Purchase verification failed",
+            "Google Play verification failed",
       );
     }
   }
 
   // ============================================================
-  // ✅ FORCE REFRESH AFTER PAYMENT
+  // ✅ LEGACY (KEEP SAFE)
+  // ============================================================
+
+  Future<void> verifyPlayStorePurchase({
+    required String purchaseToken,
+    required String productId,
+    required String orderId,
+  }) async {
+
+    await verifyOneTimePurchase(
+      purchaseToken: purchaseToken,
+      productId: productId,
+      orderId: orderId,
+    );
+  }
+
+  // ============================================================
+  // ✅ FORCE REFRESH
   // ============================================================
 
   Future<void> refreshSubscription() async {
