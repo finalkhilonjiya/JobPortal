@@ -102,6 +102,8 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
   final PageController _sliderController = PageController();
   final ValueNotifier<int> _sliderIndex = ValueNotifier(0);
   Timer? _sliderTimer;
+ final ValueNotifier<int> _notificationCount =
+    ValueNotifier(0);
 
 
 RealtimeChannel? _notificationChannel;
@@ -138,6 +140,7 @@ _sliderController.dispose();
 _notificationChannel?.unsubscribe();
  _sliderIndex.dispose();
  _searchHintIndex.dispose();
+_notificationCount.dispose();
 
     super.dispose();
   }
@@ -274,27 +277,31 @@ void _listenToNotificationChanges() {
   final user = _supabase.auth.currentUser;
   if (user == null) return;
 
-  _notificationChannel = _supabase.channel('notifications_channel')
-    ..onPostgresChanges(
-      event: PostgresChangeEvent.all,
-      schema: 'public',
-      table: 'notifications',
-      filter: PostgresChangeFilter(
-        type: PostgresChangeFilterType.eq,
-        column: 'user_id',
-        value: user.id,
-      ),
-      callback: (_) async {
-        try {
-          final count =
-              await _homeService.getUnreadNotificationsCount();
-          if (!_isDisposed && mounted) {
-            setState(() => _unreadNotifications = count);
-          }
-        } catch (_) {}
-      },
-    )
-    ..subscribe();
+  _notificationChannel =
+      _supabase.channel('notifications_channel')
+        ..onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'notifications',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'user_id',
+            value: user.id,
+          ),
+          callback: (_) async {
+            try {
+              final count =
+                  await _homeService
+                      .getUnreadNotificationsCount();
+
+              if (_isDisposed) return;
+
+              _notificationCount.value = count;
+
+            } catch (_) {}
+          },
+        )
+        ..subscribe();
 }
  void _startSliderAutoSlide() {
   _sliderTimer?.cancel();
