@@ -143,23 +143,106 @@ _notificationChannel?.unsubscribe();
   // INIT
   // ------------------------------------------------------------
   Future<void> _initialize() async {
-    try {
-      final user = _supabase.auth.currentUser;
+  try {
+    final user = _supabase.auth.currentUser;
 
-      if (user == null) {
-        _redirectToStart();
-        return;
-      }
-      await _homeService.updateMyCurrentLocationFromDevice();
-
-      Future.microtask(_loadInitialData);
-      _startSearchHintAutoSlide();
-      _startSliderAutoSlide();
-      _listenToNotificationChanges();
-    } catch (_) {
+    if (user == null) {
       _redirectToStart();
+      return;
     }
+
+    /// --------------------------------------------------
+    /// ✅ LOAD CACHED HOME FIRST (INSTANT UI)
+    /// --------------------------------------------------
+    final cached =
+        await _homeService.getCachedHomeFeed();
+
+    if (cached != null && !_isDisposed) {
+      _applyHomeData(
+        Map<String, dynamic>.from(cached),
+      );
+    }
+
+    /// --------------------------------------------------
+    /// ✅ START UI SYSTEMS IMMEDIATELY
+    /// --------------------------------------------------
+    _startSearchHintAutoSlide();
+    _startSliderAutoSlide();
+    _listenToNotificationChanges();
+
+    /// --------------------------------------------------
+    /// ✅ LOCATION UPDATE (NON-BLOCKING)
+    /// --------------------------------------------------
+    Future.microtask(() async {
+      try {
+        await _homeService
+            .updateMyCurrentLocationFromDevice();
+      } catch (_) {}
+    });
+
+    /// --------------------------------------------------
+    /// ✅ BACKGROUND DATA REFRESH
+    /// --------------------------------------------------
+    Future.microtask(_loadInitialData);
+
+  } catch (_) {
+    _redirectToStart();
   }
+}
+
+
+void _applyHomeData(Map<String, dynamic> data) {
+
+  final summary = data['profile_summary'] ?? {};
+
+  _profileName =
+      (summary['full_name'] ?? "Your Profile").toString();
+
+  _profileCompletion =
+      summary['profile_completion_percentage'] ?? 0;
+
+  _jobsPostedToday =
+      data['jobs_posted_today'] ?? 0;
+
+  _savedJobIds =
+      Set<String>.from(data['saved_job_ids'] ?? []);
+
+  _premiumJobs =
+      List<Map<String, dynamic>>.from(
+          data['premium_jobs'] ?? []);
+
+  _latestJobs =
+      List<Map<String, dynamic>>.from(
+          data['latest_jobs'] ?? []);
+
+  _nearbyJobs =
+      List<Map<String, dynamic>>.from(
+          data['nearby_jobs'] ?? []);
+
+  _recommendedJobs =
+      _premiumJobs.isNotEmpty
+          ? _premiumJobs
+          : _latestJobs;
+
+  _topCompanies =
+      List<Map<String, dynamic>>.from(
+          data['top_companies'] ?? []);
+
+  _unreadNotifications =
+      data['unread_notifications'] ?? 0;
+
+  _sliders =
+      List<Map<String, dynamic>>.from(
+          data['sliders'] ?? []);
+
+  if (mounted) {
+    setState(() {
+      _isLoadingProfile = false;
+      _loadingCompanies = false;
+    });
+  }
+}
+
 
   void _startSearchHintAutoSlide() {
     _searchHintTimer?.cancel();
@@ -242,6 +325,8 @@ void _listenToNotificationChanges() {
 
     final data =
         Map<String, dynamic>.from(rpc);
+
+      await _homeService.cacheHomeFeed(data);
 
     // --------------------------------------------------
     // PROFILE
