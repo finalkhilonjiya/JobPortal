@@ -309,6 +309,7 @@ void _listenToNotificationChanges() {
   _sliderTimer =
       Timer.periodic(const Duration(seconds: 4), (_) {
     if (_isDisposed) return;
+    if (!mounted) return;
 
     if (!_sliderController.hasClients) return;
     if (_sliders.isEmpty) return;
@@ -317,14 +318,18 @@ void _listenToNotificationChanges() {
         (_sliderIndex.value + 1) %
             _sliders.length;
 
-    _sliderIndex.value = next;
+    try {
+      _sliderIndex.value = next;
 
-    _sliderController.animateToPage(
-      next,
-      duration:
-          const Duration(milliseconds: 450),
-      curve: Curves.easeOut,
-    );
+      _sliderController.animateToPage(
+        next,
+        duration:
+            const Duration(milliseconds: 450),
+        curve: Curves.easeOut,
+      );
+    } catch (_) {
+      // controller already disposed
+    }
   });
 }
 
