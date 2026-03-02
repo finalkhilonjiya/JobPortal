@@ -414,9 +414,8 @@ void _listenToNotificationChanges() {
     // --------------------------------------------------
     // NOTIFICATIONS
     // --------------------------------------------------
-    _unreadNotifications =
-        data['unread_notifications'] ?? 0;
-
+    _notificationCount.value =
+    data['unread_notifications'] ?? 0;
     // --------------------------------------------------
     // SLIDERS
     // --------------------------------------------------
@@ -586,7 +585,7 @@ Future<void> _updateLocationSilently() async {
     );
   }
 
-void _openNotificationsPage() async {
+Future<void> _openNotificationsPage() async {
   await Navigator.push(
     context,
     MaterialPageRoute(
@@ -596,23 +595,13 @@ void _openNotificationsPage() async {
 
   try {
     final count =
-        await _homeService
-            .getUnreadNotificationsCount();
+        await _homeService.getUnreadNotificationsCount();
 
     if (!_isDisposed) {
       _notificationCount.value = count;
     }
   } catch (_) {}
 }
-  // Refresh unread count after returning
-  try {
-    final count = await _homeService.getUnreadNotificationsCount();
-    if (!_isDisposed && mounted) {
-      setState(() => _unreadNotifications = count);
-    }
-  } catch (_) {}
-}
-
   void _openCompanyDetails(String companyId) {
     if (companyId.trim().isEmpty) return;
 
