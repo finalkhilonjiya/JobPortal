@@ -1,5 +1,3 @@
-// File: lib/presentation/home_marketplace_feed/subscription_page.dart
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
@@ -10,7 +8,8 @@ import '../../services/subscription_service.dart';
 class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({Key? key}) : super(key: key);
 
-  static const String productId = "khilonjiya_pro_monthly";
+  /// ✅ MUST MATCH PLAY CONSOLE PRODUCT ID
+  static const String productId = "khilonjiya_pro_access";
 
   @override
   State<SubscriptionPage> createState() =>
@@ -33,11 +32,7 @@ class _SubscriptionPageState
 
   bool _loading = true;
   bool _paying = false;
-
   bool _isActive = false;
-
-  DateTime? _expiresAt;
-  int _daysLeft = 0;
 
   // ============================================================
   // INIT
@@ -46,8 +41,7 @@ class _SubscriptionPageState
   @override
   void initState() {
     super.initState();
-    _bootstrap();
-    _initBilling();
+    _init();
   }
 
   @override
@@ -56,40 +50,33 @@ class _SubscriptionPageState
     super.dispose();
   }
 
-  Future<void> _bootstrap() async {
+  Future<void> _init() async {
     await _loadSubscription();
+    await _initBilling();
   }
 
   // ============================================================
-  // BILLING INIT + SILENT RESTORE
+  // GOOGLE BILLING INIT
   // ============================================================
 
   Future<void> _initBilling() async {
 
-    final available =
-        await _iap.isAvailable();
-
+    final available = await _iap.isAvailable();
     if (!available) return;
 
     final response =
-        await _iap.queryProductDetails(
-      {SubscriptionPage.productId},
-    );
+        await _iap.queryProductDetails({
+      SubscriptionPage.productId,
+    });
 
     if (response.productDetails.isNotEmpty) {
-      _product =
-          response.productDetails.first;
+      _product = response.productDetails.first;
     }
 
     _purchaseSub =
         _iap.purchaseStream.listen(
       _handlePurchaseUpdates,
-      onDone: () =>
-          _purchaseSub?.cancel(),
     );
-
-    /// ✅ Silent restore (Netflix style)
-    await _iap.restorePurchases();
   }
 
   // ============================================================
@@ -104,21 +91,19 @@ class _SubscriptionPageState
       ScaffoldMessenger.of(context)
           .showSnackBar(
         const SnackBar(
-          content:
-              Text("Subscription not ready"),
-        ),
+            content:
+                Text("Product not ready")),
       );
       return;
     }
 
     setState(() => _paying = true);
 
-    final purchaseParam =
-        PurchaseParam(
-            productDetails: _product!);
+    final param =
+        PurchaseParam(productDetails: _product!);
 
     _iap.buyNonConsumable(
-        purchaseParam: purchaseParam);
+        purchaseParam: param);
   }
 
   // ============================================================
@@ -126,62 +111,35 @@ class _SubscriptionPageState
   // ============================================================
 
   Future<void> _handlePurchaseUpdates(
-      List<PurchaseDetails>
-          purchases) async {
+      List<PurchaseDetails> purchases) async {
 
     for (final purchase in purchases) {
 
-      /// ✅ SUCCESS / RESTORE
       if (purchase.status ==
-              PurchaseStatus.purchased ||
-          purchase.status ==
-              PurchaseStatus.restored) {
+          PurchaseStatus.purchased) {
 
         try {
 
+          /// ✅ VERIFY WITH YOUR BACKEND
           await _subscriptionService
-              .verifyPlayStorePurchase(
+              .verifyOneTimePurchase(
             purchaseToken:
-                purchase
-                    .verificationData
+                purchase.verificationData
                     .serverVerificationData,
-            productId:
-                purchase.productID,
+            productId: purchase.productID,
             orderId:
-                purchase.purchaseID ??
-                    "",
+                purchase.purchaseID ?? "",
           );
 
           if (purchase
               .pendingCompletePurchase) {
             await _iap
-                .completePurchase(
-                    purchase);
+                .completePurchase(purchase);
           }
 
           await _loadSubscription();
 
         } catch (_) {}
-      }
-
-      /// ✅ ALREADY SUBSCRIBED FIX
-      if (purchase.status ==
-          PurchaseStatus.error) {
-
-        final msg =
-            purchase.error?.message
-                    ?.toLowerCase() ??
-                "";
-
-        if (msg.contains(
-                "already") ||
-            msg.contains(
-                "subscribed")) {
-
-          /// silent restore
-          await _iap
-              .restorePurchases();
-        }
       }
     }
 
@@ -189,54 +147,21 @@ class _SubscriptionPageState
   }
 
   // ============================================================
-  // LOAD SUBSCRIPTION
+  // LOAD USER SUBSCRIPTION
   // ============================================================
 
-  Future<void> _loadSubscription()
-      async {
-
-    if (!mounted) return;
+  Future<void> _loadSubscription() async {
 
     setState(() => _loading = true);
 
     try {
 
-      final sub =
-          await _subscriptionService
-              .getMySubscription();
-
-      if (sub == null) {
-        setState(() {
-          _isActive = false;
-          _loading = false;
-        });
-        return;
-      }
-
-      final expires =
-          DateTime.tryParse(
-              sub['expires_at']
-                  .toString());
-
-      final now = DateTime.now();
-
       final active =
-          expires != null &&
-              expires.isAfter(now);
-
-      int days = 0;
-
-      if (expires != null) {
-        days =
-            expires
-                .difference(now)
-                .inDays;
-      }
+          await _subscriptionService
+              .isProActive();
 
       setState(() {
         _isActive = active;
-        _expiresAt = expires;
-        _daysLeft = days;
         _loading = false;
       });
 
@@ -253,16 +178,13 @@ class _SubscriptionPageState
   Widget build(BuildContext context) {
 
     return Scaffold(
-      backgroundColor:
-          KhilonjiyaUI.bg,
+      backgroundColor: KhilonjiyaUI.bg,
       appBar: AppBar(
-        backgroundColor:
-            Colors.white,
+        backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          "Subscription",
-          style:
-              KhilonjiyaUI.cardTitle,
+          "Khilonjiya Pro",
+          style: KhilonjiyaUI.cardTitle,
         ),
       ),
       body: _loading
@@ -271,12 +193,10 @@ class _SubscriptionPageState
                   CircularProgressIndicator())
           : ListView(
               padding:
-                  const EdgeInsets.all(
-                      16),
+                  const EdgeInsets.all(16),
               children: [
                 _heroCard(),
-                const SizedBox(
-                    height: 18),
+                const SizedBox(height: 18),
                 _features(),
               ],
             ),
@@ -290,27 +210,22 @@ class _SubscriptionPageState
   Widget _heroCard() {
 
     final subtitle = _isActive
-        ? "Active • $_daysLeft days left"
+        ? "Pro Activated"
         : "Unlock premium features";
 
     return Container(
-      padding:
-          const EdgeInsets.all(
-              16),
+      padding: const EdgeInsets.all(16),
       decoration:
-          KhilonjiyaUI
-              .cardDecoration(),
+          KhilonjiyaUI.cardDecoration(),
       child: Column(
         crossAxisAlignment:
-            CrossAxisAlignment
-                .start,
+            CrossAxisAlignment.start,
         children: [
 
           Text(
             "Khilonjiya Pro",
             style:
-                KhilonjiyaUI
-                    .cardTitle,
+                KhilonjiyaUI.cardTitle,
           ),
 
           const SizedBox(height: 6),
@@ -324,10 +239,9 @@ class _SubscriptionPageState
           const SizedBox(height: 14),
 
           Text(
-            "₹9 / month",
+            "₹9 • Lifetime Access",
             style:
-                KhilonjiyaUI
-                    .cardTitle
+                KhilonjiyaUI.cardTitle
                     .copyWith(
               fontSize: 22,
             ),
@@ -336,39 +250,33 @@ class _SubscriptionPageState
           const SizedBox(height: 14),
 
           SizedBox(
-            width:
-                double.infinity,
+            width: double.infinity,
             height: 46,
-            child:
-                ElevatedButton(
+            child: ElevatedButton(
               onPressed:
-                  (_paying ||
-                          _isActive)
+                  (_paying || _isActive)
                       ? null
                       : _startPayment,
               style:
                   ElevatedButton
                       .styleFrom(
                 backgroundColor:
-                    KhilonjiyaUI
-                        .primary,
+                    KhilonjiyaUI.primary,
               ),
               child: _paying
                   ? const CircularProgressIndicator(
                       color:
-                          Colors
-                              .white)
+                          Colors.white)
                   : Text(
                       _isActive
-                          ? "Already Subscribed"
-                          : "Subscribe Now",
+                          ? "Subscribed"
+                          : "Unlock Pro",
                       style:
                           const TextStyle(
-                        color: Colors
-                            .white,
+                        color:
+                            Colors.white,
                         fontWeight:
-                            FontWeight
-                                .w600,
+                            FontWeight.w600,
                       ),
                     ),
             ),
@@ -394,8 +302,7 @@ class _SubscriptionPageState
             const EdgeInsets.only(
                 bottom: 10),
         padding:
-            const EdgeInsets.all(
-                12),
+            const EdgeInsets.all(12),
         decoration:
             KhilonjiyaUI
                 .cardDecoration(),
@@ -405,8 +312,7 @@ class _SubscriptionPageState
                 color:
                     KhilonjiyaUI
                         .primary),
-            const SizedBox(
-                width: 10),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment:
