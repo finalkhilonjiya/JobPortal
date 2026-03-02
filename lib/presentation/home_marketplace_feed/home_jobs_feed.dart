@@ -1015,7 +1015,7 @@ if (_sliders.isNotEmpty) ...[
     );
   }
 }
-
+}
 
 class _AITopIcon extends StatelessWidget {
   const _AITopIcon();
