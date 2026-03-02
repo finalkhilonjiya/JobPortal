@@ -1104,7 +1104,7 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
       addJobs(List<Map<String, dynamic>>.from(res), 40);
     } catch (_) {}
 
-    final rnd = Random();
+    final rnd = Random(userId.hashCode);
     mixed.shuffle(rnd);
 
     mixed.sort((a, b) {
