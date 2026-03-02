@@ -674,193 +674,7 @@ void _openNotificationsPage() async {
   // TOP BAR
   // ------------------------------------------------------------
   Widget _buildTopBar(BuildContext scaffoldContext) {
-  return RepaintBoundary(
-    child: Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border:
-            Border(bottom: BorderSide(color: KhilonjiyaUI.border)),
-      ),
-      child: Row(
-        children: [
-          InkWell(
-            onTap: () =>
-                Scaffold.of(scaffoldContext).openDrawer(),
-            borderRadius: BorderRadius.circular(999),
-            child: const Padding(
-              padding: EdgeInsets.all(10),
-              child: Icon(Icons.menu, size: 22),
-            ),
-          ),
-
-          const SizedBox(width: 10),
-
-          /// ===============================
-          /// SEARCH BAR (NO GLOBAL REBUILD)
-          /// ===============================
-          Expanded(
-            child: InkWell(
-              onTap: _openSearchPage,
-              borderRadius: BorderRadius.circular(999),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius:
-                      BorderRadius.circular(999),
-                  border: Border.all(
-                      color: KhilonjiyaUI.border),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: Color(0xFF64748B),
-                    ),
-                    const SizedBox(width: 8),
-
-                    Expanded(
-                      child: SizedBox(
-                        height: 18,
-                        child:
-                            ValueListenableBuilder<int>(
-                          valueListenable:
-                              _searchHintIndex,
-                          builder: (_, __, ___) {
-                            return PageView.builder(
-                              controller:
-                                  _searchHintController,
-                              physics:
-                                  const NeverScrollableScrollPhysics(),
-                              itemCount:
-                                  _searchHints.length,
-                              itemBuilder: (_, i) {
-                                return Align(
-                                  alignment:
-                                      Alignment.centerLeft,
-                                  child: Text(
-                                    _searchHints[i],
-                                    maxLines: 1,
-                                    overflow:
-                                        TextOverflow
-                                            .ellipsis,
-                                    style:
-                                        KhilonjiyaUI.sub
-                                            .copyWith(
-                                      fontSize: 13,
-                                      color:
-                                          const Color(
-                                              0xFF94A3B8),
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 10),
-
-          /// AI ICON
-          const _AITopIcon(),
-
-          const SizedBox(width: 8),
-
-          /// ===============================
-          /// NOTIFICATION ICON (ISOLATED)
-          /// ===============================
-          ValueListenableBuilder<int>(
-            valueListenable:
-                ValueNotifier(_unreadNotifications),
-            builder: (_, count, __) {
-              return InkWell(
-                onTap: _openNotificationsPage,
-                borderRadius:
-                    BorderRadius.circular(999),
-                child: Stack(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius:
-                            BorderRadius.circular(
-                                999),
-                        border: Border.all(
-                            color:
-                                KhilonjiyaUI.border),
-                      ),
-                      child: const Icon(
-                        Icons
-                            .notifications_none_outlined,
-                        size: 22,
-                        color: Color(0xFF334155),
-                      ),
-                    ),
-
-                    if (count > 0)
-                      Positioned(
-                        right: 6,
-                        top: 6,
-                        child: Container(
-                          padding:
-                              const EdgeInsets
-                                  .symmetric(
-                            horizontal: 5,
-                            vertical: 2,
-                          ),
-                          decoration:
-                              const BoxDecoration(
-                            color:
-                                Color(0xFFEF4444),
-                            shape:
-                                BoxShape.circle,
-                          ),
-                          constraints:
-                              const BoxConstraints(
-                            minWidth: 18,
-                            minHeight: 18,
-                          ),
-                          child: Center(
-                            child: Text(
-                              count > 9
-                                  ? '9+'
-                                  : count
-                                      .toString(),
-                              style:
-                                  const TextStyle(
-                                color:
-                                    Colors.white,
-                                fontSize: 10,
-                                fontWeight:
-                                    FontWeight
-                                        .w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    ),
-  );
+  return const _HomeTopBar();
 }
 
 
@@ -1209,6 +1023,210 @@ class _AITopIcon extends StatelessWidget {
         Icons.auto_awesome_outlined,
         size: 20,
         color: KhilonjiyaUI.primary,
+      ),
+    );
+  }
+}
+
+
+
+class _HomeTopBar extends StatelessWidget {
+  const _HomeTopBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final state =
+        context.findAncestorStateOfType<_HomeJobsFeedState>();
+
+    if (state == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: KhilonjiyaUI.border),
+        ),
+      ),
+      child: Row(
+        children: [
+          InkWell(
+            onTap: () =>
+                Scaffold.of(context).openDrawer(),
+            borderRadius:
+                BorderRadius.circular(999),
+            child: const Padding(
+              padding: EdgeInsets.all(10),
+              child: Icon(Icons.menu, size: 22),
+            ),
+          ),
+
+          const SizedBox(width: 10),
+
+          Expanded(
+            child: InkWell(
+              onTap: state._openSearchPage,
+              borderRadius:
+                  BorderRadius.circular(999),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius:
+                      BorderRadius.circular(999),
+                  border: Border.all(
+                      color:
+                          KhilonjiyaUI.border),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.search,
+                      size: 18,
+                      color:
+                          Color(0xFF64748B),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: SizedBox(
+                        height: 18,
+                        child:
+                            PageView.builder(
+                          controller: state
+                              ._searchHintController,
+                          physics:
+                              const NeverScrollableScrollPhysics(),
+                          itemCount: state
+                              ._searchHints
+                              .length,
+                          itemBuilder: (_, i) {
+                            return Align(
+                              alignment:
+                                  Alignment
+                                      .centerLeft,
+                              child: Text(
+                                state
+                                    ._searchHints[i],
+                                maxLines: 1,
+                                overflow:
+                                    TextOverflow
+                                        .ellipsis,
+                                style:
+                                    KhilonjiyaUI.sub
+                                        .copyWith(
+                                  fontSize:
+                                      13,
+                                  color: const Color(
+                                      0xFF94A3B8),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 10),
+
+          const _AITopIcon(),
+
+          const SizedBox(width: 8),
+
+          InkWell(
+            onTap:
+                state._openNotificationsPage,
+            borderRadius:
+                BorderRadius.circular(999),
+            child: Stack(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration:
+                      BoxDecoration(
+                    color: Colors.white,
+                    borderRadius:
+                        BorderRadius
+                            .circular(
+                                999),
+                    border: Border.all(
+                        color:
+                            KhilonjiyaUI
+                                .border),
+                  ),
+                  child: const Icon(
+                    Icons
+                        .notifications_none_outlined,
+                    size: 22,
+                    color:
+                        Color(0xFF334155),
+                  ),
+                ),
+
+                if (state
+                        ._unreadNotifications >
+                    0)
+                  Positioned(
+                    right: 6,
+                    top: 6,
+                    child: Container(
+                      padding:
+                          const EdgeInsets
+                              .symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      decoration:
+                          const BoxDecoration(
+                        color:
+                            Color(
+                                0xFFEF4444),
+                        shape:
+                            BoxShape.circle,
+                      ),
+                      constraints:
+                          const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      child: Center(
+                        child: Text(
+                          state
+                                      ._unreadNotifications >
+                                  9
+                              ? '9+'
+                              : state
+                                  ._unreadNotifications
+                                  .toString(),
+                          style:
+                              const TextStyle(
+                            color:
+                                Colors
+                                    .white,
+                            fontSize:
+                                10,
+                            fontWeight:
+                                FontWeight
+                                    .w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
