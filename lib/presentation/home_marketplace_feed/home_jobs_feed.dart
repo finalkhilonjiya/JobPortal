@@ -110,7 +110,8 @@ RealtimeChannel? _notificationChannel;
   // Search hint slider
   // ------------------------------------------------------------
   final PageController _searchHintController = PageController();
-  Timer? _searchHintTimer;
+final ValueNotifier<int> _searchHintIndex = ValueNotifier(0);
+Timer? _searchHintTimer;
 
   final List<String> _searchHints = const [
     "Search jobs",
@@ -136,6 +137,7 @@ RealtimeChannel? _notificationChannel;
 _sliderController.dispose();
 _notificationChannel?.unsubscribe();
  _sliderIndex.dispose();
+ _searchHintIndex.dispose();
 
     super.dispose();
   }
@@ -246,22 +248,27 @@ void _applyHomeData(Map<String, dynamic> data) {
 
 
   void _startSearchHintAutoSlide() {
-    _searchHintTimer?.cancel();
+  _searchHintTimer?.cancel();
 
-    _searchHintTimer = Timer.periodic(const Duration(seconds: 2), (_) {
-      if (_isDisposed) return;
-      if (!_searchHintController.hasClients) return;
+  _searchHintTimer =
+      Timer.periodic(const Duration(seconds: 3), (_) {
+    if (_isDisposed) return;
+    if (!_searchHintController.hasClients) return;
 
-      final next = (_searchHintController.page?.round() ?? 0) + 1;
+    final next =
+        (_searchHintIndex.value + 1) %
+            _searchHints.length;
 
-      _searchHintController.animateToPage(
-        next % _searchHints.length,
-        duration: const Duration(milliseconds: 450),
-        curve: Curves.easeOut,
-      );
-    });
-  }
+    _searchHintIndex.value = next;
 
+    _searchHintController.animateToPage(
+      next,
+      duration:
+          const Duration(milliseconds: 400),
+      curve: Curves.easeOut,
+    );
+  });
+}
 
 void _listenToNotificationChanges() {
   final user = _supabase.auth.currentUser;
