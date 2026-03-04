@@ -90,38 +90,36 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
   }
 
   Future<void> _handleSendOtp() async {
-    if (!_isMobileValid || _isLoading) return;
+  if (!_isMobileValid || _isLoading) return;
 
-    FocusScope.of(context).unfocus();
+  FocusScope.of(context).unfocus();
+
+  setState(() {
+    _isLoading = true;
+    _error = null;
+  });
+
+  try {
+    await _auth.sendOtp(_mobileController.text.trim());
 
     setState(() {
-      _isLoading = true;
-      _error = null;
+      _showOtpStep = true;
+      _isLoading = false;
     });
 
-    try {
-      await _auth.sendOtp(_mobileController.text.trim());
+    _startResendTimer();
+    _clearOtp();
+    _otpFocusNodes.first.requestFocus();
 
-      await SmsAutoFill().listenForCode();
-
-      setState(() {
-        _showOtpStep = true;
-        _isLoading = false;
-      });
-
-      _startResendTimer();
-      _clearOtp();
-      _otpFocusNodes.first.requestFocus();
-
-      HapticFeedback.lightImpact();
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _error =
-            e is MobileAuthException ? e.message : 'Failed to send OTP';
-      });
-    }
+    HapticFeedback.lightImpact();
+  } catch (e) {
+    setState(() {
+      _isLoading = false;
+      _error =
+          e is MobileAuthException ? e.message : 'Failed to send OTP';
+    });
   }
+}
 
   void _startResendTimer() {
     _timer?.cancel();
@@ -398,27 +396,29 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
   }
 
   Widget _otpStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Enter OTP',
-          style: TextStyle(
-            fontSize: 14.5,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
-          ),
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'Enter OTP',
+        style: TextStyle(
+          fontSize: 14.5,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF0F172A),
         ),
-        const SizedBox(height: 8),
-        Text(
-          '+91 ${_mobileController.text.trim()}',
-          style: const TextStyle(
-            fontSize: 13.5,
-            color: Color(0xFF64748B),
-          ),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        '+91 ${_mobileController.text.trim()}',
+        style: const TextStyle(
+          fontSize: 13.5,
+          color: Color(0xFF64748B),
         ),
-        const SizedBox(height: 22),
-        Row(
+      ),
+      const SizedBox(height: 22),
+
+      AutofillGroup(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(6, (i) {
             return SizedBox(
@@ -426,13 +426,13 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
               height: 56,
               child: RawKeyboardListener(
                 focusNode: FocusNode(),
-                onKey: (event) =>
-                    _handleOtpBackspace(i, event),
+                onKey: (event) => _handleOtpBackspace(i, event),
                 child: TextField(
                   controller: _otpControllers[i],
                   focusNode: _otpFocusNodes[i],
                   maxLength: 1,
                   keyboardType: TextInputType.number,
+                  autofillHints: const [AutofillHints.oneTimeCode],
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 20,
@@ -457,62 +457,65 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: Color(0xFF2563EB), width: 1.4),
+                      borderSide: const BorderSide(
+                          color: Color(0xFF2563EB), width: 1.4),
                     ),
                   ),
-                  onChanged: (v) =>
-                      _handleOtpChange(i, v),
+                  onChanged: (v) => _handleOtpChange(i, v),
                 ),
               ),
             );
           }),
         ),
-        if (_error != null) ...[
-          const SizedBox(height: 14),
-          Text(
-            _error!,
-            style: const TextStyle(
-              color: Color(0xFFEF4444),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-        const SizedBox(height: 22),
-        SizedBox(
-          width: double.infinity,
-          height: 40,
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _handleVerifyOtp,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              disabledBackgroundColor: const Color(0xFFE2E8F0),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-            child: _isLoading
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.4,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Text(
-                    'Verify & Continue',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+      ),
+
+      if (_error != null) ...[
+        const SizedBox(height: 14),
+        Text(
+          _error!,
+          style: const TextStyle(
+            color: Color(0xFFEF4444),
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
-    );
-  }
+
+      const SizedBox(height: 22),
+
+      SizedBox(
+        width: double.infinity,
+        height: 40,
+        child: ElevatedButton(
+          onPressed: _isLoading ? null : _handleVerifyOtp,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF2563EB),
+            disabledBackgroundColor: const Color(0xFFE2E8F0),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          child: _isLoading
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : const Text(
+                  'Verify & Continue',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+        ),
+      ),
+    ],
+  );
+}
 }
