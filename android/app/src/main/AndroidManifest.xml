@@ -1,131 +1,137 @@
-<!-- File: android/app/src/main/AndroidManifest.xml -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.khilonjiya.marketplace">
+<!-- File: android/app/src/main/AndroidManifest.xml --><manifest xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools"
+package="com.khilonjiya.marketplace">
 
-    <uses-permission
-        android:name="com.google.android.gms.permission.AD_ID"
-        tools:node="remove"/>
+<!-- Ensure AD_ID is removed even if a dependency adds it -->
+<uses-permission
+    android:name="com.google.android.gms.permission.AD_ID"
+    tools:node="remove" />
 
-    <!-- Required -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="com.android.vending.BILLING"/>
+<!-- Required -->
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="com.android.vending.BILLING" />
 
-    <!-- Network -->
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+<!-- Network -->
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Location -->
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<!-- Location -->
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
-    <!-- Camera -->
-    <uses-permission android:name="android.permission.CAMERA" />
+<!-- Camera -->
+<uses-permission android:name="android.permission.CAMERA" />
 
-    <!-- Android 12 and below -->
-    <uses-permission
-        android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
+<!-- OTP SMS Autofill -->
+<uses-permission android:name="android.permission.RECEIVE_SMS" />
+<uses-permission android:name="android.permission.READ_SMS" />
 
-    <!-- Android 10 and below only -->
-    <uses-permission
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="28" />
+<!-- Android 12 and below -->
+<uses-permission
+    android:name="android.permission.READ_EXTERNAL_STORAGE"
+    android:maxSdkVersion="32" />
 
-    <!-- Android 13+ -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+<!-- Android 10 and below -->
+<uses-permission
+    android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    android:maxSdkVersion="28" />
 
-    <!-- Other -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.CALL_PHONE" />
+<!-- Android 13+ -->
+<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
-    <application
-        android:label="Khilonjiya"
-        android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
-        android:allowBackup="true"
-        android:supportsRtl="true"
+<!-- Other -->
+<uses-permission android:name="android.permission.WAKE_LOCK" />
+<uses-permission android:name="android.permission.VIBRATE" />
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+<uses-permission android:name="android.permission.CALL_PHONE" />
+
+<application
+    android:label="khilonjiya.com"
+    android:name="${applicationName}"
+    android:icon="@mipmap/ic_launcher"
+    android:allowBackup="true"
+    android:supportsRtl="true"
+    android:theme="@style/LaunchTheme"
+    android:usesCleartextTraffic="true">
+
+    <!-- Google Sign In -->
+    <meta-data
+        android:name="com.google.android.gms.auth.api.credentials.CREDENTIALS_API_ENABLED"
+        android:value="true" />
+
+    <!-- Flutter embedding -->
+    <meta-data
+        android:name="flutterEmbedding"
+        android:value="2" />
+
+    <!-- Disable Impeller -->
+    <meta-data
+        android:name="io.flutter.embedding.android.EnableImpeller"
+        android:value="false" />
+
+    <!-- Razorpay key -->
+    <meta-data
+        android:name="com.razorpay.ApiKey"
+        android:value="rzp_test_xxxxxxxx" />
+
+    <activity
+        android:name=".MainActivity"
+        android:exported="true"
+        android:launchMode="singleTop"
         android:theme="@style/LaunchTheme"
-        android:usesCleartextTraffic="true">
+        android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+        android:hardwareAccelerated="true"
+        android:windowSoftInputMode="adjustResize">
 
-        <!-- Google Sign In -->
-        <meta-data
-            android:name="com.google.android.gms.auth.api.credentials.CREDENTIALS_API_ENABLED"
-            android:value="true" />
+        <!-- App launcher -->
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
 
-        <!-- Flutter embedding -->
-        <meta-data
-            android:name="flutterEmbedding"
-            android:value="2" />
-
-        <!-- Disable impeller -->
-        <meta-data
-            android:name="io.flutter.embedding.android.EnableImpeller"
-            android:value="false" />
-
-        <!-- Razorpay key -->
-        <meta-data
-            android:name="com.razorpay.ApiKey"
-            android:value="rzp_test_xxxxxxxx" />
-
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:launchMode="singleTop"
-            android:theme="@style/LaunchTheme"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-            android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize">
-
-            <!-- App launcher -->
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-
-            <!-- Supabase OAuth redirect -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="com.khilonjiya.marketplace" />
-            </intent-filter>
-
-        </activity>
-
-        <!-- Needed for file pickers -->
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="androidx.core.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
-
-    </application>
-
-    <!-- Required for url_launcher + Razorpay deep links -->
-    <queries>
-
-        <intent>
+        <!-- Supabase OAuth redirect -->
+        <intent-filter>
             <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="https" />
-        </intent>
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="com.khilonjiya.marketplace" />
+        </intent-filter>
 
-        <intent>
-            <action android:name="android.intent.action.DIAL" />
-            <data android:scheme="tel" />
-        </intent>
+    </activity>
 
-        <!-- Razorpay / UPI apps -->
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="upi" />
-        </intent>
+    <!-- File provider -->
+    <provider
+        android:name="androidx.core.content.FileProvider"
+        android:authorities="${applicationId}.fileprovider"
+        android:exported="false"
+        android:grantUriPermissions="true">
 
-    </queries>
+        <meta-data
+            android:name="androidx.core.FILE_PROVIDER_PATHS"
+            android:resource="@xml/file_paths" />
+
+    </provider>
+
+</application>
+
+<!-- Required for url_launcher + Razorpay deep links -->
+<queries>
+
+    <intent>
+        <action android:name="android.intent.action.VIEW" />
+        <data android:scheme="https" />
+    </intent>
+
+    <intent>
+        <action android:name="android.intent.action.DIAL" />
+        <data android:scheme="tel" />
+    </intent>
+
+    <!-- UPI apps -->
+    <intent>
+        <action android:name="android.intent.action.VIEW" />
+        <data android:scheme="upi" />
+    </intent>
+
+</queries>
 
 </manifest>
