@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../routes/app_routes.dart';
 import '../../core/auth/user_role.dart';
 import '../../services/mobile_auth_service.dart';
+import 'package:sms_autofill/sms_autofill.dart';
 
 class EmployerLoginScreen extends StatefulWidget {
   const EmployerLoginScreen({Key? key}) : super(key: key);
@@ -14,7 +15,7 @@ class EmployerLoginScreen extends StatefulWidget {
 }
 
 class _EmployerLoginScreenState extends State<EmployerLoginScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, CodeAutoFill {
   final _mobileController = TextEditingController();
 
   final List<TextEditingController> _otpControllers =
@@ -35,30 +36,48 @@ class _EmployerLoginScreenState extends State<EmployerLoginScreen>
   late final AnimationController _animController;
 
   @override
-  void initState() {
-    super.initState();
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 450),
-    )..forward();
+void initState() {
+  super.initState();
 
-    _mobileController.addListener(_validateMobile);
-  }
+  _animController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 450),
+  )..forward();
+
+  _mobileController.addListener(_validateMobile);
+
+  // START SMS AUTO READ
+  SmsAutoFill().listenForCode();
+}
 
   @override
-  void dispose() {
-    _animController.dispose();
-    _timer?.cancel();
-    _mobileController.dispose();
+void dispose() {
+  SmsAutoFill().unregisterListener();
 
-    for (final c in _otpControllers) {
-      c.dispose();
-    }
-    for (final f in _otpFocusNodes) {
-      f.dispose();
-    }
-    super.dispose();
+  _animController.dispose();
+  _timer?.cancel();
+  _mobileController.dispose();
+
+  for (final c in _otpControllers) {
+    c.dispose();
   }
+  for (final f in _otpFocusNodes) {
+    f.dispose();
+  }
+
+  super.dispose();
+}
+
+@override
+void codeUpdated() {
+  if (code != null && code!.length == 6) {
+    for (int i = 0; i < 6; i++) {
+      _otpControllers[i].text = code![i];
+    }
+
+    _handleVerifyOtp();
+  }
+}
 
   void _validateMobile() {
     final value = _mobileController.text.trim();
