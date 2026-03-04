@@ -4,8 +4,8 @@
     package="com.khilonjiya.marketplace">
 
     <uses-permission
-    android:name="com.google.android.gms.permission.AD_ID"
-    tools:node="remove"/>
+        android:name="com.google.android.gms.permission.AD_ID"
+        tools:node="remove"/>
 
     <!-- Required -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -40,13 +40,8 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
 
-    <!-- SMS permissions (only if you use OTP auto read) -->
-    <uses-permission android:name="android.permission.RECEIVE_SMS" />
-    <uses-permission android:name="android.permission.READ_SMS" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-
     <application
-        android:label="khilonjiya.com"
+        android:label="Khilonjiya"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="true"
@@ -69,7 +64,7 @@
             android:name="io.flutter.embedding.android.EnableImpeller"
             android:value="false" />
 
-        <!-- Razorpay uses this in some cases -->
+        <!-- Razorpay key -->
         <meta-data
             android:name="com.razorpay.ApiKey"
             android:value="rzp_test_xxxxxxxx" />
@@ -83,6 +78,7 @@
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
 
+            <!-- App launcher -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -98,7 +94,7 @@
 
         </activity>
 
-        <!-- Needed for some file pickers -->
+        <!-- Needed for file pickers -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -109,19 +105,11 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- OTP receiver (if used) -->
-        <receiver
-            android:name="com.jaumard.smsautofill.SmsAutoFillReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.google.android.gms.auth.api.phone.SMS_RETRIEVED" />
-            </intent-filter>
-        </receiver>
-
     </application>
 
     <!-- Required for url_launcher + Razorpay deep links -->
     <queries>
+
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
@@ -137,6 +125,7 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="upi" />
         </intent>
+
     </queries>
 
 </manifest>
