@@ -126,7 +126,7 @@ class CompanyCardHorizontal extends StatelessWidget {
         ),
       ),
   ],
-)
+),
 
                   const SizedBox(height: 6),
 
