@@ -45,11 +45,7 @@ void initState() {
   )..forward();
 
   _mobileController.addListener(_validateMobile);
-
-  // START SMS AUTO READ
-  SmsAutoFill().listenForCode();
 }
-
   @override
 void dispose() {
   SmsAutoFill().unregisterListener();
@@ -110,6 +106,9 @@ void codeUpdated() {
       _showOtpStep = true;
       _isLoading = false;
     });
+
+    // Start SMS auto-read when OTP screen opens
+    SmsAutoFill().listenForCode();
 
     _startResendTimer();
     _clearOtp();
