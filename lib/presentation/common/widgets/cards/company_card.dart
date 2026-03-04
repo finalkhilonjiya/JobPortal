@@ -135,7 +135,7 @@ class CompanyCard extends StatelessWidget {
       ),
     ),
   ],
-)
+),
 
                   const SizedBox(height: 6),
 
