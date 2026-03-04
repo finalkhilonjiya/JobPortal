@@ -45,7 +45,7 @@ package="com.khilonjiya.marketplace">
 <uses-permission android:name="android.permission.CALL_PHONE" />
 
 <application
-    android:label="khilonjiya.com"
+    android:label="Khilonjiya"
     android:name="${applicationName}"
     android:icon="@mipmap/ic_launcher"
     android:allowBackup="true"
