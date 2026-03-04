@@ -94,39 +94,39 @@ class CompanyCardHorizontal extends StatelessWidget {
                   // NAME + VERIFIED
                   // =========================
                   Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          name.isEmpty
-                              ? "Company"
-                              : name,
-                          maxLines: 1,
-                          overflow:
-                              TextOverflow.ellipsis,
-                          style:
-                              KhilonjiyaUI.cardTitle
-                                  .copyWith(
-                            fontSize: 15.4,
-                            fontWeight:
-                                FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                      if (isVerified)
-                        const Padding(
-                          padding:
-                              EdgeInsets.only(
-                                  left: 6),
-                          child: Icon(
-                            Icons
-                                .verified_rounded,
-                            size: 16,
-                            color:
-                                Color(0xFF2563EB),
-                          ),
-                        ),
-                    ],
-                  ),
+  mainAxisSize: MainAxisSize.min,
+  children: [
+    Flexible(
+      child: Text(
+        name.isEmpty
+            ? "Company"
+            : name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style:
+            KhilonjiyaUI.cardTitle
+                .copyWith(
+          fontSize: 15.4,
+          fontWeight:
+              FontWeight.w900,
+        ),
+      ),
+    ),
+    if (isVerified)
+      const Padding(
+        padding:
+            EdgeInsets.only(
+                left: 4),
+        child: Icon(
+          Icons
+              .verified_rounded,
+          size: 16,
+          color:
+              Color(0xFF2563EB),
+        ),
+      ),
+  ],
+)
 
                   const SizedBox(height: 6),
 
