@@ -34,6 +34,7 @@ class _SubscriptionPageState
   bool _isActive = false;
 
   bool _agreed = false;
+  bool _showTerms = false;
 
   DateTime? _expiry;
   int _daysLeft = 0;
@@ -185,6 +186,19 @@ class _SubscriptionPageState
   }
 
   // ======================================================
+  // SUBSCRIBE BUTTON FLOW
+  // ======================================================
+
+  void _onSubscribePressed() {
+
+    if (_isActive) return;
+
+    setState(() {
+      _showTerms = true;
+    });
+  }
+
+  // ======================================================
   // UI
   // ======================================================
 
@@ -214,9 +228,14 @@ class _SubscriptionPageState
                       16),
               children: [
                 _heroCard(),
-                const SizedBox(
-                    height: 16),
-                _terms(),
+
+                if (!_isActive &&
+                    _showTerms) ...[
+                  const SizedBox(
+                      height: 16),
+                  _terms(),
+                ],
+
                 const SizedBox(
                     height: 16),
                 _features(),
@@ -269,8 +288,7 @@ class _SubscriptionPageState
           const SizedBox(height: 14),
 
           Text(
-            _product?.price ??
-                "₹19",
+            "₹4",
             style:
                 KhilonjiyaUI
                     .cardTitle
@@ -291,7 +309,7 @@ class _SubscriptionPageState
                   (_paying ||
                           _isActive)
                       ? null
-                      : _startPayment,
+                      : _onSubscribePressed,
               child: _paying
                   ? const CircularProgressIndicator(
                       color:
@@ -365,6 +383,21 @@ class _SubscriptionPageState
                     "I agree to the terms and conditions"),
               )
             ],
+          ),
+
+          const SizedBox(height: 10),
+
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: ElevatedButton(
+              onPressed:
+                  (_agreed && !_paying)
+                      ? _startPayment
+                      : null,
+              child: const Text(
+                  "Continue to Payment"),
+            ),
           )
         ],
       ),
