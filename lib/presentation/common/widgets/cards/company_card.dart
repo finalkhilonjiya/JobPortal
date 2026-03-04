@@ -91,51 +91,51 @@ class CompanyCard extends StatelessWidget {
                     MainAxisAlignment.center,
                 children: [
                   Row(
-                    children: [
-                      _CompanyLogo(
-                        name: name,
-                        logoUrl: companyLogoUrl,
-                        size: _companyLogoSize,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                name.isEmpty
-                                    ? "Company"
-                                    : name,
-                                maxLines: 1,
-                                overflow:
-                                    TextOverflow.ellipsis,
-                                style:
-                                    KhilonjiyaUI.cardTitle
-                                        .copyWith(
-                                  fontSize: 15.6,
-                                  fontWeight:
-                                      FontWeight.w900,
-                                ),
-                              ),
-                            ),
-                            if (isVerified)
-                              const Padding(
-                                padding:
-                                    EdgeInsets.only(
-                                        left: 6),
-                                child: Icon(
-                                  Icons
-                                      .verified_rounded,
-                                  size: 18,
-                                  color:
-                                      Color(0xFF2563EB),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+  children: [
+    _CompanyLogo(
+      name: name,
+      logoUrl: companyLogoUrl,
+      size: _companyLogoSize,
+    ),
+    const SizedBox(width: 10),
+    Expanded(
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              name.isEmpty
+                  ? "Company"
+                  : name,
+              maxLines: 1,
+              overflow:
+                  TextOverflow.ellipsis,
+              style:
+                  KhilonjiyaUI.cardTitle
+                      .copyWith(
+                fontSize: 15.6,
+                fontWeight:
+                    FontWeight.w900,
+              ),
+            ),
+          ),
+          if (isVerified)
+            const Padding(
+              padding:
+                  EdgeInsets.only(
+                      left: 6),
+              child: Icon(
+                Icons
+                    .verified_rounded,
+                size: 18,
+                color:
+                    Color(0xFF2563EB),
+              ),
+            ),
+        ],
+      ),
+    ),
+  ],
+)
 
                   const SizedBox(height: 6),
 
