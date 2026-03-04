@@ -52,31 +52,36 @@ class MobileAuthService {
   // ------------------------------------------------------------
   // SEND OTP
   // ------------------------------------------------------------
-  Future<void> sendOtp(String mobile) async {
-    final cleaned = mobile.replaceAll(RegExp(r'[^0-9]'), '');
+  Future<void> sendOtp({
+  required String mobile,
+  required UserRole role,
+}) async {
+  final cleaned = mobile.replaceAll(RegExp(r'[^0-9]'), '');
 
-    if (!isValidMobileNumber(cleaned)) {
-      throw MobileAuthException('Enter a valid 10-digit mobile number');
-    }
-
-    try {
-      final res = await _supabase.functions.invoke(
-        'smart-function',
-        body: {
-          'action': 'request-otp',
-          'mobile_number': cleaned,
-        },
-      );
-
-      final data = _safeJson(res.data);
-
-      if (res.status != 200 || data['success'] != true) {
-        throw MobileAuthException(data['error'] ?? 'Failed to send OTP');
-      }
-    } catch (_) {
-      throw MobileAuthException('Failed to send OTP');
-    }
+  if (!isValidMobileNumber(cleaned)) {
+    throw MobileAuthException('Enter a valid 10-digit mobile number');
   }
+
+  try {
+    final res = await _supabase.functions.invoke(
+      'smart-function',
+      body: {
+        'action': 'request-otp',
+        'mobile_number': cleaned,
+        'role': role.name, // IMPORTANT: send selected role
+      },
+    );
+
+    final data = _safeJson(res.data);
+
+    if (res.status != 200 || data['success'] != true) {
+      throw MobileAuthException(data['error'] ?? 'Failed to send OTP');
+    }
+  } catch (e) {
+    if (e is MobileAuthException) rethrow;
+    throw MobileAuthException('Failed to send OTP');
+  }
+}
 
   // ------------------------------------------------------------
   // VERIFY OTP
