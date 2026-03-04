@@ -100,7 +100,10 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
   });
 
   try {
-    await _auth.sendOtp(_mobileController.text.trim());
+    await _auth.sendOtp(
+      mobile: _mobileController.text.trim(),
+      role: UserRole.jobSeeker,
+    );
 
     setState(() {
       _showOtpStep = true;
@@ -120,7 +123,6 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
     });
   }
 }
-
   void _startResendTimer() {
     _timer?.cancel();
     setState(() => _resendSeconds = 30);
