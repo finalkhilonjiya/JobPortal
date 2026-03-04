@@ -42,15 +42,19 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
   late final AnimationController _animController;
 
   @override
-  void initState() {
-    super.initState();
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 450),
-    )..forward();
+void initState() {
+  super.initState();
 
-    _mobileController.addListener(_validateMobile);
-  }
+  _animController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 450),
+  )..forward();
+
+  _mobileController.addListener(_validateMobile);
+
+  // START SMS AUTO READ
+  SmsAutoFill().listenForCode();
+}
 
   @override
   void dispose() {
