@@ -72,36 +72,38 @@ class _EmployerLoginScreenState extends State<EmployerLoginScreen>
   }
 
   Future<void> _handleSendOtp() async {
-    if (!_isMobileValid || _isLoading) return;
+  if (!_isMobileValid || _isLoading) return;
 
-    FocusScope.of(context).unfocus();
+  FocusScope.of(context).unfocus();
+
+  setState(() {
+    _isLoading = true;
+    _error = null;
+  });
+
+  try {
+    await _auth.sendOtp(
+      mobile: _mobileController.text.trim(),
+      role: UserRole.employer,
+    );
 
     setState(() {
-      _isLoading = true;
-      _error = null;
+      _showOtpStep = true;
+      _isLoading = false;
     });
 
-    try {
-      await _auth.sendOtp(_mobileController.text.trim());
+    _startResendTimer();
+    _clearOtp();
+    _otpFocusNodes.first.requestFocus();
 
-      setState(() {
-        _showOtpStep = true;
-        _isLoading = false;
-      });
-
-      _startResendTimer();
-      _clearOtp();
-      _otpFocusNodes.first.requestFocus();
-
-      HapticFeedback.lightImpact();
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _error = e is MobileAuthException ? e.message : 'Failed to send OTP';
-      });
-    }
+    HapticFeedback.lightImpact();
+  } catch (e) {
+    setState(() {
+      _isLoading = false;
+      _error = e is MobileAuthException ? e.message : 'Failed to send OTP';
+    });
   }
-
+}
   void _startResendTimer() {
     _timer?.cancel();
 
