@@ -2,6 +2,7 @@ plugins {
     id "com.android.application"
     id "org.jetbrains.kotlin.android"
     id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services"
 }
 
 def localProperties = new Properties()
@@ -23,7 +24,7 @@ android {
     defaultConfig {
         applicationId "com.khilonjiya.marketplace"
         minSdk 23
-        targetSdk 35   // ✅ Updated to meet Play requirement
+        targetSdk 35
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
 
@@ -51,7 +52,7 @@ android {
             shrinkResources true
             debuggable false
             proguardFiles getDefaultProguardFile(
-                "proguard-android-optimize.txt"
+                    "proguard-android-optimize.txt"
             ), "proguard-rules.pro"
         }
 
@@ -65,13 +66,13 @@ android {
     packaging {
         resources {
             excludes += [
-                "META-INF/DEPENDENCIES",
-                "META-INF/LICENSE",
-                "META-INF/LICENSE.txt",
-                "META-INF/NOTICE",
-                "META-INF/NOTICE.txt",
-                "META-INF/ASL2.0",
-                "META-INF/*.kotlin_module"
+                    "META-INF/DEPENDENCIES",
+                    "META-INF/LICENSE",
+                    "META-INF/LICENSE.txt",
+                    "META-INF/NOTICE",
+                    "META-INF/NOTICE.txt",
+                    "META-INF/ASL2.0",
+                    "META-INF/*.kotlin_module"
             ]
         }
     }
@@ -87,9 +88,13 @@ flutter {
 }
 
 dependencies {
+
     implementation "androidx.multidex:multidex:2.0.1"
     coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"
 
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.8.4"
     implementation "androidx.lifecycle:lifecycle-process:2.8.4"
+
+    // Firebase Messaging
+    implementation "com.google.firebase:firebase-messaging:24.0.0"
 }
