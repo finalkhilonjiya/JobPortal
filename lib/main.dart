@@ -41,11 +41,24 @@ Future<void> initPushNotifications() async {
     sound: true,
   );
 
-  String? token = await messaging.getToken();
+  final token = await messaging.getToken();
 
-  print("FCM TOKEN: $token");
+  if (token == null) return;
+
+  final user = Supabase.instance.client.auth.currentUser;
+
+  if (user == null) return;
+
+  await Supabase.instance.client
+      .from('user_devices')
+      .upsert({
+        "user_id": user.id,
+        "fcm_token": token,
+        "platform": "android"
+      });
+
+  print("FCM token saved to Supabase");
 }
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
