@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "845692774721",
+    "project_id": "khilonjiya-9c872",
+    "storage_bucket": "khilonjiya-9c872.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:845692774721:android:6653d676b19df84b4799c0",
+        "android_client_info": {
+          "package_name": "com.khilonjiya.marketplace"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC96O4d_kgSEs-uOD2k-mFuXSqPtCf0cCA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
