@@ -190,34 +190,30 @@ class _CompanyDetailsPageState extends State<CompanyDetailsPage> {
                           CrossAxisAlignment.start,
                       children: [
                         Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                name,
-                                maxLines: 1,
-                                overflow:
-                                    TextOverflow.ellipsis,
-                                style:
-                                    KhilonjiyaUI.cardTitle.copyWith(
-                                  fontSize: 20, // 🔥 bigger
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ),
-                            if (isVerified)
-                              const Padding(
-                                padding:
-                                    EdgeInsets.only(left: 6),
-                                child: Icon(
-                                  Icons.verified_rounded,
-                                  size: 20,
-                                  color:
-                                      Color(0xFF2563EB),
-                                ),
-                              ),
-                          ],
-                        ),
-
+  mainAxisSize: MainAxisSize.min,
+  children: [
+    Flexible(
+      child: Text(
+        name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: KhilonjiyaUI.cardTitle.copyWith(
+          fontSize: 20,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    ),
+    if (isVerified)
+      const Padding(
+        padding: EdgeInsets.only(left: 4),
+        child: Icon(
+          Icons.verified_rounded,
+          size: 20,
+          color: Color(0xFF2563EB),
+        ),
+      ),
+  ],
+),
                         if (location.isNotEmpty) ...[
                           const SizedBox(height: 6),
                           Text(
