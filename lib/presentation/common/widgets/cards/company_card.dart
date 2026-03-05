@@ -98,37 +98,30 @@ class CompanyCard extends StatelessWidget {
       size: _companyLogoSize,
     ),
     const SizedBox(width: 10),
+
     Expanded(
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
+          Flexible(
             child: Text(
-              name.isEmpty
-                  ? "Company"
-                  : name,
+              name.isEmpty ? "Company" : name,
               maxLines: 1,
-              overflow:
-                  TextOverflow.ellipsis,
-              style:
-                  KhilonjiyaUI.cardTitle
-                      .copyWith(
+              overflow: TextOverflow.ellipsis,
+              style: KhilonjiyaUI.cardTitle.copyWith(
                 fontSize: 15.6,
-                fontWeight:
-                    FontWeight.w900,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ),
+
           if (isVerified)
             const Padding(
-              padding:
-                  EdgeInsets.only(
-                      left: 6),
+              padding: EdgeInsets.only(left: 4),
               child: Icon(
-                Icons
-                    .verified_rounded,
+                Icons.verified_rounded,
                 size: 18,
-                color:
-                    Color(0xFF2563EB),
+                color: Color(0xFF2563EB),
               ),
             ),
         ],
