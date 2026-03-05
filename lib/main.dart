@@ -29,6 +29,23 @@ Future<void> _firebaseMessagingBackgroundHandler(
   await Firebase.initializeApp();
 }
 
+/// ------------------------------------------------------------
+/// Push notification initialization
+/// ------------------------------------------------------------
+Future<void> initPushNotifications() async {
+  final messaging = FirebaseMessaging.instance;
+
+  await messaging.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
+  String? token = await messaging.getToken();
+
+  print("FCM TOKEN: $token");
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -61,6 +78,8 @@ Future<void> main() async {
     FirebaseMessaging.onBackgroundMessage(
       _firebaseMessagingBackgroundHandler,
     );
+
+    await initPushNotifications();
   } catch (_) {}
 
   SystemChrome.setSystemUIOverlayStyle(
