@@ -4,6 +4,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:sizer/sizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+// Firebase
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
 import 'core/navigation_service.dart';
 import 'core/ui/khilonjiya_ui.dart';
 import 'routes/app_routes.dart';
@@ -17,6 +21,14 @@ class AppConfig {
       supabaseAnonKey.trim().isNotEmpty;
 }
 
+/// ------------------------------------------------------------
+/// Firebase background handler
+/// ------------------------------------------------------------
+Future<void> _firebaseMessagingBackgroundHandler(
+    RemoteMessage message) async {
+  await Firebase.initializeApp();
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -28,6 +40,9 @@ Future<void> main() async {
     await dotenv.load(fileName: '.env');
   } catch (_) {}
 
+  /// ------------------------------------------------------------
+  /// Supabase init (existing)
+  /// ------------------------------------------------------------
   if (AppConfig.hasSupabase) {
     try {
       await Supabase.initialize(
@@ -36,6 +51,17 @@ Future<void> main() async {
       );
     } catch (_) {}
   }
+
+  /// ------------------------------------------------------------
+  /// Firebase init (added)
+  /// ------------------------------------------------------------
+  try {
+    await Firebase.initializeApp();
+
+    FirebaseMessaging.onBackgroundMessage(
+      _firebaseMessagingBackgroundHandler,
+    );
+  } catch (_) {}
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
