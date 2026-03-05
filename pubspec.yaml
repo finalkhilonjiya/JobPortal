@@ -83,6 +83,8 @@ dependencies:
   crypto: ^3.0.3
 
   # Notifications
+  firebase_core: ^3.3.0
+  firebase_messaging: ^15.0.3
   flutter_local_notifications: ^19.3.0
 
   # Permissions
