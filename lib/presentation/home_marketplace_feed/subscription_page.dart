@@ -39,10 +39,6 @@ class _SubscriptionPageState
   DateTime? _expiry;
   int _daysLeft = 0;
 
-  // ======================================================
-  // INIT
-  // ======================================================
-
   @override
   void initState() {
     super.initState();
@@ -60,12 +56,7 @@ class _SubscriptionPageState
     await _initBilling();
   }
 
-  // ======================================================
-  // BILLING
-  // ======================================================
-
   Future<void> _initBilling() async {
-
     if (!await _iap.isAvailable()) return;
 
     final response =
@@ -82,10 +73,6 @@ class _SubscriptionPageState
       _handlePurchaseUpdates,
     );
   }
-
-  // ======================================================
-  // PAYMENT
-  // ======================================================
 
   Future<void> _startPayment() async {
 
@@ -111,10 +98,6 @@ class _SubscriptionPageState
                   _product!),
     );
   }
-
-  // ======================================================
-  // PURCHASE LISTENER
-  // ======================================================
 
   Future<void> _handlePurchaseUpdates(
       List<PurchaseDetails> purchases) async {
@@ -151,10 +134,6 @@ class _SubscriptionPageState
     setState(() => _paying = false);
   }
 
-  // ======================================================
-  // LOAD SUBSCRIPTION
-  // ======================================================
-
   Future<void> _loadSubscription() async {
 
     setState(() => _loading = true);
@@ -185,10 +164,6 @@ class _SubscriptionPageState
     setState(() => _loading = false);
   }
 
-  // ======================================================
-  // SUBSCRIBE BUTTON FLOW
-  // ======================================================
-
   void _onSubscribePressed() {
 
     if (_isActive) return;
@@ -197,10 +172,6 @@ class _SubscriptionPageState
       _showTerms = true;
     });
   }
-
-  // ======================================================
-  // UI
-  // ======================================================
 
   @override
   Widget build(BuildContext context) {
@@ -243,10 +214,6 @@ class _SubscriptionPageState
             ),
     );
   }
-
-  // ======================================================
-  // HERO
-  // ======================================================
 
   Widget _heroCard() {
 
@@ -305,6 +272,10 @@ class _SubscriptionPageState
             height: 46,
             child:
                 ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: KhilonjiyaUI.primary,
+                foregroundColor: Colors.white,
+              ),
               onPressed:
                   (_paying ||
                           _isActive)
@@ -326,10 +297,6 @@ class _SubscriptionPageState
       ),
     );
   }
-
-  // ======================================================
-  // TERMS + AGREEMENT
-  // ======================================================
 
   Widget _terms() {
 
@@ -391,6 +358,10 @@ class _SubscriptionPageState
             width: double.infinity,
             height: 44,
             child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: KhilonjiyaUI.primary,
+                foregroundColor: Colors.white,
+              ),
               onPressed:
                   (_agreed && !_paying)
                       ? _startPayment
@@ -403,10 +374,6 @@ class _SubscriptionPageState
       ),
     );
   }
-
-  // ======================================================
-  // FEATURES
-  // ======================================================
 
   Widget _features() {
     Widget item(
