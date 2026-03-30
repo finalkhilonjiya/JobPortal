@@ -784,11 +784,25 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
   // ============================================================
 
   Future<List<Map<String, dynamic>>> fetchLatestJobs({
-    int offset = 0,
-    int limit = 20,
-  }) async {
-    return fetchJobs(offset: offset, limit: limit);
-  }
+  int offset = 0,
+  int limit = 20,
+}) async {
+  _ensureAuthenticatedSync();
+
+  final res = await _db.rpc(
+    'get_latest_jobs_v1',
+    params: {
+      'p_offset': offset,
+      'p_limit': limit,
+    },
+  );
+
+  final list = List<Map<String, dynamic>>.from(res);
+
+  return list
+      .map((e) => Map<String, dynamic>.from(e['job']))
+      .toList();
+}
 
   // ============================================================
   // JOBS POSTED TODAY (PAGINATED)
