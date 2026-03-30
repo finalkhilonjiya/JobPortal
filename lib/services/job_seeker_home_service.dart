@@ -831,57 +831,21 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
 }) async {
   _ensureAuthenticatedSync();
 
-  final nowIso =
-      DateTime.now().toIso8601String();
-
-  final res = await _db
-      .from('job_listings')
-      .select(_jobWithCompanySelect)
-      .eq('status', 'active')
-      .gte('expires_at', nowIso)
-      .not('latitude', 'is', null)
-      .not('longitude', 'is', null)
-      .limit(1000);
-
-  final jobs =
-      List<Map<String, dynamic>>.from(res);
-
-  /// ✅ PRECOMPUTE DISTANCE (FAST SORT)
-  for (final j in jobs) {
-    final lat =
-        double.tryParse(
-                j['latitude'].toString()) ??
-            0;
-
-    final lng =
-        double.tryParse(
-                j['longitude'].toString()) ??
-            0;
-
-    j['_dist'] =
-        _haversineKm(
-            userLat, userLng, lat, lng);
-  }
-
-  jobs.sort(
-    (a, b) =>
-        (a['_dist'] as double)
-            .compareTo(
-                b['_dist'] as double),
+  final res = await _db.rpc(
+    'get_nearby_jobs_v1',
+    params: {
+      'p_user_lat': userLat,
+      'p_user_lng': userLng,
+      'p_offset': offset,
+      'p_limit': limit,
+    },
   );
 
-  for (final j in jobs) {
-    j.remove('_dist');
-  }
+  final list = List<Map<String, dynamic>>.from(res);
 
-  if (offset >= jobs.length) return [];
-
-  final end =
-      (offset + limit) > jobs.length
-          ? jobs.length
-          : offset + limit;
-
-  return jobs.sublist(offset, end);
+  return list
+      .map((e) => Map<String, dynamic>.from(e['job']))
+      .toList();
 }
   // ============================================================
   // RAW PATH FETCH (useful for edit screens)
