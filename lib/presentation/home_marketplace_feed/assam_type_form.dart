@@ -346,8 +346,8 @@ Padding(
         ),
         title: const Text("Request Submitted"),
         content: const Text(
-          "Your Assam type construction request has been submitted successfully. Our team will contact you shortly.",
-        ),
+  "Your Assam type construction request has been submitted successfully. Khilonjiya Support Team will contact you shortly.",
+),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
