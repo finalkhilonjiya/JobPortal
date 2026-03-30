@@ -378,8 +378,8 @@ Padding(
         ),
         title: const Text("Request Submitted"),
         content: const Text(
-          "Your interior design request has been submitted successfully. Our team will contact you shortly.",
-        ),
+  "Your Interior Design request has been submitted successfully. Khilonjiya Support Team will contact you shortly.",
+),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
