@@ -935,48 +935,28 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
   // ============================================================
 
   Future<List<Map<String, dynamic>>> getRecommendedJobs({
-    int offset = 0,
-    int limit = 20,
-  }) async {
-    _ensureAuthenticatedSync();
+  int offset = 0,
+  int limit = 20,
+}) async {
+  _ensureAuthenticatedSync();
 
-    final userId = _userId();
-    final nowIso = DateTime.now().toIso8601String();
+  final userId = _userId();
 
-    List<String> preferredLocations = [];
-    String currentCity = '';
-    String highestEducation = '';
-    int expectedSalaryMin = 0;
+  final res = await _db.rpc(
+    'get_recommended_jobs_v1',
+    params: {
+      'p_user_id': userId,
+      'p_offset': offset,
+      'p_limit': limit,
+    },
+  );
 
-    try {
-      final p = await _db
-          .from('user_profiles')
-          .select(
-            'preferred_locations, current_city, highest_education, expected_salary_min',
-          )
-          .eq('id', userId)
-          .maybeSingle();
+  final list = List<Map<String, dynamic>>.from(res);
 
-      if (p != null) {
-        final pl = p['preferred_locations'];
-        if (pl is List) {
-          preferredLocations = pl
-              .map((e) => e.toString().trim())
-              .where((e) => e.isNotEmpty)
-              .toList();
-        }
-
-        currentCity = (p['current_city'] ?? '').toString().trim();
-        highestEducation = (p['highest_education'] ?? '').toString().trim();
-
-        final rawSalary = p['expected_salary_min'];
-        if (rawSalary is int) expectedSalaryMin = rawSalary;
-        if (rawSalary != null && rawSalary is! int) {
-          expectedSalaryMin = int.tryParse(rawSalary.toString()) ?? 0;
-        }
-      }
-    } catch (_) {}
-
+  return list
+      .map((e) => Map<String, dynamic>.from(e['job']))
+      .toList();
+}
     final cityLower = currentCity.toLowerCase();
     final eduLower = highestEducation.toLowerCase();
 
