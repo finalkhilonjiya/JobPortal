@@ -883,31 +883,28 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
   // JOBS FILTERED BY SALARY (MONTHLY)
   // ============================================================
 
-  Future<List<Map<String, dynamic>>> fetchJobsByMinSalaryMonthly({
-    required int minMonthlySalary,
-    int offset = 0,
-    int limit = 20,
-  }) async {
-    _ensureAuthenticatedSync();
+ Future<List<Map<String, dynamic>>> fetchJobsByMinSalaryMonthly({
+  required int minMonthlySalary,
+  int offset = 0,
+  int limit = 20,
+}) async {
+  _ensureAuthenticatedSync();
 
-    final nowIso = DateTime.now().toIso8601String();
-    final minSalary = minMonthlySalary < 0 ? 0 : minMonthlySalary;
+  final res = await _db.rpc(
+    'get_jobs_by_salary_v1',
+    params: {
+      'p_min_salary': minMonthlySalary,
+      'p_offset': offset,
+      'p_limit': limit,
+    },
+  );
 
-    final res = await _db
-        .from('job_listings')
-        .select(_jobWithCompanySelect)
-        .eq('status', 'active')
-        .gte('expires_at', nowIso)
-        .or(
-          'salary_period.is.null,salary_period.eq.Monthly,salary_period.eq.monthly',
-        )
-        .gte('salary_max', minSalary)
-        .order('salary_max', ascending: false)
-        .range(offset, offset + limit - 1);
+  final list = List<Map<String, dynamic>>.from(res);
 
-    return List<Map<String, dynamic>>.from(res);
-  }
-
+  return list
+      .map((e) => Map<String, dynamic>.from(e['job']))
+      .toList();
+}
   // ============================================================
   // RECOMMENDED JOBS (PAGINATED) - MIXED + RANDOM
   // ============================================================
