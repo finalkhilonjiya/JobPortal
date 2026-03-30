@@ -909,11 +909,18 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
   // RECOMMENDED JOBS (PAGINATED) - MIXED + RANDOM
   // ============================================================
 
-  Future<List<Map<String, dynamic>>> getRecommendedJobs({
+ Future<List<Map<String, dynamic>>> getRecommendedJobs({
   int offset = 0,
   int limit = 20,
 }) async {
   _ensureAuthenticatedSync();
+
+  if (offset == 0) {
+    final cached = await getCachedHomeFeed();
+    if (cached != null && cached['recommended'] != null) {
+      return List<Map<String, dynamic>>.from(cached['recommended']);
+    }
+  }
 
   final userId = _userId();
 
@@ -926,11 +933,15 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
     },
   );
 
-  final list = List<Map<String, dynamic>>.from(res);
-
-  return list
+  final list = List<Map<String, dynamic>>.from(res)
       .map((e) => Map<String, dynamic>.from(e['job']))
       .toList();
+
+  if (offset == 0) {
+    await cacheHomeFeed({'recommended': list});
+  }
+
+  return list;
 }
     
   Future<List<Map<String, dynamic>>> getJobsBasedOnActivity({
