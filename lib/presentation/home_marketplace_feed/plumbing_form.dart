@@ -360,8 +360,8 @@ Padding(
         ),
         title: const Text("Request Submitted"),
         content: const Text(
-          "Your plumbing request has been submitted successfully. Our team will contact you shortly.",
-        ),
+  "Your Plumbing request has been submitted successfully. Khilonjiya Support Team will contact you shortly.",
+),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
