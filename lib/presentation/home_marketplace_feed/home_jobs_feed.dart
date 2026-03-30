@@ -666,21 +666,25 @@ Future<void> _openNotificationsPage() async {
     } catch (_) {}
   }
 
-  void _openJobsBySalary() {
-    if (_expectedSalaryPerMonth <= 0) {
-      _openExpectedSalaryEditPage();
-      return;
-    }
+  Future<void> _openJobsBySalary() async {
+  if (_expectedSalaryPerMonth <= 0) {
+    await _openExpectedSalaryEditPage();
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => JobsBySalaryPage(
-          minMonthlySalary: _expectedSalaryPerMonth,
-        ),
-      ),
-    );
+    // 🔥 after user sets salary → open jobs
+    if (_expectedSalaryPerMonth <= 0) return;
   }
+
+  if (!mounted) return;
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => JobsBySalaryPage(
+        minMonthlySalary: _expectedSalaryPerMonth,
+      ),
+    ),
+  );
+}
 
   // ------------------------------------------------------------
   // TOP BAR
