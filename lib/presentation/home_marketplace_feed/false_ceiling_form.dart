@@ -350,8 +350,8 @@ Padding(
         ),
         title: const Text("Request Submitted"),
         content: const Text(
-          "Your false ceiling request has been submitted successfully. Our team will contact you shortly.",
-        ),
+  "Your False Ceiling request has been submitted successfully. Khilonjiya Support Team will contact you shortly.",
+),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
