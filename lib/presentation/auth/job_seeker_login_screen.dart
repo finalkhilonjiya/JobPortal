@@ -23,10 +23,10 @@ with SingleTickerProviderStateMixin, CodeAutoFill {
 
 final _mobileController = TextEditingController();
 
-final List<TextEditingController> otpControllers =
-List.generate(6, () => TextEditingController());
-final List<FocusNode> otpFocusNodes =
-List.generate(6, () => FocusNode());
+final List<TextEditingController> _otpControllers =
+List.generate(6, (_) => TextEditingController());
+final List<FocusNode> _otpFocusNodes =
+List.generate(6, (_) => FocusNode());
 
 final _auth = MobileAuthService();
 
@@ -53,7 +53,8 @@ duration: const Duration(milliseconds: 450),
 _mobileController.addListener(_validateMobile);
 
 // START SMS AUTO READ
-SmsAutoFill().listenForCode();
+listenForCode();
+_printAppHash();
 }
 
 @override
@@ -75,12 +76,26 @@ super.dispose();
 
 @override
 void codeUpdated() {
-if (code != null && code!.length == 6) {
-for (int i = 0; i < 6; i++) {
-_otpControllers[i].text = code![i];
+  if (code == null) return;
+
+  final otp = code!.replaceAll(RegExp(r'[^0-9]'), '');
+
+  if (otp.length == 6) {
+    for (int i = 0; i < 6; i++) {
+      _otpControllers[i].text = otp[i];
+    }
+
+    Future.delayed(const Duration(milliseconds: 200), () {
+      _handleVerifyOtp();
+    });
+  }
 }
-_handleVerifyOtp();
-}
+
+Future<void> _printAppHash() async {
+  final signature = await SmsAutoFill().getAppSignature;
+  print("######## APP HASH ########");
+  print(signature);
+  print("######## APP HASH ########");
 }
 
 void _validateMobile() {
@@ -230,14 +245,6 @@ _otpFocusNodes[index - 1].requestFocus();
 }
 }
 
-void goBackToRoleSelection() {
-Navigator.pushNamedAndRemoveUntil(
-context,
-AppRoutes.roleSelection,
-() => false,
-);
-}
-
 @override
 Widget build(BuildContext context) {
 return Scaffold(
@@ -250,15 +257,7 @@ padding: const EdgeInsets.symmetric(horizontal: 24),
 child: Column(
 children: [
 const SizedBox(height: 12),
-Align(
-alignment: Alignment.centerLeft,
-child: IconButton(
-onPressed: _goBackToRoleSelection,
-icon: const Icon(Icons.arrow_back_ios_new_rounded),
-color: const Color(0xFF0F172A),
-splashRadius: 22,
-),
-),
+
 const SizedBox(height: 26),
 _header(),
 const SizedBox(height: 38),
