@@ -1,5 +1,3 @@
-// SAME FILE — ONLY BUSINESS ICON REMOVED
-
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../../core/ui/khilonjiya_ui.dart';
