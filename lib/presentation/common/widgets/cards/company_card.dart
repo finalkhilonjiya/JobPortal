@@ -13,7 +13,6 @@ class CompanyCard extends StatelessWidget {
   }) : super(key: key);
 
   static const double _cardHeight = 118;
-  static const double _logoSize = _cardHeight * 0.32;
   static const double _companyLogoSize = 38;
 
   @override
@@ -34,14 +33,11 @@ class CompanyCard extends StatelessWidget {
         (company['logo_url'] ?? '').toString().trim();
 
     String businessType = '';
-    String? businessLogoUrl;
 
     final bt = company['business_types_master'];
 
     if (bt is Map<String, dynamic>) {
       businessType = (bt['type_name'] ?? '').toString().trim();
-      final url = (bt['logo_url'] ?? '').toString().trim();
-      businessLogoUrl = url.isEmpty ? null : url;
     }
 
     if (businessType.isEmpty) {
@@ -50,12 +46,6 @@ class CompanyCard extends StatelessWidget {
     }
 
     if (businessType.isEmpty) businessType = "Business";
-
-    if (businessLogoUrl == null || businessLogoUrl.isEmpty) {
-      if (companyLogoUrl.isNotEmpty) {
-        businessLogoUrl = companyLogoUrl;
-      }
-    }
 
     final location = _formatLocation(
       headquartersCity,
@@ -66,7 +56,7 @@ class CompanyCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: KhilonjiyaUI.r16,
       child: Container(
-        constraints: const BoxConstraints(minHeight: _cardHeight), // ✅ only change
+        constraints: const BoxConstraints(minHeight: _cardHeight),
         margin: const EdgeInsets.only(bottom: 14),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -91,59 +81,55 @@ class CompanyCard extends StatelessWidget {
                     MainAxisAlignment.center,
                 children: [
                   Row(
-  children: [
-    _CompanyLogo(
-      name: name,
-      logoUrl: companyLogoUrl,
-      size: _companyLogoSize,
-    ),
-    const SizedBox(width: 10),
+                    children: [
+                      _CompanyLogo(
+                        name: name,
+                        logoUrl: companyLogoUrl,
+                        size: _companyLogoSize,
+                      ),
+                      const SizedBox(width: 10),
 
-    Expanded(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(
-            child: Text(
-              name.isEmpty ? "Company" : name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: KhilonjiyaUI.cardTitle.copyWith(
-                fontSize: 15.6,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
+                      Expanded(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                name.isEmpty ? "Company" : name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: KhilonjiyaUI.cardTitle.copyWith(
+                                  fontSize: 15.6,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
 
-          if (isVerified)
-            const Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Icon(
-                Icons.verified_rounded,
-                size: 18,
-                color: Color(0xFF2563EB),
-              ),
-            ),
-        ],
-      ),
-    ),
-  ],
-),
+                            if (isVerified)
+                              const Padding(
+                                padding: EdgeInsets.only(left: 4),
+                                child: Icon(
+                                  Icons.verified_rounded,
+                                  size: 18,
+                                  color: Color(0xFF2563EB),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
 
                   const SizedBox(height: 6),
 
                   Text(
                     businessType,
                     maxLines: 1,
-                    overflow:
-                        TextOverflow.ellipsis,
-                    style: KhilonjiyaUI.sub
-                        .copyWith(
+                    overflow: TextOverflow.ellipsis,
+                    style: KhilonjiyaUI.sub.copyWith(
                       fontSize: 12.8,
-                      fontWeight:
-                          FontWeight.w800,
-                      color:
-                          const Color(0xFF64748B),
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF64748B),
                     ),
                   ),
 
@@ -152,18 +138,13 @@ class CompanyCard extends StatelessWidget {
                   if (location.isNotEmpty ||
                       companySize.isNotEmpty)
                     Text(
-                      _combineLocationSize(
-                          location, companySize),
+                      _combineLocationSize(location, companySize),
                       maxLines: 1,
-                      overflow:
-                          TextOverflow.ellipsis,
-                      style: KhilonjiyaUI.sub
-                          .copyWith(
+                      overflow: TextOverflow.ellipsis,
+                      style: KhilonjiyaUI.sub.copyWith(
                         fontSize: 12.2,
-                        fontWeight:
-                            FontWeight.w700,
-                        color:
-                            const Color(0xFF94A3B8),
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF94A3B8),
                       ),
                     ),
 
@@ -174,27 +155,15 @@ class CompanyCard extends StatelessWidget {
                         ? "No active jobs"
                         : "$totalJobs active job${totalJobs > 1 ? 's' : ''}",
                     maxLines: 1,
-                    overflow:
-                        TextOverflow.ellipsis,
-                    style: KhilonjiyaUI.sub
-                        .copyWith(
+                    overflow: TextOverflow.ellipsis,
+                    style: KhilonjiyaUI.sub.copyWith(
                       fontSize: 12.2,
-                      fontWeight:
-                          FontWeight.w800,
-                      color:
-                          const Color(0xFF94A3B8),
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF94A3B8),
                     ),
                   ),
                 ],
               ),
-            ),
-
-            const SizedBox(width: 14),
-
-            _BusinessTypeLogo(
-              businessType: businessType,
-              logoUrl: businessLogoUrl,
-              size: _logoSize,
             ),
           ],
         ),
@@ -216,15 +185,11 @@ class CompanyCard extends StatelessWidget {
     return city.isNotEmpty ? city : state;
   }
 
-  String _combineLocationSize(
-      String location, String size) {
-    if (location.isNotEmpty &&
-        size.isNotEmpty) {
+  String _combineLocationSize(String location, String size) {
+    if (location.isNotEmpty && size.isNotEmpty) {
       return "$location • $size";
     }
-    return location.isNotEmpty
-        ? location
-        : size;
+    return location.isNotEmpty ? location : size;
   }
 }
 
@@ -271,8 +236,7 @@ class _CompanyLogo extends StatelessWidget {
                 letter,
                 style: TextStyle(
                   fontSize: size * 0.45,
-                  fontWeight:
-                      FontWeight.w600,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             )
@@ -284,77 +248,8 @@ class _CompanyLogo extends StatelessWidget {
                 child: Text(
                   letter,
                   style: TextStyle(
-                    fontSize:
-                        size * 0.45,
-                    fontWeight:
-                        FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-    );
-  }
-}
-
-class _BusinessTypeLogo extends StatelessWidget {
-  final String businessType;
-  final String? logoUrl;
-  final double size;
-
-  const _BusinessTypeLogo({
-    required this.businessType,
-    required this.logoUrl,
-    required this.size,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final letter =
-        businessType.isNotEmpty
-            ? businessType[0].toUpperCase()
-            : "B";
-
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius:
-            BorderRadius.circular(14),
-        border:
-            Border.all(color: KhilonjiyaUI.border),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: (logoUrl == null ||
-              logoUrl!.isEmpty)
-          ? Center(
-              child: Text(
-                letter,
-                style: TextStyle(
-                  fontSize:
-                      size * 0.52,
-                  fontWeight:
-                      FontWeight.w900,
-                  color: const Color(
-                      0xFF0F172A),
-                ),
-              ),
-            )
-          : Image.network(
-              logoUrl!,
-              fit: BoxFit.cover,
-              errorBuilder:
-                  (_, __, ___) =>
-                      Center(
-                child: Text(
-                  letter,
-                  style: TextStyle(
-                    fontSize:
-                        size * 0.52,
-                    fontWeight:
-                        FontWeight.w900,
-                    color: const Color(
-                        0xFF0F172A),
+                    fontSize: size * 0.45,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
