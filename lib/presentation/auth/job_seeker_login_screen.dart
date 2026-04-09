@@ -95,7 +95,10 @@ void codeUpdated() {
 
 Future<void> _printAppHash() async {
   final signature = await SmsAutoFill().getAppSignature;
-  print("APP HASH: $signature");
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text("HASH: $signature")),
+  );
 }
 
   void _validateMobile() {
