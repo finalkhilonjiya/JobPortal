@@ -52,7 +52,7 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
 
     _mobileController.addListener(_validateMobile);
 
-    SmsAutoFill().listenForCode();
+    listenForCode();
   }
 
   @override
@@ -71,15 +71,23 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
     super.dispose();
   }
 
+  
   @override
-  void codeUpdated() {
-    if (code != null && code!.length == 6) {
-      for (int i = 0; i < 6; i++) {
-        _otpControllers[i].text = code![i];
-      }
-      _handleVerifyOtp();
+void codeUpdated() {
+  if (code == null) return;
+
+  final otp = code!.replaceAll(RegExp(r'[^0-9]'), '');
+
+  if (otp.length == 6) {
+    for (int i = 0; i < 6; i++) {
+      _otpControllers[i].text = otp[i];
     }
+
+    Future.delayed(const Duration(milliseconds: 200), () {
+      _handleVerifyOtp();
+    });
   }
+}
 
   void _validateMobile() {
     final value = _mobileController.text.trim();
