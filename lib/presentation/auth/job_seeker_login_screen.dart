@@ -42,21 +42,26 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
   late final AnimationController _animController;
 
   @override
-void initState() {
-  super.initState();
+  void initState() {
+    super.initState();
 
-  _animController = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 450),
-  )..forward();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    )..forward();
 
-  _mobileController.addListener(_validateMobile);
+    _mobileController.addListener(_validateMobile);
 
-  listenForCode();
+    listenForCode();
 
-  // ✅ ADD THIS
-  _printAppHash();
-}
+    // ✅ APP HASH PRINT
+    _printAppHash();
+  }
+
+  Future<void> _printAppHash() async {
+    final signature = await SmsAutoFill().getAppSignature;
+    debugPrint("APP HASH: $signature");
+  }
 
   @override
   void dispose() {
@@ -74,37 +79,26 @@ void initState() {
     super.dispose();
   }
 
-  
   @override
-void codeUpdated() {
-  if (code == null) return;
+  void codeUpdated() {
+    if (code == null) return;
 
-  final otp = code!.replaceAll(RegExp(r'[^0-9]'), '');
+    final otp = code!.replaceAll(RegExp(r'[^0-9]'), '');
 
-  if (otp.length == 6) {
-    for (int i = 0; i < 6; i++) {
-      _otpControllers[i].text = otp[i];
+    if (otp.length == 6) {
+      for (int i = 0; i < 6; i++) {
+        _otpControllers[i].text = otp[i];
+      }
+
+      Future.delayed(const Duration(milliseconds: 200), () {
+        _handleVerifyOtp();
+      });
     }
-
-    Future.delayed(const Duration(milliseconds: 200), () {
-      _handleVerifyOtp();
-    });
   }
-}
-
-
-Future<void> _printAppHash() async {
-  final signature = await SmsAutoFill().getAppSignature;
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text("HASH: $signature")),
-  );
-}
 
   void _validateMobile() {
     final value = _mobileController.text.trim();
     final valid = MobileAuthService.isValidMobileNumber(value);
-    if (valid == _isMobileValid && _error == null) return;
 
     setState(() {
       _isMobileValid = valid;
@@ -114,8 +108,6 @@ Future<void> _printAppHash() async {
 
   Future<void> _handleSendOtp() async {
     if (!_isMobileValid || _isLoading) return;
-
-    FocusScope.of(context).unfocus();
 
     setState(() {
       _isLoading = true;
@@ -136,13 +128,10 @@ Future<void> _printAppHash() async {
       _startResendTimer();
       _clearOtp();
       _otpFocusNodes.first.requestFocus();
-
-      HapticFeedback.lightImpact();
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _error =
-            e is MobileAuthException ? e.message : 'Failed to send OTP';
+        _error = 'Failed to send OTP';
       });
     }
   }
@@ -152,7 +141,6 @@ Future<void> _printAppHash() async {
     setState(() => _resendSeconds = 30);
 
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!mounted) return;
       if (_resendSeconds <= 0) {
         t.cancel();
         return;
@@ -170,14 +158,7 @@ Future<void> _printAppHash() async {
   Future<void> _handleVerifyOtp() async {
     final otp = _otpControllers.map((c) => c.text).join();
 
-    if (otp.length != 6) {
-      setState(() => _error = 'Please enter the full 6-digit OTP');
-      return;
-    }
-
-    if (_isLoading) return;
-
-    FocusScope.of(context).unfocus();
+    if (otp.length != 6) return;
 
     setState(() {
       _isLoading = true;
@@ -199,12 +180,10 @@ Future<void> _printAppHash() async {
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _error =
-            e is MobileAuthException ? e.message : 'Invalid OTP';
+        _error = 'Invalid OTP';
       });
 
       _clearOtp();
-      _otpFocusNodes.first.requestFocus();
     }
   }
 
@@ -215,22 +194,13 @@ Future<void> _printAppHash() async {
         for (int i = 0; i < 6; i++) {
           _otpControllers[i].text = digits[i];
         }
-        _otpFocusNodes.last.requestFocus();
-        Future.delayed(const Duration(milliseconds: 250), _handleVerifyOtp);
-      } else {
-        _otpControllers[index].text =
-            digits.isNotEmpty ? digits[0] : '';
+        Future.delayed(const Duration(milliseconds: 200), _handleVerifyOtp);
       }
       return;
     }
 
     if (value.isNotEmpty && index < 5) {
       _otpFocusNodes[index + 1].requestFocus();
-    }
-
-    final fullOtp = _otpControllers.map((c) => c.text).join();
-    if (fullOtp.length == 6) {
-      Future.delayed(const Duration(milliseconds: 250), _handleVerifyOtp);
     }
   }
 
@@ -257,47 +227,84 @@ Future<void> _printAppHash() async {
               children: [
                 const SizedBox(height: 12),
 
-                // BACK BUTTON (NO NAVIGATION NOW)
+                // BACK BUTTON DISABLED
                 Align(
                   alignment: Alignment.centerLeft,
                   child: IconButton(
                     onPressed: () {},
                     icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                    color: const Color(0xFF0F172A),
-                    splashRadius: 22,
                   ),
                 ),
 
                 const SizedBox(height: 26),
+
                 _header(),
+
                 const SizedBox(height: 38),
+
                 Expanded(
                   child: _showOtpStep ? _otpStep() : _mobileStep(),
                 ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Made in Assam',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF475569),
-                    letterSpacing: 0.2,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  '© Khilonjiya India Pvt. Ltd.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF94A3B8),
-                  ),
-                ),
-                const SizedBox(height: 18),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  // ================= HEADER =================
+  Widget _header() {
+    return const Column(
+      children: [
+        Text(
+          'Khilonjiya Login',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+
+  // ================= MOBILE =================
+  Widget _mobileStep() {
+    return Column(
+      children: [
+        TextField(
+          controller: _mobileController,
+          keyboardType: TextInputType.phone,
+          decoration: const InputDecoration(hintText: 'Enter mobile'),
+        ),
+        ElevatedButton(
+          onPressed: _handleSendOtp,
+          child: const Text('Send OTP'),
+        ),
+      ],
+    );
+  }
+
+  // ================= OTP =================
+  Widget _otpStep() {
+    return Column(
+      children: [
+        Row(
+          children: List.generate(6, (i) {
+            return Expanded(
+              child: TextField(
+                controller: _otpControllers[i],
+                focusNode: _otpFocusNodes[i],
+                maxLength: 1,
+                textAlign: TextAlign.center,
+                autofillHints: const [AutofillHints.oneTimeCode],
+                onChanged: (v) => _handleOtpChange(i, v),
+              ),
+            );
+          }),
+        ),
+        ElevatedButton(
+          onPressed: _handleVerifyOtp,
+          child: const Text('Verify'),
+        ),
+      ],
     );
   }
 }
