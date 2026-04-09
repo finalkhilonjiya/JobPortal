@@ -13,7 +13,6 @@ class CompanyCardHorizontal extends StatelessWidget {
 
   static const double cardWidth = 320;
   static const double cardHeight = 128;
-  static const double _logoSize = cardHeight * 0.32;
 
   @override
   Widget build(BuildContext context) {
@@ -33,33 +32,6 @@ class CompanyCardHorizontal extends StatelessWidget {
       headquartersCity,
       headquartersState,
     );
-
-    // =========================
-    // BUSINESS TYPE
-    // =========================
-    String businessType = '';
-    String? businessLogoUrl;
-
-    final bt = company['business_types_master'];
-
-    if (bt is Map<String, dynamic>) {
-      businessType = (bt['type_name'] ?? '').toString().trim();
-      final url = (bt['logo_url'] ?? '').toString().trim();
-      businessLogoUrl = url.isEmpty ? null : url;
-    }
-
-    if (businessType.isEmpty) {
-      businessType =
-          (company['industry'] ?? '').toString().trim();
-    }
-
-    if (businessType.isEmpty) businessType = "Business";
-
-    if (businessLogoUrl == null || businessLogoUrl.isEmpty) {
-      final fallback =
-          (company['logo_url'] ?? '').toString().trim();
-      if (fallback.isNotEmpty) businessLogoUrl = fallback;
-    }
 
     return InkWell(
       onTap: onTap,
@@ -85,123 +57,66 @@ class CompanyCardHorizontal extends StatelessWidget {
           children: [
             Expanded(
               child: Column(
-                mainAxisAlignment:
-                    MainAxisAlignment.center,
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // =========================
                   // NAME + VERIFIED
-                  // =========================
                   Row(
-  mainAxisSize: MainAxisSize.min,
-  children: [
-    Flexible(
-      child: Text(
-        name.isEmpty
-            ? "Company"
-            : name,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style:
-            KhilonjiyaUI.cardTitle
-                .copyWith(
-          fontSize: 15.4,
-          fontWeight:
-              FontWeight.w900,
-        ),
-      ),
-    ),
-    if (isVerified)
-      const Padding(
-        padding:
-            EdgeInsets.only(
-                left: 4),
-        child: Icon(
-          Icons
-              .verified_rounded,
-          size: 16,
-          color:
-              Color(0xFF2563EB),
-        ),
-      ),
-  ],
-),
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          name.isEmpty ? "Company" : name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: KhilonjiyaUI.cardTitle.copyWith(
+                            fontSize: 15.4,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      if (isVerified)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 4),
+                          child: Icon(
+                            Icons.verified_rounded,
+                            size: 16,
+                            color: Color(0xFF2563EB),
+                          ),
+                        ),
+                    ],
+                  ),
 
                   const SizedBox(height: 6),
 
-                  // =========================
-                  // BUSINESS TYPE
-                  // =========================
-                  Text(
-                    businessType,
-                    maxLines: 1,
-                    overflow:
-                        TextOverflow.ellipsis,
-                    style: KhilonjiyaUI.sub
-                        .copyWith(
-                      fontSize: 12.8,
-                      fontWeight:
-                          FontWeight.w800,
-                      color:
-                          const Color(0xFF64748B),
-                    ),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  // =========================
                   // LOCATION + SIZE
-                  // =========================
-                  if (location.isNotEmpty ||
-                      companySize.isNotEmpty)
+                  if (location.isNotEmpty || companySize.isNotEmpty)
                     Text(
-                      _combineLocationSize(
-                          location,
-                          companySize),
+                      _combineLocationSize(location, companySize),
                       maxLines: 1,
-                      overflow:
-                          TextOverflow.ellipsis,
-                      style: KhilonjiyaUI.sub
-                          .copyWith(
+                      overflow: TextOverflow.ellipsis,
+                      style: KhilonjiyaUI.sub.copyWith(
                         fontSize: 12.0,
-                        fontWeight:
-                            FontWeight.w700,
-                        color:
-                            const Color(
-                                0xFF94A3B8),
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF94A3B8),
                       ),
                     ),
 
                   const SizedBox(height: 10),
 
-                  // =========================
                   // ACTIVE JOBS
-                  // =========================
                   Text(
                     totalJobs <= 0
                         ? "No active jobs"
                         : "$totalJobs active job${totalJobs > 1 ? 's' : ''}",
-                    style: KhilonjiyaUI.sub
-                        .copyWith(
+                    style: KhilonjiyaUI.sub.copyWith(
                       fontSize: 12.0,
-                      fontWeight:
-                          FontWeight.w800,
-                      color:
-                          const Color(
-                              0xFFF59E0B),
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFFF59E0B),
                     ),
                   ),
                 ],
               ),
-            ),
-
-            const SizedBox(width: 14),
-
-            _BusinessTypeLogo(
-              businessType: businessType,
-              logoUrl: businessLogoUrl,
-              size: _logoSize,
             ),
 
             const SizedBox(width: 10),
@@ -224,100 +139,17 @@ class CompanyCardHorizontal extends StatelessWidget {
     return int.tryParse(v.toString()) ?? 0;
   }
 
-  String _formatLocation(
-      String city, String state) {
-    if (city.isNotEmpty &&
-        state.isNotEmpty) {
+  String _formatLocation(String city, String state) {
+    if (city.isNotEmpty && state.isNotEmpty) {
       return "$city, $state";
     }
-    return city.isNotEmpty
-        ? city
-        : state;
+    return city.isNotEmpty ? city : state;
   }
 
-  String _combineLocationSize(
-      String location, String size) {
-    if (location.isNotEmpty &&
-        size.isNotEmpty) {
+  String _combineLocationSize(String location, String size) {
+    if (location.isNotEmpty && size.isNotEmpty) {
       return "$location • $size";
     }
-    return location.isNotEmpty
-        ? location
-        : size;
-  }
-}
-
-// ============================================================
-// BUSINESS TYPE LOGO
-// ============================================================
-
-class _BusinessTypeLogo extends StatelessWidget {
-  final String businessType;
-  final String? logoUrl;
-  final double size;
-
-  const _BusinessTypeLogo({
-    required this.businessType,
-    required this.logoUrl,
-    required this.size,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final letter =
-        businessType.isNotEmpty
-            ? businessType[0]
-                .toUpperCase()
-            : "B";
-
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color:
-            const Color(0xFFF8FAFC),
-        borderRadius:
-            BorderRadius.circular(14),
-        border: Border.all(
-            color: KhilonjiyaUI.border),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: (logoUrl == null ||
-              logoUrl!.isEmpty)
-          ? Center(
-              child: Text(
-                letter,
-                style: TextStyle(
-                  fontSize:
-                      size * 0.52,
-                  fontWeight:
-                      FontWeight.w900,
-                  color:
-                      const Color(
-                          0xFF0F172A),
-                ),
-              ),
-            )
-          : Image.network(
-              logoUrl!,
-              fit: BoxFit.cover,
-              errorBuilder:
-                  (_, __, ___) =>
-                      Center(
-                child: Text(
-                  letter,
-                  style: TextStyle(
-                    fontSize:
-                        size * 0.52,
-                    fontWeight:
-                        FontWeight.w900,
-                    color:
-                        const Color(
-                            0xFF0F172A),
-                  ),
-                ),
-              ),
-            ),
-    );
+    return location.isNotEmpty ? location : size;
   }
 }
