@@ -1683,8 +1683,8 @@ Future<List<Map<String, dynamic>>> fetchTopCompanies({
   final list = List<Map<String, dynamic>>.from(res);
 
   return list
-      .map((e) => Map<String, dynamic>.from(e['company']))
-      .toList();
+    .map((e) => Map<String, dynamic>.from(e))
+    .toList();
 }  // ============================================================
   // NOTIFICATIONS
   // ============================================================
