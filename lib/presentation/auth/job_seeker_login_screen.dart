@@ -42,18 +42,21 @@ class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
   late final AnimationController _animController;
 
   @override
-  void initState() {
-    super.initState();
+void initState() {
+  super.initState();
 
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 450),
-    )..forward();
+  _animController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 450),
+  )..forward();
 
-    _mobileController.addListener(_validateMobile);
+  _mobileController.addListener(_validateMobile);
 
-    listenForCode();
-  }
+  listenForCode();
+
+  // ✅ ADD THIS
+  _printAppHash();
+}
 
   @override
   void dispose() {
@@ -87,6 +90,12 @@ void codeUpdated() {
       _handleVerifyOtp();
     });
   }
+}
+
+
+Future<void> _printAppHash() async {
+  final signature = await SmsAutoFill().getAppSignature;
+  print("APP HASH: $signature");
 }
 
   void _validateMobile() {
