@@ -101,64 +101,62 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: KhilonjiyaUI.bg,
-    body: SafeArea(
-      child: Column(
-        children: [
-          _topBar(),
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _results.isEmpty
-                    ? _emptyState()
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding:
-                            const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                        itemCount:
-                            _results.length + (_loadingMore ? 1 : 0),
-                        itemBuilder: (_, index) {
-                          if (index >= _results.length) {
-                            return const Padding(
-                              padding:
-                                  EdgeInsets.symmetric(vertical: 16),
-                              child: Center(
-                                child:
-                                    CircularProgressIndicator(),
-                              ),
-                            );
-                          }
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: KhilonjiyaUI.bg,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _topBar(),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : (_controller.text.trim().isEmpty)
+                      ? _defaultState()
+                      : (_results.isEmpty
+                          ? _emptyState()
+                          : ListView.builder(
+                              controller: _scrollController,
+                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                              itemCount:
+                                  _results.length + (_loadingMore ? 1 : 0),
+                              itemBuilder: (_, index) {
+                                if (index >= _results.length) {
+                                  return const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 16),
+                                    child: Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  );
+                                }
 
-                          final job = _results[index];
+                                final job = _results[index];
 
-                          return JobCardWidget(
-                            job: job,
-                            isSaved: false,
-                            onSaveToggle: () {},
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      JobDetailsPage(
-                                    job: job,
-                                    isSaved: false,
-                                    onSaveToggle: () {},
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-          ),
-        ],
+                                return JobCardWidget(
+                                  job: job,
+                                  isSaved: false,
+                                  onSaveToggle: () {},
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => JobDetailsPage(
+                                          job: job,
+                                          isSaved: false,
+                                          onSaveToggle: () {},
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            )),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _topBar() {
     return Container(
@@ -219,6 +217,43 @@ Widget build(BuildContext context) {
     );
   }
 
+  // ✅ DEFAULT STATE (before typing)
+  Widget _defaultState() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const SizedBox(height: 80),
+        Icon(
+          Icons.search_rounded,
+          size: 46,
+          color: Colors.black.withOpacity(0.35),
+        ),
+        const SizedBox(height: 14),
+        Center(
+          child: Text(
+            "Search jobs easily",
+            style: KhilonjiyaUI.hTitle.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Center(
+          child: Text(
+            "Try searching using:\n"
+            "• Job title\n"
+            "• Company name\n"
+            "• Location or district\n"
+            "• Skills or keywords",
+            textAlign: TextAlign.center,
+            style: KhilonjiyaUI.sub,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ❌ NO RESULTS STATE (after search)
   Widget _emptyState() {
     return ListView(
       padding: const EdgeInsets.all(16),
