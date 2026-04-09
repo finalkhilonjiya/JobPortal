@@ -18,45 +18,11 @@ class SearchService {
         },
       );
 
-      final jobs = List<Map<String, dynamic>>.from(response);
+      final list = List<Map<String, dynamic>>.from(response);
 
-      if (jobs.isEmpty) return [];
-
-      final companyIds = jobs
-          .map((e) => e['company_id'])
-          .where((e) => e != null)
-          .toSet()
+      return list
+          .map((e) => Map<String, dynamic>.from(e['job']))
           .toList();
-
-      if (companyIds.isEmpty) return jobs;
-
-      final companies = await _db
-          .from('companies')
-          .select('''
-            id,
-            name,
-            logo_url,
-            is_verified,
-            business_types_master (
-              id,
-              type_name,
-              logo_url
-            )
-          ''')
-          .inFilter('id', companyIds);
-
-      final companyMap = {
-        for (var c in companies) c['id']: c,
-      };
-
-      for (var job in jobs) {
-        final companyId = job['company_id'];
-        if (companyMap.containsKey(companyId)) {
-          job['companies'] = companyMap[companyId];
-        }
-      }
-
-      return jobs;
     } catch (e) {
       return [];
     }
