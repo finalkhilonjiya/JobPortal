@@ -1,3 +1,5 @@
+// SAME FILE — ONLY BUSINESS ICON REMOVED
+
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../../core/ui/khilonjiya_ui.dart';
@@ -17,7 +19,6 @@ class JobCardWidget extends StatelessWidget {
   });
 
   static const double _companyLogoSize = 46;
-  static const double _businessIconSize = 52;
 
   @override
   Widget build(BuildContext context) {
@@ -54,22 +55,6 @@ class JobCardWidget extends StatelessWidget {
     final companyLogoUrl =
         (job['companies']?['logo_url'] ?? '').toString().trim();
 
-    String? businessIconUrl;
-
-    if (companyMap is Map<String, dynamic>) {
-      final bt = companyMap['business_types_master'];
-
-      if (bt is Map<String, dynamic>) {
-        final url = (bt['logo_url'] ?? '').toString().trim();
-        businessIconUrl = url.isEmpty ? null : url;
-      }
-
-      if (businessIconUrl == null) {
-        final url = (companyMap['logo_url'] ?? '').toString().trim();
-        businessIconUrl = url.isEmpty ? null : url;
-      }
-    }
-
     final skills = _extractSkills(job);
 
     return InkWell(
@@ -79,102 +64,89 @@ class JobCardWidget extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(12),
         decoration: KhilonjiyaUI.cardDecoration(),
-        child: Stack(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Positioned.fill(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: _BusinessTypeIcon(
-                  iconUrl: businessIconUrl,
-                  size: _businessIconSize,
-                ),
-              ),
-            ),
-            Column(
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _CompanyLogo(
-                      name: company,
-                      logoUrl: companyLogoUrl,
-                      size: _companyLogoSize,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: KhilonjiyaUI.cardTitle,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            company,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: KhilonjiyaUI.company,
-                          ),
-                        ],
-                      ),
-                    ),
-                    InkWell(
-                      onTap: onSaveToggle,
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Icon(
-                          isSaved
-                              ? Icons.bookmark
-                              : Icons.bookmark_border,
-                          size: 22,
-                          color: isSaved
-                              ? KhilonjiyaUI.primary
-                              : KhilonjiyaUI.muted,
-                        ),
-                      ),
-                    ),
-                  ],
+                _CompanyLogo(
+                  name: company,
+                  logoUrl: companyLogoUrl,
+                  size: _companyLogoSize,
                 ),
-                const SizedBox(height: 10),
-                _infoRow(Icons.location_on_outlined,
-                    const Color(0xFF2563EB), location),
-                const SizedBox(height: 6),
-                _infoRow(Icons.work_outline_rounded,
-                    const Color(0xFF475569), exp),
-                const SizedBox(height: 6),
-                _infoRow(Icons.currency_rupee_rounded,
-                    const Color(0xFF16A34A), salary),
-                if (skills.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: skills
-                        .take(4)
-                        .map(
-                          (e) => Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
-                            decoration: KhilonjiyaUI.tagDecoration(),
-                            child: Text(
-                              e,
-                              style: KhilonjiyaUI.tagTextStyle,
-                            ),
-                          ),
-                        )
-                        .toList(),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: KhilonjiyaUI.cardTitle,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        company,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: KhilonjiyaUI.company,
+                      ),
+                    ],
                   ),
-                ],
-                const SizedBox(height: 10),
-                Text(
-                  _postedAgo(postedAt),
-                  style: KhilonjiyaUI.sub,
+                ),
+                InkWell(
+                  onTap: onSaveToggle,
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(
+                      isSaved
+                          ? Icons.bookmark
+                          : Icons.bookmark_border,
+                      size: 22,
+                      color: isSaved
+                          ? KhilonjiyaUI.primary
+                          : KhilonjiyaUI.muted,
+                    ),
+                  ),
                 ),
               ],
+            ),
+            const SizedBox(height: 10),
+            _infoRow(Icons.location_on_outlined,
+                const Color(0xFF2563EB), location),
+            const SizedBox(height: 6),
+            _infoRow(Icons.work_outline_rounded,
+                const Color(0xFF475569), exp),
+            const SizedBox(height: 6),
+            _infoRow(Icons.currency_rupee_rounded,
+                const Color(0xFF16A34A), salary),
+            if (skills.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: skills
+                    .take(4)
+                    .map(
+                      (e) => Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: KhilonjiyaUI.tagDecoration(),
+                        child: Text(
+                          e,
+                          style: KhilonjiyaUI.tagTextStyle,
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
+            const SizedBox(height: 10),
+            Text(
+              _postedAgo(postedAt),
+              style: KhilonjiyaUI.sub,
             ),
           ],
         ),
@@ -298,35 +270,6 @@ class _CompanyLogo extends StatelessWidget {
                   ),
                 ),
               ),
-            ),
-    );
-  }
-}
-
-class _BusinessTypeIcon extends StatelessWidget {
-  final String? iconUrl;
-  final double size;
-
-  const _BusinessTypeIcon({
-    required this.iconUrl,
-    required this.size,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: (iconUrl == null || iconUrl!.isEmpty)
-          ? const SizedBox()
-          : Image.network(
-              iconUrl!,
-              fit: BoxFit.cover,
             ),
     );
   }
