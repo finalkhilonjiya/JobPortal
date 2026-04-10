@@ -1,3 +1,5 @@
+// File: android/app/build.gradle
+
 plugins {
     id "com.android.application"
     id "org.jetbrains.kotlin.android"
@@ -20,6 +22,16 @@ android {
     namespace "com.khilonjiya.marketplace"
     compileSdk 36
     ndkVersion "28.2.13676358"
+
+    // ✅ ADD THIS (SIGNING CONFIG)
+    signingConfigs {
+        release {
+            storeFile file(System.getenv("CM_KEYSTORE_PATH"))
+            storePassword System.getenv("CM_KEYSTORE_PASSWORD")
+            keyAlias System.getenv("CM_KEY_ALIAS")
+            keyPassword System.getenv("CM_KEY_PASSWORD")
+        }
+    }
 
     defaultConfig {
         applicationId "com.khilonjiya.marketplace"
@@ -47,7 +59,10 @@ android {
     }
 
     buildTypes {
+
+        // ✅ FIXED RELEASE
         release {
+            signingConfig signingConfigs.release
             minifyEnabled true
             shrinkResources true
             debuggable false
