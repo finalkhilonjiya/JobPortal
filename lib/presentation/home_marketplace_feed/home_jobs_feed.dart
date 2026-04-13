@@ -10,6 +10,7 @@ import '../../core/ui/khilonjiya_ui.dart';
 import '../../routes/app_routes.dart';
 import '../../services/job_seeker_home_service.dart';
 import 'package:geolocator/geolocator.dart';
+import '../common/widgets/cards/job_card_widget.dart';
 
 import '../common/widgets/pages/job_details_page.dart';
 
