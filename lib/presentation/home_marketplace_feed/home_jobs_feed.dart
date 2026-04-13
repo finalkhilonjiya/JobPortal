@@ -129,11 +129,18 @@ Timer? _searchHintTimer;
   ];
 
   @override
-  void initState() {
-    super.initState();
-    _initialize();
-  _mainScrollController.addListener(_onScroll);
-  }
+void initState() {
+  super.initState();
+
+  _mainScrollController.addListener(() {
+    if (_mainScrollController.position.pixels >=
+        _mainScrollController.position.maxScrollExtent - 200) {
+      _loadMoreRecommendedJobs();
+    }
+  });
+
+  _initialize();
+}
 
   @override
   void dispose() {
@@ -921,7 +928,7 @@ if (_sliders.isNotEmpty) ...[
           const SizedBox(height: 18),
 
           SectionHeader(
-            title: "Top companies",
+  title: "Top Employers",
             ctaText: "View all",
             onTap: _openTopCompaniesPage,
           ),
@@ -987,8 +994,6 @@ const SizedBox(height: 18),
 
 SectionHeader(
   title: "Recommended jobs",
-  ctaText: "",
-  onTap: () {},
 ),
 
 const SizedBox(height: 10),
