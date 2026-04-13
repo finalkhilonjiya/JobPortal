@@ -1018,8 +1018,21 @@ const SizedBox(height: 10),
 ListView.builder(
   shrinkWrap: true,
   physics: const NeverScrollableScrollPhysics(),
-  itemCount: _recommendedJobs.length,
+  itemCount: _recommendedJobs.length + 1,
   itemBuilder: (_, i) {
+
+    // ✅ ADD THIS PART HERE (TOP OF builder)
+    if (i == _recommendedJobs.length) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Center(
+          child: _loadingMoreRecommended
+              ? const CircularProgressIndicator()
+              : const SizedBox(),
+        ),
+      );
+    }
+
     final job = _recommendedJobs[i];
     final jobId = job['id']?.toString() ?? '';
 
@@ -1034,7 +1047,6 @@ ListView.builder(
     );
   },
 ),
-
       ],
     ),
   ),
@@ -1046,9 +1058,13 @@ ListView.builder(
   // ------------------------------------------------------------
 
 Future<void> _loadMoreRecommendedJobs() async {
+  if (_loadingMoreRecommended || !_hasMoreRecommended) return;
+
+  _loadingMoreRecommended = true;
+
   try {
     final more = await _homeService.getRecommendedJobs(
-      offset: _recommendedJobs.length,
+      offset: _recommendedOffset,
       limit: 20,
     );
 
@@ -1057,12 +1073,21 @@ Future<void> _loadMoreRecommendedJobs() async {
     setState(() {
       if (more.isEmpty) {
         // 🔁 restart from beginning
+        _recommendedOffset = 0;
         _recommendedJobs.clear();
+        _hasMoreRecommended = true;
       } else {
         _recommendedJobs.addAll(more);
+        _recommendedOffset += more.length;
+
+        if (more.length < 20) {
+          _hasMoreRecommended = false;
+        }
       }
     });
   } catch (_) {}
+
+  _loadingMoreRecommended = false;
 }
   @override
   Widget build(BuildContext context) {
