@@ -754,7 +754,7 @@ if (_sliders.isNotEmpty) ...[
 
   RepaintBoundary(
     child: SizedBox(
-      height: 150,
+      height: 190,
       child: PageView.builder(
         controller: _sliderController,
         itemCount: _sliders.length,
