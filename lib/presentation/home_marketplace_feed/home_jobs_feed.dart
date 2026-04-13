@@ -58,6 +58,11 @@ class _HomeJobsFeedState extends State<HomeJobsFeed> {
 
   bool _isCheckingAuth = false;
   bool _isDisposed = false;
+  final ScrollController _mainScrollController = ScrollController();
+
+bool _loadingMoreRecommended = false;
+bool _hasMoreRecommended = true;
+int _recommendedOffset = 0;
 
   // ------------------------------------------------------------
   // HOME SUMMARY
@@ -127,6 +132,7 @@ Timer? _searchHintTimer;
   void initState() {
     super.initState();
     _initialize();
+  _mainScrollController.addListener(_onScroll);
   }
 
   @override
@@ -141,6 +147,7 @@ _notificationChannel?.unsubscribe();
  _sliderIndex.dispose();
  _searchHintIndex.dispose();
 _notificationCount.dispose();
+_mainScrollController.dispose();
 
     super.dispose();
   }
@@ -273,6 +280,15 @@ void _applyHomeData(Map<String, dynamic> data) {
   });
 }
 
+
+ void _onScroll() {
+  if (_mainScrollController.position.pixels >
+          _mainScrollController.position.maxScrollExtent - 300 &&
+      !_loadingMoreRecommended &&
+      _hasMoreRecommended) {
+    _loadMoreRecommended();
+  }
+}
 void _listenToNotificationChanges() {
   final user = _supabase.auth.currentUser;
   if (user == null) return;
@@ -392,9 +408,11 @@ void _listenToNotificationChanges() {
             data['nearby_jobs'] ?? []);
 
     _recommendedJobs =
-        _premiumJobs.isNotEmpty
-            ? _premiumJobs
-            : _latestJobs;
+    List<Map<String, dynamic>>.from(
+        data['recommended_jobs'] ?? []);
+        
+_recommendedOffset = _recommendedJobs.length;
+_hasMoreRecommended = true;
 
     // --------------------------------------------------
     // TOP COMPANIES (RPC DATA)
@@ -738,7 +756,8 @@ Widget _fastImage(String url) {
   child: RefreshIndicator(
     onRefresh: _refreshHome,
     child: ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+  controller: _mainScrollController,
+  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       cacheExtent: 1200,
       addAutomaticKeepAlives: true,
       addRepaintBoundaries: true,
@@ -847,31 +866,7 @@ if (_sliders.isNotEmpty) ...[
           ),
           const SizedBox(height: 18),
 
-          SectionHeader(
-            title: "Recommended jobs",
-            ctaText: "View all",
-            onTap: _openRecommendedJobsPage,
-          ),
-          RepaintBoundary(
-  child: SizedBox(
-    height: 170,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: jobsForRecommendedHorizontal.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemBuilder: (_, i) {
-                final job = jobsForRecommendedHorizontal[i];
-
-                return JobCardHorizontal(
-                  job: job,
-                  onTap: () => _openJobDetails(job),
-                );
-              },
-            ),
-          ),
-        ),
-
-          const SizedBox(height: 18),
+          
 
           SectionHeader(
             title: "Latest jobs",
@@ -987,7 +982,36 @@ else
 
 const SizedBox(height: 10),
 
+// 🔥 RECOMMENDED JOBS (VERTICAL)
+const SizedBox(height: 18),
 
+SectionHeader(
+  title: "Recommended jobs",
+  ctaText: "",
+  onTap: () {},
+),
+
+const SizedBox(height: 10),
+
+ListView.builder(
+  shrinkWrap: true,
+  physics: const NeverScrollableScrollPhysics(),
+  itemCount: _recommendedJobs.length,
+  itemBuilder: (_, i) {
+    final job = _recommendedJobs[i];
+    final jobId = job['id']?.toString() ?? '';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: JobCardWidget(
+        job: job,
+        isSaved: _savedJobIds.contains(jobId),
+        onSaveToggle: () => _toggleSaveJob(jobId),
+        onTap: () => _openJobDetails(job),
+      ),
+    );
+  },
+),
 
       ],
     ),
@@ -998,6 +1022,26 @@ const SizedBox(height: 10),
   // ------------------------------------------------------------
   // BUILD
   // ------------------------------------------------------------
+
+Future<void> _loadMoreRecommendedJobs() async {
+  try {
+    final more = await _homeService.getRecommendedJobs(
+      offset: _recommendedJobs.length,
+      limit: 20,
+    );
+
+    if (_isDisposed) return;
+
+    setState(() {
+      if (more.isEmpty) {
+        // 🔁 restart from beginning
+        _recommendedJobs.clear();
+      } else {
+        _recommendedJobs.addAll(more);
+      }
+    });
+  } catch (_) {}
+}
   @override
   Widget build(BuildContext context) {
     
