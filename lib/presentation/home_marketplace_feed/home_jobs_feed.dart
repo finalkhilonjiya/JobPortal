@@ -883,7 +883,7 @@ if (_sliders.isNotEmpty) ...[
           ),
           RepaintBoundary(
   child: SizedBox(
-    height: 170,
+    height: 260,
     child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: jobsForLatestHorizontal.length,
@@ -891,10 +891,16 @@ if (_sliders.isNotEmpty) ...[
               itemBuilder: (_, i) {
                 final job = jobsForLatestHorizontal[i];
 
-                return JobCardHorizontal(
-                  job: job,
-                  onTap: () => _openJobDetails(job),
-                );
+                return SizedBox(
+  width: 300,
+  child: JobCardWidget(
+    job: job,
+    isSaved: _savedJobIds.contains(job['id'].toString()),
+    onSaveToggle: () =>
+        _toggleSaveJob(job['id'].toString()),
+    onTap: () => _openJobDetails(job),
+  ),
+);
               },
             ),
           ),
@@ -909,7 +915,7 @@ if (_sliders.isNotEmpty) ...[
           ),
           RepaintBoundary(
   child: SizedBox(
-    height: 170,
+    height: 260,
     child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: jobsForNearbyHorizontal.length,
@@ -917,10 +923,16 @@ if (_sliders.isNotEmpty) ...[
               itemBuilder: (_, i) {
                 final job = jobsForNearbyHorizontal[i];
 
-                return JobCardHorizontal(
-                  job: job,
-                  onTap: () => _openJobDetails(job),
-                );
+                return SizedBox(
+  width: 300,
+  child: JobCardWidget(
+    job: job,
+    isSaved: _savedJobIds.contains(job['id'].toString()),
+    onSaveToggle: () =>
+        _toggleSaveJob(job['id'].toString()),
+    onTap: () => _openJobDetails(job),
+  ),
+);
               },
             ),
           ),
