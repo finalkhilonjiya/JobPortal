@@ -112,10 +112,10 @@ class _ConstructionServicesHomePageState
               controller: _scrollController,
               child: Column(
                 children: [
-                  _buildSliderSection(),
                   _buildWelcomeBanner(),
-                  _buildServicesGrid(context),
-                  _buildFeaturesSection(),
+_buildServicesGrid(context),
+_buildSliderSection(),   // 👈 moved here
+_buildFeaturesSection(),
                   if (_loadingMore)
                     Padding(
                       padding: EdgeInsets.symmetric(vertical: 4.h),
@@ -377,7 +377,7 @@ class _ConstructionServicesHomePageState
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildFeatureItem(Icons.star, '15+ Years\nExperience'),
+              _buildFeatureItem(Icons.star, '2+ Years\nExperience'),
               _buildFeatureItem(Icons.workspace_premium, 'Local\nExpertise'),
               _buildFeatureItem(Icons.verified, 'Quality\nMaterials'),
             ],
