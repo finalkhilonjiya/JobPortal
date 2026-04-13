@@ -883,7 +883,7 @@ if (_sliders.isNotEmpty) ...[
           ),
           RepaintBoundary(
   child: SizedBox(
-    height: 260,
+    height: 300,
     child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: jobsForLatestHorizontal.length,
@@ -891,9 +891,11 @@ if (_sliders.isNotEmpty) ...[
               itemBuilder: (_, i) {
                 final job = jobsForLatestHorizontal[i];
 
-                return SizedBox(
-  width: 300,
-  child: JobCardWidget(
+                return Padding(
+  padding: const EdgeInsets.only(bottom: 4),
+  child: SizedBox(
+    width: 300,
+    child: JobCardWidget(
     job: job,
     isSaved: _savedJobIds.contains(job['id'].toString()),
     onSaveToggle: () =>
@@ -915,7 +917,7 @@ if (_sliders.isNotEmpty) ...[
           ),
           RepaintBoundary(
   child: SizedBox(
-    height: 260,
+    height: 300,
     child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: jobsForNearbyHorizontal.length,
@@ -923,9 +925,11 @@ if (_sliders.isNotEmpty) ...[
               itemBuilder: (_, i) {
                 final job = jobsForNearbyHorizontal[i];
 
-                return SizedBox(
-  width: 300,
-  child: JobCardWidget(
+                return Padding(
+  padding: const EdgeInsets.only(bottom: 4),
+  child: SizedBox(
+    width: 300,
+    child: JobCardWidget(
     job: job,
     isSaved: _savedJobIds.contains(job['id'].toString()),
     onSaveToggle: () =>
