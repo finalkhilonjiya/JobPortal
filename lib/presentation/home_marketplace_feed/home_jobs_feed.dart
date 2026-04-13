@@ -746,6 +746,66 @@ Widget _fastImage(String url) {
 
         AIBannerCard(onTap: _openRecommendedJobsPage),
         const SizedBox(height: 14),
+        
+        // AUTO SLIDER SECTION
+// AUTO SLIDER SECTION
+if (_sliders.isNotEmpty) ...[
+  const SizedBox(height: 20),
+
+  RepaintBoundary(
+    child: SizedBox(
+      height: 150,
+      child: PageView.builder(
+        controller: _sliderController,
+        itemCount: _sliders.length,
+        onPageChanged: (index) {
+          _sliderIndex.value = index;
+        },
+        itemBuilder: (_, i) {
+          final imageUrl =
+              _sliders[i]['image_url']?.toString() ?? '';
+
+          return Container(
+            decoration:
+                KhilonjiyaUI.cardDecoration(radius: 18),
+            clipBehavior: Clip.antiAlias,
+            child: _fastImage(imageUrl),
+          );
+        },
+      ),
+    ),
+  ),
+
+  const SizedBox(height: 8),
+
+  ValueListenableBuilder<int>(
+    valueListenable: _sliderIndex,
+    builder: (_, current, __) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(
+          _sliders.length,
+          (i) => AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            margin:
+                const EdgeInsets.symmetric(horizontal: 4),
+            width: current == i ? 18 : 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: current == i
+                  ? KhilonjiyaUI.primary
+                  : KhilonjiyaUI.border,
+              borderRadius:
+                  BorderRadius.circular(999),
+            ),
+          ),
+        ),
+      );
+    },
+  ),
+
+  const SizedBox(height: 24),
+],
 
         ProfileAndSearchCards(
           profileName: _profileName,
@@ -927,65 +987,7 @@ else
 
 const SizedBox(height: 10),
 
-// AUTO SLIDER SECTION
-// AUTO SLIDER SECTION
-if (_sliders.isNotEmpty) ...[
-  const SizedBox(height: 20),
 
-  RepaintBoundary(
-    child: SizedBox(
-      height: 150,
-      child: PageView.builder(
-        controller: _sliderController,
-        itemCount: _sliders.length,
-        onPageChanged: (index) {
-          _sliderIndex.value = index;
-        },
-        itemBuilder: (_, i) {
-          final imageUrl =
-              _sliders[i]['image_url']?.toString() ?? '';
-
-          return Container(
-            decoration:
-                KhilonjiyaUI.cardDecoration(radius: 18),
-            clipBehavior: Clip.antiAlias,
-            child: _fastImage(imageUrl),
-          );
-        },
-      ),
-    ),
-  ),
-
-  const SizedBox(height: 8),
-
-  ValueListenableBuilder<int>(
-    valueListenable: _sliderIndex,
-    builder: (_, current, __) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(
-          _sliders.length,
-          (i) => AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            margin:
-                const EdgeInsets.symmetric(horizontal: 4),
-            width: current == i ? 18 : 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: current == i
-                  ? KhilonjiyaUI.primary
-                  : KhilonjiyaUI.border,
-              borderRadius:
-                  BorderRadius.circular(999),
-            ),
-          ),
-        ),
-      );
-    },
-  ),
-
-  const SizedBox(height: 24),
-],
 
       ],
     ),
