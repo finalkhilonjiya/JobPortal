@@ -1262,17 +1262,8 @@ class _HomeTopBar extends StatelessWidget {
 
           const SizedBox(width: 10),
 
-          // --------------------------------------------------
-          // AI ICON
-          // --------------------------------------------------
-          const _AITopIcon(),
-
-          const SizedBox(width: 8),
-
-          // --------------------------------------------------
-          // NOTIFICATIONS (ULTRA OPTIMIZED)
-          // --------------------------------------------------
-          InkWell(
+// NOTIFICATIONS
+InkWell(
             onTap:
                 state._openNotificationsPage,
             borderRadius:
