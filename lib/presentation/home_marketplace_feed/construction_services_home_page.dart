@@ -211,15 +211,16 @@ _buildFeaturesSection(),
         ],
       ),
       child: AspectRatio(
-        aspectRatio: 1280 / 636,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Image.asset(
-            'assets/images/constructionbanner.jpg',
-            fit: BoxFit.cover,
-          ),
-        ),
-      ),
+  aspectRatio: 1280 / 636, // keep this (2:1 banner)
+  child: ClipRRect(
+    borderRadius: BorderRadius.circular(20),
+    child: Image.asset(
+      'assets/images/constructionbanner.jpg',
+      fit: BoxFit.cover, // ✅ THIS is what makes it fully fill
+      width: double.infinity,
+    ),
+  ),
+),
     );
   }
 
