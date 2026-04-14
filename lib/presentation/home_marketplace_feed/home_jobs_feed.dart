@@ -834,18 +834,53 @@ if (_sliders.isNotEmpty) ...[
   const SizedBox(height: 24),
 ],
 
-        ProfileAndSearchCards(
-          profileName: _profileName,
-          profileCompletion: _profileCompletion,
-          lastUpdatedText: _lastUpdatedText,
-          missingDetails: _missingDetails,
-          jobsPostedToday: _jobsPostedToday,
-          onProfileTap: _openProfileEditPage,
-          onMissingDetailsTap: _openProfileEditPage,
-          onProfileViewAllTap: _openProfileEditPage,
-          onJobsPostedTodayViewAllTap:
-              _openJobsPostedTodayPage,
+        GestureDetector(
+  onTap: _openProfileEditPage,
+  child: Container(
+    padding: const EdgeInsets.all(16),
+    decoration: KhilonjiyaUI.cardDecoration(radius: 16),
+    child: Row(
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE0F2FE),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.person,
+            color: KhilonjiyaUI.primary,
+          ),
         ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Your Profile",
+                style: KhilonjiyaUI.body.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "$_profileCompletion% complete",
+                style: KhilonjiyaUI.sub,
+              ),
+            ],
+          ),
+        ),
+        const Icon(
+          Icons.arrow_forward_ios,
+          size: 16,
+          color: Color(0xFF94A3B8),
+        ),
+      ],
+    ),
+  ),
+),
 
         const SizedBox(height: 14),
 
