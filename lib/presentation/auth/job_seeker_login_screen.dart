@@ -54,7 +54,6 @@ _mobileController.addListener(_validateMobile);
 
 // START SMS AUTO READ
 listenForCode();
-_printAppHash();
 }
 
 @override
@@ -91,18 +90,7 @@ void codeUpdated() {
   }
 }
 
-Future<void> _printAppHash() async {
-  final signature = await SmsAutoFill().getAppSignature;
 
-  if (!mounted) return;
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text("APP HASH: $signature"),
-      duration: const Duration(seconds: 10),
-    ),
-  );
-}
 
 void _validateMobile() {
 final value = _mobileController.text.trim();
