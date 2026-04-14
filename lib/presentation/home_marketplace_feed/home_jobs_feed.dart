@@ -883,7 +883,7 @@ if (_sliders.isNotEmpty) ...[
           ),
           RepaintBoundary(
   child: SizedBox(
-    height: 300,
+    height: 160,
     child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: jobsForLatestHorizontal.length,
@@ -918,7 +918,7 @@ if (_sliders.isNotEmpty) ...[
           ),
           RepaintBoundary(
   child: SizedBox(
-    height: 300,
+    height: 160,
     child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: jobsForNearbyHorizontal.length,
