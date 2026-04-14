@@ -294,7 +294,7 @@ void _applyHomeData(Map<String, dynamic> data) {
           _mainScrollController.position.maxScrollExtent - 300 &&
       !_loadingMoreRecommended &&
       _hasMoreRecommended) {
-    _loadMoreRecommended();
+    _loadMoreRecommendedJobs();
   }
 }
 void _listenToNotificationChanges() {
@@ -896,11 +896,12 @@ if (_sliders.isNotEmpty) ...[
   child: SizedBox(
     width: 300,
     child: JobCardWidget(
-    job: job,
-    isSaved: _savedJobIds.contains(job['id'].toString()),
-    onSaveToggle: () =>
-        _toggleSaveJob(job['id'].toString()),
-    onTap: () => _openJobDetails(job),
+      job: job,
+      isSaved: _savedJobIds.contains(job['id'].toString()),
+      onSaveToggle: () =>
+          _toggleSaveJob(job['id'].toString()),
+      onTap: () => _openJobDetails(job),
+    ),
   ),
 );
               },
@@ -930,11 +931,12 @@ if (_sliders.isNotEmpty) ...[
   child: SizedBox(
     width: 300,
     child: JobCardWidget(
-    job: job,
-    isSaved: _savedJobIds.contains(job['id'].toString()),
-    onSaveToggle: () =>
-        _toggleSaveJob(job['id'].toString()),
-    onTap: () => _openJobDetails(job),
+      job: job,
+      isSaved: _savedJobIds.contains(job['id'].toString()),
+      onSaveToggle: () =>
+          _toggleSaveJob(job['id'].toString()),
+      onTap: () => _openJobDetails(job),
+    ),
   ),
 );
               },
@@ -1011,8 +1013,8 @@ const SizedBox(height: 18),
 
 SectionHeader(
   title: "Recommended jobs",
+  ctaText: "",
 ),
-
 const SizedBox(height: 10),
 
 ListView.builder(
