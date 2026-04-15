@@ -21,28 +21,15 @@ package="com.khilonjiya.marketplace">
 <!-- Camera -->
 <uses-permission android:name="android.permission.CAMERA" />
 
-<!-- OTP SMS Autofill -->
-<uses-permission android:name="android.permission.RECEIVE_SMS" />
-<uses-permission android:name="android.permission.READ_SMS" />
 
-<!-- Android 12 and below -->
-<uses-permission
-    android:name="android.permission.READ_EXTERNAL_STORAGE"
-    android:maxSdkVersion="32" />
 
-<!-- Android 10 and below -->
-<uses-permission
-    android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-    android:maxSdkVersion="28" />
 
-<!-- Android 13+ -->
-<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
 <!-- Other -->
 <uses-permission android:name="android.permission.WAKE_LOCK" />
 <uses-permission android:name="android.permission.VIBRATE" />
 <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-<uses-permission android:name="android.permission.CALL_PHONE" />
+
 
 <application
     android:label="Khilonjiya"
