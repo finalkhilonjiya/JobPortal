@@ -838,44 +838,86 @@ if (_sliders.isNotEmpty) ...[
   onTap: _openProfileEditPage,
   child: Container(
     padding: const EdgeInsets.all(16),
-    decoration: KhilonjiyaUI.cardDecoration(radius: 16),
+    decoration: BoxDecoration(
+      color: const Color(0xFFEFF6FF), // ✅ blue tint
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: const Color(0xFFDBEAFE)),
+    ),
     child: Row(
       children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: const Color(0xFFE0F2FE),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(
-            Icons.person,
-            color: KhilonjiyaUI.primary,
+        // ================= CIRCULAR PROGRESS =================
+        SizedBox(
+          width: 52,
+          height: 52,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              TweenAnimationBuilder<double>(
+                tween: Tween(
+                  begin: 0,
+                  end: (_profileCompletion.clamp(0, 100)) / 100,
+                ),
+                duration: const Duration(milliseconds: 800),
+                builder: (_, value, __) {
+                  return CircularProgressIndicator(
+                    value: value,
+                    strokeWidth: 5,
+                    backgroundColor: const Color(0xFFDBEAFE),
+                    valueColor: const AlwaysStoppedAnimation(
+                      Color(0xFF2563EB),
+                    ),
+                  );
+                },
+              ),
+              Text(
+                "${_profileCompletion}%",
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1E3A8A),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(width: 12),
+
+        const SizedBox(width: 14),
+
+        // ================= TEXT =================
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Your Profile",
-                style: KhilonjiyaUI.body.copyWith(
-                  fontWeight: FontWeight.w700,
+                (_profileName.trim().isNotEmpty &&
+                        _profileName != "Your Profile")
+                    ? "${_profileName.split(' ').first}'s Profile"
+                    : "Your Profile",
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                "$_profileCompletion% complete",
-                style: KhilonjiyaUI.sub,
+              const Text(
+                "Update profile",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF475569),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                "Complete profile for better job suggestions",
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF64748B),
+                ),
               ),
             ],
           ),
-        ),
-        const Icon(
-          Icons.arrow_forward_ios,
-          size: 16,
-          color: Color(0xFF94A3B8),
         ),
       ],
     ),
