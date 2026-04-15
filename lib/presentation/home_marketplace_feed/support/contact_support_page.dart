@@ -23,7 +23,7 @@ class ContactSupportPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Forced email
-    final email = "support@khilonjiya.com";
+    final email = "khilonjiyaindiaprivatelimited@gmail.com";
     final phone = AppLinks.supportPhone.trim();
     final whatsapp = AppLinks.supportWhatsapp.trim();
     final supportUrl = AppLinks.contactSupportUrl.trim();
