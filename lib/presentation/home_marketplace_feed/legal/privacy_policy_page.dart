@@ -7,7 +7,7 @@ class PrivacyPolicyPage extends StatelessWidget {
   const PrivacyPolicyPage({Key? key}) : super(key: key);
 
   static const String _lastUpdated = "24 Feb 2026";
-  static const String _supportEmail = "support@khilonjiya.com";
+  static const String _supportEmail = "khilonjiyaindiaprivatelimited@gmail.com";
 
   @override
   Widget build(BuildContext context) {
