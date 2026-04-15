@@ -847,8 +847,8 @@ if (_sliders.isNotEmpty) ...[
       children: [
         // ================= CIRCULAR PROGRESS =================
         SizedBox(
-          width: 52,
-          height: 52,
+          width: 58,
+          height: 58,
           child: Stack(
             alignment: Alignment.center,
             children: [
@@ -861,7 +861,7 @@ if (_sliders.isNotEmpty) ...[
                 builder: (_, value, __) {
                   return CircularProgressIndicator(
                     value: value,
-                    strokeWidth: 5,
+                    strokeWidth: 4,
                     backgroundColor: const Color(0xFFDBEAFE),
                     valueColor: const AlwaysStoppedAnimation(
                       Color(0xFF2563EB),
@@ -900,19 +900,11 @@ if (_sliders.isNotEmpty) ...[
                 ),
               ),
               const SizedBox(height: 4),
+              
               const Text(
-                "Update profile",
+                "Complete your profile for better job suggestions",
                 style: TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF475569),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 2),
-              const Text(
-                "Complete profile for better job suggestions",
-                style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 14,
                   color: Color(0xFF64748B),
                 ),
               ),
