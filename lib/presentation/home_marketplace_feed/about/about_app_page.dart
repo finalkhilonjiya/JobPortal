@@ -80,8 +80,8 @@ class _AboutAppPageState extends State<AboutAppPage> {
           _tile(
             icon: Icons.mail_outline,
             title: "Support Email",
-            subtitle: "support@khilonjiya.com",
-            onTap: () => _openUrl("mailto:support@khilonjiya.com"),
+            subtitle: "khilonjiyaindiaprivatelimited@gmail.com",
+            onTap: () => _openUrl("mailto: khilonjiyaindiaprivatelimited@gmail.com"),
           ),
 
           const SizedBox(height: 12),
