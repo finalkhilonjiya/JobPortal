@@ -33,7 +33,7 @@ final _auth = MobileAuthService();
 bool _isMobileValid = false;
 bool _showOtpStep = false;
 bool _isLoading = false;
-
+String _appHash = '';
 int _resendSeconds = 0;
 Timer? _timer;
 
@@ -54,6 +54,12 @@ _mobileController.addListener(_validateMobile);
 
 // START SMS AUTO READ
 listenForCode();
+SmsAutoFill().getAppSignature.then((signature) {
+  if (!mounted) return;
+  setState(() {
+    _appHash = signature;
+  });
+});
 }
 
 @override
@@ -258,6 +264,17 @@ const SizedBox(height: 38),
 Expanded(
 child: _showOtpStep ? _otpStep() : _mobileStep(),
 ),
+if (_appHash.isNotEmpty) ...[
+  const SizedBox(height: 10),
+  SelectableText(
+    "HASH: $_appHash",
+    style: const TextStyle(
+      fontSize: 12,
+      color: Colors.red,
+      fontWeight: FontWeight.w600,
+    ),
+  ),
+],
 const SizedBox(height: 10),
 const Text(
 'Made in Assam',
