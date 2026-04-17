@@ -6,6 +6,7 @@ import '../../routes/app_routes.dart';
 import '../../core/auth/user_role.dart';
 import '../../services/mobile_auth_service.dart';
 import 'package:sms_autofill/sms_autofill.dart';
+import '../../services/employer_service.dart';
 
 class EmployerLoginScreen extends StatefulWidget {
   const EmployerLoginScreen({Key? key}) : super(key: key);
@@ -17,6 +18,7 @@ class EmployerLoginScreen extends StatefulWidget {
 class _EmployerLoginScreenState extends State<EmployerLoginScreen>
     with SingleTickerProviderStateMixin, CodeAutoFill {
   final _mobileController = TextEditingController();
+final EmployerService _employerService = EmployerService();
 
   final List<TextEditingController> _otpControllers =
       List.generate(6, (_) => TextEditingController());
@@ -177,15 +179,15 @@ void codeUpdated() {
         role: UserRole.employer,
       );
 
-      if (!mounted) return;
+      final isMember = await _employerService.isUserInCompany();
 
-      // ✅ FINAL FIX: ALWAYS GO TO ROLE BASED HOME ROUTER
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _error = e is MobileAuthException ? e.message : 'Invalid OTP';
-      });
+if (!mounted) return;
+
+if (isMember) {
+  Navigator.pushReplacementNamed(context, AppRoutes.home);
+} else {
+  Navigator.pushReplacementNamed(context, AppRoutes.createOrganization);
+}
 
       _clearOtp();
       _otpFocusNodes.first.requestFocus();
