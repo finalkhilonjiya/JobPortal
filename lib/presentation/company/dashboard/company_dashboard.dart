@@ -815,53 +815,173 @@ Widget _actionItem({
   // RECENT APPLICANTS (REAL)
   // ------------------------------------------------------------
   Widget _buildRecentApplicantsCard() {
-    if (_recentApplicants.isEmpty) {
-      return _softEmptyCard(
-        icon: Icons.people_outline,
-        title: "No applicants yet",
-        subtitle: "When candidates apply, they will appear here.",
-      );
-    }
+  if (_recentApplicants.isEmpty) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 12),
+      child: Text(
+        "No applicants yet",
+        style: TextStyle(
+          fontSize: 13,
+          color: _muted,
+        ),
+      ),
+    );
+  }
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: _cardDeco(radius: _r20),
-      child: Column(
+  return Column(
+    children: List.generate(_recentApplicants.length, (i) {
+      final item = _recentApplicants[i];
+
+      final listing = (item['job_listings'] ?? {}) as Map;
+      final app = (item['job_applications'] ?? {}) as Map;
+
+      final jobId = (listing['id'] ?? '').toString();
+      final name = (app['name'] ?? 'Candidate').toString();
+      final jobTitle = (listing['job_title'] ?? 'Job').toString();
+      final status = (item['application_status'] ?? 'applied').toString();
+
+      return Column(
         children: [
-          for (int i = 0; i < _recentApplicants.length; i++) ...[
-            _recentApplicantTile(_recentApplicants[i]),
-            if (i != _recentApplicants.length - 1)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10),
-                child: Divider(height: 1, color: _border),
+          _applicantRow(
+            name: name,
+            jobTitle: jobTitle,
+            status: status,
+            onTap: () async {
+              await Navigator.pushNamed(
+                context,
+                AppRoutes.jobApplicants,
+                arguments: {
+                  'jobId': jobId,
+                  'companyId': _companyId,
+                },
+              );
+              await _loadDashboard(silent: true);
+            },
+          ),
+
+          if (i != _recentApplicants.length - 1)
+            const Divider(height: 18, color: _border),
+        ],
+      );
+    }),
+  );
+}
+
+Widget _applicantRow({
+  required String name,
+  required String jobTitle,
+  required String status,
+  required VoidCallback onTap,
+}) {
+  return InkWell(
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          // avatar
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              name.isNotEmpty ? name[0].toUpperCase() : "C",
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
               ),
-          ],
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, AppRoutes.employerJobs);
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _text,
-                backgroundColor: const Color(0xFFF8FAFC),
-                side: const BorderSide(color: _border),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+
+          const SizedBox(width: 10),
+
+          // text
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: _text,
+                  ),
                 ),
-              ),
-              child: const Text(
-                "View All",
-                style: TextStyle(fontWeight: FontWeight.w900),
-              ),
+                const SizedBox(height: 2),
+                Text(
+                  jobTitle,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: _muted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // status
+          Text(
+            _statusLabel(status),
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: _statusColor(status),
             ),
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
+
+
+
+String _statusLabel(String s) {
+  final v = s.toLowerCase();
+
+  if (v == 'shortlisted') return "Shortlisted";
+  if (v == 'interview_scheduled') return "Interview";
+  if (v == 'selected') return "Selected";
+  if (v == 'rejected') return "Rejected";
+
+  return "Applied";
+}
+
+Color _statusColor(String s) {
+  final v = s.toLowerCase();
+
+  if (v == 'shortlisted') return Colors.green;
+  if (v == 'interview_scheduled') return Colors.orange;
+  if (v == 'selected') return Colors.green;
+  if (v == 'rejected') return Colors.red;
+
+  return const Color(0xFF64748B);
+}
+Widget _avatar(String name) {
+  final letter =
+      name.isNotEmpty ? name[0].toUpperCase() : "C";
+
+  return Container(
+    width: 36,
+    height: 36,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: const Color(0xFFF1F5F9),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Text(
+      letter,
+      style: const TextStyle(
+        fontWeight: FontWeight.w700,
+        fontSize: 13,
+      ),
+    ),
+  );
+}
 
   Widget _recentApplicantTile(Map<String, dynamic> row) {
     final listing = (row['job_listings'] ?? {}) as Map;
