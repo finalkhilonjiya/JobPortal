@@ -239,7 +239,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
                       _sectionHeader(title: "Primary Actions"),
                       const SizedBox(height: 10),
-                      _buildPrimaryActionsGrid(),
+                      _buildPrimaryActionsRow(),
 
                       const SizedBox(height: 18),
 
@@ -691,49 +691,83 @@ Widget _divider() {
   // ------------------------------------------------------------
   // PRIMARY ACTIONS
   // ------------------------------------------------------------
-  Widget _buildPrimaryActionsGrid() {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1.65,
+  Widget _buildPrimaryActionsRow() {
+  return SizedBox(
+    height: 72,
+    child: ListView(
+      scrollDirection: Axis.horizontal,
       children: [
-        _actionTile(
-          icon: Icons.add_circle_outline,
-          label: "Post a Job",
+        _actionItem(
+          icon: Icons.add,
+          label: "Post Job",
           onTap: () async {
             final res = await Navigator.pushNamed(context, AppRoutes.createJob);
             if (res == true) await _loadDashboard(silent: true);
           },
         ),
-        _actionTile(
+        _actionItem(
           icon: Icons.work_outline,
-          label: "Manage Jobs",
+          label: "Jobs",
           onTap: () {
             Navigator.pushNamed(context, AppRoutes.employerJobs);
           },
         ),
-        _actionTile(
+        _actionItem(
           icon: Icons.people_outline,
           label: "Applicants",
           onTap: () {
             Navigator.pushNamed(context, AppRoutes.employerJobs);
           },
         ),
-        _actionTile(
-          icon: Icons.notifications_none_outlined,
-          label: "Notifications",
+        _actionItem(
+          icon: Icons.notifications_none,
+          label: "Alerts",
           onTap: () async {
-            await Navigator.pushNamed(context, AppRoutes.employerNotifications);
+            await Navigator.pushNamed(
+                context, AppRoutes.employerNotifications);
             await _loadDashboard(silent: true);
           },
         ),
       ],
-    );
-  }
-
+    ),
+  );
+}
+Widget _actionItem({
+  required IconData icon,
+  required String label,
+  required VoidCallback onTap,
+}) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Container(
+      width: 90,
+      margin: const EdgeInsets.only(right: 12),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 20, color: _text),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: _muted,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
   Widget _actionTile({
     required IconData icon,
     required String label,
