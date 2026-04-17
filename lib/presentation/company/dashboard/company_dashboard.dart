@@ -67,7 +67,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   // ------------------------------------------------------------
   // LOAD DASHBOARD (ORG BASED)
   // ------------------------------------------------------------
-  Future<void> _loadDashboard({bool silent = false}) async {
+Future<void> _loadDashboard({bool silent = false}) async {
   if (!mounted) return;
 
   if (!silent) setState(() => _loading = true);
@@ -76,36 +76,35 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   try {
     final user = _requireUser();
 
-    // ✅ STEP 1: CHECK COMPANY MEMBERSHIP FIRST
     final member = await Supabase.instance.client
         .from('company_members')
         .select('company_id')
         .eq('user_id', user.id)
         .maybeSingle();
 
-    // ❗ NO COMPANY → SHOW CREATE ORG ONLY
     if (member == null) {
-      _needsOrganization = true;
-
-      _company = {};
-      _jobs = [];
-      _stats = {};
-      _recentApplicants = [];
-      _topJobs = [];
-      _todayInterviews = [];
-      _perf7d = {};
-      _unreadNotifications = 0;
-      _companyId = "";
-
+      if (!mounted) return;
+      setState(() {
+        _needsOrganization = true;
+        _company = {};
+        _jobs = [];
+        _stats = {};
+        _recentApplicants = [];
+        _topJobs = [];
+        _todayInterviews = [];
+        _perf7d = {};
+        _unreadNotifications = 0;
+        _companyId = "";
+        _loading = false;
+        _refreshing = false;
+      });
       return;
     }
 
-    // ✅ COMPANY EXISTS
     final companyId = member['company_id'].toString();
     _companyId = companyId;
     _needsOrganization = false;
 
-    // ✅ LOAD REAL DATA
     final company =
         await _service.fetchCompanyById(companyId: companyId);
 
@@ -119,27 +118,29 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       _service.fetchUnreadNotificationsCount(),
     ]);
 
-    _company = Map<String, dynamic>.from(company);
-    _jobs = List<Map<String, dynamic>>.from(results[0] as List);
-    _stats = Map<String, dynamic>.from(results[1] as Map);
-    _recentApplicants = List<Map<String, dynamic>>.from(results[2] as List);
-    _topJobs = List<Map<String, dynamic>>.from(results[3] as List);
-    _todayInterviews = List<Map<String, dynamic>>.from(results[4] as List);
-    _perf7d = Map<String, dynamic>.from(results[5] as Map);
-    _unreadNotifications = (results[6] as int);
+    if (!mounted) return;
 
+    setState(() {
+      _company = Map<String, dynamic>.from(company);
+      _jobs = List<Map<String, dynamic>>.from(results[0] as List);
+      _stats = Map<String, dynamic>.from(results[1] as Map);
+      _recentApplicants = List<Map<String, dynamic>>.from(results[2] as List);
+      _topJobs = List<Map<String, dynamic>>.from(results[3] as List);
+      _todayInterviews = List<Map<String, dynamic>>.from(results[4] as List);
+      _perf7d = Map<String, dynamic>.from(results[5] as Map);
+      _unreadNotifications = (results[6] as int);
+      _loading = false;
+      _refreshing = false;
+    });
   } catch (e) {
-    // fallback safe
-    _needsOrganization = true;
+    if (!mounted) return;
+    setState(() {
+      _needsOrganization = true;
+      _loading = false;
+      _refreshing = false;
+    });
   }
-
-  if (!mounted) return;
-  setState(() {
-    _loading = false;
-    _refreshing = false;
-  });
 }
-
   // ------------------------------------------------------------
   // LOGOUT
   // ------------------------------------------------------------
@@ -541,40 +542,40 @@ const SizedBox(height: 14),
   }
 
   Widget _orgAvatar() {
-    if (_orgLogo.trim().isNotEmpty) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(999),
-        child: Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: const Color(0xFFDBEAFE)),
-            color: const Color(0xFFEFF6FF),
-          ),
-          child: Image.network(
-            _orgLogo,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => const Icon(
-              Icons.apartment_rounded,
-              color: _primary,
-            ),
+  if (_orgLogo.trim().isNotEmpty) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: const Color(0xFFDBEAFE)),
+          color: const Color(0xFFEFF6FF),
+        ),
+        child: Image.network(
+          _orgLogo, // ✅ FIXED
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const Icon(
+            Icons.apartment_rounded,
+            color: _primary,
           ),
         ),
-      );
-    }
-
-    return Container(
-      width: 52,
-      height: 52,
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFDBEAFE)),
       ),
-      child: const Icon(Icons.apartment_rounded, color: _primary),
     );
   }
+
+  return Container(
+    width: 52,
+    height: 52,
+    decoration: BoxDecoration(
+      color: const Color(0xFFEFF6FF),
+      borderRadius: BorderRadius.circular(999),
+      border: Border.all(color: const Color(0xFFDBEAFE)),
+    ),
+    child: const Icon(Icons.apartment_rounded, color: _primary),
+  );
+}
 
   // ------------------------------------------------------------
   // SECTION HEADER
@@ -767,48 +768,7 @@ Widget _actionItem({
     ),
   );
 }
-  Widget _actionTile({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(_r20),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: _cardDeco(radius: _r20, shadow: false),
-        child: Row(
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFDBEAFE)),
-              ),
-              child: Icon(icon, color: _primary, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                label,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w900,
-                  color: _text,
-                ),
-              ),
-            ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8)),
-          ],
-        ),
-      ),
-    );
-  }
+  
 
   // ------------------------------------------------------------
   // RECENT APPLICANTS (REAL)
@@ -960,94 +920,7 @@ Color _statusColor(String s) {
 
   return const Color(0xFF64748B);
 }
-Widget _avatar(String name) {
-  final letter =
-      name.isNotEmpty ? name[0].toUpperCase() : "C";
 
-  return Container(
-    width: 36,
-    height: 36,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      color: const Color(0xFFF1F5F9),
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: Text(
-      letter,
-      style: const TextStyle(
-        fontWeight: FontWeight.w700,
-        fontSize: 13,
-      ),
-    ),
-  );
-}
-
-  Widget _recentApplicantTile(Map<String, dynamic> row) {
-    final listing = (row['job_listings'] ?? {}) as Map;
-    final app = (row['job_applications'] ?? {}) as Map;
-
-    final jobId = (listing['id'] ?? '').toString();
-    final status = (row['application_status'] ?? 'applied').toString();
-    final appliedAt = row['applied_at'];
-
-    final name = (app['name'] ?? 'Candidate').toString();
-    final jobTitle = (listing['job_title'] ?? 'Job').toString();
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: () async {
-        await Navigator.pushNamed(
-          context,
-          AppRoutes.jobApplicants,
-          arguments: {
-            'jobId': jobId,
-            'companyId': _companyId,
-          },
-        );
-        await _loadDashboard(silent: true);
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Row(
-          children: [
-            _avatarLetter(name),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      color: _text,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    "$jobTitle • ${_timeAgo(appliedAt)}",
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      color: _muted,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            _applicationStatusChip(status),
-            const SizedBox(width: 8),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8)),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _avatarLetter(String name) {
     final ch = name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : "C";
@@ -1318,199 +1191,7 @@ Widget _buildTopSlider() {
   );
 }
 
-  Widget _activeJobCard(Map<String, dynamic> job) {
-    final jobId = (job['id'] ?? '').toString();
-    final title = (job['job_title'] ?? 'Job').toString();
-    final status = (job['status'] ?? 'active').toString();
-
-    final district = (job['district'] ?? '').toString();
-    final jobType = (job['job_type'] ?? 'Full-time').toString();
-    final postedAt = job['created_at'];
-
-    final applicants = _toInt(job['applications_count']);
-    final views = _toInt(job['views_count']);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: _cardDeco(radius: _r20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                    color: _text,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              _jobStatusChip(status),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.location_on_outlined, size: 16, color: _muted),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  district.isEmpty ? "Assam" : district,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    color: _muted,
-                  ),
-                ),
-              ),
-              const Text(
-                " • ",
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                  color: _muted,
-                ),
-              ),
-              Text(
-                jobType,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                  color: _muted,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              const Icon(Icons.access_time, size: 16, color: _muted),
-              const SizedBox(width: 6),
-              Text(
-                postedAt == null ? "Recently posted" : _timeAgo(postedAt),
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                  color: _muted,
-                ),
-              ),
-              const Text(
-                " • ",
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                  color: _muted,
-                ),
-              ),
-              const Icon(Icons.people_outline, size: 16, color: _muted),
-              const SizedBox(width: 6),
-              Text(
-                "$applicants applicants",
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                  color: _muted,
-                ),
-              ),
-              const Text(
-                " • ",
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                  color: _muted,
-                ),
-              ),
-              const Icon(Icons.visibility_outlined, size: 16, color: _muted),
-              const SizedBox(width: 6),
-              Text(
-                "$views views",
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                  color: _muted,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    final res = await Navigator.pushNamed(
-                      context,
-                      AppRoutes.createJob,
-                      arguments: {
-                        'mode': 'edit',
-                        'jobId': jobId,
-                      },
-                    );
-
-                    if (res == true) await _loadDashboard(silent: true);
-                  },
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: const Text(
-                    "Edit",
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _text,
-                    backgroundColor: const Color(0xFFF8FAFC),
-                    side: const BorderSide(color: _border),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    await Navigator.pushNamed(
-                      context,
-                      AppRoutes.jobApplicants,
-                      arguments: {
-                        'jobId': jobId,
-                        'companyId': _companyId,
-                      },
-                    );
-                    await _loadDashboard(silent: true);
-                  },
-                  icon: const Icon(Icons.people_outline, size: 18),
-                  label: const Text(
-                    "Applicants",
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _primary,
-                    backgroundColor: const Color(0xFFEFF6FF),
-                    side: const BorderSide(color: Color(0xFFBFDBFE)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  
 
   Widget _jobStatusChip(String status) {
     final s = status.toLowerCase();
