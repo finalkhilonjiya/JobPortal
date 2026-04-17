@@ -1,9 +1,7 @@
-// lib/presentation/company/dashboard/create_organization_screen.dart
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../services/employer_dashboard_service.dart';
-import '../../../routes/app_routes.dart';
 
 class CreateOrganizationScreen extends StatefulWidget {
   const CreateOrganizationScreen({Key? key}) : super(key: key);
@@ -30,11 +28,11 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
   String? _selectedDistrictId;
   String? _selectedBusinessTypeId;
 
-  static const Color _bg = Color(0xFFF7F8FA);
-  static const Color _border = Color(0xFFE6E8EC);
-  static const Color _text = Color(0xFF111827);
-  static const Color _muted = Color(0xFF6B7280);
-  static const Color _primary = Color(0xFF2563EB);
+  static const Color _bg = Color(0xFFF8FAFC);
+  static const Color _border = Color(0xFFE5E7EB);
+  static const Color _text = Color(0xFF0F172A);
+  static const Color _muted = Color(0xFF64748B);
+  static const Color _primary = Color(0xFF16A34A);
 
   @override
   void initState() {
@@ -58,42 +56,36 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
 
   void _toast(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   Future<void> _loadMasters() async {
-    if (!mounted) return;
     setState(() => _loading = true);
 
     try {
       final dRes = await _db
           .from('assam_districts_master')
           .select('id, district_name')
-          .order('district_name', ascending: true);
-
-      _districts = List<Map<String, dynamic>>.from(dRes);
+          .order('district_name');
 
       final bRes = await _db
           .from('business_types_master')
           .select('id, type_name')
           .eq('is_active', true)
-          .order('type_name', ascending: true);
+          .order('type_name');
 
+      _districts = List<Map<String, dynamic>>.from(dRes);
       _businessTypes = List<Map<String, dynamic>>.from(bRes);
-    } catch (e) {
-      _toast("Failed to load dropdowns");
+    } catch (_) {
+      _toast("Failed to load data");
     }
 
-    if (!mounted) return;
     setState(() => _loading = false);
   }
 
-  // ------------------------------------------------------------
-  // CREATE ORGANIZATION
-  // ------------------------------------------------------------
+  // ✅ FINAL FIXED CREATE
   Future<void> _create() async {
-    _requireUser();
+    final user = _requireUser();
 
     final name = _name.text.trim();
 
@@ -102,179 +94,196 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
       return;
     }
 
-    if ((_selectedBusinessTypeId ?? '').isEmpty) {
-      _toast("Business type required");
+    if (_selectedBusinessTypeId == null) {
+      _toast("Select business type");
       return;
     }
 
-    if ((_selectedDistrictId ?? '').isEmpty) {
-      _toast("District required");
+    if (_selectedDistrictId == null) {
+      _toast("Select district");
       return;
     }
 
-    if (!mounted) return;
     setState(() => _saving = true);
 
     try {
-      await _service.createOrganization(
-        name: name,
-        businessTypeId: _selectedBusinessTypeId!,
-        districtId: _selectedDistrictId!,
-        website: _website.text.trim(),
-        description: _desc.text.trim(),
-      );
+      // 1️⃣ Create company
+      final company = await _db
+          .from('companies')
+          .insert({
+            "name": name,
+            "business_type_id": _selectedBusinessTypeId,
+            "district_id": _selectedDistrictId,
+            "website": _website.text.trim(),
+            "description": _desc.text.trim(),
+            "created_by": user.id,
+          })
+          .select()
+          .single();
 
+      // 2️⃣ Link user → company (CRITICAL)
+      await _db.from('company_members').insert({
+        "company_id": company['id'],
+        "user_id": user.id,
+        "role": "owner",
+      });
+
+      // 3️⃣ Return success → dashboard auto refresh
       if (!mounted) return;
+      Navigator.pop(context, true);
 
-      // ✅ IMPORTANT FIX: re-trigger HomeRouter
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRoutes.home,
-        (_) => false,
-      );
     } catch (e) {
       _toast("Failed: $e");
     }
 
-    if (!mounted) return;
     setState(() => _saving = false);
   }
 
-  // ------------------------------------------------------------
-  // UI
-  // ------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
-    final keyboardBottom = MediaQuery.of(context).viewInsets.bottom;
+    final bottom = MediaQuery.of(context).viewInsets.bottom;
 
     return Scaffold(
       backgroundColor: _bg,
-      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0.7,
-        title: const Text("Create Organization"),
+        elevation: 0.5,
+        title: const Text(
+          "Create Organization",
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
         foregroundColor: _text,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : SafeArea(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  14,
-                  16,
-                  24 + keyboardBottom,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _title("Organization Details"),
-                    const SizedBox(height: 6),
-                    _sub(
-                      "Create your organization to start posting jobs.",
+          : SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 24 + bottom),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Get started",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: _text,
                     ),
-                    const SizedBox(height: 18),
-
-                    _label("Organization name *"),
-                    const SizedBox(height: 8),
-                    _input(controller: _name, hint: "Eg. ABC Construction"),
-
-                    const SizedBox(height: 14),
-                    _label("Business type *"),
-                    const SizedBox(height: 8),
-                    _dropdown(
-                      value: _selectedBusinessTypeId,
-                      hint: "Select business type",
-                      items: _businessTypes,
-                      labelKey: 'type_name',
-                      onChanged: (v) =>
-                          setState(() => _selectedBusinessTypeId = v),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    "Create your organization to start hiring",
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      color: _muted,
                     ),
+                  ),
 
-                    const SizedBox(height: 14),
-                    _label("District *"),
-                    const SizedBox(height: 8),
-                    _dropdown(
-                      value: _selectedDistrictId,
-                      hint: "Select district",
-                      items: _districts,
-                      labelKey: 'district_name',
-                      onChanged: (v) =>
-                          setState(() => _selectedDistrictId = v),
-                    ),
+                  const SizedBox(height: 20),
 
-                    const SizedBox(height: 14),
-                    _label("Website"),
-                    const SizedBox(height: 8),
-                    _input(
-                      controller: _website,
-                      hint: "https://",
-                      keyboardType: TextInputType.url,
-                    ),
+                  _label("Organization name"),
+                  _input(_name, "ABC Pvt Ltd"),
 
-                    const SizedBox(height: 14),
-                    _label("Description"),
-                    const SizedBox(height: 8),
-                    _input(
-                      controller: _desc,
-                      hint: "About your company",
-                      minLines: 3,
-                      maxLines: 5,
-                    ),
+                  const SizedBox(height: 14),
 
-                    const SizedBox(height: 22),
+                  _label("Business type"),
+                  _dropdown(
+                    value: _selectedBusinessTypeId,
+                    hint: "Select type",
+                    items: _businessTypes,
+                    labelKey: 'type_name',
+                    onChanged: (v) =>
+                        setState(() => _selectedBusinessTypeId = v),
+                  ),
 
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _saving ? null : _create,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _primary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
+                  const SizedBox(height: 14),
+
+                  _label("District"),
+                  _dropdown(
+                    value: _selectedDistrictId,
+                    hint: "Select district",
+                    items: _districts,
+                    labelKey: 'district_name',
+                    onChanged: (v) =>
+                        setState(() => _selectedDistrictId = v),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  _label("Website"),
+                  _input(_website, "https://"),
+
+                  const SizedBox(height: 14),
+
+                  _label("Description"),
+                  _input(_desc, "About company", maxLines: 4),
+
+                  const SizedBox(height: 24),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _saving ? null : _create,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primary,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Text(
-                          _saving ? "Creating..." : "Create Organization",
+                      ),
+                      child: Text(
+                        _saving ? "Creating..." : "Continue",
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
     );
   }
 
-  Widget _title(String t) =>
-      const Text("Organization Details", style: TextStyle(fontWeight: FontWeight.w900));
+  Widget _label(String t) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text(
+          t,
+          style: const TextStyle(
+            fontSize: 13,
+            color: _muted,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
 
-  Widget _sub(String t) =>
-      Text(t, style: const TextStyle(color: _muted));
-
-  Widget _label(String t) =>
-      Text(t, style: const TextStyle(fontWeight: FontWeight.w700));
-
-  Widget _input({
-    required TextEditingController controller,
-    required String hint,
-    TextInputType keyboardType = TextInputType.text,
-    int minLines = 1,
-    int maxLines = 1,
-  }) {
+  Widget _input(TextEditingController c, String hint,
+      {int maxLines = 1}) {
     return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      minLines: minLines,
+      controller: c,
       maxLines: maxLines,
+      style: const TextStyle(fontSize: 14.5),
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
         fillColor: Colors.white,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: _border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: _border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: _primary,
+            width: 1.2,
+          ),
         ),
       ),
     );
@@ -300,8 +309,10 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(10),
         ),
       ),
     );
