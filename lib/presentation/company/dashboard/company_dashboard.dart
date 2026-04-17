@@ -18,6 +18,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
   bool _loading = true;
   bool _refreshing = false;
+ late final PageController _pageController;
 
   // REAL DATA
   Map<String, dynamic> _company = {};
@@ -53,10 +54,11 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   static const double _r20 = 20;
 
   @override
-  void initState() {
-    super.initState();
-    _loadDashboard();
-  }
+void initState() {
+  super.initState();
+  _pageController = PageController(viewportFraction: 0.92);
+  _loadDashboard();
+}
 
   User _requireUser() {
     final u = Supabase.instance.client.auth.currentUser;
@@ -102,8 +104,6 @@ Future<void> _loadDashboard({bool silent = false}) async {
     }
 
     final companyId = member['company_id'].toString();
-    _companyId = companyId;
-    _needsOrganization = false;
 
     final company =
         await _service.fetchCompanyById(companyId: companyId);
@@ -121,6 +121,9 @@ Future<void> _loadDashboard({bool silent = false}) async {
     if (!mounted) return;
 
     setState(() {
+      _companyId = companyId; // ✅ FIXED (inside setState)
+      _needsOrganization = false;
+
       _company = Map<String, dynamic>.from(company);
       _jobs = List<Map<String, dynamic>>.from(results[0] as List);
       _stats = Map<String, dynamic>.from(results[1] as Map);
@@ -129,6 +132,7 @@ Future<void> _loadDashboard({bool silent = false}) async {
       _todayInterviews = List<Map<String, dynamic>>.from(results[4] as List);
       _perf7d = Map<String, dynamic>.from(results[5] as Map);
       _unreadNotifications = (results[6] as int);
+
       _loading = false;
       _refreshing = false;
     });
@@ -791,8 +795,10 @@ Widget _actionItem({
     children: List.generate(_recentApplicants.length, (i) {
       final item = _recentApplicants[i];
 
-      final listing = (item['job_listings'] ?? {}) as Map;
-      final app = (item['job_applications'] ?? {}) as Map;
+      final listing =
+          Map<String, dynamic>.from(item['job_listings'] ?? {});
+      final app =
+          Map<String, dynamic>.from(item['job_applications'] ?? {});
 
       final jobId = (listing['id'] ?? '').toString();
       final name = (app['name'] ?? 'Candidate').toString();
@@ -817,7 +823,6 @@ Widget _actionItem({
               await _loadDashboard(silent: true);
             },
           ),
-
           if (i != _recentApplicants.length - 1)
             const Divider(height: 18, color: _border),
         ],
@@ -1152,7 +1157,7 @@ Widget _buildTopSlider() {
     height: 90,
     child: PageView.builder(
       itemCount: sliders.length,
-      controller: PageController(viewportFraction: 0.92),
+      controller: _pageController,
       itemBuilder: (_, i) {
         final s = sliders[i];
 
