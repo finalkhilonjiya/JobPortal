@@ -158,30 +158,30 @@ class _AppInitializerState
   }
 
   Future<void> _bootstrap() async {
-    try {
-      setState(() => _loadingText = "Starting...");
+  try {
+    setState(() => _loadingText = "Starting...");
 
-      if (!AppConfig.hasSupabase) {
-        _go(AppRoutes.jobSeekerLogin);
-        return;
-      }
-
-      final client = Supabase.instance.client;
-      final session = client.auth.currentSession;
-      final user = client.auth.currentUser;
-
-      if (session != null && user != null) {
-        setState(() => _loadingText = "Welcome back...");
-        _go(AppRoutes.home);
-        return;
-      }
-
-      setState(() => _loadingText = "Loading...");
-      _go(AppRoutes.jobSeekerLogin);
-    } catch (_) {
-      _go(AppRoutes.jobSeekerLogin);
+    if (!AppConfig.hasSupabase) {
+      _go(AppRoutes.roleSelection);
+      return;
     }
+
+    final client = Supabase.instance.client;
+    final session = client.auth.currentSession;
+    final user = client.auth.currentUser;
+
+    if (session != null && user != null) {
+      setState(() => _loadingText = "Welcome back...");
+      _go(AppRoutes.home);
+      return;
+    }
+
+    setState(() => _loadingText = "Loading...");
+    _go(AppRoutes.roleSelection);
+  } catch (_) {
+    _go(AppRoutes.roleSelection);
   }
+}
 
   void _go(String route) {
     if (!mounted) return;
