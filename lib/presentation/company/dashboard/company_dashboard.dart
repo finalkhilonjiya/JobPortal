@@ -1,6 +1,6 @@
 // lib/presentation/company/dashboard/company_dashboard.dart
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';hh
 
 import '../../../routes/app_routes.dart';
 import '../../../services/mobile_auth_service.dart';
