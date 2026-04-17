@@ -1,6 +1,6 @@
 // lib/presentation/company/dashboard/company_dashboard.dart
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';hh
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../../services/mobile_auth_service.dart';
@@ -222,9 +222,8 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
                     children: [
-                      _buildOrganizationProfileRow(),
-                      const SizedBox(height: 14),
-
+                      _buildTopSlider(),
+const SizedBox(height: 14),
                       _sectionHeader(
                         title: "Quick Stats",
                         ctaText: _refreshing ? "Refreshing..." : "Refresh",
@@ -1128,25 +1127,196 @@ Widget _avatar(String name) {
   // ACTIVE JOB POSTS (REAL)
   // ------------------------------------------------------------
   Widget _buildActiveJobsList() {
-    if (_jobs.isEmpty) {
-      return _softEmptyCard(
-        icon: Icons.work_outline,
-        title: "No jobs posted yet",
-        subtitle: "Post your first job to start receiving applications.",
-      );
-    }
-
-    final activeJobs = _jobs
-        .where((j) =>
-            (j['status'] ?? 'active').toString().toLowerCase() == 'active')
-        .toList();
-
-    final list = activeJobs.isNotEmpty ? activeJobs : _jobs;
-
-    return Column(
-      children: list.take(4).map((job) => _activeJobCard(job)).toList(),
+  if (_jobs.isEmpty) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 12),
+      child: Text(
+        "No jobs yet",
+        style: TextStyle(fontSize: 13, color: _muted),
+      ),
     );
   }
+
+  final activeJobs = _jobs
+      .where((j) =>
+          (j['status'] ?? 'active').toString().toLowerCase() == 'active')
+      .toList();
+
+  final list = activeJobs.isNotEmpty ? activeJobs : _jobs;
+
+  return Column(
+    children: List.generate(list.take(5).length, (i) {
+      final job = list[i];
+
+      final jobId = (job['id'] ?? '').toString();
+      final title = (job['job_title'] ?? 'Job').toString();
+      final district = (job['district'] ?? '').toString();
+      final applicants = _toInt(job['applications_count']);
+
+      return Column(
+        children: [
+          _jobRow(
+            title: title,
+            subtitle: district.isEmpty ? "Assam" : district,
+            applicants: applicants,
+            onApplicants: () async {
+              await Navigator.pushNamed(
+                context,
+                AppRoutes.jobApplicants,
+                arguments: {
+                  'jobId': jobId,
+                  'companyId': _companyId,
+                },
+              );
+              await _loadDashboard(silent: true);
+            },
+            onEdit: () async {
+              final res = await Navigator.pushNamed(
+                context,
+                AppRoutes.createJob,
+                arguments: {
+                  'mode': 'edit',
+                  'jobId': jobId,
+                },
+              );
+              if (res == true) await _loadDashboard(silent: true);
+            },
+          ),
+
+          if (i != list.length - 1)
+            const Divider(height: 18, color: _border),
+        ],
+      );
+    }),
+  );
+}
+
+Widget _jobRow({
+  required String title,
+  required String subtitle,
+  required int applicants,
+  required VoidCallback onApplicants,
+  required VoidCallback onEdit,
+}) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    child: Row(
+      children: [
+        // Left
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: _text,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                "$subtitle • $applicants applicants",
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: _muted,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Right actions
+        Row(
+          children: [
+            GestureDetector(
+              onTap: onApplicants,
+              child: const Padding(
+                padding: EdgeInsets.all(6),
+                child: Icon(Icons.people_outline, size: 20),
+              ),
+            ),
+            const SizedBox(width: 6),
+            GestureDetector(
+              onTap: onEdit,
+              child: const Padding(
+                padding: EdgeInsets.all(6),
+                child: Icon(Icons.edit_outlined, size: 20),
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+
+
+
+Widget _buildTopSlider() {
+  if (_needsOrganization) return const SizedBox();
+
+  final sliders = [
+    {
+      "title": "Post jobs faster",
+      "subtitle": "Reach candidates instantly",
+    },
+    {
+      "title": "Track applicants",
+      "subtitle": "Manage your hiring pipeline",
+    },
+    {
+      "title": "Schedule interviews",
+      "subtitle": "Stay organized and efficient",
+    },
+  ];
+
+  return SizedBox(
+    height: 90,
+    child: PageView.builder(
+      itemCount: sliders.length,
+      controller: PageController(viewportFraction: 0.92),
+      itemBuilder: (_, i) {
+        final s = sliders[i];
+
+        return Container(
+          margin: const EdgeInsets.only(right: 10),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF16A34A), // employer theme
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                s["title"]!,
+                style: const TextStyle(
+                  fontSize: 15.5,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                s["subtitle"]!,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: Colors.white70,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    ),
+  );
+}
 
   Widget _activeJobCard(Map<String, dynamic> job) {
     final jobId = (job['id'] ?? '').toString();
