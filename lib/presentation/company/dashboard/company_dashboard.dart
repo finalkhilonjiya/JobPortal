@@ -319,153 +319,138 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   // NO ORG CARD
   // ------------------------------------------------------------
   Widget _noOrgCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: _cardDeco(radius: _r20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Create your Organization",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-              color: _text,
-            ),
+  return Container(
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: _border),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Start hiring",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: _text,
           ),
-          const SizedBox(height: 6),
-          const Text(
-            "You must create an organization before you can post jobs and manage applicants.",
-            style: TextStyle(
-              fontSize: 12.8,
-              fontWeight: FontWeight.w800,
-              color: _muted,
-              height: 1.35,
-            ),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          "Create your organization to post jobs and manage applicants.",
+          style: TextStyle(
+            fontSize: 13.5,
+            color: _muted,
+            height: 1.4,
           ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () async {
-                final res = await Navigator.pushNamed(
-                  context,
-                  AppRoutes.createOrganization,
-                );
+        ),
+        const SizedBox(height: 16),
 
-                if (res == true) {
-                  await _loadDashboard(silent: false);
-                }
-              },
-              icon: const Icon(Icons.apartment_rounded),
-              label: const Text(
-                "Create Organization",
-                style: TextStyle(fontWeight: FontWeight.w900),
+        // 🔥 PRIMARY BUTTON
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () async {
+              final res = await Navigator.pushNamed(
+                context,
+                AppRoutes.createOrganization,
+              );
+
+              if (res == true) {
+                await _loadDashboard();
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF16A34A),
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _primary,
-                backgroundColor: const Color(0xFFEFF6FF),
-                side: const BorderSide(color: Color(0xFFBFDBFE)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
+            ),
+            child: const Text(
+              "Create Organization",
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   // ------------------------------------------------------------
   // TOP HEADER (REAL NOTIFICATIONS)
   // ------------------------------------------------------------
-  Widget _buildTopHeader(BuildContext scaffoldContext) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: _border)),
-      ),
-      child: Row(
-        children: [
-          InkWell(
-            onTap: () => Scaffold.of(scaffoldContext).openDrawer(),
-            borderRadius: BorderRadius.circular(999),
-            child: const Padding(
-              padding: EdgeInsets.all(10),
-              child: Icon(Icons.menu, size: 22, color: _text),
-            ),
-          ),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Text(
-              "Employer Dashboard",
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 16.5,
-                fontWeight: FontWeight.w800,
-                color: _text,
-                letterSpacing: -0.2,
-              ),
-            ),
-          ),
-          InkWell(
-            borderRadius: BorderRadius.circular(999),
-            onTap: () async {
-              await Navigator.pushNamed(context, AppRoutes.employerNotifications);
-              await _loadDashboard(silent: true);
-            },
-            child: Stack(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: _border),
-                  ),
-                  child: const Icon(
-                    Icons.notifications_none_outlined,
-                    size: 22,
-                    color: Color(0xFF334155),
-                  ),
+  Widget _buildTopHeader(BuildContext context) {
+  return Container(
+    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+    decoration: const BoxDecoration(
+      color: Colors.white,
+      border: Border(bottom: BorderSide(color: _border)),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _needsOrganization ? "Welcome" : _orgName,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: _text,
                 ),
-                if (_unreadNotifications > 0)
-                  Positioned(
-                    right: 6,
-                    top: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEF4444),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        _unreadNotifications > 99
-                            ? "99+"
-                            : _unreadNotifications.toString(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 10.5,
-                        ),
-                      ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _needsOrganization
+                    ? "Let's set up your organization"
+                    : "Manage hiring & track pipeline",
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: _muted,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // 🔔 notifications
+        GestureDetector(
+          onTap: () async {
+            await Navigator.pushNamed(
+                context, AppRoutes.employerNotifications);
+            await _loadDashboard(silent: true);
+          },
+          child: Stack(
+            children: [
+              const Icon(Icons.notifications_none, size: 24),
+              if (_unreadNotifications > 0)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
                     ),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   // ------------------------------------------------------------
   // ORGANIZATION PROFILE ROW (REAL)
@@ -637,104 +622,71 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   // QUICK STATS (REAL)
   // ------------------------------------------------------------
   Widget _buildQuickStatsRow() {
-    return SizedBox(
-      height: 122,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          _quickStatCard(
-            icon: Icons.work_outline,
-            value: _activeJobs.toString(),
-            label: "Active Jobs",
-            hint: "$_totalJobs total",
-          ),
-          const SizedBox(width: 12),
-          _quickStatCard(
-            icon: Icons.people_outline,
-            value: _totalApplicants.toString(),
-            label: "Applicants",
-            hint: "+$_applicants24h in 24h",
-          ),
-          const SizedBox(width: 12),
-          _quickStatCard(
-            icon: Icons.visibility_outlined,
-            value: _totalViews.toString(),
-            label: "Views",
-            hint: "All time",
-          ),
-        ],
-      ),
-    );
-  }
+  return Container(
+    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: _border),
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _statItem(
+          value: _activeJobs,
+          label: "Active",
+        ),
+        _divider(),
+        _statItem(
+          value: _totalApplicants,
+          label: "Applicants",
+        ),
+        _divider(),
+        _statItem(
+          value: _totalViews,
+          label: "Views",
+        ),
+      ],
+    ),
+  );
+}
 
-  Widget _quickStatCard({
-    required IconData icon,
-    required String value,
-    required String label,
-    required String hint,
-  }) {
-    return Container(
-      width: 160,
-      padding: const EdgeInsets.all(14),
-      decoration: _cardDeco(radius: _r20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFDBEAFE)),
-                ),
-                child: Icon(icon, color: _primary, size: 20),
-              ),
-              const Spacer(),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: _border),
-                ),
-                child: Text(
-                  hint,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                    color: _muted,
-                  ),
-                ),
-              ),
-            ],
+  Widget _statItem({
+  required int value,
+  required String label,
+}) {
+  return Expanded(
+    child: Column(
+      children: [
+        Text(
+          value.toString(),
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: _text,
           ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              color: _text,
-              letterSpacing: -0.4,
-            ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12.5,
+            color: _muted,
+            fontWeight: FontWeight.w600,
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w800,
-              color: _muted,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _divider() {
+  return Container(
+    width: 1,
+    height: 28,
+    color: _border,
+  );
+}
 
   // ------------------------------------------------------------
   // PRIMARY ACTIONS
