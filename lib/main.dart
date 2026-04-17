@@ -159,8 +159,6 @@ class _AppInitializerState
 
   Future<void> _bootstrap() async {
   try {
-    setState(() => _loadingText = "Starting...");
-
     if (!AppConfig.hasSupabase) {
       _go(AppRoutes.roleSelection);
       return;
@@ -170,13 +168,13 @@ class _AppInitializerState
     final session = client.auth.currentSession;
     final user = client.auth.currentUser;
 
+    // ✅ USER LOGGED IN → GO HOME
     if (session != null && user != null) {
-      setState(() => _loadingText = "Welcome back...");
       _go(AppRoutes.home);
       return;
     }
 
-    setState(() => _loadingText = "Loading...");
+    // ❌ NOT LOGGED IN → GO ROLE SELECTION
     _go(AppRoutes.roleSelection);
   } catch (_) {
     _go(AppRoutes.roleSelection);
