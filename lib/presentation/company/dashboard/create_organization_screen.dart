@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../services/employer_dashboard_service.dart';
+import '../../../routes/app_routes.dart';
 
 class CreateOrganizationScreen extends StatefulWidget {
   const CreateOrganizationScreen({Key? key}) : super(key: key);
@@ -19,19 +20,16 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
   bool _loading = true;
   bool _saving = false;
 
-  // masters
   List<Map<String, dynamic>> _districts = [];
   List<Map<String, dynamic>> _businessTypes = [];
 
-  // form
   final TextEditingController _name = TextEditingController();
   final TextEditingController _website = TextEditingController();
   final TextEditingController _desc = TextEditingController();
 
-  String? _selectedDistrictId; // UUID
-  String? _selectedBusinessTypeId; // UUID
+  String? _selectedDistrictId;
+  String? _selectedBusinessTypeId;
 
-  // UI
   static const Color _bg = Color(0xFFF7F8FA);
   static const Color _border = Color(0xFFE6E8EC);
   static const Color _text = Color(0xFF111827);
@@ -64,19 +62,11 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  Map<String, dynamic> _asMap(dynamic v) {
-    if (v == null) return {};
-    if (v is Map<String, dynamic>) return v;
-    if (v is Map) return Map<String, dynamic>.from(v);
-    return {};
-  }
-
   Future<void> _loadMasters() async {
     if (!mounted) return;
     setState(() => _loading = true);
 
     try {
-      // DISTRICTS (REAL TABLE)
       final dRes = await _db
           .from('assam_districts_master')
           .select('id, district_name')
@@ -84,18 +74,15 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
 
       _districts = List<Map<String, dynamic>>.from(dRes);
 
-      // BUSINESS TYPES (REAL TABLE)
       final bRes = await _db
           .from('business_types_master')
-          .select('id, type_name, is_active')
+          .select('id, type_name')
           .eq('is_active', true)
           .order('type_name', ascending: true);
 
       _businessTypes = List<Map<String, dynamic>>.from(bRes);
     } catch (e) {
-      _districts = [];
-      _businessTypes = [];
-      _toast("Failed to load dropdowns: $e");
+      _toast("Failed to load dropdowns");
     }
 
     if (!mounted) return;
@@ -103,23 +90,24 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
   }
 
   // ------------------------------------------------------------
-  // SAVE ORGANIZATION
+  // CREATE ORGANIZATION
   // ------------------------------------------------------------
   Future<void> _create() async {
     _requireUser();
 
     final name = _name.text.trim();
+
     if (name.isEmpty) {
       _toast("Organization name required");
       return;
     }
 
-    if ((_selectedBusinessTypeId ?? '').trim().isEmpty) {
+    if ((_selectedBusinessTypeId ?? '').isEmpty) {
       _toast("Business type required");
       return;
     }
 
-    if ((_selectedDistrictId ?? '').trim().isEmpty) {
+    if ((_selectedDistrictId ?? '').isEmpty) {
       _toast("District required");
       return;
     }
@@ -138,8 +126,12 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
 
       if (!mounted) return;
 
-      Navigator.pop(context, true);
-      _toast("Organization created");
+      // ✅ IMPORTANT FIX: re-trigger HomeRouter
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.home,
+        (_) => false,
+      );
     } catch (e) {
       _toast("Failed: $e");
     }
@@ -149,7 +141,7 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
   }
 
   // ------------------------------------------------------------
-  // BUILD
+  // UI
   // ------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
@@ -180,83 +172,55 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
                     _title("Organization Details"),
                     const SizedBox(height: 6),
                     _sub(
-                      "Create your organization to start posting jobs. "
-                      "Your organization will be verified later by the office team.",
+                      "Create your organization to start posting jobs.",
                     ),
                     const SizedBox(height: 18),
 
                     _label("Organization name *"),
                     const SizedBox(height: 8),
-                    _input(
-                      controller: _name,
-                      hint: "Eg. ABC Construction",
-                      textInputAction: TextInputAction.next,
-                    ),
-                    const SizedBox(height: 14),
+                    _input(controller: _name, hint: "Eg. ABC Construction"),
 
+                    const SizedBox(height: 14),
                     _label("Business type *"),
                     const SizedBox(height: 8),
-                    _dropdownId(
-                      valueId: _selectedBusinessTypeId,
+                    _dropdown(
+                      value: _selectedBusinessTypeId,
                       hint: "Select business type",
-                      items: _businessTypes
-                          .map((e) => {
-                                'id': (e['id'] ?? '').toString(),
-                                'label': (e['type_name'] ?? '').toString(),
-                              })
-                          .where((x) =>
-                              (x['id'] ?? '').toString().trim().isNotEmpty &&
-                              (x['label'] ?? '')
-                                  .toString()
-                                  .trim()
-                                  .isNotEmpty)
-                          .toList(),
-                      onChangedId: (id) =>
-                          setState(() => _selectedBusinessTypeId = id),
+                      items: _businessTypes,
+                      labelKey: 'type_name',
+                      onChanged: (v) =>
+                          setState(() => _selectedBusinessTypeId = v),
                     ),
-                    const SizedBox(height: 14),
 
+                    const SizedBox(height: 14),
                     _label("District *"),
                     const SizedBox(height: 8),
-                    _dropdownId(
-                      valueId: _selectedDistrictId,
+                    _dropdown(
+                      value: _selectedDistrictId,
                       hint: "Select district",
-                      items: _districts
-                          .map((e) => {
-                                'id': (e['id'] ?? '').toString(),
-                                'label': (e['district_name'] ?? '').toString(),
-                              })
-                          .where((x) =>
-                              (x['id'] ?? '').toString().trim().isNotEmpty &&
-                              (x['label'] ?? '')
-                                  .toString()
-                                  .trim()
-                                  .isNotEmpty)
-                          .toList(),
-                      onChangedId: (id) =>
-                          setState(() => _selectedDistrictId = id),
+                      items: _districts,
+                      labelKey: 'district_name',
+                      onChanged: (v) =>
+                          setState(() => _selectedDistrictId = v),
                     ),
-                    const SizedBox(height: 14),
 
-                    _label("Website (optional)"),
+                    const SizedBox(height: 14),
+                    _label("Website"),
                     const SizedBox(height: 8),
                     _input(
                       controller: _website,
                       hint: "https://",
                       keyboardType: TextInputType.url,
-                      textInputAction: TextInputAction.next,
                     ),
-                    const SizedBox(height: 14),
 
-                    _label("Description (optional)"),
+                    const SizedBox(height: 14),
+                    _label("Description"),
                     const SizedBox(height: 8),
                     _input(
                       controller: _desc,
-                      hint: "Short description about your organization",
+                      hint: "About your company",
                       minLines: 3,
-                      maxLines: 6,
-                      keyboardType: TextInputType.multiline,
-                      textInputAction: TextInputAction.newline,
+                      maxLines: 5,
                     ),
 
                     const SizedBox(height: 22),
@@ -268,27 +232,13 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _primary,
                           foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 13),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
                         child: Text(
                           _saving ? "Creating..." : "Create Organization",
-                          style: const TextStyle(fontWeight: FontWeight.w900),
                         ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-                    const Text(
-                      "By creating, you agree to verification by the office team.",
-                      style: TextStyle(
-                        color: _muted,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12.5,
-                        height: 1.3,
                       ),
                     ),
                   ],
@@ -298,112 +248,60 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
     );
   }
 
-  // ------------------------------------------------------------
-  // UI HELPERS
-  // ------------------------------------------------------------
-  Widget _title(String t) {
-    return Text(
-      t,
-      style: const TextStyle(
-        fontSize: 16.5,
-        fontWeight: FontWeight.w900,
-        color: _text,
-      ),
-    );
-  }
+  Widget _title(String t) =>
+      const Text("Organization Details", style: TextStyle(fontWeight: FontWeight.w900));
 
-  Widget _sub(String t) {
-    return Text(
-      t,
-      style: const TextStyle(
-        color: _muted,
-        fontWeight: FontWeight.w700,
-        height: 1.35,
-      ),
-    );
-  }
+  Widget _sub(String t) =>
+      Text(t, style: const TextStyle(color: _muted));
 
-  Widget _label(String t) {
-    return Text(
-      t,
-      style: const TextStyle(
-        fontWeight: FontWeight.w900,
-        color: _text,
-      ),
-    );
-  }
+  Widget _label(String t) =>
+      Text(t, style: const TextStyle(fontWeight: FontWeight.w700));
 
   Widget _input({
     required TextEditingController controller,
     required String hint,
     TextInputType keyboardType = TextInputType.text,
-    TextInputAction textInputAction = TextInputAction.next,
     int minLines = 1,
     int maxLines = 1,
   }) {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
-      textInputAction: textInputAction,
       minLines: minLines,
       maxLines: maxLines,
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: _border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: _border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: _primary, width: 1.2),
+          borderRadius: BorderRadius.circular(14),
         ),
       ),
     );
   }
 
-  Widget _dropdownId({
-    required String? valueId,
+  Widget _dropdown({
+    required String? value,
     required String hint,
-    required List<Map<String, String>> items,
-    required ValueChanged<String?> onChangedId,
+    required List<Map<String, dynamic>> items,
+    required String labelKey,
+    required Function(String?) onChanged,
   }) {
-    String? currentLabel;
-
-    for (final it in items) {
-      if ((it['id'] ?? '') == (valueId ?? '')) {
-        currentLabel = it['label'];
-        break;
-      }
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _border),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: valueId,
-          isExpanded: true,
-          hint: Text(hint),
-          items: items
-              .map(
-                (x) => DropdownMenuItem(
-                  value: x['id'],
-                  child: Text(x['label'] ?? ''),
-                ),
-              )
-              .toList(),
-          onChanged: onChangedId,
+    return DropdownButtonFormField<String>(
+      value: value,
+      hint: Text(hint),
+      items: items
+          .map((e) => DropdownMenuItem<String>(
+                value: e['id'].toString(),
+                child: Text(e[labelKey].toString()),
+              ))
+          .toList(),
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
         ),
       ),
     );
