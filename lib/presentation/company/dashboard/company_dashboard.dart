@@ -68,51 +68,24 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   // LOAD DASHBOARD (ORG BASED)
   // ------------------------------------------------------------
   Future<void> _loadDashboard({bool silent = false}) async {
-    if (!mounted) return;
+  if (!mounted) return;
 
-    if (!silent) setState(() => _loading = true);
-    if (silent) setState(() => _refreshing = true);
+  if (!silent) setState(() => _loading = true);
+  if (silent) setState(() => _refreshing = true);
 
-    try {
-      _requireUser();
+  try {
+    final user = _requireUser();
 
-      // 1) Resolve default organization
-      final companyId = await _service.resolveDefaultCompanyId();
-      _companyId = companyId;
+    // ✅ STEP 1: CHECK COMPANY MEMBERSHIP FIRST
+    final member = await Supabase.instance.client
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      // 2) Fetch organization object
-      final company = await _service.fetchCompanyById(companyId: companyId);
-
-      // 3) Fetch everything else using companyId
-      final results = await Future.wait([
-        _service.fetchCompanyJobs(companyId: companyId),
-        _service.fetchCompanyDashboardStats(companyId: companyId),
-        _service.fetchRecentApplicants(companyId: companyId, limit: 6),
-        _service.fetchTopJobs(companyId: companyId, limit: 6),
-        _service.fetchTodayInterviews(companyId: companyId, limit: 10),
-        _service.fetchLast7DaysPerformance(companyId: companyId),
-        _service.fetchUnreadNotificationsCount(),
-      ]);
-
-      _company = Map<String, dynamic>.from(company);
-      _jobs = List<Map<String, dynamic>>.from(results[0] as List);
-      _stats = Map<String, dynamic>.from(results[1] as Map);
-      _recentApplicants = List<Map<String, dynamic>>.from(results[2] as List);
-      _topJobs = List<Map<String, dynamic>>.from(results[3] as List);
-      _todayInterviews = List<Map<String, dynamic>>.from(results[4] as List);
-      _perf7d = Map<String, dynamic>.from(results[5] as Map);
-      _unreadNotifications = (results[6] as int);
-
-      _needsOrganization = false;
-    } catch (e) {
-      // If no org exists
-      final msg = e.toString().toLowerCase();
-      final noOrg = msg.contains("no organization linked") ||
-          msg.contains("create one first") ||
-          msg.contains("no organization") ||
-          msg.contains("no company");
-
-      _needsOrganization = noOrg;
+    // ❗ NO COMPANY → SHOW CREATE ORG ONLY
+    if (member == null) {
+      _needsOrganization = true;
 
       _company = {};
       _jobs = [];
@@ -123,14 +96,49 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       _perf7d = {};
       _unreadNotifications = 0;
       _companyId = "";
+
+      return;
     }
 
-    if (!mounted) return;
-    setState(() {
-      _loading = false;
-      _refreshing = false;
-    });
+    // ✅ COMPANY EXISTS
+    final companyId = member['company_id'].toString();
+    _companyId = companyId;
+    _needsOrganization = false;
+
+    // ✅ LOAD REAL DATA
+    final company =
+        await _service.fetchCompanyById(companyId: companyId);
+
+    final results = await Future.wait([
+      _service.fetchCompanyJobs(companyId: companyId),
+      _service.fetchCompanyDashboardStats(companyId: companyId),
+      _service.fetchRecentApplicants(companyId: companyId, limit: 6),
+      _service.fetchTopJobs(companyId: companyId, limit: 6),
+      _service.fetchTodayInterviews(companyId: companyId, limit: 10),
+      _service.fetchLast7DaysPerformance(companyId: companyId),
+      _service.fetchUnreadNotificationsCount(),
+    ]);
+
+    _company = Map<String, dynamic>.from(company);
+    _jobs = List<Map<String, dynamic>>.from(results[0] as List);
+    _stats = Map<String, dynamic>.from(results[1] as Map);
+    _recentApplicants = List<Map<String, dynamic>>.from(results[2] as List);
+    _topJobs = List<Map<String, dynamic>>.from(results[3] as List);
+    _todayInterviews = List<Map<String, dynamic>>.from(results[4] as List);
+    _perf7d = Map<String, dynamic>.from(results[5] as Map);
+    _unreadNotifications = (results[6] as int);
+
+  } catch (e) {
+    // fallback safe
+    _needsOrganization = true;
   }
+
+  if (!mounted) return;
+  setState(() {
+    _loading = false;
+    _refreshing = false;
+  });
+}
 
   // ------------------------------------------------------------
   // LOGOUT
