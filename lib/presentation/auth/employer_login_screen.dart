@@ -156,43 +156,49 @@ void codeUpdated() {
   }
 
   Future<void> _handleVerifyOtp() async {
-    final otp = _otpControllers.map((c) => c.text).join();
+  final otp = _otpControllers.map((c) => c.text).join();
 
-    if (otp.length != 6) {
-      setState(() => _error = 'Please enter the full 6-digit OTP');
-      return;
+  if (otp.length != 6) {
+    setState(() => _error = 'Please enter the full 6-digit OTP');
+    return;
+  }
+
+  if (_isLoading) return;
+
+  FocusScope.of(context).unfocus();
+
+  setState(() {
+    _isLoading = true;
+    _error = null;
+  });
+
+  try {
+    await _auth.verifyOtp(
+      mobile: _mobileController.text.trim(),
+      otp: otp,
+      role: UserRole.employer,
+    );
+
+    final isMember = await _employerService.isUserInCompany();
+
+    if (!mounted) return;
+
+    if (isMember) {
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
+    } else {
+      Navigator.pushReplacementNamed(context, AppRoutes.createOrganization);
     }
 
-    if (_isLoading) return;
-
-    FocusScope.of(context).unfocus();
-
+  } catch (e) {
     setState(() {
-      _isLoading = true;
-      _error = null;
+      _isLoading = false;
+      _error = e is MobileAuthException ? e.message : 'Invalid OTP';
     });
 
-    try {
-      await _auth.verifyOtp(
-        mobile: _mobileController.text.trim(),
-        otp: otp,
-        role: UserRole.employer,
-      );
-
-      final isMember = await _employerService.isUserInCompany();
-
-if (!mounted) return;
-
-if (isMember) {
-  Navigator.pushReplacementNamed(context, AppRoutes.home);
-} else {
-  Navigator.pushReplacementNamed(context, AppRoutes.createOrganization);
-}
-
-      _clearOtp();
-      _otpFocusNodes.first.requestFocus();
-    }
+    _clearOtp();
+    _otpFocusNodes.first.requestFocus();
   }
+}
 
   void _handleOtpChange(int index, String value) {
     if (value.length > 1) {
