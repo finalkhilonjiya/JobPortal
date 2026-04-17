@@ -45,6 +45,9 @@ void initState() {
   )..forward();
 
   _mobileController.addListener(_validateMobile);
+
+  // ✅ ADD THIS (same as job seeker)
+  listenForCode();
 }
   @override
 void dispose() {
@@ -66,12 +69,18 @@ void dispose() {
 
 @override
 void codeUpdated() {
-  if (code != null && code!.length == 6) {
+  if (code == null) return;
+
+  final otp = code!.replaceAll(RegExp(r'[^0-9]'), '');
+
+  if (otp.length == 6) {
     for (int i = 0; i < 6; i++) {
-      _otpControllers[i].text = code![i];
+      _otpControllers[i].text = otp[i];
     }
 
-    _handleVerifyOtp();
+    Future.delayed(const Duration(milliseconds: 200), () {
+      _handleVerifyOtp();
+    });
   }
 }
 
@@ -107,8 +116,7 @@ void codeUpdated() {
       _isLoading = false;
     });
 
-    // Start SMS auto-read when OTP screen opens
-    SmsAutoFill().listenForCode();
+    
 
     _startResendTimer();
     _clearOtp();
@@ -460,11 +468,15 @@ void codeUpdated() {
                 focusNode: FocusNode(),
                 onKey: (event) => _handleOtpBackspace(i, event),
                 child: TextField(
-                  controller: _otpControllers[i],
-                  focusNode: _otpFocusNodes[i],
-                  maxLength: 1,
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.center,
+  controller: _otpControllers[i],
+  focusNode: _otpFocusNodes[i],
+  maxLength: 1,
+  keyboardType: TextInputType.number,
+
+  // ✅ ADD THIS
+  autofillHints: const [AutofillHints.oneTimeCode],
+
+  textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
