@@ -85,59 +85,70 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
 
   // ✅ FINAL FIXED CREATE
   Future<void> _create() async {
-    final user = _requireUser();
+  final user = _requireUser();
 
-    final name = _name.text.trim();
+  final name = _name.text.trim();
 
-    if (name.isEmpty) {
-      _toast("Organization name required");
-      return;
-    }
-
-    if (_selectedBusinessTypeId == null) {
-      _toast("Select business type");
-      return;
-    }
-
-    if (_selectedDistrictId == null) {
-      _toast("Select district");
-      return;
-    }
-
-    setState(() => _saving = true);
-
-    try {
-      // 1️⃣ Create company
-      final company = await _db
-          .from('companies')
-          .insert({
-            "name": name,
-            "business_type_id": _selectedBusinessTypeId,
-            "district_id": _selectedDistrictId,
-            "website": _website.text.trim(),
-            "description": _desc.text.trim(),
-            "created_by": user.id,
-          })
-          .select()
-          .single();
-
-      // 2️⃣ Link user → company (CRITICAL)
-      await _db.from('company_members').insert({
-        "company_id": company['id'],
-        "user_id": user.id,
-        "role": "owner",
-      });
-
-      // 3️⃣ Return success → dashboard auto refresh
-      if (!mounted) return;
-      Navigator.pop(context, true);
-
-    } catch (e) {
-      _toast("Failed: $e");
-    }
-
-    setState(() => _saving = false);
+  if (name.isEmpty) {
+    _toast("Organization name required");
+    return;
   }
+
+  if (_selectedBusinessTypeId == null) {
+    _toast("Select business type");
+    return;
+  }
+
+  if (_selectedDistrictId == null) {
+    _toast("Select district");
+    return;
+  }
+
+  setState(() => _saving = true);
+
+  try {
+    // Convert district_id → district_name (since DB stores TEXT)
+    final districtObj = _districts.firstWhere(
+      (d) => d['id'].toString() == _selectedDistrictId,
+    );
+
+    final districtName = districtObj['district_name'];
+
+    // CREATE COMPANY (STRICTLY matching schema)
+    final company = await _db
+        .from('companies')
+        .insert({
+          "name": name,
+          "business_type_id": _selectedBusinessTypeId,
+          "website": _website.text.trim(),
+          "description": _desc.text.trim(),
+
+          // ✅ correct fields (schema-based)
+          "headquarters_city": districtName,
+          "headquarters_state": "Assam",
+
+          "created_by": user.id,
+          "owner_id": user.id,
+        })
+        .select()
+        .single();
+
+    // LINK USER TO COMPANY
+    await _db.from('company_members').insert({
+      "company_id": company['id'],
+      "user_id": user.id,
+      "role": "owner",
+    });
+
+    if (!mounted) return;
+    Navigator.pop(context, true);
+
+  } catch (e) {
+    _toast("Failed: $e");
+  }
+
+  setState(() => _saving = false);
+}
 
   @override
   Widget build(BuildContext context) {
