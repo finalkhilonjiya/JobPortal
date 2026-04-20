@@ -43,7 +43,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
   static const Color _border = Color(0xFFE6E8EC);
   static const Color _text = Color(0xFF111827);
   static const Color _muted = Color(0xFF6B7280);
-  static const Color _primary = Color(0xFF2563EB);
+  static const Color _primary = Color(0xFF16A34A);
 
   @override
   void initState() {
@@ -592,268 +592,264 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
   // BUILD
   // ------------------------------------------------------------
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: _bg,
+    appBar: AppBar(
       backgroundColor: _bg,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: _text,
-        elevation: 0.7,
-        title: const Text("Applicants"),
-        actions: [
-          IconButton(
-            onPressed: _busy ? null : _load,
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(34),
-          child: Container(
+      elevation: 0,
+      surfaceTintColor: _bg,
+      title: const Text(
+        "Applicants",
+        style: TextStyle(
+          fontWeight: FontWeight.w800,
+          color: _text,
+        ),
+      ),
+      actions: [
+        IconButton(
+          onPressed: _busy ? null : _load,
+          icon: const Icon(Icons.refresh_rounded),
+          color: _primary,
+        ),
+      ],
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(28),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Align(
             alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
             child: Text(
               _jobTitle.isEmpty ? "Job Applicants" : _jobTitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 color: _muted,
               ),
             ),
           ),
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                _topFilters(),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _load,
-                    child: _filtered.isEmpty
-                        ? ListView(
-                            padding: const EdgeInsets.all(16),
-                            children: [
-                              _emptyCard(),
-                            ],
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-                            itemCount: _filtered.length,
-                            itemBuilder: (_, i) {
-                              final row = _filtered[i];
-                              return _applicantTile(row);
-                            },
-                          ),
-                  ),
+    ),
+    body: _loading
+        ? const Center(child: CircularProgressIndicator())
+        : Column(
+            children: [
+              _topFilters(),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _load,
+                  child: _filtered.isEmpty
+                      ? ListView(
+                          padding: const EdgeInsets.all(16),
+                          children: [_emptyCard()],
+                        )
+                      : ListView.builder(
+                          padding:
+                              const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                          itemCount: _filtered.length,
+                          itemBuilder: (_, i) =>
+                              _applicantTile(_filtered[i]),
+                        ),
                 ),
-              ],
-            ),
-    );
-  }
-
+              ),
+            ],
+          ),
+  );
+}
   // ------------------------------------------------------------
   // UI: FILTERS
   // ------------------------------------------------------------
   Widget _topFilters() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: _border)),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _border),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.search_rounded, color: _muted),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    controller: _search,
-                    onChanged: (_) => setState(() {}),
-                    decoration: const InputDecoration(
-                      hintText: "Search name, phone, email, skills...",
-                      border: InputBorder.none,
-                    ),
+  return Container(
+    padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border(bottom: BorderSide(color: _border)),
+    ),
+    child: Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _border),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.search, color: _muted),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: _search,
+                  onChanged: (_) => setState(() {}),
+                  decoration: const InputDecoration(
+                    hintText: "Search candidates...",
+                    border: InputBorder.none,
                   ),
                 ),
-                if (_search.text.trim().isNotEmpty)
-                  InkWell(
-                    onTap: () {
-                      _search.clear();
-                      setState(() {});
-                    },
-                    child: const Icon(Icons.close_rounded, color: _muted),
-                  ),
-              ],
-            ),
+              ),
+              if (_search.text.isNotEmpty)
+                IconButton(
+                  onPressed: () {
+                    _search.clear();
+                    setState(() {});
+                  },
+                  icon: const Icon(Icons.close_rounded),
+                ),
+            ],
           ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 40,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _filterChip("All", "all"),
-                _filterChip("Applied", "applied"),
-                _filterChip("Viewed", "viewed"),
-                _filterChip("Shortlisted", "shortlisted"),
-                _filterChip("Interview", "interview_scheduled"),
-                _filterChip("Selected", "selected"),
-                _filterChip("Rejected", "rejected"),
-              ],
-            ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 36,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              _filterChip("All", "all"),
+              _filterChip("Applied", "applied"),
+              _filterChip("Viewed", "viewed"),
+              _filterChip("Shortlisted", "shortlisted"),
+              _filterChip("Interview", "interview_scheduled"),
+              _filterChip("Selected", "selected"),
+              _filterChip("Rejected", "rejected"),
+            ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
+
 
   Widget _filterChip(String label, String key) {
-    final active = _filter == key;
+  final active = _filter == key;
 
-    return Padding(
-      padding: const EdgeInsets.only(right: 10),
-      child: InkWell(
-        onTap: () => setState(() => _filter = key),
-        borderRadius: BorderRadius.circular(999),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: active ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: active ? const Color(0xFFBFDBFE) : _border,
-            ),
+  return Padding(
+    padding: const EdgeInsets.only(right: 8),
+    child: GestureDetector(
+      onTap: () => setState(() => _filter = key),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFFDCFCE7) : Colors.white,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: active ? const Color(0xFFBBF7D0) : _border,
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              color: active ? _primary : _text,
-              fontSize: 12.5,
-            ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: active ? _primary : _text,
+            fontSize: 12,
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   // ------------------------------------------------------------
   // UI: LIST ITEM
   // ------------------------------------------------------------
   Widget _applicantTile(Map<String, dynamic> row) {
-    final app = _asMap(row['job_applications']);
+  final app = _asMap(row['job_applications']);
 
-    final name = (app['name'] ?? 'Candidate').toString();
-    final district = (app['district'] ?? '').toString();
-    final exp = (app['experience_level'] ?? '').toString();
-    final salary = (app['expected_salary'] ?? '').toString();
+  final name = (app['name'] ?? 'Candidate').toString();
+  final district = (app['district'] ?? '').toString();
+  final exp = (app['experience_level'] ?? '').toString();
+  final salary = (app['expected_salary'] ?? '').toString();
 
-    final status =
-        (row['application_status'] ?? 'applied').toString().toLowerCase();
+  final status =
+      (row['application_status'] ?? 'applied').toString().toLowerCase();
 
-    final appliedAt = row['applied_at'];
-    final interviewAt = row['interview_date'];
+  final appliedAt = row['applied_at'];
 
-    return InkWell(
-      onTap: () => _openApplicant(row),
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                _avatar(name),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w900,
-                          color: _text,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        appliedAt == null
-                            ? "Recently applied"
-                            : "Applied ${_timeAgo(appliedAt)}",
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                          color: _muted,
-                        ),
-                      ),
-                      if (status == 'interview_scheduled' && interviewAt != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Text(
-                            "Interview: ${_formatDateTime(interviewAt)}",
-                            style: const TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF7C2D12),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                _statusChip(status),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _mini(Icons.location_on_outlined,
-                      district.isEmpty ? "Assam" : district),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _mini(Icons.timeline_outlined,
-                      exp.isEmpty ? "Experience: -" : exp),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            _mini(Icons.currency_rupee_rounded,
-                salary.isEmpty ? "Expected salary: -" : salary),
-          ],
-        ),
+  return InkWell(
+    onTap: () => _openApplicant(row),
+    borderRadius: BorderRadius.circular(16),
+    child: Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-    );
-  }
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _avatar(name),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        color: _text,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      appliedAt == null
+                          ? "Recently applied"
+                          : "Applied ${_timeAgo(appliedAt)}",
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: _muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _statusChip(status),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+
+          Text(
+            "$district • ${exp.isEmpty ? "Experience -" : exp}",
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: _muted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          const SizedBox(height: 6),
+
+          Text(
+            salary.isEmpty ? "Expected salary -" : salary,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: _text,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 
   Widget _mini(IconData icon, String text) {
     return Row(
@@ -959,27 +955,26 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
   }
 
   Widget _avatar(String name) {
-    final letter = name.isNotEmpty ? name[0].toUpperCase() : "C";
+  final letter = name.isNotEmpty ? name[0].toUpperCase() : "C";
 
-    return Container(
-      width: 46,
-      height: 46,
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFBFDBFE)),
+  return Container(
+    width: 42,
+    height: 42,
+    decoration: BoxDecoration(
+      color: const Color(0xFFDCFCE7),
+      borderRadius: BorderRadius.circular(999),
+    ),
+    alignment: Alignment.center,
+    child: Text(
+      letter,
+      style: const TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w800,
+        color: _primary,
       ),
-      alignment: Alignment.center,
-      child: Text(
-        letter,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w900,
-          color: _primary,
-        ),
-      ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _emptyCard() {
     return Container(
