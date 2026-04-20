@@ -100,15 +100,27 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         _companyId = companyId;
         _company = company;
 
-        _jobs = List<Map<String, dynamic>>.from(results[0]);
-        _stats = Map<String, dynamic>.from(results[1]);
-        _recentApplicants =
-            List<Map<String, dynamic>>.from(results[2]);
-        _topJobs = List<Map<String, dynamic>>.from(results[3]);
-        _todayInterviews =
-            List<Map<String, dynamic>>.from(results[4]);
-        _perf7d = Map<String, dynamic>.from(results[5]);
-        _unreadNotifications = results[6];
+        _jobs = List<Map<String, dynamic>>.from(
+  (results[0] as List).map((e) => Map<String, dynamic>.from(e)),
+);
+
+_stats = Map<String, dynamic>.from(results[1] as Map);
+
+_recentApplicants = List<Map<String, dynamic>>.from(
+  (results[2] as List).map((e) => Map<String, dynamic>.from(e)),
+);
+
+_topJobs = List<Map<String, dynamic>>.from(
+  (results[3] as List).map((e) => Map<String, dynamic>.from(e)),
+);
+
+_todayInterviews = List<Map<String, dynamic>>.from(
+  (results[4] as List).map((e) => Map<String, dynamic>.from(e)),
+);
+
+_perf7d = Map<String, dynamic>.from(results[5] as Map);
+
+_unreadNotifications = results[6] as int;
 
         _needsOrganization = false;
         _loading = false;
