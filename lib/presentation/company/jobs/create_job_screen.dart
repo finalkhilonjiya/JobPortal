@@ -1244,67 +1244,74 @@ ButtonStyle _primaryButtonStyle() {
   // BOTTOM BAR
   // ------------------------------------------------------------
   Widget _bottomActionBar() {
-    final bool canGoBack = _step > 0;
+  final bool canGoBack = _step > 0;
 
-    return Container(
-      padding: EdgeInsets.fromLTRB(4.w, 1.2.h, 4.w, 2.2.h),
-      decoration: BoxDecoration(
-        color: _card,
-        border: Border(top: BorderSide(color: Colors.black.withOpacity(0.06))),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _loading ? null : (canGoBack ? _prevStep : null),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _text,
-                  side: const BorderSide(color: _line),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: const Text(
-                  "Back",
-                  style: TextStyle(fontWeight: FontWeight.w800),
-                ),
-              ),
-            ),
-            SizedBox(width: 3.w),
-            Expanded(
-              flex: 2,
-              child: ElevatedButton(
-                onPressed: _loading
-                    ? null
-                    : (_step == 3 ? _submit : _nextStep),
-                style: style: _primaryButtonStyle(),
-                child: _loading
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.6,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : Text(
-                        _step == 3 ? "Publish Job" : "Continue",
-                        style: const TextStyle(
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-              ),
-            ),
-          ],
+  return Container(
+    padding: EdgeInsets.fromLTRB(4.w, 1.4.h, 4.w, 2.4.h),
+    decoration: BoxDecoration(
+      color: _card,
+      border: Border(
+        top: BorderSide(
+          color: Colors.black.withOpacity(0.06),
         ),
       ),
-    );
-  }
+    ),
+    child: SafeArea(
+      top: false,
+      child: Row(
+        children: [
+          // 🔹 BACK BUTTON
+          Expanded(
+            child: OutlinedButton(
+              onPressed: _loading ? null : (canGoBack ? _prevStep : null),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _text,
+                side: const BorderSide(color: _line),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                "Back",
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+
+          SizedBox(width: 3.w),
+
+          // 🔹 PRIMARY BUTTON
+          Expanded(
+            flex: 2,
+            child: ElevatedButton(
+              onPressed:
+                  _loading ? null : (_step == 3 ? _submit : _nextStep),
+              style: _primaryButtonStyle(),
+              child: _loading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.6,
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Text(
+                      _step == 3 ? "Publish Job" : "Continue",
+                      style: const TextStyle(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
   // ------------------------------------------------------------
   // DROPDOWNS
@@ -1379,40 +1386,49 @@ ButtonStyle _primaryButtonStyle() {
 }) {
   return Container(
     width: double.infinity,
-    padding: EdgeInsets.fromLTRB(4.w, 2.4.h, 4.w, 2.4.h),
+    padding: EdgeInsets.fromLTRB(4.w, 2.6.h, 4.w, 2.6.h),
     decoration: BoxDecoration(
       color: _card,
       borderRadius: BorderRadius.circular(16),
       border: Border.all(color: _line),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.04),
-          blurRadius: 14,
-          offset: const Offset(0, 6),
+          color: Colors.black.withOpacity(0.035),
+          blurRadius: 16,
+          offset: const Offset(0, 8),
         ),
       ],
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // 🔹 TITLE
         Text(
           title,
           style: const TextStyle(
-            fontSize: 16,
+            fontSize: 16.2,
             fontWeight: FontWeight.w800,
             color: _text,
+            letterSpacing: -0.2,
           ),
         ),
+
         const SizedBox(height: 6),
+
+        // 🔹 SUBTITLE
         Text(
           subtitle,
           style: const TextStyle(
             fontSize: 13,
             color: _muted,
             fontWeight: FontWeight.w600,
+            height: 1.3,
           ),
         ),
+
         SizedBox(height: 2.6.h),
+
+        // 🔹 CONTENT
         child,
       ],
     ),
@@ -1487,45 +1503,52 @@ ButtonStyle _primaryButtonStyle() {
   }
 
   Widget _dropdown(
-    String label,
-    String value,
-    List<String> items,
-    void Function(String) onChanged,
-  ) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 1.5.h),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        items: items
-            .map(
-              (e) => DropdownMenuItem(
-                value: e,
-                child: Text(
-                  e,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: _text,
-                  ),
+  String label,
+  String value,
+  List<String> items,
+  void Function(String) onChanged,
+) {
+  return Padding(
+    padding: EdgeInsets.only(bottom: 2.h),
+    child: DropdownButtonFormField<String>(
+      value: value,
+      isExpanded: true,
+      icon: const Icon(Icons.keyboard_arrow_down_rounded),
+
+      items: items
+          .map(
+            (e) => DropdownMenuItem(
+              value: e,
+              child: Text(
+                e,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: _text,
                 ),
               ),
-            )
-            .toList(),
-        onChanged: (v) {
-          if (v == null) return;
-          onChanged(v);
-        },
-        decoration: _inputDecoration(label: label),
-        icon: const Icon(Icons.keyboard_arrow_down_rounded),
-        dropdownColor: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-    );
-  }
+            ),
+          )
+          .toList(),
+
+      onChanged: (v) {
+        if (v == null) return;
+        onChanged(v);
+      },
+
+      decoration: _inputDecoration(label: label),
+
+      dropdownColor: Colors.white,
+
+      borderRadius: BorderRadius.circular(14),
+    ),
+  );
+}
 
   InputDecoration _inputDecoration({required String label, String? hint}) {
   return InputDecoration(
     labelText: label,
     hintText: hint,
+    floatingLabelBehavior: FloatingLabelBehavior.always,
 
     filled: true,
     fillColor: Colors.white,
