@@ -8,7 +8,7 @@ import '../../services/subscription_service.dart';
 class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({Key? key}) : super(key: key);
 
-  static const String productId = "khilonjiya_pro_monthly";
+  static const String productId = "khilonjiya_pro_access";
 
   @override
   State<SubscriptionPage> createState() =>
@@ -86,9 +86,9 @@ class _SubscriptionPageState
 
   setState(() => _paying = true);
 
-  // ✅ SUBSCRIPTION PURCHASE
-  _iap.buySubscription(
+  _iap.buyConsumable(
     purchaseParam: PurchaseParam(productDetails: _product!),
+    autoConsume: true,
   );
 }
 
