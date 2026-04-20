@@ -1,1 +1,406 @@
-ahah
+// lib/presentation/company/jobs/create_job_screen.dart
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:sizer/sizer.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class CreateJobScreen extends StatefulWidget {
+  const CreateJobScreen({Key? key}) : super(key: key);
+
+  @override
+  State<CreateJobScreen> createState() => _CreateJobScreenState();
+}
+
+class _CreateJobScreenState extends State<CreateJobScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final SupabaseClient _client = Supabase.instance.client;
+
+  // ---------------- CONTROLLERS ----------------
+  final _jobTitleCtrl = TextEditingController();
+  final _jobDescriptionCtrl = TextEditingController();
+  final _requirementsCtrl = TextEditingController();
+  final _responsibilitiesCtrl = TextEditingController();
+  final _educationCtrl = TextEditingController();
+  final _experienceCtrl = TextEditingController();
+  final _salaryMinCtrl = TextEditingController();
+  final _salaryMaxCtrl = TextEditingController();
+  final _addressCtrl = TextEditingController();
+  final _openingsCtrl = TextEditingController(text: "1");
+  final _skillsCtrl = TextEditingController();
+  final _benefitsCtrl = TextEditingController();
+  final _additionalInfoCtrl = TextEditingController();
+  final _walkInDetailsCtrl = TextEditingController();
+
+  // ---------------- STATE ----------------
+  bool _loading = false;
+  int _step = 0;
+
+  String _jobType = "Full-time";
+  String _employmentType = "Permanent";
+  String _workMode = "On-site";
+  String _salaryPeriod = "Monthly";
+  String _hiringUrgency = "Normal";
+
+  bool _isWalkIn = false;
+
+  List<String> _categories = [];
+  String? _selectedCategory;
+
+  List<String> _districts = [];
+  String? _selectedDistrict;
+
+  List<Map<String, dynamic>> _myCompanies = [];
+  String? _selectedCompanyId;
+
+  bool _loadingCompanies = true;
+  bool _loadingCategories = true;
+  bool _loadingDistricts = true;
+
+  // ---------------- DESIGN TOKENS (MATCH DASHBOARD) ----------------
+  static const _bg = Color(0xFFF7F8FA);
+  static const _card = Colors.white;
+  static const _text = Color(0xFF0F172A);
+  static const _muted = Color(0xFF6B7280);
+  static const _line = Color(0xFFE6E8EC);
+  static const _primary = Color(0xFF16A34A);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEverything();
+  }
+
+  Future<void> _loadEverything() async {
+    await Future.wait([
+      _loadCompanies(),
+      _loadCategories(),
+      _loadDistricts(),
+    ]);
+  }
+
+  // ---------------- LOAD DATA ----------------
+  Future<void> _loadCompanies() async {
+    final user = _client.auth.currentUser;
+
+    if (user == null) return;
+
+    final mem = await _client
+        .from("company_members")
+        .select("company_id")
+        .eq("user_id", user.id);
+
+    final ids = List<Map<String, dynamic>>.from(mem)
+        .map((e) => e["company_id"].toString())
+        .toList();
+
+    if (ids.isEmpty) {
+      setState(() => _loadingCompanies = false);
+      return;
+    }
+
+    final res = await _client
+        .from("companies")
+        .select("id,name")
+        .inFilter("id", ids);
+
+    final list = List<Map<String, dynamic>>.from(res);
+
+    setState(() {
+      _myCompanies = list;
+      _selectedCompanyId =
+          list.isNotEmpty ? list.first["id"].toString() : null;
+      _loadingCompanies = false;
+    });
+  }
+
+  Future<void> _loadCategories() async {
+    final res = await _client
+        .from("job_categories_master")
+        .select("category_name")
+        .eq("is_active", true);
+
+    final list = List<Map<String, dynamic>>.from(res)
+        .map((e) => e["category_name"].toString())
+        .toList();
+
+    setState(() {
+      _categories = list;
+      _selectedCategory = list.isNotEmpty ? list.first : null;
+      _loadingCategories = false;
+    });
+  }
+
+  Future<void> _loadDistricts() async {
+    final res = await _client
+        .from("assam_districts_master")
+        .select("district_name");
+
+    final list = List<Map<String, dynamic>>.from(res)
+        .map((e) => e["district_name"].toString())
+        .toList();
+
+    setState(() {
+      _districts = list;
+      _selectedDistrict = list.isNotEmpty ? list.first : null;
+      _loadingDistricts = false;
+    });
+  }
+
+  // ---------------- SUBMIT ----------------
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final user = _client.auth.currentUser;
+    if (user == null) return;
+
+    setState(() => _loading = true);
+
+    await _client.from("job_listings").insert({
+      "employer_id": user.id,
+      "company_id": _selectedCompanyId,
+      "job_title": _jobTitleCtrl.text,
+      "job_category": _selectedCategory,
+      "job_type": _jobType,
+      "employment_type": _employmentType,
+      "work_mode": _workMode,
+      "job_description": _jobDescriptionCtrl.text,
+      "requirements": _requirementsCtrl.text,
+      "education_required": _educationCtrl.text,
+      "experience_required": _experienceCtrl.text,
+      "salary_min": int.parse(_salaryMinCtrl.text),
+      "salary_max": int.parse(_salaryMaxCtrl.text),
+      "salary_period": _salaryPeriod,
+      "district": _selectedDistrict,
+      "job_address": _addressCtrl.text,
+      "hiring_urgency": _hiringUrgency,
+      "status": "active",
+    });
+
+    if (!mounted) return;
+    Navigator.pop(context, true);
+  }
+
+  // ---------------- UI ----------------
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: _bg,
+      appBar: AppBar(
+        backgroundColor: _bg,
+        elevation: 0,
+        title: const Text(
+          "Create Job",
+          style: TextStyle(fontWeight: FontWeight.w800, color: _text),
+        ),
+        iconTheme: const IconThemeData(color: _text),
+      ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _header(),
+            const SizedBox(height: 16),
+            _stepIndicator(),
+            const SizedBox(height: 16),
+            _stepBody(),
+            const SizedBox(height: 100),
+          ],
+        ),
+      ),
+      bottomNavigationBar: _bottomBar(),
+    );
+  }
+
+  // ---------------- HEADER ----------------
+  Widget _header() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _line),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.work, color: _primary),
+          SizedBox(width: 10),
+          Text(
+            "Post a new job",
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------------- STEP INDICATOR ----------------
+  Widget _stepIndicator() {
+    final steps = ["Org", "Job", "Details", "Location"];
+
+    return Row(
+      children: List.generate(steps.length, (i) {
+        final active = i == _step;
+
+        return Expanded(
+          child: Column(
+            children: [
+              CircleAvatar(
+                radius: 14,
+                backgroundColor:
+                    active ? _primary : Colors.grey.shade300,
+                child: Text("${i + 1}",
+                    style: const TextStyle(color: Colors.white)),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                steps[i],
+                style: TextStyle(
+                  fontSize: 11,
+                  color: active ? _text : _muted,
+                ),
+              )
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
+  // ---------------- STEP BODY ----------------
+  Widget _stepBody() {
+    if (_step == 0) return _orgStep();
+    if (_step == 1) return _jobStep();
+    if (_step == 2) return _detailsStep();
+    return _locationStep();
+  }
+
+  Widget _orgStep() {
+    if (_loadingCompanies) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return _card(
+      DropdownButtonFormField<String>(
+        value: _selectedCompanyId,
+        items: _myCompanies
+            .map((e) => DropdownMenuItem(
+                  value: e["id"].toString(),
+                  child: Text(e["name"]),
+                ))
+            .toList(),
+        onChanged: (v) => setState(() => _selectedCompanyId = v),
+        decoration: _input("Organization"),
+      ),
+    );
+  }
+
+  Widget _jobStep() {
+    return _card(Column(children: [
+      _field("Job Title", _jobTitleCtrl),
+      _dropdown("Category", _selectedCategory, _categories,
+          (v) => setState(() => _selectedCategory = v)),
+    ]));
+  }
+
+  Widget _detailsStep() {
+    return _card(Column(children: [
+      _field("Min Salary", _salaryMinCtrl),
+      _field("Max Salary", _salaryMaxCtrl),
+      _multiline("Description", _jobDescriptionCtrl),
+    ]));
+  }
+
+  Widget _locationStep() {
+    return _card(Column(children: [
+      _dropdown("District", _selectedDistrict, _districts,
+          (v) => setState(() => _selectedDistrict = v)),
+      _multiline("Address", _addressCtrl),
+    ]));
+  }
+
+  // ---------------- BOTTOM BAR ----------------
+  Widget _bottomBar() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: _card,
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: _step == 0 ? null : () => setState(() => _step--),
+              child: const Text("Back"),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: ElevatedButton(
+              onPressed:
+                  _step == 3 ? _submit : () => setState(() => _step++),
+              style: ElevatedButton.styleFrom(backgroundColor: _primary),
+              child: Text(_step == 3 ? "Publish" : "Next"),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------------- HELPERS ----------------
+  Widget _card(Widget child) => Container(
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: _card,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _line),
+        ),
+        child: child,
+      );
+
+  Widget _field(String label, TextEditingController c) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextFormField(
+        controller: c,
+        validator: (v) => v!.isEmpty ? "Required" : null,
+        decoration: _input(label),
+      ),
+    );
+  }
+
+  Widget _multiline(String label, TextEditingController c) {
+    return TextFormField(
+      controller: c,
+      maxLines: 4,
+      decoration: _input(label),
+    );
+  }
+
+  Widget _dropdown(
+      String label, String? value, List<String> items, Function(String) onChanged) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      items: items
+          .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+          .toList(),
+      onChanged: (v) => onChanged(v!),
+      decoration: _input(label),
+    );
+  }
+
+  InputDecoration _input(String label) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    );
+  }
+}
