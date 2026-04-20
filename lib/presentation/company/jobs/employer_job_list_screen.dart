@@ -29,7 +29,7 @@ class _EmployerJobListScreenState extends State<EmployerJobListScreen> {
   static const Color _border = Color(0xFFE6E8EC);
   static const Color _text = Color(0xFF111827);
   static const Color _muted = Color(0xFF6B7280);
-  static const Color _primary = Color(0xFF2563EB);
+  static const Color _primary = Color(0xFF16A34A);
 
   @override
   void initState() {
@@ -230,109 +230,110 @@ class _EmployerJobListScreenState extends State<EmployerJobListScreen> {
   // BUILD
   // ------------------------------------------------------------
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: _bg,
+    appBar: AppBar(
       backgroundColor: _bg,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.7,
-        title: const Text("My Jobs"),
-        foregroundColor: _text,
-        actions: [
-          TextButton(
-            onPressed: _refreshing ? null : () => _load(silent: true),
-            child: Text(
-              _refreshing ? "Refreshing..." : "Refresh",
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                color: _refreshing ? const Color(0xFF94A3B8) : _primary,
-              ),
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final res = await Navigator.pushNamed(context, AppRoutes.createJob);
-          if (res == true) await _load(silent: true);
-        },
-        backgroundColor: _primary,
-        foregroundColor: Colors.white,
-        elevation: 1,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text(
-          "Post Job",
-          style: TextStyle(fontWeight: FontWeight.w900),
+      elevation: 0,
+      surfaceTintColor: _bg,
+      title: const Text(
+        "My Jobs",
+        style: TextStyle(
+          fontWeight: FontWeight.w800,
+          color: _text,
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: () => _load(silent: true),
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
-                children: [
-                  _searchBox(),
-                  const SizedBox(height: 12),
-                  _statusFilter(),
-                  const SizedBox(height: 14),
-                  _summaryRow(),
-                  const SizedBox(height: 12),
-                  if (_jobs.isEmpty)
-                    _empty()
-                  else
-                    Column(
-                      children: _jobs.map((j) => _jobCard(j)).toList(),
-                    ),
-                ],
-              ),
+      actions: [
+        IconButton(
+          onPressed: _refreshing ? null : () => _load(silent: true),
+          icon: const Icon(Icons.refresh_rounded),
+          color: _primary,
+        ),
+      ],
+    ),
+    floatingActionButton: FloatingActionButton.extended(
+      onPressed: () async {
+        final res = await Navigator.pushNamed(context, AppRoutes.createJob);
+        if (res == true) await _load(silent: true);
+      },
+      backgroundColor: _primary,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      icon: const Icon(Icons.add_rounded),
+      label: const Text(
+        "Post Job",
+        style: TextStyle(fontWeight: FontWeight.w800),
+      ),
+    ),
+    body: _loading
+        ? const Center(child: CircularProgressIndicator())
+        : RefreshIndicator(
+            onRefresh: () => _load(silent: true),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 120),
+              children: [
+                _searchBox(),
+                const SizedBox(height: 14),
+                _statusFilter(),
+                const SizedBox(height: 16),
+                _summaryRow(),
+                const SizedBox(height: 14),
+                if (_jobs.isEmpty)
+                  _empty()
+                else
+                  Column(
+                    children: _jobs.map((j) => _jobCard(j)).toList(),
+                  ),
+              ],
             ),
-    );
-  }
+          ),
+  );
+}
 
   // ------------------------------------------------------------
   // UI: SEARCH
   // ------------------------------------------------------------
   Widget _searchBox() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _border),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.search, color: _muted),
-          const SizedBox(width: 10),
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              onChanged: (v) => _search = v,
-              onSubmitted: (_) => _load(silent: true),
-              decoration: const InputDecoration(
-                hintText: "Search by job title",
-                border: InputBorder.none,
-              ),
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 14),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: _border),
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.search, color: _muted),
+        const SizedBox(width: 10),
+        Expanded(
+          child: TextField(
+            controller: _searchController,
+            onChanged: (v) => _search = v,
+            onSubmitted: (_) => _load(silent: true),
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: _text,
+            ),
+            decoration: const InputDecoration(
+              hintText: "Search jobs...",
+              border: InputBorder.none,
             ),
           ),
-          const SizedBox(width: 8),
-          InkWell(
-            borderRadius: BorderRadius.circular(999),
-            onTap: () async {
-              _searchController.clear();
-              _search = '';
-              await _load(silent: true);
-            },
-            child: const Padding(
-              padding: EdgeInsets.all(8),
-              child: Icon(Icons.close_rounded, color: _muted),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+        IconButton(
+          onPressed: () async {
+            _searchController.clear();
+            _search = '';
+            await _load(silent: true);
+          },
+          icon: const Icon(Icons.close_rounded),
+          color: _muted,
+        ),
+      ],
+    ),
+  );
+}
 
   // ------------------------------------------------------------
   // UI: FILTER
@@ -352,34 +353,33 @@ class _EmployerJobListScreenState extends State<EmployerJobListScreen> {
   }
 
   Widget _chip(String label, String key) {
-    final selected = _status == key;
+  final selected = _status == key;
 
-    return InkWell(
-      onTap: () async {
-        setState(() => _status = key);
-        await _load(silent: true);
-      },
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFFEFF6FF) : Colors.white,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: selected ? const Color(0xFFBFDBFE) : _border,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            color: selected ? _primary : _text,
-            fontSize: 12.5,
-          ),
+  return GestureDetector(
+    onTap: () async {
+      setState(() => _status = key);
+      await _load(silent: true);
+    },
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: selected ? const Color(0xFFDCFCE7) : Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: selected ? const Color(0xFFBBF7D0) : _border,
         ),
       ),
-    );
-  }
+      child: Text(
+        label,
+        style: TextStyle(
+          fontWeight: FontWeight.w700,
+          color: selected ? _primary : _text,
+          fontSize: 12.5,
+        ),
+      ),
+    ),
+  );
+}
 
   // ------------------------------------------------------------
   // UI: SUMMARY
@@ -407,37 +407,44 @@ class _EmployerJobListScreenState extends State<EmployerJobListScreen> {
   }
 
   Widget _miniMetric(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              color: _muted,
-              fontSize: 12.5,
-            ),
+  return Container(
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: _border),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.03),
+          blurRadius: 12,
+          offset: const Offset(0, 6),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: _muted,
+            fontSize: 12,
           ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              color: _text,
-              fontSize: 18,
-            ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            color: _text,
+            fontSize: 18,
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   // ------------------------------------------------------------
   // UI: EMPTY
@@ -481,288 +488,146 @@ class _EmployerJobListScreenState extends State<EmployerJobListScreen> {
   // UI: JOB CARD
   // ------------------------------------------------------------
   Widget _jobCard(Map<String, dynamic> j) {
-    final jobId = (j['id'] ?? '').toString();
-    final companyId = (j['company_id'] ?? '').toString();
+  final jobId = (j['id'] ?? '').toString();
+  final companyId = (j['company_id'] ?? '').toString();
 
-    final title = (j['job_title'] ?? 'Job').toString();
-    final district = (j['district'] ?? '').toString();
-    final jobType = (j['job_type'] ?? 'Full-time').toString();
+  final title = (j['job_title'] ?? 'Job').toString();
+  final district = (j['district'] ?? '').toString();
+  final jobType = (j['job_type'] ?? 'Full-time').toString();
 
-    final status = (j['status'] ?? 'active').toString().toLowerCase();
+  final status = (j['status'] ?? 'active').toString().toLowerCase();
 
-    final salaryMin = _service.toInt(j['salary_min']);
-    final salaryMax = _service.toInt(j['salary_max']);
-    final salaryPeriod = (j['salary_period'] ?? 'Monthly').toString();
+  final salaryMin = _service.toInt(j['salary_min']);
+  final salaryMax = _service.toInt(j['salary_max']);
+  final salaryPeriod = (j['salary_period'] ?? 'Monthly').toString();
 
-    final views = _service.toInt(j['views_count']);
-    final apps = _service.toInt(j['applications_count']);
+  final views = _service.toInt(j['views_count']);
+  final apps = _service.toInt(j['applications_count']);
 
-    final createdAt = j['created_at'];
-    final expiresAt = j['expires_at'];
+  final createdAt = j['created_at'];
+  final expiresAt = j['expires_at'];
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // title + status
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                    color: _text,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              _statusChip(status),
-            ],
-          ),
-
-          const SizedBox(height: 8),
-
-          // location + type
-          Row(
-            children: [
-              const Icon(Icons.location_on_outlined, size: 16, color: _muted),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  district.isEmpty ? "Assam" : district,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    color: _muted,
-                  ),
-                ),
-              ),
-              const Text(
-                " • ",
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                  color: _muted,
-                ),
-              ),
-              Text(
-                jobType,
+  return Container(
+    margin: const EdgeInsets.only(bottom: 14),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: _border),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.03),
+          blurRadius: 14,
+          offset: const Offset(0, 8),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 12.5,
+                  fontSize: 15.5,
                   fontWeight: FontWeight.w800,
-                  color: _muted,
+                  color: _text,
                 ),
               ),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          // salary
-          Text(
-            _salaryText(salaryMin, salaryMax, salaryPeriod),
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              color: _text,
             ),
+            _statusChip(status),
+          ],
+        ),
+
+        const SizedBox(height: 8),
+
+        Text(
+          "$district • $jobType",
+          style: const TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: _muted,
           ),
+        ),
 
-          const SizedBox(height: 10),
+        const SizedBox(height: 8),
 
-          // views + apps
-          Row(
-            children: [
-              const Icon(Icons.people_outline, size: 16, color: _muted),
-              const SizedBox(width: 6),
-              Text(
-                "$apps applicants",
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                  color: _muted,
-                ),
-              ),
-              const Text(
-                " • ",
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                  color: _muted,
-                ),
-              ),
-              const Icon(Icons.visibility_outlined, size: 16, color: _muted),
-              const SizedBox(width: 6),
-              Text(
-                "$views views",
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                  color: _muted,
-                ),
-              ),
-            ],
+        Text(
+          _salaryText(salaryMin, salaryMax, salaryPeriod),
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            color: _text,
           ),
+        ),
 
-          const SizedBox(height: 10),
+        const SizedBox(height: 10),
 
-          // posted + expiry
-          Row(
-            children: [
-              const Icon(Icons.access_time, size: 16, color: _muted),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  "Posted: ${_timeAgo(createdAt)}",
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    color: _muted,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  expiresAt == null ? "" : "Expires: ${_dateShort(expiresAt)}",
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    color: _muted,
-                  ),
-                ),
-              ),
-            ],
+        Text(
+          "$apps applicants • $views views",
+          style: const TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: _muted,
           ),
+        ),
 
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: _border),
-          const SizedBox(height: 12),
+        const SizedBox(height: 8),
 
-          // primary actions
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _openApplicants(
-                    jobId: jobId,
-                    companyId: companyId,
-                  ),
-                  icon: const Icon(Icons.people_outline, size: 18),
-                  label: const Text(
-                    "Applicants",
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _primary,
-                    backgroundColor: const Color(0xFFEFF6FF),
-                    side: const BorderSide(color: Color(0xFFBFDBFE)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _openPipeline(
-                    jobId: jobId,
-                    companyId: companyId,
-                  ),
-                  icon: const Icon(Icons.view_kanban_outlined, size: 18),
-                  label: const Text(
-                    "Pipeline",
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _text,
-                    backgroundColor: const Color(0xFFF8FAFC),
-                    side: const BorderSide(color: _border),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+        Text(
+          "Posted ${_timeAgo(createdAt)}",
+          style: const TextStyle(
+            fontSize: 12,
+            color: _muted,
           ),
+        ),
 
-          const SizedBox(height: 10),
+        const SizedBox(height: 12),
+        const Divider(height: 1),
+        const SizedBox(height: 12),
 
-          // secondary actions (edit / delete)
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _editJob(jobId),
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: const Text(
-                    "Edit",
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _text,
-                    backgroundColor: Colors.white,
-                    side: const BorderSide(color: _border),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => _openApplicants(
+                  jobId: jobId,
+                  companyId: companyId,
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _primary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _deleteJob(jobId),
-                  icon: const Icon(Icons.delete_outline, size: 18),
-                  label: const Text(
-                    "Delete",
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFEF4444),
-                    backgroundColor: const Color(0xFFFFF1F2),
-                    side: const BorderSide(color: Color(0xFFFECACA)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
+                child: const Text("Applicants"),
+            ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => _editJob(jobId),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _text,
+                  side: const BorderSide(color: _border),
                 ),
+                child: const Text("Edit"),
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
 
-          const SizedBox(height: 10),
+        const SizedBox(height: 10),
 
-          // status actions
-          _statusActions(jobId, status),
-        ],
-      ),
-    );
-  }
+        _statusActions(jobId, status),
+      ],
+    ),
+  );
+}
 
   Widget _statusActions(String jobId, String status) {
     final isActive = status == 'active';
