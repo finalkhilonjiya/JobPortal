@@ -795,7 +795,7 @@ ButtonStyle _primaryButtonStyle() {
               child: Column(
                 children: [
                   _topHeader(),
-                  SizedBox(height: 2.h),
+                  SizedBox(height: 2.5.h),
                   _stepIndicator(),
                   SizedBox(height: 2.2.h),
                   AnimatedSwitcher(
@@ -1135,7 +1135,7 @@ ButtonStyle _primaryButtonStyle() {
             ],
           ),
         ),
-        SizedBox(height: 2.2.h),
+        SizedBox(height: 3.h),
         _cardSection(
           title: "Requirements",
           subtitle: "Describe role and what you need",
@@ -1177,7 +1177,7 @@ ButtonStyle _primaryButtonStyle() {
             ],
           ),
         ),
-        SizedBox(height: 2.2.h),
+        SizedBox(height: 3.h),
         _cardSection(
           title: "Other",
           subtitle: "Openings, urgency and optional details",
@@ -1412,7 +1412,7 @@ ButtonStyle _primaryButtonStyle() {
             fontWeight: FontWeight.w600,
           ),
         ),
-        SizedBox(height: 2.h),
+        SizedBox(height: 2.6.h),
         child,
       ],
     ),
@@ -1430,7 +1430,7 @@ ButtonStyle _primaryButtonStyle() {
     String? Function(String?)? validator,
   }) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 1.5.h),
+      padding: EdgeInsets.only(bottom: 2.h),
       child: TextFormField(
         controller: controller,
         keyboardType:
@@ -1455,7 +1455,7 @@ ButtonStyle _primaryButtonStyle() {
     bool required = true,
   }) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 1.5.h),
+      padding: EdgeInsets.only(bottom: 2.h),
       child: TextFormField(
         controller: controller,
         minLines: 4,
