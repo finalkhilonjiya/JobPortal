@@ -260,6 +260,22 @@ static const _primary = Color(0xFF16A34A);
     }
   }
 
+
+
+
+
+
+ButtonStyle _primaryButtonStyle() {
+  return ElevatedButton.styleFrom(
+    backgroundColor: _primary,
+    foregroundColor: Colors.white,
+    elevation: 0,
+    padding: const EdgeInsets.symmetric(vertical: 14),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+  );
+}
   // ------------------------------------------------------------
   // LOAD: CATEGORIES
   // ------------------------------------------------------------
@@ -550,14 +566,7 @@ static const _primary = Color(0xFF16A34A);
 
                               setModalState(() => saving = false);
                             },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _primary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
+                      style: style: _primaryButtonStyle(),
                       child: saving
                           ? const SizedBox(
                               width: 22,
@@ -1271,16 +1280,7 @@ static const _primary = Color(0xFF16A34A);
                 onPressed: _loading
                     ? null
                     : (_step == 3 ? _submit : _nextStep),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _primary,
-                  disabledBackgroundColor: const Color(0xFFE2E8F0),
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
+                style: style: _primaryButtonStyle(),
                 child: _loading
                     ? const SizedBox(
                         width: 22,
