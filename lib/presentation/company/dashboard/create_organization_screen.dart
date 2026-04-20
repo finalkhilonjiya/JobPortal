@@ -107,14 +107,27 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
   setState(() => _saving = true);
 
   try {
-    // Convert district_id → district_name (since DB stores TEXT)
+    // 🔁 STEP 1: Check if already linked (PREVENT DUPLICATE CRASH)
+    final existing = await _db
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+    if (existing != null) {
+      if (!mounted) return;
+      Navigator.pop(context, true);
+      return;
+    }
+
+    // 🔁 STEP 2: Get district name
     final districtObj = _districts.firstWhere(
       (d) => d['id'].toString() == _selectedDistrictId,
     );
 
     final districtName = districtObj['district_name'];
 
-    // CREATE COMPANY (STRICTLY matching schema)
+    // 🔁 STEP 3: Create company
     final company = await _db
         .from('companies')
         .insert({
@@ -122,27 +135,30 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
           "business_type_id": _selectedBusinessTypeId,
           "website": _website.text.trim(),
           "description": _desc.text.trim(),
-
-          // ✅ correct fields (schema-based)
           "headquarters_city": districtName,
           "headquarters_state": "Assam",
-
           "created_by": user.id,
           "owner_id": user.id,
         })
         .select()
         .single();
 
-    // LINK USER TO COMPANY
-    await _db.from('company_members').insert({
-      "company_id": company['id'],
+    final companyId = company['id'];
+
+    // 🔁 STEP 4: LINK USER (IMPORTANT FIX)
+    await _db.from('company_members').upsert({
+      "company_id": companyId,
       "user_id": user.id,
       "role": "owner",
-    });
+      "status": "active",
+    }, onConflict: 'user_id');
+
+    // 🔁 STEP 5: WAIT (fix dashboard race condition)
+    await Future.delayed(const Duration(milliseconds: 500));
 
     if (!mounted) return;
-    Navigator.pop(context, true);
 
+    Navigator.pop(context, true);
   } catch (e) {
     _toast("Failed: $e");
   }
