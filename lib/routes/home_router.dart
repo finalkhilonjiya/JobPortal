@@ -26,7 +26,7 @@ class _HomeRouterState extends State<HomeRouter> {
   }
 
   // ------------------------------------------------------------
-  // RESOLVE ROLE
+  // ROLE
   // ------------------------------------------------------------
   Future<UserRole?> _resolveRoleOrNull() async {
     final user = _auth.currentUser;
@@ -38,19 +38,33 @@ class _HomeRouterState extends State<HomeRouter> {
   }
 
   // ------------------------------------------------------------
-  // CHECK COMPANY MEMBERSHIP
+  // ✅ FIXED COMPANY CHECK (CRITICAL)
   // ------------------------------------------------------------
   Future<bool> _hasCompany() async {
     final user = _auth.currentUser;
     if (user == null) return false;
 
-    final res = await Supabase.instance.client
+    final db = Supabase.instance.client;
+
+    // 1️⃣ Check membership
+    final member = await db
         .from('company_members')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
 
-    return res != null;
+    if (member != null) return true;
+
+    // 2️⃣ Fallback → first-time creation case
+    final created = await db
+        .from('companies')
+        .select('id')
+        .eq('created_by', user.id)
+        .maybeSingle();
+
+    if (created != null) return true;
+
+    return false;
   }
 
   // ------------------------------------------------------------
@@ -68,7 +82,7 @@ class _HomeRouterState extends State<HomeRouter> {
   }
 
   // ------------------------------------------------------------
-  // BUILD
+  // UI
   // ------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
@@ -83,7 +97,7 @@ class _HomeRouterState extends State<HomeRouter> {
 
         final role = roleSnap.data;
 
-        // ❌ No session
+        // ❌ no session
         if (role == null) {
           _goToRoleSelection();
           return const Scaffold(
@@ -92,7 +106,7 @@ class _HomeRouterState extends State<HomeRouter> {
         }
 
         // --------------------------------------------------------
-        // EMPLOYER FLOW (STRICT)
+        // EMPLOYER
         // --------------------------------------------------------
         if (role == UserRole.employer) {
           return FutureBuilder<bool>(
@@ -106,19 +120,19 @@ class _HomeRouterState extends State<HomeRouter> {
 
               final hasCompany = companySnap.data ?? false;
 
-              // ❌ NO COMPANY → CREATE
+              // ❌ NO COMPANY
               if (!hasCompany) {
                 return const CreateOrganizationScreen();
               }
 
-              // ✅ HAS COMPANY → DASHBOARD
+              // ✅ HAS COMPANY
               return const CompanyDashboard();
             },
           );
         }
 
         // --------------------------------------------------------
-        // JOB SEEKER FLOW
+        // JOB SEEKER
         // --------------------------------------------------------
         return const JobSeekerMainShell();
       },
