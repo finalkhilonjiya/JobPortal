@@ -178,13 +178,19 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   final jobId = widget.job['id']?.toString();
   if (jobId == null || jobId.trim().isEmpty) return;
 
-  // ✅ CHECK PRO SUBSCRIPTION
   final isPro = await _homeService.isUserProSubscribed();
 
   if (!isPro) {
     if (!mounted) return;
 
-    Navigator.pushNamed(context, AppRoutes.subscribe); // your subscribe route
+    final res =
+        await Navigator.pushNamed(context, AppRoutes.subscribe);
+
+    // ✅ retry after subscription
+    if (res == true) {
+      await _applyNow();
+    }
+
     return;
   }
 
