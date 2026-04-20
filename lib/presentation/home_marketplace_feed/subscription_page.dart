@@ -8,7 +8,7 @@ import '../../services/subscription_service.dart';
 class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({Key? key}) : super(key: key);
 
-  static const String productId = "khilonjiya_pro_access";
+  static const String productId = "khilonjiya_pro_monthly";
 
   @override
   State<SubscriptionPage> createState() =>
@@ -75,29 +75,22 @@ class _SubscriptionPageState
   }
 
   Future<void> _startPayment() async {
-
-    if (!_agreed) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        const SnackBar(
-            content:
-                Text("Accept terms first")),
-      );
-      return;
-    }
-
-    if (_product == null || _isActive)
-      return;
-
-    setState(() => _paying = true);
-
-    _iap.buyNonConsumable(
-      purchaseParam:
-          PurchaseParam(
-              productDetails:
-                  _product!),
+  if (!_agreed) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Accept terms first")),
     );
+    return;
   }
+
+  if (_product == null || _isActive) return;
+
+  setState(() => _paying = true);
+
+  // ✅ SUBSCRIPTION PURCHASE
+  _iap.buySubscription(
+    purchaseParam: PurchaseParam(productDetails: _product!),
+  );
+}
 
   Future<void> _handlePurchaseUpdates(
     List<PurchaseDetails> purchases) async {
