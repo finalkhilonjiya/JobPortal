@@ -114,12 +114,18 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
   // ------------------------------------------------------------
   // FLUENT LIGHT PALETTE
   // ------------------------------------------------------------
-  static const _bg = Color(0xFFF6F7FB);
-  static const _card = Colors.white;
-  static const _text = Color(0xFF0F172A);
-  static const _muted = Color(0xFF64748B);
-  static const _line = Color(0xFFE6EAF2);
-  static const _primary = Color(0xFF2563EB);
+  // MATCH DASHBOARD EXACTLY
+static const _bg = Color(0xFFF7F8FA);
+static const _card = Colors.white;
+
+static const _text = Color(0xFF0F172A);
+static const _muted = Color(0xFF6B7280);
+
+static const _line = Color(0xFFE6E8EC);
+
+// ✅ IMPORTANT (green, not blue)
+static const _primary = Color(0xFF16A34A);
+
 
   @override
   void initState() {
@@ -808,69 +814,57 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
   // HEADER
   // ------------------------------------------------------------
   Widget _topHeader() {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(4.w, 2.2.h, 4.w, 2.2.h),
-      decoration: BoxDecoration(
-        color: _card,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _line),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.025),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.fromLTRB(4.w, 2.2.h, 4.w, 2.2.h),
+    decoration: BoxDecoration(
+      color: _card,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: _line),
+    ),
+    child: Row(
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: const Color(0xFFDCFCE7),
+            borderRadius: BorderRadius.circular(12),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFDBEAFE)),
-            ),
-            child: const Icon(
-              Icons.add_task_rounded,
-              color: _primary,
-              size: 26,
-            ),
+          child: const Icon(
+            Icons.work_outline,
+            color: _primary,
           ),
-          SizedBox(width: 4.w),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Post a new job",
-                  style: TextStyle(
-                    fontSize: 16.5,
-                    fontWeight: FontWeight.w800,
-                    color: _text,
-                    letterSpacing: -0.2,
-                  ),
+        ),
+        SizedBox(width: 3.w),
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Post a new job",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: _text,
                 ),
-                SizedBox(height: 4),
-                Text(
-                  "Select organization, then fill job details.",
-                  style: TextStyle(
-                    fontSize: 12.6,
-                    fontWeight: FontWeight.w600,
-                    color: _muted,
-                    height: 1.25,
-                  ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                "Fill details step by step to publish job",
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: _muted,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
+        ),
+      ],
+    ),
+  );
+}
   // ------------------------------------------------------------
   // STEPPER
   // ------------------------------------------------------------
@@ -1370,53 +1364,51 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
   // UI HELPERS
   // ------------------------------------------------------------
   Widget _cardSection({
-    required String title,
-    required String subtitle,
-    required Widget child,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(4.w, 2.2.h, 4.w, 2.2.h),
-      decoration: BoxDecoration(
-        color: _card,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _line),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.025),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
+  required String title,
+  required String subtitle,
+  required Widget child,
+}) {
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.fromLTRB(4.w, 2.4.h, 4.w, 2.4.h),
+    decoration: BoxDecoration(
+      color: _card,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: _line),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.04),
+          blurRadius: 14,
+          offset: const Offset(0, 6),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: _text,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 15.5,
-              fontWeight: FontWeight.w800,
-              color: _text,
-              letterSpacing: -0.2,
-            ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          subtitle,
+          style: const TextStyle(
+            fontSize: 13,
+            color: _muted,
+            fontWeight: FontWeight.w600,
           ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 12.6,
-              color: _muted,
-              fontWeight: FontWeight.w600,
-              height: 1.25,
-            ),
-          ),
-          SizedBox(height: 2.h),
-          child,
-        ],
-      ),
-    );
-  }
+        ),
+        SizedBox(height: 2.h),
+        child,
+      ],
+    ),
+  );
+}
 
   Widget _field(
     String label,
@@ -1522,42 +1514,54 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
   }
 
   InputDecoration _inputDecoration({required String label, String? hint}) {
-    return InputDecoration(
-      labelText: label,
-      hintText: hint,
-      filled: true,
-      fillColor: const Color(0xFFF8FAFC),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      labelStyle: const TextStyle(
-        fontWeight: FontWeight.w600,
-        color: _muted,
-      ),
-      hintStyle: const TextStyle(
-        fontWeight: FontWeight.w500,
-        color: Color(0xFF94A3B8),
-      ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: _line),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: _line),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: _primary, width: 1.4),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFFFCA5A5)),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.2),
-      ),
-    );
-  }
+  return InputDecoration(
+    labelText: label,
+    hintText: hint,
+
+    filled: true,
+    fillColor: Colors.white,
+
+    contentPadding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+
+    labelStyle: const TextStyle(
+      fontWeight: FontWeight.w600,
+      color: _muted,
+      fontSize: 13,
+    ),
+
+    hintStyle: const TextStyle(
+      fontWeight: FontWeight.w500,
+      color: Color(0xFF9CA3AF),
+      fontSize: 13,
+    ),
+
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: _line),
+    ),
+
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: _line),
+    ),
+
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: _primary, width: 1.4),
+    ),
+
+    errorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0xFFFCA5A5)),
+    ),
+
+    focusedErrorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.2),
+    ),
+  );
+}
 
   Widget _infoBox({required String text, required IconData icon}) {
     return Container(
