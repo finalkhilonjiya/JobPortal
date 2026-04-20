@@ -100,39 +100,34 @@ class _SubscriptionPageState
   }
 
   Future<void> _handlePurchaseUpdates(
-      List<PurchaseDetails> purchases) async {
+    List<PurchaseDetails> purchases) async {
 
-    for (final purchase in purchases) {
+  for (final purchase in purchases) {
 
-      if (purchase.status ==
-          PurchaseStatus.purchased) {
+    if (purchase.status == PurchaseStatus.purchased) {
 
-        await _service
-            .verifyPlayStorePurchase(
-          purchaseToken:
-              purchase
-                  .verificationData
-                  .serverVerificationData,
-          productId:
-              purchase.productID,
-          orderId:
-              purchase.purchaseID ??
-                  "",
-        );
+      await _service.verifyPlayStorePurchase(
+        purchaseToken:
+            purchase.verificationData.serverVerificationData,
+        productId: purchase.productID,
+        orderId: purchase.purchaseID ?? "",
+      );
 
-        if (purchase
-            .pendingCompletePurchase) {
-          await _iap
-              .completePurchase(
-                  purchase);
-        }
+      if (purchase.pendingCompletePurchase) {
+        await _iap.completePurchase(purchase);
+      }
 
-        await _loadSubscription();
+      await _loadSubscription();
+
+      // ✅ IMPORTANT: go back to job page
+      if (mounted) {
+        Navigator.pop(context, true);
       }
     }
-
-    setState(() => _paying = false);
   }
+
+  if (mounted) setState(() => _paying = false);
+}
 
   Future<void> _loadSubscription() async {
 
