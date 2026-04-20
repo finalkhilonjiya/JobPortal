@@ -869,94 +869,103 @@ static const _primary = Color(0xFF16A34A);
   // STEPPER
   // ------------------------------------------------------------
   Widget _stepIndicator() {
-    final steps = const [
-      ("Organization", Icons.apartment_rounded),
-      ("Job", Icons.work_outline_rounded),
-      ("Requirements", Icons.rule_rounded),
-      ("Location", Icons.location_on_rounded),
-    ];
+  final steps = const [
+    ("Organization", Icons.apartment_rounded),
+    ("Job", Icons.work_outline_rounded),
+    ("Requirements", Icons.rule_rounded),
+    ("Location", Icons.location_on_rounded),
+  ];
 
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(4.w, 1.6.h, 4.w, 1.6.h),
-      decoration: BoxDecoration(
-        color: _card,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _line),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: List.generate(steps.length, (i) {
-              final isDone = i < _step;
-              final isActive = i == _step;
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.fromLTRB(4.w, 1.6.h, 4.w, 1.6.h),
+    decoration: BoxDecoration(
+      color: _card,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: _line),
+    ),
+    child: Column(
+      children: [
+        Row(
+          children: List.generate(steps.length, (i) {
+            final isDone = i < _step;
+            final isActive = i == _step;
 
-              final Color dotBg = isDone
-                  ? const Color(0xFFDCFCE7)
-                  : (isActive
-                      ? const Color(0xFFEFF6FF)
-                      : const Color(0xFFF1F5F9));
+            final Color dotBg = isDone
+                ? const Color(0xFFDCFCE7) // light green
+                : (isActive
+                    ? const Color(0xFFE8FDF5) // soft green highlight
+                    : const Color(0xFFF1F5F9));
 
-              final Color dotFg = isDone
-                  ? const Color(0xFF166534)
-                  : (isActive
-                      ? const Color(0xFF1D4ED8)
-                      : const Color(0xFF475569));
+            final Color dotFg = isDone
+                ? const Color(0xFF166534) // dark green
+                : (isActive
+                    ? _primary // ✅ your dashboard green
+                    : const Color(0xFF475569));
 
-              return Expanded(
-                child: Row(
-                  children: [
-                    Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: dotBg,
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: dotFg.withOpacity(0.18)),
-                      ),
-                      child: Icon(
-                        isDone ? Icons.check_rounded : steps[i].$2,
-                        size: 18,
-                        color: dotFg,
+            return Expanded(
+              child: Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: dotBg,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: dotFg.withOpacity(0.2),
                       ),
                     ),
-                    if (i != steps.length - 1)
-                      Expanded(
-                        child: Container(
-                          height: 2,
-                          margin: const EdgeInsets.symmetric(horizontal: 10),
-                          decoration: BoxDecoration(
-                            color: isDone ? const Color(0xFFBFDBFE) : _line,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
+                    child: Icon(
+                      isDone ? Icons.check_rounded : steps[i].$2,
+                      size: 18,
+                      color: dotFg,
+                    ),
+                  ),
+
+                  if (i != steps.length - 1)
+                    Expanded(
+                      child: Container(
+                        height: 2,
+                        margin: const EdgeInsets.symmetric(horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: isDone
+                              ? const Color(0xFFBBF7D0) // ✅ green line
+                              : _line,
+                          borderRadius: BorderRadius.circular(999),
                         ),
                       ),
-                  ],
+                    ),
+                ],
+              ),
+            );
+          }),
+        ),
+
+        SizedBox(height: 1.1.h),
+
+        Row(
+          children: List.generate(steps.length, (i) {
+            final isActive = i == _step;
+
+            return Expanded(
+              child: Text(
+                steps[i].$1,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12.2,
+                  fontWeight:
+                      isActive ? FontWeight.w800 : FontWeight.w600,
+                  color: isActive ? _text : _muted,
                 ),
-              );
-            }),
-          ),
-          SizedBox(height: 1.1.h),
-          Row(
-            children: List.generate(steps.length, (i) {
-              final isActive = i == _step;
-              return Expanded(
-                child: Text(
-                  steps[i].$1,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12.2,
-                    fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-                    color: isActive ? _text : _muted,
-                  ),
-                ),
-              );
-            }),
-          ),
-        ],
-      ),
-    );
-  }
+              ),
+            );
+          }),
+        ),
+      ],
+    ),
+  );
+}
 
   // ------------------------------------------------------------
   // STEP BODY
