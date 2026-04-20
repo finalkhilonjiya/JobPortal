@@ -15,7 +15,7 @@ class EmployerDashboardService {
   }
 
   // ============================================================
-  // ORGANIZATION RESOLUTION (CRITICAL FIX)
+  // ORGANIZATION RESOLUTION (CRITICAL)
   // ============================================================
   Future<String?> resolveCompanyIdSafe() async {
     final user = _requireUser();
@@ -31,7 +31,7 @@ class EmployerDashboardService {
       return member['company_id'].toString();
     }
 
-    // 2️⃣ Fallback (first time create case)
+    // 2️⃣ Fallback (first-time create case)
     final company = await _db
         .from('companies')
         .select('id')
@@ -94,7 +94,6 @@ class EmployerDashboardService {
 
     for (final j in jobs) {
       if (j['status'] == 'active') active++;
-
       applicants += (j['applications_count'] ?? 0) as int;
       views += (j['views_count'] ?? 0) as int;
     }
@@ -117,6 +116,7 @@ class EmployerDashboardService {
         .from('job_applications_listings')
         .select('''
           application_status,
+          applied_at,
           job_listings (
             id,
             job_title,
@@ -206,7 +206,7 @@ class EmployerDashboardService {
     return {
       "total_views": totalViews,
       "total_applications": totalApps,
-      "days": [], // can enhance later
+      "days": [],
     };
   }
 
@@ -226,7 +226,7 @@ class EmployerDashboardService {
   }
 
   // ============================================================
-  // CREATE ORGANIZATION (SAFE)
+  // CREATE ORGANIZATION (FINAL SAFE VERSION)
   // ============================================================
   Future<String> createOrganization({
     required String name,
@@ -273,10 +273,11 @@ class EmployerDashboardService {
 
     final companyId = inserted['id'];
 
+    // ✅ role = member (as you requested)
     await _db.from('company_members').upsert({
       'company_id': companyId,
       'user_id': user.id,
-      'role': 'owner',
+      'role': 'member',
       'status': 'active',
     }, onConflict: 'user_id');
 
