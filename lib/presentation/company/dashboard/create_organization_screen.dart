@@ -1,7 +1,7 @@
+// lib/presentation/company/create_organization_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import '../../../services/employer_dashboard_service.dart';
 
 class CreateOrganizationScreen extends StatefulWidget {
   const CreateOrganizationScreen({Key? key}) : super(key: key);
@@ -11,9 +11,9 @@ class CreateOrganizationScreen extends StatefulWidget {
       _CreateOrganizationScreenState();
 }
 
-class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
+class _CreateOrganizationScreenState
+    extends State<CreateOrganizationScreen> {
   final SupabaseClient _db = Supabase.instance.client;
-  final EmployerDashboardService _service = EmployerDashboardService();
 
   bool _loading = true;
   bool _saving = false;
@@ -50,13 +50,14 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
 
   User _requireUser() {
     final u = _db.auth.currentUser;
-    if (u == null) throw Exception("Session expired. Please login again.");
+    if (u == null) throw Exception("Session expired");
     return u;
   }
 
   void _toast(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
   }
 
   Future<void> _loadMasters() async {
@@ -83,87 +84,88 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
     setState(() => _loading = false);
   }
 
-  // ✅ FINAL FIXED CREATE
+  // ============================================================
+  // CREATE ORGANIZATION (FINAL CLEAN)
+  // ============================================================
   Future<void> _create() async {
-  final user = _requireUser();
+    final user = _requireUser();
 
-  final name = _name.text.trim();
+    final name = _name.text.trim();
 
-  if (name.isEmpty) {
-    _toast("Organization name required");
-    return;
-  }
-
-  if (_selectedBusinessTypeId == null) {
-    _toast("Select business type");
-    return;
-  }
-
-  if (_selectedDistrictId == null) {
-    _toast("Select district");
-    return;
-  }
-
-  setState(() => _saving = true);
-
-  try {
-    // ✅ PREVENT DUPLICATE INSERT
-    final existing = await _db
-        .from('company_members')
-        .select('company_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-    if (existing != null) {
-      if (!mounted) return;
-      Navigator.pop(context, true);
+    if (name.isEmpty) {
+      _toast("Organization name required");
       return;
     }
 
-    final districtObj = _districts.firstWhere(
-      (d) => d['id'].toString() == _selectedDistrictId,
-    );
+    if (_selectedBusinessTypeId == null) {
+      _toast("Select business type");
+      return;
+    }
 
-    final districtName = districtObj['district_name'];
+    if (_selectedDistrictId == null) {
+      _toast("Select district");
+      return;
+    }
 
-    // ✅ CREATE COMPANY
-    final company = await _db
-        .from('companies')
-        .insert({
-          "name": name,
-          "business_type_id": _selectedBusinessTypeId,
-          "website": _website.text.trim(),
-          "description": _desc.text.trim(),
-          "headquarters_city": districtName,
-          "headquarters_state": "Assam",
-          "created_by": user.id,
-          "owner_id": user.id,
-        })
-        .select()
-        .single();
+    setState(() => _saving = true);
 
-    final companyId = company['id'];
+    try {
+      // 1️⃣ Prevent duplicate
+      final existing = await _db
+          .from('company_members')
+          .select('company_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-    // ✅ SAFE UPSERT (NO CRASH)
-    await _db.from('company_members').upsert({
-      "company_id": companyId,
-      "user_id": user.id,
-      "role": "owner",
-      "status": "active",
-    }, onConflict: 'user_id');
+      if (existing != null) {
+        if (!mounted) return;
+        Navigator.pop(context, true);
+        return;
+      }
 
-    // ✅ IMPORTANT: WAIT (fix dashboard race)
-    await Future.delayed(const Duration(milliseconds: 500));
+      // 2️⃣ Get district name
+      final districtObj = _districts.firstWhere(
+        (d) => d['id'].toString() == _selectedDistrictId,
+      );
 
-    if (!mounted) return;
+      final districtName = districtObj['district_name'];
 
-    Navigator.pop(context, true);
-  } catch (e) {
-    _toast("Failed: $e");
+      // 3️⃣ Create company
+      final company = await _db
+          .from('companies')
+          .insert({
+            "name": name,
+            "business_type_id": _selectedBusinessTypeId,
+            "website": _website.text.trim(),
+            "description": _desc.text.trim(),
+            "headquarters_city": districtName,
+            "headquarters_state": "Assam",
+            "created_by": user.id,
+            "owner_id": user.id,
+          })
+          .select()
+          .single();
+
+      final companyId = company['id'];
+
+      // 4️⃣ Link user (role = member)
+      await _db.from('company_members').upsert({
+        "company_id": companyId,
+        "user_id": user.id,
+        "role": "member",   // ✅ FINAL
+        "status": "active",
+      }, onConflict: 'user_id');
+
+      // 5️⃣ Return success (dashboard will reload)
+      if (!mounted) return;
+      Navigator.pop(context, true);
+
+    } catch (e) {
+      _toast("Failed: $e");
+    }
+
+    setState(() => _saving = false);
   }
-
-  setState(() => _saving = false);
-}
 
   @override
   Widget build(BuildContext context) {
@@ -252,9 +254,11 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _primary,
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding:
+                            const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius:
+                              BorderRadius.circular(10),
                         ),
                       ),
                       child: Text(
@@ -289,7 +293,6 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
     return TextField(
       controller: c,
       maxLines: maxLines,
-      style: const TextStyle(fontSize: 14.5),
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
@@ -298,18 +301,6 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
             const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: _primary,
-            width: 1.2,
-          ),
         ),
       ),
     );
@@ -332,15 +323,6 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
               ))
           .toList(),
       onChanged: onChanged,
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
     );
   }
 }
