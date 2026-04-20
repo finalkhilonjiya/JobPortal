@@ -7,7 +7,7 @@ import '../../../routes/app_routes.dart';
 import '../../../services/mobile_auth_service.dart';
 import '../../../services/employer_dashboard_service.dart';
 
-// UI widgets
+// UI Widgets
 import 'widgets/header_widget.dart';
 import 'widgets/hero_slider.dart';
 import 'widgets/quick_stats.dart';
@@ -56,9 +56,9 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     return u;
   }
 
-  // ------------------------------------------------------------
-  // 🔥 FIXED LOAD LOGIC
-  // ------------------------------------------------------------
+  // ============================================================
+  // LOAD DASHBOARD (FINAL FIXED LOGIC)
+  // ============================================================
   Future<void> _loadDashboard() async {
     if (!mounted) return;
 
@@ -67,9 +67,9 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     try {
       final user = _requireUser();
 
-      // 🔥 RETRY LOGIC (handles delayed insert after org creation)
       Map<String, dynamic>? member;
 
+      // 🔁 RETRY (fix delay issue after org creation)
       for (int i = 0; i < 3; i++) {
         final res = await Supabase.instance.client
             .from('company_members')
@@ -82,10 +82,23 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           break;
         }
 
-        await Future.delayed(const Duration(milliseconds: 400));
+        await Future.delayed(const Duration(milliseconds: 500));
       }
 
-      // ❌ STILL NULL → SHOW CREATE ORG
+      // 🔁 FALLBACK (if membership not yet inserted)
+      if (member == null) {
+        final fallback = await Supabase.instance.client
+            .from('companies')
+            .select('id')
+            .eq('created_by', user.id)
+            .maybeSingle();
+
+        if (fallback != null) {
+          member = {'company_id': fallback['id']};
+        }
+      }
+
+      // ❌ STILL NULL → show create org
       if (member == null) {
         setState(() {
           _needsOrganization = true;
@@ -96,6 +109,9 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
       final companyId = member['company_id'].toString();
 
+      // ============================================================
+      // FETCH ALL DATA
+      // ============================================================
       final company =
           await _service.fetchCompanyById(companyId: companyId);
 
@@ -109,58 +125,66 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         _service.fetchUnreadNotificationsCount(),
       ]);
 
-      // 🔥 SAFE PARSING (NO CRASH)
-      List<Map<String, dynamic>> safeList(dynamic data) {
-        if (data is List) {
-          return data
-              .map((e) => Map<String, dynamic>.from(e))
-              .toList();
-        }
-        return [];
-      }
+      // ============================================================
+      // SAFE CASTING
+      // ============================================================
+      final jobs = (results[0] as List)
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
 
-      Map<String, dynamic> safeMap(dynamic data) {
-        if (data is Map) {
-          return Map<String, dynamic>.from(data);
-        }
-        return {};
-      }
+      final stats = Map<String, dynamic>.from(results[1] as Map);
 
-      int safeInt(dynamic v) {
-        if (v is int) return v;
-        return int.tryParse(v.toString()) ?? 0;
-      }
+      final applicants = (results[2] as List)
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+
+      final topJobs = (results[3] as List)
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+
+      final interviews = (results[4] as List)
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+
+      final perf = Map<String, dynamic>.from(results[5] as Map);
+
+      final unread = (results[6] as int?) ?? 0;
+
+      if (!mounted) return;
 
       setState(() {
         _companyId = companyId;
-        _company = safeMap(company);
+        _company = company;
 
-        _jobs = safeList(results[0]);
-        _stats = safeMap(results[1]);
-        _recentApplicants = safeList(results[2]);
-        _topJobs = safeList(results[3]);
-        _todayInterviews = safeList(results[4]);
-        _perf7d = safeMap(results[5]);
-        _unreadNotifications = safeInt(results[6]);
+        _jobs = jobs;
+        _stats = stats;
+        _recentApplicants = applicants;
+        _topJobs = topJobs;
+        _todayInterviews = interviews;
+        _perf7d = perf;
+        _unreadNotifications = unread;
 
         _needsOrganization = false;
         _loading = false;
       });
     } catch (e) {
-      debugPrint("Dashboard Error: $e");
+      debugPrint("DASHBOARD ERROR: $e");
 
-      // 🔥 DO NOT FORCE NO ORG HERE
+      if (!mounted) return;
+
       setState(() {
+        _needsOrganization = true;
         _loading = false;
       });
     }
   }
 
-  // ------------------------------------------------------------
+  // ============================================================
   // LOGOUT
-  // ------------------------------------------------------------
+  // ============================================================
   Future<void> _logout() async {
     await MobileAuthService().logout();
+
     if (!mounted) return;
 
     Navigator.pushNamedAndRemoveUntil(
@@ -170,13 +194,14 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     );
   }
 
-  // ------------------------------------------------------------
-  // UI
-  // ------------------------------------------------------------
+  // ============================================================
+  // BUILD
+  // ============================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
+
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _needsOrganization
@@ -190,7 +215,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
               onPressed: () async {
                 final res =
                     await Navigator.pushNamed(context, AppRoutes.createJob);
-                if (res == true) _loadDashboard();
+                if (res == true) await _loadDashboard();
               },
               child: const Icon(Icons.add),
             ),
@@ -200,24 +225,31 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF16A34A),
         onTap: (i) {
-          if (i == 1 || i == 2) {
+          if (i == 1) {
+            Navigator.pushNamed(context, AppRoutes.employerJobs);
+          } else if (i == 2) {
             Navigator.pushNamed(context, AppRoutes.employerJobs);
           }
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Dashboard"),
-          BottomNavigationBarItem(icon: Icon(Icons.work), label: "Jobs"),
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: "Applicants"),
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Messages"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.home), label: "Dashboard"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.work), label: "Jobs"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.people), label: "Applicants"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.chat), label: "Messages"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person), label: "Profile"),
         ],
       ),
     );
   }
 
-  // ------------------------------------------------------------
+  // ============================================================
   // DASHBOARD UI
-  // ------------------------------------------------------------
+  // ============================================================
   Widget _dashboard() {
     return SafeArea(
       child: RefreshIndicator(
@@ -226,43 +258,69 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           padding: const EdgeInsets.all(16),
           children: [
             HeaderWidget(company: _company, unread: _unreadNotifications),
+
             const SizedBox(height: 16),
             const HeroSlider(),
             const SizedBox(height: 16),
+
             QuickStats(stats: _stats),
             const SizedBox(height: 16),
+
             PrimaryActions(companyId: _companyId),
             const SizedBox(height: 20),
+
             const Text("Recent Applicants",
                 style: TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 10),
+
             RecentApplicants(
-                data: _recentApplicants, companyId: _companyId),
+              data: _recentApplicants,
+              companyId: _companyId,
+            ),
+
             const SizedBox(height: 20),
+
             const Text("Active Jobs",
                 style: TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 10),
+
             ActiveJobs(jobs: _jobs, companyId: _companyId),
+
             const SizedBox(height: 20),
+
             const Text("Today's Interviews",
                 style: TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 10),
+
             TodayInterviews(data: _todayInterviews),
+
             const SizedBox(height: 20),
+
             const Text("Performance",
                 style: TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 10),
+
             PerformanceWidget(perf: _perf7d),
+
             const SizedBox(height: 20),
+
             const Text("Top Jobs",
                 style: TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 10),
+
             TopJobs(jobs: _topJobs, companyId: _companyId),
+
             const SizedBox(height: 20),
+
             const Text("Action Needed",
                 style: TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 10),
-            ActionNeeded(applicants: _recentApplicants, jobs: _jobs),
+
+            ActionNeeded(
+              applicants: _recentApplicants,
+              jobs: _jobs,
+            ),
+
             const SizedBox(height: 100),
           ],
         ),
@@ -270,24 +328,51 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     );
   }
 
-  // ------------------------------------------------------------
+  // ============================================================
   // NO ORG
-  // ------------------------------------------------------------
+  // ============================================================
   Widget _noOrg() {
     return SafeArea(
       child: Center(
-        child: ElevatedButton(
-          onPressed: () async {
-            final res = await Navigator.pushNamed(
-                context, AppRoutes.createOrganization);
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE6E8EC)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("Start hiring",
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 8),
+                const Text(
+                  "Create your organization to post jobs",
+                  style: TextStyle(color: Color(0xFF6B7280)),
+                ),
+                const SizedBox(height: 16),
 
-            // 🔥 IMPORTANT FIX
-            if (res == true) {
-              await Future.delayed(const Duration(milliseconds: 500));
-              _loadDashboard();
-            }
-          },
-          child: const Text("Create Organization"),
+                ElevatedButton(
+                  onPressed: () async {
+                    final res = await Navigator.pushNamed(
+                        context, AppRoutes.createOrganization);
+
+                    if (res == true) {
+                      await _loadDashboard();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF16A34A),
+                  ),
+                  child: const Text("Create Organization"),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
