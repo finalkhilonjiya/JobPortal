@@ -1,4 +1,5 @@
 // lib/presentation/company/dashboard/company_dashboard.dart
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -6,8 +7,20 @@ import '../../../routes/app_routes.dart';
 import '../../../services/mobile_auth_service.dart';
 import '../../../services/employer_dashboard_service.dart';
 
+// ✅ NEW UI
+import 'widgets/header_widget.dart';
+import 'widgets/hero_slider.dart';
+import 'widgets/quick_stats.dart';
+import 'widgets/primary_actions.dart';
+import 'widgets/recent_applicants.dart';
+import 'widgets/active_jobs.dart';
+import 'widgets/today_interviews.dart';
+import 'widgets/performance_widget.dart';
+import 'widgets/top_jobs.dart';
+import 'widgets/action_needed.dart';
+
 class CompanyDashboard extends StatefulWidget {
-  const CompanyDashboard({Key? key}) : super(key: key);
+  const CompanyDashboard({super.key});
 
   @override
   State<CompanyDashboard> createState() => _CompanyDashboardState();
@@ -17,10 +30,10 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   final EmployerDashboardService _service = EmployerDashboardService();
 
   bool _loading = true;
-  bool _refreshing = false;
- late final PageController _pageController;
+  bool _needsOrganization = false;
 
-  // REAL DATA
+  String _companyId = "";
+
   Map<String, dynamic> _company = {};
   Map<String, dynamic> _stats = {};
   List<Map<String, dynamic>> _jobs = [];
@@ -31,120 +44,83 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
   int _unreadNotifications = 0;
 
-  // Multi-org
-  String _companyId = "";
-
-  // If user has no org
-  bool _needsOrganization = false;
-
-  // Bottom nav
-  int _bottomIndex = 0;
-
-  // ------------------------------------------------------------
-  // UI TOKENS (Minimal, Elegant)
-  // ------------------------------------------------------------
-  static const Color _bg = Color(0xFFF7F8FA);
-  static const Color _card = Colors.white;
-  static const Color _border = Color(0xFFE6E8EC);
-  static const Color _text = Color(0xFF111827);
-  static const Color _muted = Color(0xFF6B7280);
-  static const Color _primary = Color(0xFF2563EB);
-
-  static const double _r16 = 16;
-  static const double _r20 = 20;
-
   @override
-void initState() {
-  super.initState();
-  _pageController = PageController(viewportFraction: 0.92);
-  _loadDashboard();
-}
+  void initState() {
+    super.initState();
+    _loadDashboard();
+  }
 
   User _requireUser() {
     final u = Supabase.instance.client.auth.currentUser;
-    if (u == null) throw Exception("Session expired. Please login again.");
+    if (u == null) throw Exception("Session expired");
     return u;
   }
 
   // ------------------------------------------------------------
-  // LOAD DASHBOARD (ORG BASED)
+  // LOAD DATA (REAL)
   // ------------------------------------------------------------
-Future<void> _loadDashboard({bool silent = false}) async {
-  if (!mounted) return;
+  Future<void> _loadDashboard() async {
+    if (!mounted) return;
 
-  if (!silent) setState(() => _loading = true);
-  if (silent) setState(() => _refreshing = true);
+    setState(() => _loading = true);
 
-  try {
-    final user = _requireUser();
+    try {
+      final user = _requireUser();
 
-    final member = await Supabase.instance.client
-        .from('company_members')
-        .select('company_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      final member = await Supabase.instance.client
+          .from('company_members')
+          .select('company_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-    if (member == null) {
-      if (!mounted) return;
+      if (member == null) {
+        setState(() {
+          _needsOrganization = true;
+          _loading = false;
+        });
+        return;
+      }
+
+      final companyId = member['company_id'].toString();
+
+      final company =
+          await _service.fetchCompanyById(companyId: companyId);
+
+      final results = await Future.wait([
+        _service.fetchCompanyJobs(companyId: companyId),
+        _service.fetchCompanyDashboardStats(companyId: companyId),
+        _service.fetchRecentApplicants(companyId: companyId),
+        _service.fetchTopJobs(companyId: companyId),
+        _service.fetchTodayInterviews(companyId: companyId),
+        _service.fetchLast7DaysPerformance(companyId: companyId),
+        _service.fetchUnreadNotificationsCount(),
+      ]);
+
+      setState(() {
+        _companyId = companyId;
+        _company = company;
+
+        _jobs = List<Map<String, dynamic>>.from(results[0]);
+        _stats = Map<String, dynamic>.from(results[1]);
+        _recentApplicants =
+            List<Map<String, dynamic>>.from(results[2]);
+        _topJobs = List<Map<String, dynamic>>.from(results[3]);
+        _todayInterviews =
+            List<Map<String, dynamic>>.from(results[4]);
+        _perf7d = Map<String, dynamic>.from(results[5]);
+        _unreadNotifications = results[6];
+
+        _needsOrganization = false;
+        _loading = false;
+      });
+    } catch (e) {
       setState(() {
         _needsOrganization = true;
-        _company = {};
-        _jobs = [];
-        _stats = {};
-        _recentApplicants = [];
-        _topJobs = [];
-        _todayInterviews = [];
-        _perf7d = {};
-        _unreadNotifications = 0;
-        _companyId = "";
         _loading = false;
-        _refreshing = false;
       });
-      return;
     }
-
-    final companyId = member['company_id'].toString();
-
-    final company =
-        await _service.fetchCompanyById(companyId: companyId);
-
-    final results = await Future.wait([
-      _service.fetchCompanyJobs(companyId: companyId),
-      _service.fetchCompanyDashboardStats(companyId: companyId),
-      _service.fetchRecentApplicants(companyId: companyId, limit: 6),
-      _service.fetchTopJobs(companyId: companyId, limit: 6),
-      _service.fetchTodayInterviews(companyId: companyId, limit: 10),
-      _service.fetchLast7DaysPerformance(companyId: companyId),
-      _service.fetchUnreadNotificationsCount(),
-    ]);
-
-    if (!mounted) return;
-
-    setState(() {
-      _companyId = companyId; // ✅ FIXED (inside setState)
-      _needsOrganization = false;
-
-      _company = Map<String, dynamic>.from(company);
-      _jobs = List<Map<String, dynamic>>.from(results[0] as List);
-      _stats = Map<String, dynamic>.from(results[1] as Map);
-      _recentApplicants = List<Map<String, dynamic>>.from(results[2] as List);
-      _topJobs = List<Map<String, dynamic>>.from(results[3] as List);
-      _todayInterviews = List<Map<String, dynamic>>.from(results[4] as List);
-      _perf7d = Map<String, dynamic>.from(results[5] as Map);
-      _unreadNotifications = (results[6] as int);
-
-      _loading = false;
-      _refreshing = false;
-    });
-  } catch (e) {
-    if (!mounted) return;
-    setState(() {
-      _needsOrganization = true;
-      _loading = false;
-      _refreshing = false;
-    });
   }
-}
+
   // ------------------------------------------------------------
   // LOGOUT
   // ------------------------------------------------------------
@@ -160,2034 +136,201 @@ Future<void> _loadDashboard({bool silent = false}) async {
   }
 
   // ------------------------------------------------------------
-  // SAFE STATS
-  // ------------------------------------------------------------
-  int _s(String key) => _toInt(_stats[key]);
-
-  int get _totalJobs => _s('total_jobs');
-  int get _activeJobs => _s('active_jobs');
-  int get _pausedJobs => _s('paused_jobs');
-  int get _closedJobs => _s('closed_jobs');
-  int get _expiredJobs => _s('expired_jobs');
-
-  int get _totalApplicants => _s('total_applicants');
-  int get _totalViews => _s('total_views');
-  int get _applicants24h => _s('applicants_last_24h');
-
-  // ------------------------------------------------------------
-  // ORG SAFE
-  // ------------------------------------------------------------
-  String get _orgName => (_company['name'] ?? 'Organization').toString();
-  String get _orgLogo => (_company['logo_url'] ?? '').toString();
-  bool get _orgVerified => (_company['is_verified'] ?? false) == true;
-
-  String get _orgLocation {
-    final city = (_company['headquarters_city'] ?? '').toString().trim();
-    final state = (_company['headquarters_state'] ?? '').toString().trim();
-
-    if (city.isNotEmpty && state.isNotEmpty) return "$city, $state";
-    if (state.isNotEmpty) return state;
-    if (city.isNotEmpty) return city;
-    return "India";
-  }
-
-  // ------------------------------------------------------------
-  // BUILD
+  // UI
   // ------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
-      drawer: _newEmployerDrawer(),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Builder(
-              builder: (scaffoldContext) {
-                return _buildTopHeader(scaffoldContext);
-              },
-            ),
-            if (_loading)
-              const Expanded(
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (_needsOrganization)
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
-                  children: [
-                    _noOrgCard(),
-                  ],
-                ),
-              )
-            else
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () => _loadDashboard(silent: true),
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
-                    children: [
-                      _buildTopSlider(),
-const SizedBox(height: 14),
-                      _sectionHeader(
-                        title: "Quick Stats",
-                        ctaText: _refreshing ? "Refreshing..." : "Refresh",
-                        onTap: _refreshing
-                            ? null
-                            : () => _loadDashboard(silent: true),
-                      ),
-                      const SizedBox(height: 10),
-                      _buildQuickStatsRow(),
+      backgroundColor: const Color(0xFFF7F8FA),
 
-                      const SizedBox(height: 18),
+      // ------------------------------------------------------------
+      // LOADING
+      // ------------------------------------------------------------
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _needsOrganization
+              ? _noOrg()
+              : _dashboard(),
 
-                      _sectionHeader(title: "Primary Actions"),
-                      const SizedBox(height: 10),
-                      _buildPrimaryActionsRow(),
-
-                      const SizedBox(height: 18),
-
-                      _sectionHeader(
-                        title: "Recent Applicants",
-                        ctaText: "View all",
-                        onTap: () {
-                          Navigator.pushNamed(context, AppRoutes.employerJobs);
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      _buildRecentApplicantsCard(),
-
-                      const SizedBox(height: 18),
-
-                      _sectionHeader(
-                        title: "Your Active Jobs",
-                        ctaText: "View all",
-                        onTap: () {
-                          Navigator.pushNamed(context, AppRoutes.employerJobs);
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      _buildActiveJobsList(),
-
-                      const SizedBox(height: 18),
-
-                      _sectionHeader(title: "Today’s Interviews"),
-                      const SizedBox(height: 10),
-                      _buildTodayInterviewsReal(),
-
-                      const SizedBox(height: 18),
-
-                      _sectionHeader(title: "Performance (Last 7 days)"),
-                      const SizedBox(height: 10),
-                      _buildPerformanceReal(),
-
-                      const SizedBox(height: 18),
-
-                      _sectionHeader(title: "Top Jobs"),
-                      const SizedBox(height: 10),
-                      _buildTopJobsReal(),
-
-                      const SizedBox(height: 18),
-
-                      _sectionHeader(title: "Action Needed"),
-                      const SizedBox(height: 10),
-                      _buildActionNeededReal(),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
+      // ------------------------------------------------------------
+      // FAB
+      // ------------------------------------------------------------
       floatingActionButton: _needsOrganization
           ? null
-          : FloatingActionButton.extended(
-              onPressed: () async {
-                final res = await Navigator.pushNamed(context, AppRoutes.createJob);
-                if (res == true) await _loadDashboard(silent: true);
-              },
-              backgroundColor: _primary,
-              foregroundColor: Colors.white,
-              elevation: 1,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text(
-                "Post a Job",
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-            ),
-      bottomNavigationBar: _buildBottomNav(),
-    );
-  }
-
-  // ------------------------------------------------------------
-  // NO ORG CARD
-  // ------------------------------------------------------------
-  Widget _noOrgCard() {
-  return Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: _border),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Start hiring",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: _text,
-          ),
-        ),
-        const SizedBox(height: 6),
-        const Text(
-          "Create your organization to post jobs and manage applicants.",
-          style: TextStyle(
-            fontSize: 13.5,
-            color: _muted,
-            height: 1.4,
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // 🔥 PRIMARY BUTTON
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () async {
-              final res = await Navigator.pushNamed(
-                context,
-                AppRoutes.createOrganization,
-              );
-
-              if (res == true) {
-                await _loadDashboard();
-              }
-            },
-            style: ElevatedButton.styleFrom(
+          : FloatingActionButton(
               backgroundColor: const Color(0xFF16A34A),
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+              onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.createJob);
+              },
+              child: const Icon(Icons.add),
             ),
-            child: const Text(
-              "Create Organization",
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
 
-  // ------------------------------------------------------------
-  // TOP HEADER (REAL NOTIFICATIONS)
-  // ------------------------------------------------------------
-  Widget _buildTopHeader(BuildContext context) {
-  return Container(
-    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-    decoration: const BoxDecoration(
-      color: Colors.white,
-      border: Border(bottom: BorderSide(color: _border)),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _needsOrganization ? "Welcome" : _orgName,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: _text,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                _needsOrganization
-                    ? "Let's set up your organization"
-                    : "Manage hiring & track pipeline",
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: _muted,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // 🔔 notifications
-        GestureDetector(
-          onTap: () async {
-            await Navigator.pushNamed(
-                context, AppRoutes.employerNotifications);
-            await _loadDashboard(silent: true);
-          },
-          child: Stack(
-            children: [
-              const Icon(Icons.notifications_none, size: 24),
-              if (_unreadNotifications > 0)
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-  // ------------------------------------------------------------
-  // ORGANIZATION PROFILE ROW (REAL)
-  // ------------------------------------------------------------
-  Widget _buildOrganizationProfileRow() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: _cardDeco(radius: _r20),
-      child: Row(
-        children: [
-          _orgAvatar(),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _orgName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w900,
-                          color: _text,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    if (_orgVerified)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: const Color(0xFFBFDBFE)),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.check_circle,
-                                size: 14, color: _primary),
-                            SizedBox(width: 6),
-                            Text(
-                              "Verified",
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w900,
-                                color: _primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on_outlined,
-                        size: 16, color: _muted),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        _orgLocation,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12.8,
-                          fontWeight: FontWeight.w800,
-                          color: _muted,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _orgAvatar() {
-  if (_orgLogo.trim().isNotEmpty) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        width: 52,
-        height: 52,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: const Color(0xFFDBEAFE)),
-          color: const Color(0xFFEFF6FF),
-        ),
-        child: Image.network(
-          _orgLogo, // ✅ FIXED
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const Icon(
-            Icons.apartment_rounded,
-            color: _primary,
-          ),
-        ),
-      ),
-    );
-  }
-
-  return Container(
-    width: 52,
-    height: 52,
-    decoration: BoxDecoration(
-      color: const Color(0xFFEFF6FF),
-      borderRadius: BorderRadius.circular(999),
-      border: Border.all(color: const Color(0xFFDBEAFE)),
-    ),
-    child: const Icon(Icons.apartment_rounded, color: _primary),
-  );
-}
-
-  // ------------------------------------------------------------
-  // SECTION HEADER
-  // ------------------------------------------------------------
-  Widget _sectionHeader({
-    required String title,
-    String? ctaText,
-    VoidCallback? onTap,
-  }) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 15.5,
-              fontWeight: FontWeight.w900,
-              color: _text,
-              letterSpacing: -0.2,
-            ),
-          ),
-        ),
-        if (ctaText != null)
-          InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(999),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-              child: Text(
-                ctaText,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w900,
-                  color: onTap == null ? const Color(0xFF94A3B8) : _primary,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  // ------------------------------------------------------------
-  // QUICK STATS (REAL)
-  // ------------------------------------------------------------
-  Widget _buildQuickStatsRow() {
-  return Container(
-    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: _border),
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _statItem(
-          value: _activeJobs,
-          label: "Active",
-        ),
-        _divider(),
-        _statItem(
-          value: _totalApplicants,
-          label: "Applicants",
-        ),
-        _divider(),
-        _statItem(
-          value: _totalViews,
-          label: "Views",
-        ),
-      ],
-    ),
-  );
-}
-
-  Widget _statItem({
-  required int value,
-  required String label,
-}) {
-  return Expanded(
-    child: Column(
-      children: [
-        Text(
-          value.toString(),
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: _text,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12.5,
-            color: _muted,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _divider() {
-  return Container(
-    width: 1,
-    height: 28,
-    color: _border,
-  );
-}
-
-  // ------------------------------------------------------------
-  // PRIMARY ACTIONS
-  // ------------------------------------------------------------
-  Widget _buildPrimaryActionsRow() {
-  return SizedBox(
-    height: 72,
-    child: ListView(
-      scrollDirection: Axis.horizontal,
-      children: [
-        _actionItem(
-          icon: Icons.add,
-          label: "Post Job",
-          onTap: () async {
-            final res = await Navigator.pushNamed(context, AppRoutes.createJob);
-            if (res == true) await _loadDashboard(silent: true);
-          },
-        ),
-        _actionItem(
-          icon: Icons.work_outline,
-          label: "Jobs",
-          onTap: () {
-            Navigator.pushNamed(context, AppRoutes.employerJobs);
-          },
-        ),
-        _actionItem(
-          icon: Icons.people_outline,
-          label: "Applicants",
-          onTap: () {
-            Navigator.pushNamed(context, AppRoutes.employerJobs);
-          },
-        ),
-        _actionItem(
-          icon: Icons.notifications_none,
-          label: "Alerts",
-          onTap: () async {
-            await Navigator.pushNamed(
-                context, AppRoutes.employerNotifications);
-            await _loadDashboard(silent: true);
-          },
-        ),
-      ],
-    ),
-  );
-}
-Widget _actionItem({
-  required IconData icon,
-  required String label,
-  required VoidCallback onTap,
-}) {
-  return GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: 90,
-      margin: const EdgeInsets.only(right: 12),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 20, color: _text),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: _muted,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-  
-
-  // ------------------------------------------------------------
-  // RECENT APPLICANTS (REAL)
-  // ------------------------------------------------------------
-  Widget _buildRecentApplicantsCard() {
-  if (_recentApplicants.isEmpty) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 12),
-      child: Text(
-        "No applicants yet",
-        style: TextStyle(
-          fontSize: 13,
-          color: _muted,
-        ),
-      ),
-    );
-  }
-
-  return Column(
-    children: List.generate(_recentApplicants.length, (i) {
-      final item = _recentApplicants[i];
-
-      final listing =
-          Map<String, dynamic>.from(item['job_listings'] ?? {});
-      final app =
-          Map<String, dynamic>.from(item['job_applications'] ?? {});
-
-      final jobId = (listing['id'] ?? '').toString();
-      final name = (app['name'] ?? 'Candidate').toString();
-      final jobTitle = (listing['job_title'] ?? 'Job').toString();
-      final status = (item['application_status'] ?? 'applied').toString();
-
-      return Column(
-        children: [
-          _applicantRow(
-            name: name,
-            jobTitle: jobTitle,
-            status: status,
-            onTap: () async {
-              await Navigator.pushNamed(
-                context,
-                AppRoutes.jobApplicants,
-                arguments: {
-                  'jobId': jobId,
-                  'companyId': _companyId,
-                },
-              );
-              await _loadDashboard(silent: true);
-            },
-          ),
-          if (i != _recentApplicants.length - 1)
-            const Divider(height: 18, color: _border),
-        ],
-      );
-    }),
-  );
-}
-
-Widget _applicantRow({
-  required String name,
-  required String jobTitle,
-  required String status,
-  required VoidCallback onTap,
-}) {
-  return InkWell(
-    onTap: onTap,
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        children: [
-          // avatar
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              name.isNotEmpty ? name[0].toUpperCase() : "C",
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 10),
-
-          // text
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                    color: _text,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  jobTitle,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: _muted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // status
-          Text(
-            _statusLabel(status),
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-              color: _statusColor(status),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-
-
-String _statusLabel(String s) {
-  final v = s.toLowerCase();
-
-  if (v == 'shortlisted') return "Shortlisted";
-  if (v == 'interview_scheduled') return "Interview";
-  if (v == 'selected') return "Selected";
-  if (v == 'rejected') return "Rejected";
-
-  return "Applied";
-}
-
-Color _statusColor(String s) {
-  final v = s.toLowerCase();
-
-  if (v == 'shortlisted') return Colors.green;
-  if (v == 'interview_scheduled') return Colors.orange;
-  if (v == 'selected') return Colors.green;
-  if (v == 'rejected') return Colors.red;
-
-  return const Color(0xFF64748B);
-}
-
-
-  Widget _avatarLetter(String name) {
-    final ch = name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : "C";
-
-    return Container(
-      width: 46,
-      height: 46,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: _border),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        ch,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w900,
-          color: _text,
-        ),
-      ),
-    );
-  }
-
-  Widget _applicationStatusChip(String status) {
-    final s = status.toLowerCase();
-
-    Color bg = const Color(0xFFEFF6FF);
-    Color fg = const Color(0xFF1D4ED8);
-    String label = 'Applied';
-
-    if (s == 'viewed') {
-      bg = const Color(0xFFF1F5F9);
-      fg = const Color(0xFF334155);
-      label = 'Viewed';
-    } else if (s == 'shortlisted') {
-      bg = const Color(0xFFECFDF5);
-      fg = const Color(0xFF166534);
-      label = 'Shortlisted';
-    } else if (s == 'interview_scheduled') {
-      bg = const Color(0xFFFFFBEB);
-      fg = const Color(0xFF7C2D12);
-      label = 'Interview';
-    } else if (s == 'interviewed') {
-      bg = const Color(0xFFFFFBEB);
-      fg = const Color(0xFF7C2D12);
-      label = 'Interviewed';
-    } else if (s == 'selected') {
-      bg = const Color(0xFFDCFCE7);
-      fg = const Color(0xFF14532D);
-      label = 'Selected';
-    } else if (s == 'rejected') {
-      bg = const Color(0xFFFFF1F2);
-      fg = const Color(0xFF9F1239);
-      label = 'Rejected';
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: fg.withOpacity(0.12)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w900,
-          color: fg,
-        ),
-      ),
-    );
-  }
-
-  // ------------------------------------------------------------
-  // ACTIVE JOB POSTS (REAL)
-  // ------------------------------------------------------------
-  Widget _buildActiveJobsList() {
-  if (_jobs.isEmpty) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 12),
-      child: Text(
-        "No jobs yet",
-        style: TextStyle(fontSize: 13, color: _muted),
-      ),
-    );
-  }
-
-  final activeJobs = _jobs
-      .where((j) =>
-          (j['status'] ?? 'active').toString().toLowerCase() == 'active')
-      .toList();
-
-  final list = activeJobs.isNotEmpty ? activeJobs : _jobs;
-
-  return Column(
-    children: List.generate(list.take(5).length, (i) {
-      final job = list[i];
-
-      final jobId = (job['id'] ?? '').toString();
-      final title = (job['job_title'] ?? 'Job').toString();
-      final district = (job['district'] ?? '').toString();
-      final applicants = _toInt(job['applications_count']);
-
-      return Column(
-        children: [
-          _jobRow(
-            title: title,
-            subtitle: district.isEmpty ? "Assam" : district,
-            applicants: applicants,
-            onApplicants: () async {
-              await Navigator.pushNamed(
-                context,
-                AppRoutes.jobApplicants,
-                arguments: {
-                  'jobId': jobId,
-                  'companyId': _companyId,
-                },
-              );
-              await _loadDashboard(silent: true);
-            },
-            onEdit: () async {
-              final res = await Navigator.pushNamed(
-                context,
-                AppRoutes.createJob,
-                arguments: {
-                  'mode': 'edit',
-                  'jobId': jobId,
-                },
-              );
-              if (res == true) await _loadDashboard(silent: true);
-            },
-          ),
-
-          if (i != list.length - 1)
-            const Divider(height: 18, color: _border),
-        ],
-      );
-    }),
-  );
-}
-
-Widget _jobRow({
-  required String title,
-  required String subtitle,
-  required int applicants,
-  required VoidCallback onApplicants,
-  required VoidCallback onEdit,
-}) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 10),
-    child: Row(
-      children: [
-        // Left
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
-                  color: _text,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                "$subtitle • $applicants applicants",
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: _muted,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Right actions
-        Row(
-          children: [
-            GestureDetector(
-              onTap: onApplicants,
-              child: const Padding(
-                padding: EdgeInsets.all(6),
-                child: Icon(Icons.people_outline, size: 20),
-              ),
-            ),
-            const SizedBox(width: 6),
-            GestureDetector(
-              onTap: onEdit,
-              child: const Padding(
-                padding: EdgeInsets.all(6),
-                child: Icon(Icons.edit_outlined, size: 20),
-              ),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
-
-
-
-Widget _buildTopSlider() {
-  if (_needsOrganization) return const SizedBox();
-
-  final sliders = [
-    {
-      "title": "Post jobs faster",
-      "subtitle": "Reach candidates instantly",
-    },
-    {
-      "title": "Track applicants",
-      "subtitle": "Manage your hiring pipeline",
-    },
-    {
-      "title": "Schedule interviews",
-      "subtitle": "Stay organized and efficient",
-    },
-  ];
-
-  return SizedBox(
-    height: 90,
-    child: PageView.builder(
-      itemCount: sliders.length,
-      controller: _pageController,
-      itemBuilder: (_, i) {
-        final s = sliders[i];
-
-        return Container(
-          margin: const EdgeInsets.only(right: 10),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: const Color(0xFF16A34A), // employer theme
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                s["title"]!,
-                style: const TextStyle(
-                  fontSize: 15.5,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                s["subtitle"]!,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  color: Colors.white70,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    ),
-  );
-}
-
-  
-
-  Widget _jobStatusChip(String status) {
-    final s = status.toLowerCase();
-
-    Color bg;
-    Color fg;
-    String label;
-
-    if (s == 'active') {
-      bg = const Color(0xFFECFDF5);
-      fg = const Color(0xFF166534);
-      label = 'Active';
-    } else if (s == 'paused') {
-      bg = const Color(0xFFFFFBEB);
-      fg = const Color(0xFF7C2D12);
-      label = 'Paused';
-    } else if (s == 'expired') {
-      bg = const Color(0xFFF1F5F9);
-      fg = const Color(0xFF475569);
-      label = 'Expired';
-    } else {
-      bg = const Color(0xFFFFF1F2);
-      fg = const Color(0xFF9F1239);
-      label = 'Closed';
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: fg.withOpacity(0.12)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w900,
-          color: fg,
-        ),
-      ),
-    );
-  }
-
-  // ------------------------------------------------------------
-  // TODAY INTERVIEWS (REAL)
-  // ------------------------------------------------------------
-  Widget _buildTodayInterviewsReal() {
-    if (_todayInterviews.isEmpty) {
-      return _softEmptyCard(
-        icon: Icons.calendar_month_outlined,
-        title: "No interviews scheduled today",
-        subtitle: "When you schedule interviews, they will appear here.",
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: _cardDeco(radius: _r20),
-      child: Column(
-        children: [
-          for (int i = 0; i < _todayInterviews.length; i++) ...[
-            _interviewTile(_todayInterviews[i]),
-            if (i != _todayInterviews.length - 1)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10),
-                child: Divider(height: 1, color: _border),
-              ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _interviewTile(Map<String, dynamic> row) {
-    final scheduledAt =
-        DateTime.tryParse((row['scheduled_at'] ?? '').toString());
-    final type = (row['interview_type'] ?? 'video').toString().toLowerCase();
-    final duration = _toInt(row['duration_minutes']);
-    final meetingLink = (row['meeting_link'] ?? '').toString();
-    final location = (row['location_address'] ?? '').toString();
-
-    final listingWrap = (row['job_applications_listings'] ?? {}) as Map;
-    final jobWrap = (listingWrap['job_listings'] ?? {}) as Map;
-    final appWrap = (listingWrap['job_applications'] ?? {}) as Map;
-
-    final candidateName = (appWrap['name'] ?? 'Candidate').toString();
-    final jobTitle = (jobWrap['job_title'] ?? 'Job').toString();
-
-    final isOnline = type.contains('video') || meetingLink.trim().isNotEmpty;
-
-    final timeText = scheduledAt == null
-        ? "Today"
-        : "${_hhmm(scheduledAt)} • ${duration <= 0 ? 30 : duration} min";
-
-    final modeText = isOnline ? "Online" : "In-person";
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _border),
-          ),
-          child: Icon(
-            isOnline ? Icons.videocam_outlined : Icons.location_on_outlined,
-            color: _primary,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    timeText,
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w900,
-                      color: _primary,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: _border),
-                    ),
-                    child: Text(
-                      modeText,
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w900,
-                        color: _muted,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 5),
-              Text(
-                candidateName,
-                style: const TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w900,
-                  color: _text,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                jobTitle,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                  color: _muted,
-                ),
-              ),
-              const SizedBox(height: 10),
-              if (isOnline && meetingLink.trim().isNotEmpty)
-                _smallInfo("Meeting link saved")
-              else if (!isOnline && location.trim().isNotEmpty)
-                _smallInfo("Location saved"),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _smallInfo(String t) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _border),
-      ),
-      child: Text(
-        t,
-        style: const TextStyle(
-          color: _muted,
-          fontWeight: FontWeight.w800,
-          fontSize: 12,
-        ),
-      ),
-    );
-  }
-
-  // ------------------------------------------------------------
-  // PERFORMANCE (REAL)
-  // ------------------------------------------------------------
-  Widget _buildPerformanceReal() {
-    final days = (_perf7d['days'] ?? []) as List;
-
-    if (days.isEmpty) {
-      return _softEmptyCard(
-        icon: Icons.insights_outlined,
-        title: "No data yet",
-        subtitle:
-            "Views and applications will appear after your jobs get traffic.",
-      );
-    }
-
-    int totalViews = _toInt(_perf7d['total_views']);
-    int totalApps = _toInt(_perf7d['total_applications']);
-
-    int maxV = 1;
-    int maxA = 1;
-
-    for (final d in days) {
-      if (d is! Map) continue;
-      maxV = _toInt(d['views']) > maxV ? _toInt(d['views']) : maxV;
-      maxA = _toInt(d['applications']) > maxA ? _toInt(d['applications']) : maxA;
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: _cardDeco(radius: _r20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _miniMetricsRow(
-            leftLabel: "Views",
-            leftValue: totalViews.toString(),
-            rightLabel: "Applications",
-            rightValue: totalApps.toString(),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  "Last 7 days",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    color: _text,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: _border),
-                ),
-                child: const Text(
-                  "Views vs Apps",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    color: _muted,
-                    fontSize: 11.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 110,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: List.generate(days.length, (i) {
-                final d = days[i] as Map;
-                final date = DateTime.tryParse((d['date'] ?? '').toString());
-                final views = _toInt(d['views']);
-                final apps = _toInt(d['applications']);
-
-                final vH = (views / maxV) * 90;
-                final aH = (apps / maxA) * 90;
-
-                final label = date == null ? "" : "${date.day}/${date.month}";
-
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Expanded(
-                              child: Container(
-                                height: vH < 6 ? 6 : vH,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFDBEAFE),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Container(
-                                height: aH < 6 ? 6 : aH,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF93C5FD),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          label,
-                          style: const TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF94A3B8),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _miniMetricsRow({
-    required String leftLabel,
-    required String leftValue,
-    required String rightLabel,
-    required String rightValue,
-  }) {
-    return Row(
-      children: [
-        Expanded(child: _metricMini(label: leftLabel, value: leftValue)),
-        const SizedBox(width: 12),
-        Expanded(child: _metricMini(label: rightLabel, value: rightValue)),
-      ],
-    );
-  }
-
-  Widget _metricMini({required String label, required String value}) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w900,
-              color: _muted,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: _text,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ------------------------------------------------------------
-  // TOP JOBS (REAL)
-  // ------------------------------------------------------------
-  Widget _buildTopJobsReal() {
-    if (_topJobs.isEmpty) {
-      return _softEmptyCard(
-        icon: Icons.star_outline,
-        title: "No job performance yet",
-        subtitle: "Once applicants start applying, top jobs will appear here.",
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: _cardDeco(radius: _r20),
-      child: Column(
-        children: [
-          for (int i = 0; i < _topJobs.length; i++) ...[
-            _topJobTile(_topJobs[i]),
-            if (i != _topJobs.length - 1)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10),
-                child: Divider(height: 1, color: _border),
-              ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _topJobTile(Map<String, dynamic> j) {
-    final id = (j['id'] ?? '').toString();
-    final title = (j['job_title'] ?? 'Job').toString();
-    final apps = _toInt(j['applications_count']);
-    final views = _toInt(j['views_count']);
-    final status = (j['status'] ?? 'active').toString();
-
-    return InkWell(
-      onTap: () async {
-        await Navigator.pushNamed(
-          context,
-          AppRoutes.jobApplicants,
-          arguments: {
-            'jobId': id,
-            'companyId': _companyId,
-          },
-        );
-        await _loadDashboard(silent: true);
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _border),
-              ),
-              child: const Icon(Icons.work_outline, color: _primary),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      color: _text,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "$apps applicants • $views views • ${status.toUpperCase()}",
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: _muted,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ------------------------------------------------------------
-  // ACTION NEEDED (REAL COMPUTED)
-  // ------------------------------------------------------------
-  Widget _buildActionNeededReal() {
-    final waitingReview = _recentApplicants
-        .where((a) =>
-            (a['application_status'] ?? 'applied')
-                .toString()
-                .toLowerCase() ==
-            'applied')
-        .length;
-
-    final expiringSoon = _jobs.where((j) {
-      final exp = DateTime.tryParse((j['expires_at'] ?? '').toString());
-      if (exp == null) return false;
-      final diff = exp.difference(DateTime.now()).inHours;
-      return diff >= 0 && diff <= 48;
-    }).length;
-
-    final paused = _pausedJobs;
-
-    final List<Widget> cards = [];
-
-    if (waitingReview > 0) {
-      cards.add(
-        _actionNeededCard(
-          icon: Icons.people_outline,
-          title: "$waitingReview applicants waiting for review",
-          buttonText: "Review",
-          onTap: () => Navigator.pushNamed(context, AppRoutes.employerJobs),
-        ),
-      );
-    }
-
-    if (expiringSoon > 0) {
-      cards.add(
-        _actionNeededCard(
-          icon: Icons.warning_amber_outlined,
-          title: "$expiringSoon job posts expiring soon",
-          buttonText: "Manage jobs",
-          onTap: () => Navigator.pushNamed(context, AppRoutes.employerJobs),
-        ),
-      );
-    }
-
-    if (paused > 0) {
-      cards.add(
-        _actionNeededCard(
-          icon: Icons.pause_circle_outline,
-          title: "$paused jobs are paused",
-          buttonText: "Resume",
-          onTap: () => Navigator.pushNamed(context, AppRoutes.employerJobs),
-        ),
-      );
-    }
-
-    if (cards.isEmpty) {
-      return _softEmptyCard(
-        icon: Icons.check_circle_outline,
-        title: "All good",
-        subtitle: "No pending actions right now.",
-      );
-    }
-
-    return Column(
-      children: [
-        for (int i = 0; i < cards.length; i++) ...[
-          cards[i],
-          if (i != cards.length - 1) const SizedBox(height: 12),
-        ]
-      ],
-    );
-  }
-
-  Widget _actionNeededCard({
-    required IconData icon,
-    required String title,
-    required String buttonText,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: _cardDeco(radius: _r20),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _border),
-                ),
-                child: Icon(icon, color: _primary),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w900,
-                    color: _text,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: onTap,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _text,
-                backgroundColor: const Color(0xFFF8FAFC),
-                side: const BorderSide(color: _border),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: Text(
-                buttonText,
-                style: const TextStyle(fontWeight: FontWeight.w900),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ------------------------------------------------------------
-  // DRAWER
-  // ------------------------------------------------------------
-  Widget _newEmployerDrawer() {
-    return Drawer(
-      backgroundColor: Colors.white,
-      child: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(bottom: BorderSide(color: _border)),
-              ),
-              child: Row(
-                children: [
-                  _orgAvatar(),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _needsOrganization ? "No Organization" : _orgName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 15.5,
-                            fontWeight: FontWeight.w900,
-                            color: _text,
-                            letterSpacing: -0.2,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        const Text(
-                          "Employer Account",
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w800,
-                            color: _muted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-                children: [
-                  _drawerItem(
-                    icon: Icons.dashboard_outlined,
-                    title: "Dashboard",
-                    onTap: () => Navigator.pop(context),
-                  ),
-                  _drawerItem(
-                    icon: Icons.apartment_outlined,
-                    title: "Create Organization",
-                    onTap: () async {
-                      Navigator.pop(context);
-                      final res = await Navigator.pushNamed(
-                        context,
-                        AppRoutes.createOrganization,
-                      );
-                      if (res == true) await _loadDashboard(silent: false);
-                    },
-                  ),
-                  _drawerItem(
-                    icon: Icons.work_outline,
-                    title: "My Jobs",
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.pushNamed(context, AppRoutes.employerJobs);
-                    },
-                  ),
-                  _drawerItem(
-                    icon: Icons.add_circle_outline,
-                    title: "Post a Job",
-                    onTap: _needsOrganization
-                        ? () {
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  "Create an organization first.",
-                                ),
-                              ),
-                            );
-                          }
-                        : () async {
-                            Navigator.pop(context);
-                            final res = await Navigator.pushNamed(
-                              context,
-                              AppRoutes.createJob,
-                            );
-                            if (res == true) await _loadDashboard(silent: true);
-                          },
-                  ),
-                  _drawerItem(
-                    icon: Icons.people_outline,
-                    title: "Applicants",
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.pushNamed(context, AppRoutes.employerJobs);
-                    },
-                  ),
-                  _drawerItem(
-                    icon: Icons.notifications_none_outlined,
-                    title: "Notifications",
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await Navigator.pushNamed(
-                        context,
-                        AppRoutes.employerNotifications,
-                      );
-                      await _loadDashboard(silent: true);
-                    },
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-                    child: Divider(height: 1, color: _border),
-                  ),
-                  _drawerItem(
-                    icon: Icons.logout_rounded,
-                    title: "Logout",
-                    destructive: true,
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await _logout();
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 18),
-              child: Column(
-                children: [
-                  Text(
-                    "Made in Assam",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF475569),
-                    ),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    "© Khilonjiya",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF94A3B8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _drawerItem({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-    bool destructive = false,
-  }) {
-    final fg = destructive ? const Color(0xFFEF4444) : _text;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _border),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: fg),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w900,
-                  color: fg,
-                ),
-              ),
-            ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ------------------------------------------------------------
-  // BOTTOM NAV
-  // ------------------------------------------------------------
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: _border)),
-      ),
-      child: BottomNavigationBar(
-        currentIndex: _bottomIndex,
+      // ------------------------------------------------------------
+      // NAV
+      // ------------------------------------------------------------
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: const Color(0xFF16A34A),
         onTap: (i) {
-          setState(() => _bottomIndex = i);
-
-          if (i == 0) {
-            // dashboard
-          } else if (i == 1) {
+          if (i == 1) {
             Navigator.pushNamed(context, AppRoutes.employerJobs);
           } else if (i == 2) {
             Navigator.pushNamed(context, AppRoutes.employerJobs);
-          } else if (i == 3) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Messages will be added next")),
-            );
-          } else if (i == 4) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Employer profile will be added next")),
-            );
           }
         },
-        type: BottomNavigationBarType.fixed,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        selectedItemColor: _primary,
-        unselectedItemColor: const Color(0xFF64748B),
-        selectedLabelStyle: const TextStyle(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w900,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w800,
-        ),
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: "Dashboard",
-          ),
+              icon: Icon(Icons.home), label: "Dashboard"),
           BottomNavigationBarItem(
-            icon: Icon(Icons.work_outline),
-            label: "Jobs",
-          ),
+              icon: Icon(Icons.work), label: "Jobs"),
           BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            label: "Applicants",
-          ),
+              icon: Icon(Icons.people), label: "Applicants"),
           BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
-            label: "Messages",
-          ),
+              icon: Icon(Icons.chat), label: "Messages"),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: "Profile",
-          ),
+              icon: Icon(Icons.person), label: "Profile"),
         ],
       ),
     );
   }
 
   // ------------------------------------------------------------
-  // HELPERS
+  // DASHBOARD UI
   // ------------------------------------------------------------
-  BoxDecoration _cardDeco({double radius = 16, bool shadow = true}) {
-    return BoxDecoration(
-      color: _card,
-      borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: _border),
-      boxShadow: shadow
-          ? [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-            ]
-          : [],
+  Widget _dashboard() {
+    return SafeArea(
+      child: RefreshIndicator(
+        onRefresh: _loadDashboard,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            HeaderWidget(
+              company: _company,
+              unread: _unreadNotifications,
+            ),
+
+            const SizedBox(height: 16),
+
+            const HeroSlider(),
+
+            const SizedBox(height: 16),
+
+            QuickStats(stats: _stats),
+
+            const SizedBox(height: 16),
+
+            PrimaryActions(companyId: _companyId),
+
+            const SizedBox(height: 20),
+
+            const Text("Recent Applicants",
+                style: TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 10),
+
+            RecentApplicants(
+              data: _recentApplicants,
+              companyId: _companyId,
+            ),
+
+            const SizedBox(height: 20),
+
+            const Text("Active Jobs",
+                style: TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 10),
+
+            ActiveJobs(
+              jobs: _jobs,
+              companyId: _companyId,
+            ),
+
+            const SizedBox(height: 20),
+
+            const Text("Today's Interviews",
+                style: TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 10),
+
+            TodayInterviews(data: _todayInterviews),
+
+            const SizedBox(height: 20),
+
+            const Text("Performance",
+                style: TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 10),
+
+            PerformanceWidget(perf: _perf7d),
+
+            const SizedBox(height: 20),
+
+            const Text("Top Jobs",
+                style: TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 10),
+
+            TopJobs(
+              jobs: _topJobs,
+              companyId: _companyId,
+            ),
+
+            const SizedBox(height: 20),
+
+            const Text("Action Needed",
+                style: TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 10),
+
+            ActionNeeded(
+              applicants: _recentApplicants,
+              jobs: _jobs,
+            ),
+
+            const SizedBox(height: 100),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _softEmptyCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: _cardDeco(radius: _r20),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
+  // ------------------------------------------------------------
+  // NO ORG UI
+  // ------------------------------------------------------------
+  Widget _noOrg() {
+    return SafeArea(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Container(
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _border),
+              border: Border.all(color: const Color(0xFFE6E8EC)),
             ),
-            child: Icon(icon, color: _text),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    color: _text,
-                  ),
+                const Text("Start hiring",
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 8),
+                const Text(
+                  "Create your organization to post jobs",
+                  style: TextStyle(color: Color(0xFF6B7280)),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    color: _muted,
-                    height: 1.3,
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(
+                        context, AppRoutes.createOrganization);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF16A34A),
                   ),
+                  child: const Text("Create Organization"),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
-  }
-
-  String _timeAgo(dynamic date) {
-    if (date == null) return 'recent';
-
-    final d = DateTime.tryParse(date.toString());
-    if (d == null) return 'recent';
-
-    final diff = DateTime.now().difference(d);
-
-    if (diff.inMinutes < 2) return 'just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays == 1) return '1d ago';
-    return '${diff.inDays}d ago';
-  }
-
-  String _hhmm(DateTime d) {
-    final h = d.hour;
-    final m = d.minute.toString().padLeft(2, '0');
-
-    final ampm = h >= 12 ? "PM" : "AM";
-    final hh = (h % 12 == 0) ? 12 : (h % 12);
-
-    return "$hh:$m $ampm";
-  }
-
-  int _toInt(dynamic v) {
-    if (v == null) return 0;
-    if (v is int) return v;
-    if (v is double) return v.toInt();
-    return int.tryParse(v.toString()) ?? 0;
   }
 }
