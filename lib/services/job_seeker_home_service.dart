@@ -254,17 +254,23 @@ Future<bool> isUserProSubscribed() async {
   if (user == null) return false;
 
   final res = await client
-      .from('subscriptions')
+      .from('user_subscriptions') // ✅ FIXED TABLE
       .select('status, expires_at')
       .eq('user_id', user.id)
+      .eq('status', 'active')
+      .order('expires_at', ascending: false)
+      .limit(1)
       .maybeSingle();
 
   if (res == null) return false;
-  if (res['status'] != 'active') return false;
-  if (res['expires_at'] == null) return false;
 
-  return DateTime.parse(res['expires_at'])
-      .isAfter(DateTime.now());
+  final expiresRaw = res['expires_at'];
+  if (expiresRaw == null) return false;
+
+  final expires = DateTime.tryParse(expiresRaw.toString());
+  if (expires == null) return false;
+
+  return expires.isAfter(DateTime.now());
 }
 
 Future<void> updateMyCurrentLocationFromDevice() async {
@@ -1708,18 +1714,22 @@ Future<List<Map<String, dynamic>>> fetchTopCompanies({
   // ============================================================
 
   Future<Map<String, dynamic>?> getMySubscription() async {
-    _ensureAuthenticatedSync();
-    final userId = _userId();
+  _ensureAuthenticatedSync();
+  final userId = _userId();
 
-    final res = await _db
-        .from('subscriptions')
-        .select('id, user_id, status, plan_price, starts_at, expires_at')
-        .eq('user_id', userId)
-        .maybeSingle();
+  final res = await _db
+      .from('user_subscriptions') // ✅ FIXED
+      .select('user_id, status, plan_name, started_at, expires_at')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .order('expires_at', ascending: false)
+      .limit(1)
+      .maybeSingle();
 
-    if (res == null) return null;
-    return Map<String, dynamic>.from(res);
-  }
+  if (res == null) return null;
+
+  return Map<String, dynamic>.from(res);
+}
 
   Future<bool> isProActive() async {
     final sub = await getMySubscription();
