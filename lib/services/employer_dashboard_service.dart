@@ -1,236 +1,218 @@
 // lib/services/employer_dashboard_service.dart
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EmployerDashboardService {
   final SupabaseClient _db = Supabase.instance.client;
 
-  // ------------------------------------------------------------
+  // ============================================================
   // AUTH
-  // ------------------------------------------------------------
+  // ============================================================
   User _requireUser() {
     final u = _db.auth.currentUser;
     if (u == null) throw Exception("Session expired. Please login again.");
     return u;
   }
 
-  // ------------------------------------------------------------
-  // ORGANIZATIONS
-  // ------------------------------------------------------------
-
-  Future<List<Map<String, dynamic>>> fetchMyOrganizations() async {
+  // ============================================================
+  // ORGANIZATION RESOLUTION (CRITICAL FIX)
+  // ============================================================
+  Future<String?> resolveCompanyIdSafe() async {
     final user = _requireUser();
 
-    final res = await _db
+    // 1️⃣ Try company_members
+    final member = await _db
         .from('company_members')
-        .select('''
-          company_id,
-          role,
-          status,
-          joined_at,
-          companies (
-            id,
-            name,
-            logo_url,
-            is_verified,
-            headquarters_city,
-            headquarters_state,
-            industry,
-            company_size,
-            website,
-            description,
-            rating,
-            total_reviews,
-            created_at,
-            business_type_id,
-            owner_id,
-            created_by
-          )
-        ''')
+        .select('company_id')
         .eq('user_id', user.id)
-        .eq('status', 'active')
-        .order('joined_at', ascending: false);
-
-    final rows = List<Map<String, dynamic>>.from(res);
-
-    final List<Map<String, dynamic>> orgs = [];
-
-    for (final r in rows) {
-      final c = r['companies'];
-      if (c == null || c is! Map) continue;
-
-      final id = (c['id'] ?? '').toString();
-      final name = (c['name'] ?? '').toString();
-
-      if (id.trim().isEmpty || name.trim().isEmpty) continue;
-
-      orgs.add({
-        ...Map<String, dynamic>.from(c as Map),
-        'my_role': (r['role'] ?? 'member').toString(),
-        'my_status': (r['status'] ?? 'active').toString(),
-        'my_joined_at': r['joined_at'],
-      });
-    }
-
-    orgs.sort((a, b) {
-      final an = (a['name'] ?? '').toString().toLowerCase();
-      final bn = (b['name'] ?? '').toString().toLowerCase();
-      return an.compareTo(bn);
-    });
-
-    return orgs;
-  }
-
-  Future<String> resolveDefaultOrganizationId() async {
-    final orgs = await fetchMyOrganizations();
-    if (orgs.isEmpty) {
-      throw Exception("No organization linked. Please create one first.");
-    }
-    return (orgs.first['id'] ?? '').toString();
-  }
-
-  Future<Map<String, dynamic>> fetchOrganizationById({
-    required String organizationId,
-  }) async {
-    _requireUser();
-
-    final id = organizationId.trim();
-    if (id.isEmpty) throw Exception("Organization ID missing");
-
-    final org = await _db
-        .from('companies')
-        .select()
-        .eq('id', id)
         .maybeSingle();
 
-    if (org == null) {
-      throw Exception("Organization not found or access denied.");
+    if (member != null) {
+      return member['company_id'].toString();
     }
 
-    return Map<String, dynamic>.from(org);
+    // 2️⃣ Fallback (first time create case)
+    final company = await _db
+        .from('companies')
+        .select('id')
+        .eq('created_by', user.id)
+        .maybeSingle();
+
+    if (company != null) {
+      return company['id'].toString();
+    }
+
+    return null;
   }
 
-  // ------------------------------------------------------------
-  // COMPANY COMPATIBILITY METHODS (FOR DASHBOARD)
-  // ------------------------------------------------------------
-
-  Future<String> resolveDefaultCompanyId() async {
-    return resolveDefaultOrganizationId();
-  }
-
+  // ============================================================
+  // COMPANY
+  // ============================================================
   Future<Map<String, dynamic>> fetchCompanyById({
     required String companyId,
   }) async {
-    return fetchOrganizationById(organizationId: companyId);
+    final res = await _db
+        .from('companies')
+        .select()
+        .eq('id', companyId)
+        .maybeSingle();
+
+    if (res == null) return {};
+
+    return Map<String, dynamic>.from(res);
   }
 
-  // Dummy safe methods so dashboard compiles
-
+  // ============================================================
+  // JOBS
+  // ============================================================
   Future<List<Map<String, dynamic>>> fetchCompanyJobs({
     required String companyId,
   }) async {
-    return [];
+    final res = await _db
+        .from('job_listings')
+        .select()
+        .eq('company_id', companyId)
+        .order('created_at', ascending: false);
+
+    return List<Map<String, dynamic>>.from(res);
   }
 
+  // ============================================================
+  // STATS
+  // ============================================================
   Future<Map<String, dynamic>> fetchCompanyDashboardStats({
     required String companyId,
   }) async {
-    return {};
+    final jobs = await _db
+        .from('job_listings')
+        .select('status, applications_count, views_count')
+        .eq('company_id', companyId);
+
+    int active = 0;
+    int applicants = 0;
+    int views = 0;
+
+    for (final j in jobs) {
+      if (j['status'] == 'active') active++;
+
+      applicants += (j['applications_count'] ?? 0) as int;
+      views += (j['views_count'] ?? 0) as int;
+    }
+
+    return {
+      "active_jobs": active,
+      "total_applicants": applicants,
+      "total_views": views,
+    };
   }
 
+  // ============================================================
+  // RECENT APPLICANTS
+  // ============================================================
   Future<List<Map<String, dynamic>>> fetchRecentApplicants({
     required String companyId,
     int limit = 6,
   }) async {
-    return [];
+    final res = await _db
+        .from('job_applications_listings')
+        .select('''
+          application_status,
+          job_listings (
+            id,
+            job_title,
+            company_id
+          ),
+          job_applications (
+            name
+          )
+        ''')
+        .eq('job_listings.company_id', companyId)
+        .order('applied_at', ascending: false)
+        .limit(limit);
+
+    return List<Map<String, dynamic>>.from(res);
   }
 
+  // ============================================================
+  // TOP JOBS
+  // ============================================================
   Future<List<Map<String, dynamic>>> fetchTopJobs({
     required String companyId,
     int limit = 6,
   }) async {
-    return [];
+    final res = await _db
+        .from('job_listings')
+        .select()
+        .eq('company_id', companyId)
+        .order('applications_count', ascending: false)
+        .limit(limit);
+
+    return List<Map<String, dynamic>>.from(res);
   }
 
+  // ============================================================
+  // TODAY INTERVIEWS
+  // ============================================================
   Future<List<Map<String, dynamic>>> fetchTodayInterviews({
     required String companyId,
     int limit = 10,
   }) async {
-    return [];
+    final today = DateTime.now();
+
+    final start = DateTime(today.year, today.month, today.day);
+    final end = start.add(const Duration(days: 1));
+
+    final res = await _db
+        .from('interviews')
+        .select('''
+          scheduled_at,
+          interview_type,
+          duration_minutes,
+          meeting_link,
+          location_address,
+          job_application_listing_id,
+          job_applications_listings (
+            job_listings (job_title),
+            job_applications (name)
+          )
+        ''')
+        .eq('company_id', companyId)
+        .gte('scheduled_at', start.toIso8601String())
+        .lt('scheduled_at', end.toIso8601String())
+        .limit(limit);
+
+    return List<Map<String, dynamic>>.from(res);
   }
 
-  Future<List<Map<String, dynamic>>> fetchLast7DaysPerformance({
+  // ============================================================
+  // PERFORMANCE
+  // ============================================================
+  Future<Map<String, dynamic>> fetchLast7DaysPerformance({
     required String companyId,
   }) async {
-    return [];
+    final res = await _db
+        .from('job_listings')
+        .select('views_count, applications_count')
+        .eq('company_id', companyId);
+
+    int totalViews = 0;
+    int totalApps = 0;
+
+    for (final j in res) {
+      totalViews += (j['views_count'] ?? 0) as int;
+      totalApps += (j['applications_count'] ?? 0) as int;
+    }
+
+    return {
+      "total_views": totalViews,
+      "total_applications": totalApps,
+      "days": [], // can enhance later
+    };
   }
 
-  // ------------------------------------------------------------
-  // CREATE ORGANIZATION
-  // ------------------------------------------------------------
-
-  Future<String> createOrganization({
-    required String name,
-    required String businessTypeId,
-    required String districtId,
-    String website = '',
-    String description = '',
-  }) async {
-    final user = _requireUser();
-
-    final n = name.trim();
-    if (n.isEmpty) throw Exception("Organization name required");
-
-    final btId = businessTypeId.trim();
-    if (btId.isEmpty) throw Exception("Business type required");
-
-    final distId = districtId.trim();
-    if (distId.isEmpty) throw Exception("District required");
-
-    final distRow = await _db
-        .from('assam_districts_master')
-        .select('district_name')
-        .eq('id', distId)
-        .maybeSingle();
-
-    if (distRow == null) throw Exception("District invalid");
-
-    final districtName =
-        (distRow['district_name'] ?? '').toString().trim();
-
-    final inserted = await _db
-        .from('companies')
-        .insert({
-          'name': n,
-          'business_type_id': btId,
-          'headquarters_city': districtName,
-          'headquarters_state': 'Assam',
-          'website': website.trim().isEmpty ? null : website.trim(),
-          'description': description.trim().isEmpty
-              ? null
-              : description.trim(),
-          'created_by': user.id,
-          'owner_id': user.id,
-        })
-        .select('id')
-        .single();
-
-    final companyId =
-        (inserted['id'] ?? '').toString().trim();
-
-    await _db.from('company_members').upsert({
-      'company_id': companyId,
-      'user_id': user.id,
-      'role': 'member',
-      'status': 'active',
-    }, onConflict: 'company_id,user_id');
-
-    return companyId;
-  }
-
-  // ------------------------------------------------------------
+  // ============================================================
   // NOTIFICATIONS
-  // ------------------------------------------------------------
-
+  // ============================================================
   Future<int> fetchUnreadNotificationsCount() async {
     final user = _requireUser();
 
@@ -241,5 +223,63 @@ class EmployerDashboardService {
         .eq('is_read', false);
 
     return List<Map<String, dynamic>>.from(res).length;
+  }
+
+  // ============================================================
+  // CREATE ORGANIZATION (SAFE)
+  // ============================================================
+  Future<String> createOrganization({
+    required String name,
+    required String businessTypeId,
+    required String districtId,
+    String website = '',
+    String description = '',
+  }) async {
+    final user = _requireUser();
+
+    // Prevent duplicate org
+    final existing = await _db
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+    if (existing != null) {
+      return existing['company_id'];
+    }
+
+    final distRow = await _db
+        .from('assam_districts_master')
+        .select('district_name')
+        .eq('id', districtId)
+        .maybeSingle();
+
+    if (distRow == null) throw Exception("Invalid district");
+
+    final inserted = await _db
+        .from('companies')
+        .insert({
+          'name': name,
+          'business_type_id': businessTypeId,
+          'headquarters_city': distRow['district_name'],
+          'headquarters_state': 'Assam',
+          'website': website,
+          'description': description,
+          'created_by': user.id,
+          'owner_id': user.id,
+        })
+        .select('id')
+        .single();
+
+    final companyId = inserted['id'];
+
+    await _db.from('company_members').upsert({
+      'company_id': companyId,
+      'user_id': user.id,
+      'role': 'owner',
+      'status': 'active',
+    }, onConflict: 'user_id');
+
+    return companyId;
   }
 }
