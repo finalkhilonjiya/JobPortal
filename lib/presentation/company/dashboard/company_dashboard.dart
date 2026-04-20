@@ -7,7 +7,7 @@ import '../../../routes/app_routes.dart';
 import '../../../services/mobile_auth_service.dart';
 import '../../../services/employer_dashboard_service.dart';
 
-// ✅ NEW UI
+// UI widgets
 import 'widgets/header_widget.dart';
 import 'widgets/hero_slider.dart';
 import 'widgets/quick_stats.dart';
@@ -57,7 +57,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
   // ------------------------------------------------------------
-  // LOAD DATA (REAL)
+  // 🔥 FIXED LOAD LOGIC
   // ------------------------------------------------------------
   Future<void> _loadDashboard() async {
     if (!mounted) return;
@@ -67,12 +67,25 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     try {
       final user = _requireUser();
 
-      final member = await Supabase.instance.client
-          .from('company_members')
-          .select('company_id')
-          .eq('user_id', user.id)
-          .maybeSingle();
+      // 🔥 RETRY LOGIC (handles delayed insert after org creation)
+      Map<String, dynamic>? member;
 
+      for (int i = 0; i < 3; i++) {
+        final res = await Supabase.instance.client
+            .from('company_members')
+            .select('company_id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        if (res != null) {
+          member = res;
+          break;
+        }
+
+        await Future.delayed(const Duration(milliseconds: 400));
+      }
+
+      // ❌ STILL NULL → SHOW CREATE ORG
       if (member == null) {
         setState(() {
           _needsOrganization = true;
@@ -96,38 +109,48 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         _service.fetchUnreadNotificationsCount(),
       ]);
 
+      // 🔥 SAFE PARSING (NO CRASH)
+      List<Map<String, dynamic>> safeList(dynamic data) {
+        if (data is List) {
+          return data
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
+        }
+        return [];
+      }
+
+      Map<String, dynamic> safeMap(dynamic data) {
+        if (data is Map) {
+          return Map<String, dynamic>.from(data);
+        }
+        return {};
+      }
+
+      int safeInt(dynamic v) {
+        if (v is int) return v;
+        return int.tryParse(v.toString()) ?? 0;
+      }
+
       setState(() {
         _companyId = companyId;
-        _company = company;
+        _company = safeMap(company);
 
-        _jobs = List<Map<String, dynamic>>.from(
-  (results[0] as List).map((e) => Map<String, dynamic>.from(e)),
-);
-
-_stats = Map<String, dynamic>.from(results[1] as Map);
-
-_recentApplicants = List<Map<String, dynamic>>.from(
-  (results[2] as List).map((e) => Map<String, dynamic>.from(e)),
-);
-
-_topJobs = List<Map<String, dynamic>>.from(
-  (results[3] as List).map((e) => Map<String, dynamic>.from(e)),
-);
-
-_todayInterviews = List<Map<String, dynamic>>.from(
-  (results[4] as List).map((e) => Map<String, dynamic>.from(e)),
-);
-
-_perf7d = Map<String, dynamic>.from(results[5] as Map);
-
-_unreadNotifications = results[6] as int;
+        _jobs = safeList(results[0]);
+        _stats = safeMap(results[1]);
+        _recentApplicants = safeList(results[2]);
+        _topJobs = safeList(results[3]);
+        _todayInterviews = safeList(results[4]);
+        _perf7d = safeMap(results[5]);
+        _unreadNotifications = safeInt(results[6]);
 
         _needsOrganization = false;
         _loading = false;
       });
     } catch (e) {
+      debugPrint("Dashboard Error: $e");
+
+      // 🔥 DO NOT FORCE NO ORG HERE
       setState(() {
-        _needsOrganization = true;
         _loading = false;
       });
     }
@@ -154,54 +177,39 @@ _unreadNotifications = results[6] as int;
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
-
-      // ------------------------------------------------------------
-      // LOADING
-      // ------------------------------------------------------------
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _needsOrganization
               ? _noOrg()
               : _dashboard(),
 
-      // ------------------------------------------------------------
-      // FAB
-      // ------------------------------------------------------------
       floatingActionButton: _needsOrganization
           ? null
           : FloatingActionButton(
               backgroundColor: const Color(0xFF16A34A),
-              onPressed: () {
-                Navigator.pushNamed(context, AppRoutes.createJob);
+              onPressed: () async {
+                final res =
+                    await Navigator.pushNamed(context, AppRoutes.createJob);
+                if (res == true) _loadDashboard();
               },
               child: const Icon(Icons.add),
             ),
 
-      // ------------------------------------------------------------
-      // NAV
-      // ------------------------------------------------------------
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF16A34A),
         onTap: (i) {
-          if (i == 1) {
-            Navigator.pushNamed(context, AppRoutes.employerJobs);
-          } else if (i == 2) {
+          if (i == 1 || i == 2) {
             Navigator.pushNamed(context, AppRoutes.employerJobs);
           }
         },
         items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home), label: "Dashboard"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.work), label: "Jobs"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.people), label: "Applicants"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.chat), label: "Messages"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person), label: "Profile"),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Dashboard"),
+          BottomNavigationBarItem(icon: Icon(Icons.work), label: "Jobs"),
+          BottomNavigationBarItem(icon: Icon(Icons.people), label: "Applicants"),
+          BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Messages"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
         ],
       ),
     );
@@ -217,83 +225,44 @@ _unreadNotifications = results[6] as int;
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            HeaderWidget(
-              company: _company,
-              unread: _unreadNotifications,
-            ),
-
+            HeaderWidget(company: _company, unread: _unreadNotifications),
             const SizedBox(height: 16),
-
             const HeroSlider(),
-
             const SizedBox(height: 16),
-
             QuickStats(stats: _stats),
-
             const SizedBox(height: 16),
-
             PrimaryActions(companyId: _companyId),
-
             const SizedBox(height: 20),
-
             const Text("Recent Applicants",
                 style: TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 10),
-
             RecentApplicants(
-              data: _recentApplicants,
-              companyId: _companyId,
-            ),
-
+                data: _recentApplicants, companyId: _companyId),
             const SizedBox(height: 20),
-
             const Text("Active Jobs",
                 style: TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 10),
-
-            ActiveJobs(
-              jobs: _jobs,
-              companyId: _companyId,
-            ),
-
+            ActiveJobs(jobs: _jobs, companyId: _companyId),
             const SizedBox(height: 20),
-
             const Text("Today's Interviews",
                 style: TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 10),
-
             TodayInterviews(data: _todayInterviews),
-
             const SizedBox(height: 20),
-
             const Text("Performance",
                 style: TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 10),
-
             PerformanceWidget(perf: _perf7d),
-
             const SizedBox(height: 20),
-
             const Text("Top Jobs",
                 style: TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 10),
-
-            TopJobs(
-              jobs: _topJobs,
-              companyId: _companyId,
-            ),
-
+            TopJobs(jobs: _topJobs, companyId: _companyId),
             const SizedBox(height: 20),
-
             const Text("Action Needed",
                 style: TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 10),
-
-            ActionNeeded(
-              applicants: _recentApplicants,
-              jobs: _jobs,
-            ),
-
+            ActionNeeded(applicants: _recentApplicants, jobs: _jobs),
             const SizedBox(height: 100),
           ],
         ),
@@ -302,45 +271,23 @@ _unreadNotifications = results[6] as int;
   }
 
   // ------------------------------------------------------------
-  // NO ORG UI
+  // NO ORG
   // ------------------------------------------------------------
   Widget _noOrg() {
     return SafeArea(
       child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE6E8EC)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text("Start hiring",
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 8),
-                const Text(
-                  "Create your organization to post jobs",
-                  style: TextStyle(color: Color(0xFF6B7280)),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pushNamed(
-                        context, AppRoutes.createOrganization);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF16A34A),
-                  ),
-                  child: const Text("Create Organization"),
-                ),
-              ],
-            ),
-          ),
+        child: ElevatedButton(
+          onPressed: () async {
+            final res = await Navigator.pushNamed(
+                context, AppRoutes.createOrganization);
+
+            // 🔥 IMPORTANT FIX
+            if (res == true) {
+              await Future.delayed(const Duration(milliseconds: 500));
+              _loadDashboard();
+            }
+          },
+          child: const Text("Create Organization"),
         ),
       ),
     );
