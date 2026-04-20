@@ -107,7 +107,7 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
   setState(() => _saving = true);
 
   try {
-    // 🔁 STEP 1: Check if already linked (PREVENT DUPLICATE CRASH)
+    // ✅ PREVENT DUPLICATE INSERT
     final existing = await _db
         .from('company_members')
         .select('company_id')
@@ -120,14 +120,13 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
       return;
     }
 
-    // 🔁 STEP 2: Get district name
     final districtObj = _districts.firstWhere(
       (d) => d['id'].toString() == _selectedDistrictId,
     );
 
     final districtName = districtObj['district_name'];
 
-    // 🔁 STEP 3: Create company
+    // ✅ CREATE COMPANY
     final company = await _db
         .from('companies')
         .insert({
@@ -145,7 +144,7 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
 
     final companyId = company['id'];
 
-    // 🔁 STEP 4: LINK USER (IMPORTANT FIX)
+    // ✅ SAFE UPSERT (NO CRASH)
     await _db.from('company_members').upsert({
       "company_id": companyId,
       "user_id": user.id,
@@ -153,7 +152,7 @@ class _CreateOrganizationScreenState extends State<CreateOrganizationScreen> {
       "status": "active",
     }, onConflict: 'user_id');
 
-    // 🔁 STEP 5: WAIT (fix dashboard race condition)
+    // ✅ IMPORTANT: WAIT (fix dashboard race)
     await Future.delayed(const Duration(milliseconds: 500));
 
     if (!mounted) return;
