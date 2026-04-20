@@ -35,27 +35,28 @@ class SubscriptionService {
   // ============================================================
 
   Future<Map<String, dynamic>?> getMySubscription() async {
+  final uid = _uid();
 
-    final uid = _uid();
+  final res = await _db
+      .from('user_subscriptions')
+      .select('''
+        user_id,
+        status,
+        plan_name,
+        started_at,
+        expires_at,
+        purchase_token
+      ''')
+      .eq('user_id', uid)
+      .eq('status', 'active')
+      .order('expires_at', ascending: false) // ✅ pick latest
+      .limit(1) // ✅ avoid multiple rows issue
+      .maybeSingle();
 
-    final res = await _db
-        .from('user_subscriptions')
-        .select('''
-          user_id,
-          status,
-          plan_name,
-          started_at,
-          expires_at,
-          purchase_token
-        ''')
-        .eq('user_id', uid)
-        .eq('status', 'active')
-        .maybeSingle();
+  if (res == null) return null;
 
-    if (res == null) return null;
-
-    return Map<String, dynamic>.from(res);
-  }
+  return Map<String, dynamic>.from(res);
+}
 
   // ============================================================
   // ✅ CHECK ACTIVE ACCESS
