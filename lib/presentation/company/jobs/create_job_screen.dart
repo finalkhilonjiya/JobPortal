@@ -566,7 +566,7 @@ ButtonStyle _primaryButtonStyle() {
 
                               setModalState(() => saving = false);
                             },
-                      style: style: _primaryButtonStyle(),
+                      style: _primaryButtonStyle(),
                       child: saving
                           ? const SizedBox(
                               width: 22,
@@ -988,48 +988,28 @@ ButtonStyle _primaryButtonStyle() {
 
   // STEP 0
   Widget _stepOrganization() {
-    return _cardSection(
-      title: "Organization",
-      subtitle: "Select the organization where you want to post this job",
-      child: Column(
-        children: [
-          if (_loadingCompanies)
-            _infoBox(
-              text: "Loading your organizations...",
-              icon: Icons.hourglass_bottom_rounded,
-            )
-          else if (_myCompanies.isEmpty)
-            _errorBox(
-              text: "No organization found. Create one first.",
-              actionText: "Create",
-              onAction: _quickCreateOrganization,
-            )
-          else
-            _companyDropdown(),
-          SizedBox(height: 1.2.h),
-          SizedBox(
-            width: double.infinity,
-            height: 46,
-            child: OutlinedButton.icon(
-              onPressed: _loading ? null : _quickCreateOrganization,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text(
-                "Create new organization",
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _text,
-                side: const BorderSide(color: _line),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  return _cardSection(
+    title: "Organization",
+    subtitle: "Select the organization where you want to post this job",
+    child: Column(
+      children: [
+        if (_loadingCompanies)
+          _infoBox(
+            text: "Loading your organizations...",
+            icon: Icons.hourglass_bottom_rounded,
+          )
+        else if (_myCompanies.isEmpty)
+          _errorBox(
+            text: "No organization found. Please create one from dashboard.",
+            actionText: "Go Back",
+            onAction: () => Navigator.pop(context),
+          )
+        else
+          _companyDropdown(),
+      ],
+    ),
+  );
+}
 
   Widget _companyDropdown() {
     final selectedId = _selectedCompanyId;
