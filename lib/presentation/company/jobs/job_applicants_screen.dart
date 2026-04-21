@@ -113,7 +113,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
 
       if (q.isEmpty) return true;
 
-      final app = _asMap(r['job_applications']);
+      final app = _getApp(r['job_applications']);
 
       final name = (app['name'] ?? '').toString().toLowerCase();
       final phone = (app['phone'] ?? '').toString().toLowerCase();
@@ -130,6 +130,24 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
   // ------------------------------------------------------------
   // ACTIONS
   // ------------------------------------------------------------
+
+
+
+
+Map<String, dynamic> _getApp(dynamic raw) {
+  if (raw == null) return {};
+
+  if (raw is List && raw.isNotEmpty) {
+    final first = raw.first;
+    if (first is Map<String, dynamic>) return first;
+    if (first is Map) return Map<String, dynamic>.from(first);
+  }
+
+  if (raw is Map<String, dynamic>) return raw;
+  if (raw is Map) return Map<String, dynamic>.from(raw);
+
+  return {};
+}
   Future<void> _setStatus(Map<String, dynamic> row, String status) async {
     if (_busy) return;
     setState(() => _busy = true);
@@ -309,7 +327,7 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
   void _openApplicant(Map<String, dynamic> row) async {
     await _markViewedIfNeeded(row);
 
-    final app = _asMap(row['job_applications']);
+    final app = _getApp(row['job_applications']);
 
     final name = (app['name'] ?? 'Candidate').toString();
     final phone = (app['phone'] ?? '').toString();
@@ -757,7 +775,7 @@ Widget build(BuildContext context) {
   // UI: LIST ITEM
   // ------------------------------------------------------------
   Widget _applicantTile(Map<String, dynamic> row) {
-  final app = _asMap(row['job_applications']);
+  final app = _getApp(row['job_applications']);
 
   final name = (app['name'] ?? 'Candidate').toString();
   final district = (app['district'] ?? '').toString();
