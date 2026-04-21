@@ -81,13 +81,25 @@ Future<String?> getPublicOrSignedUrl(String path) async {
   if (path.trim().isEmpty) return null;
 
   try {
-    // if already full URL → return as is
-    if (path.startsWith('http')) return path;
+    String cleanPath = path.trim();
 
-    // otherwise generate signed URL from bucket
+    // Already full signed/public URL → return directly
+    if (cleanPath.startsWith('http')) return cleanPath;
+
+    // REMOVE bucket name if accidentally stored
+    if (cleanPath.startsWith('job-files/')) {
+      cleanPath = cleanPath.replaceFirst('job-files/', '');
+    }
+
+    // Final safety (must start with folder)
+    if (!cleanPath.startsWith('resumes/') &&
+        !cleanPath.startsWith('photos/')) {
+      return null;
+    }
+
     final url = await _db.storage
         .from('job-files')
-        .createSignedUrl(path, 60 * 60); // 1 hour
+        .createSignedUrl(cleanPath, 60 * 60);
 
     return url;
   } catch (e) {
