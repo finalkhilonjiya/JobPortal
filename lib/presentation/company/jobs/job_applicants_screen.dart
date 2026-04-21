@@ -857,18 +857,33 @@ Widget build(BuildContext context) {
   final letter = name.isNotEmpty ? name[0].toUpperCase() : "C";
 
   if (photoUrl != null && photoUrl.isNotEmpty) {
+    String finalUrl = photoUrl;
+
+    // FIX: convert storage path → signed URL
+    if (!photoUrl.startsWith('http')) {
+      finalUrl = _service._db.storage
+          .from('job-files')
+          .createSignedUrlSync(
+              photoUrl.replaceFirst('job-files/', ''), 3600);
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(999),
       child: Image.network(
-        photoUrl,
+        finalUrl,
         width: 44,
         height: 44,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _avatar(name),
+        errorBuilder: (_, __, ___) => _fallbackAvatar(letter),
       ),
     );
   }
 
+  return _fallbackAvatar(letter);
+}
+
+
+Widget _fallbackAvatar(String letter) {
   return Container(
     width: 44,
     height: 44,
