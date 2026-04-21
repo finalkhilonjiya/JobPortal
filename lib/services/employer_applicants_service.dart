@@ -74,6 +74,26 @@ class EmployerApplicantsService {
   // ------------------------------------------------------------
   // LOAD APPLICANTS FOR JOB (REAL)
   // ------------------------------------------------------------
+
+
+
+Future<String?> getPublicOrSignedUrl(String path) async {
+  if (path.trim().isEmpty) return null;
+
+  try {
+    // if already full URL → return as is
+    if (path.startsWith('http')) return path;
+
+    // otherwise generate signed URL from bucket
+    final url = await _db.storage
+        .from('job-files')
+        .createSignedUrl(path, 60 * 60); // 1 hour
+
+    return url;
+  } catch (e) {
+    return null;
+  }
+}
   Future<List<Map<String, dynamic>>> fetchApplicantsForJob(String jobId) async {
   _requireUser();
   await ensureCanAccessJobAndGetJob(jobId);
