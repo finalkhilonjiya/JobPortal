@@ -304,7 +304,7 @@ Map<String, dynamic> _getApp(dynamic raw) {
   // OPEN RESUME (REAL)
   // ------------------------------------------------------------
   Future<void> _openResume(Map<String, dynamic> row) async {
-    final app = _asMap(row['job_applications']);
+    final app = _getApp(row['job_applications']);
     final url = (app['resume_file_url'] ?? '').toString().trim();
 
     if (url.isEmpty) {
