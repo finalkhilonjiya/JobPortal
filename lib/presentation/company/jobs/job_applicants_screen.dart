@@ -312,311 +312,238 @@ Map<String, dynamic> _getApp(dynamic raw) {
     return;
   }
 
-  try {
-    // ✅ DO NOT TOUCH if already full URL
-    if (!url.startsWith('http')) {
-      url = await _service._db.storage
+  // FIX: if stored path instead of full URL → convert to signed URL
+  if (!url.startsWith('http')) {
+    try {
+      url = await EmployerApplicantsService()
+          ._db
+          .storage
           .from('job-files')
-          .createSignedUrl(url, 3600);
+          .createSignedUrl(url, 60 * 60);
+    } catch (e) {
+      _toast("Failed to load resume");
+      return;
     }
-
-    final uri = Uri.parse(url);
-
-    final ok = await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-    );
-
-    if (!ok) _toast("Cannot open resume");
-  } catch (e) {
-    _toast("Cannot open resume");
   }
-}
 
+  // OPEN INSIDE APP (BOTTOM SHEET)
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (_) {
+      return SafeArea(
+        child: Column(
+          children: [
+            // HEADER
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  const Text(
+                    "Resume",
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.download_rounded),
+                    onPressed: () async {
+                      final uri = Uri.parse(url);
+                      await launchUrl(uri,
+                          mode: LaunchMode.externalApplication);
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+
+            // PDF VIEW
+            Expanded(
+              child: url.toLowerCase().endsWith('.pdf')
+                  ? Center(
+                      child: Text(
+                        "PDF preview requires flutter_pdfview / syncfusion.\nTap download to open.",
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  : Image.network(url, fit: BoxFit.contain),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
   // ------------------------------------------------------------
   // DETAILS SHEET
   // ------------------------------------------------------------
   void _openApplicant(Map<String, dynamic> row) async {
-    await _markViewedIfNeeded(row);
+  await _markViewedIfNeeded(row);
 
-    final app = _getApp(row['job_applications']);
+  final app = _getApp(row['job_applications']);
 
-    final name = (app['name'] ?? 'Candidate').toString();
-    final phone = (app['phone'] ?? '').toString();
-    final email = (app['email'] ?? '').toString();
-    final district = (app['district'] ?? '').toString();
-    final edu = (app['education'] ?? '').toString();
-    final exp = (app['experience_level'] ?? '').toString();
-    final skills = (app['skills'] ?? '').toString();
-    final salary = (app['expected_salary'] ?? '').toString();
-    final notes = (row['employer_notes'] ?? '').toString();
+  final name = (app['name'] ?? 'Candidate').toString();
+  final photo = (app['photo_file_url'] ?? '').toString();
+  final skills = (app['skills'] ?? '').toString();
+  final notes = (row['employer_notes'] ?? '').toString();
 
-    final status =
-        (row['application_status'] ?? 'applied').toString().toLowerCase();
+  final fields = {
+    "Phone": app['phone'],
+    "Email": app['email'],
+    "District": app['district'],
+    "Education": app['education'],
+    "Experience": app['experience_level'],
+    "Expected Salary": app['expected_salary'],
+  };
 
-    final interviewDate = row['interview_date'];
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
-      builder: (_) {
-        return SafeArea(
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (_) {
+      return SafeArea(
+        child: SingleChildScrollView(
           child: Padding(
             padding: EdgeInsets.fromLTRB(
               16,
               16,
               16,
-              MediaQuery.of(context).viewInsets.bottom + 16,
+              MediaQuery.of(context).viewInsets.bottom + 20,
             ),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      _avatar(name),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          name,
-                          style: const TextStyle(
-                            fontSize: 16.5,
-                            fontWeight: FontWeight.w900,
-                            color: _text,
-                          ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // HEADER
+                Row(
+                  children: [
+                    _avatar(name, photoUrl: photo),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close_rounded),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  _statusChip(status),
-                  const SizedBox(height: 12),
-                  _kv("Phone", phone.isEmpty ? "Not provided" : phone),
-                  _kv("Email", email.isEmpty ? "Not provided" : email),
-                  _kv("District", district.isEmpty ? "Not provided" : district),
-                  _kv("Education", edu.isEmpty ? "Not provided" : edu),
-                  _kv("Experience", exp.isEmpty ? "Not provided" : exp),
-                  _kv(
-                    "Expected Salary",
-                    salary.isEmpty ? "Not provided" : salary,
-                  ),
-                  if (interviewDate != null)
-                    _kv("Interview", _formatDateTime(interviewDate)),
-                  const SizedBox(height: 12),
-                  Text(
-                    "Skills",
-                    style: KhilonjiyaUI.hTitle.copyWith(fontSize: 14),
-                  ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 14),
+
+                // DYNAMIC FIELDS
+                ...fields.entries
+                    .where((e) => (e.value ?? '').toString().isNotEmpty)
+                    .map((e) => _kv(e.key, e.value.toString())),
+
+                const SizedBox(height: 12),
+
+                // SKILLS
+                if (skills.isNotEmpty) ...[
+                  const Text("Skills",
+                      style: TextStyle(fontWeight: FontWeight.w900)),
                   const SizedBox(height: 6),
-                  Text(
-                    skills.isEmpty ? "Not provided" : skills,
-                    style: KhilonjiyaUI.body.copyWith(
-                      color: const Color(0xFF475569),
-                      height: 1.45,
-                    ),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: skills
+                        .split(',')
+                        .map((s) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                s.trim(),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700),
+                              ),
+                            ))
+                        .toList(),
                   ),
-                  const SizedBox(height: 14),
-                  Text(
-                    "Employer Notes",
-                    style: KhilonjiyaUI.hTitle.copyWith(fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: _border),
-                    ),
-                    child: Text(
-                      notes.trim().isEmpty ? "No notes yet." : notes,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        color: _text,
-                        height: 1.35,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _busy
-                              ? null
-                              : () async {
-                                  Navigator.pop(context);
-                                  await _openResume(row);
-                                },
-                          icon: const Icon(Icons.description_outlined),
-                          label: const Text(
-                            "Resume",
-                            style: TextStyle(fontWeight: FontWeight.w900),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: _text,
-                            backgroundColor: const Color(0xFFF8FAFC),
-                            side: const BorderSide(color: _border),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _busy
-                              ? null
-                              : () async {
-                                  Navigator.pop(context);
-                                  await _editNotes(row);
-                                },
-                          icon: const Icon(Icons.edit_note_rounded),
-                          label: const Text(
-                            "Notes",
-                            style: TextStyle(fontWeight: FontWeight.w900),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: _primary,
-                            backgroundColor: const Color(0xFFEFF6FF),
-                            side: const BorderSide(color: Color(0xFFBFDBFE)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _busy
-                              ? null
-                              : () async {
-                                  Navigator.pop(context);
-                                  await _scheduleInterview(row);
-                                },
-                          icon: const Icon(Icons.calendar_month_outlined),
-                          label: const Text(
-                            "Schedule",
-                            style: TextStyle(fontWeight: FontWeight.w900),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: _primary,
-                            backgroundColor: const Color(0xFFEFF6FF),
-                            side: const BorderSide(color: Color(0xFFBFDBFE)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _busy
-                              ? null
-                              : () async {
-                                  Navigator.pop(context);
-                                  await _setStatus(row, 'shortlisted');
-                                },
-                          icon: const Icon(Icons.star_border_rounded),
-                          label: const Text(
-                            "Shortlist",
-                            style: TextStyle(fontWeight: FontWeight.w900),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: _text,
-                            backgroundColor: const Color(0xFFF8FAFC),
-                            side: const BorderSide(color: _border),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _busy
-                              ? null
-                              : () async {
-                                  Navigator.pop(context);
-                                  await _setStatus(row, 'selected');
-                                },
-                          icon: const Icon(Icons.check_circle_outline),
-                          label: const Text(
-                            "Select",
-                            style: TextStyle(fontWeight: FontWeight.w900),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF166534),
-                            backgroundColor: const Color(0xFFECFDF5),
-                            side: const BorderSide(color: Color(0xFFBBF7D0)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _busy
-                              ? null
-                              : () async {
-                                  Navigator.pop(context);
-                                  await _setStatus(row, 'rejected');
-                                },
-                          icon: const Icon(Icons.block_outlined),
-                          label: const Text(
-                            "Reject",
-                            style: TextStyle(fontWeight: FontWeight.w900),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF9F1239),
-                            backgroundColor: const Color(0xFFFFF1F2),
-                            side: const BorderSide(color: Color(0xFFFDA4AF)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
                 ],
-              ),
+
+                const SizedBox(height: 14),
+
+                // NOTES
+                if (notes.isNotEmpty) ...[
+                  const Text("Notes",
+                      style: TextStyle(fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 6),
+                  Text(notes),
+                ],
+
+                const SizedBox(height: 20),
+
+                // ACTIONS (AT BOTTOM - NOT FIXED)
+                Column(
+                  children: [
+                    ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await _openResume(row);
+                      },
+                      child: const Text("View Resume"),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await _scheduleInterview(row);
+                      },
+                      child: const Text("Schedule Interview"),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await _setStatus(row, 'shortlisted');
+                      },
+                      child: const Text("Shortlist"),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await _setStatus(row, 'selected');
+                      },
+                      child: const Text("Select"),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await _setStatus(row, 'rejected');
+                      },
+                      child: const Text("Reject"),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   // ------------------------------------------------------------
   // BUILD
@@ -984,12 +911,25 @@ Widget build(BuildContext context) {
     );
   }
 
-  Widget _avatar(String name) {
+  Widget _avatar(String name, {String? photoUrl}) {
   final letter = name.isNotEmpty ? name[0].toUpperCase() : "C";
 
+  if (photoUrl != null && photoUrl.isNotEmpty) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(999),
+      child: Image.network(
+        photoUrl,
+        width: 44,
+        height: 44,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _avatar(name),
+      ),
+    );
+  }
+
   return Container(
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     decoration: BoxDecoration(
       color: const Color(0xFFDCFCE7),
       borderRadius: BorderRadius.circular(999),
@@ -998,8 +938,7 @@ Widget build(BuildContext context) {
     child: Text(
       letter,
       style: const TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.w800,
+        fontWeight: FontWeight.w900,
         color: _primary,
       ),
     ),
