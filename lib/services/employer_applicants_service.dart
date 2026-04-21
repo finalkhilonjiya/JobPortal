@@ -75,50 +75,75 @@ class EmployerApplicantsService {
   // LOAD APPLICANTS FOR JOB (REAL)
   // ------------------------------------------------------------
   Future<List<Map<String, dynamic>>> fetchApplicantsForJob(String jobId) async {
-    _requireUser();
-    await ensureCanAccessJobAndGetJob(jobId);
+  _requireUser();
+  await ensureCanAccessJobAndGetJob(jobId);
 
-    final res = await _db
-        .from('job_applications_listings')
-        .select('''
-          id,
-          listing_id,
-          application_id,
-          applied_at,
-          application_status,
-          employer_notes,
-          interview_date,
-          user_id,
+  // 1. Fetch listing rows
+  final listings = await _db
+      .from('job_applications_listings')
+      .select('''
+        id,
+        listing_id,
+        application_id,
+        applied_at,
+        application_status,
+        employer_notes,
+        interview_date,
+        user_id
+      ''')
+      .eq('listing_id', jobId)
+      .order('applied_at', ascending: false);
 
-          job_applications (
-            id,
-            user_id,
-            created_at,
-            name,
-            phone,
-            email,
-            district,
-            address,
-            gender,
-            date_of_birth,
-            education,
-            experience_level,
-            experience_details,
-            skills,
-            expected_salary,
-            availability,
-            additional_info,
-            resume_file_name,
-            resume_file_url,
-            photo_file_name,
-            photo_file_url
-          )
-        ''')
-        .eq('listing_id', jobId)
-        .order('applied_at', ascending: false);
+  if (listings.isEmpty) return [];
 
-    return List<Map<String, dynamic>>.from(res);
-  }
+  // 2. Collect application_ids
+  final appIds = listings
+      .map((e) => e['application_id'])
+      .where((e) => e != null)
+      .toList();
+
+  // 3. Fetch FULL job_applications data (ALL fields)
+  final apps = await _db
+      .from('job_applications')
+      .select('''
+        id,
+        user_id,
+        created_at,
+        name,
+        phone,
+        email,
+        district,
+        address,
+        gender,
+        date_of_birth,
+        education,
+        experience_level,
+        experience_details,
+        skills,
+        expected_salary,
+        availability,
+        additional_info,
+        resume_file_name,
+        resume_file_url,
+        photo_file_name,
+        photo_file_url
+      ''')
+      .inFilter('id', appIds);
+
+  // 4. Map applications by id
+  final appMap = {
+    for (var a in apps) a['id']: Map<String, dynamic>.from(a)
+  };
+
+  // 5. Merge manually (IMPORTANT)
+  return listings.map<Map<String, dynamic>>((row) {
+    final appId = row['application_id'];
+    return {
+      ...row,
+      'job_applications': appMap[appId] ?? {},
+    };
+  }).toList();
+}
 
   // ------------------------------------------------------------
   // MARK VIEWED (REAL)
