@@ -788,45 +788,92 @@ Widget _iconBtn(IconData icon, VoidCallback onTap) {
     onTap: () => _openApplicant(row),
     borderRadius: BorderRadius.circular(16),
     child: Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _avatar(name, photoUrl: photo),
           const SizedBox(width: 12),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w900, fontSize: 14.5)),
+                // NAME + STATUS
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                          color: _text,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _statusChip(status),
+                  ],
+                ),
+
                 const SizedBox(height: 4),
+
+                // APPLIED TIME
                 Text(
                   appliedAt == null
                       ? "Recently applied"
                       : "Applied ${_timeAgo(appliedAt)}",
-                  style: const TextStyle(color: _muted, fontSize: 12),
+                  style: const TextStyle(
+                    color: _muted,
+                    fontSize: 12,
+                  ),
                 ),
+
                 const SizedBox(height: 6),
+
+                // LOCATION + EXPERIENCE
                 Text(
-                  "$district • ${exp.isEmpty ? "Experience -" : exp}",
-                  style: const TextStyle(color: _muted, fontSize: 12.5),
+                  district.isEmpty && exp.isEmpty
+                      ? "-"
+                      : "$district${district.isNotEmpty && exp.isNotEmpty ? " • " : ""}${exp.isEmpty ? "" : exp}",
+                  style: const TextStyle(
+                    color: _muted,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                const SizedBox(height: 4),
+
+                const SizedBox(height: 6),
+
+                // SALARY
                 Text(
                   salary.isEmpty ? "Expected salary -" : salary,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13.5,
+                    color: _text,
+                  ),
                 ),
               ],
             ),
           ),
-          _statusChip(status),
         ],
       ),
     ),
