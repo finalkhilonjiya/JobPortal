@@ -394,127 +394,164 @@ Map<String, dynamic> _getApp(dynamic raw) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-    ),
+    backgroundColor: Colors.transparent,
     builder: (_) {
-      return SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              16,
-              16,
-              16,
-              MediaQuery.of(context).viewInsets.bottom + 20,
+      return DraggableScrollableSheet(
+        initialChildSize: 0.9,
+        minChildSize: 0.6,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    _avatar(name, photoUrl: photo),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(name,
+                // HEADER
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Color(0xFFE6E8EC)),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      _avatar(name, photoUrl: photo),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          name,
                           style: const TextStyle(
-                              fontWeight: FontWeight.w900, fontSize: 16)),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
+                              fontSize: 18, fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      )
+                    ],
+                  ),
                 ),
 
-                const SizedBox(height: 16),
+                // CONTENT
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      ...fields.entries
+                          .where((e) =>
+                              (e.value ?? '').toString().trim().isNotEmpty)
+                          .map((e) => _kvStack(e.key, e.value.toString())),
 
-                ...fields.entries
-                    .where((e) => (e.value ?? '').toString().isNotEmpty)
-                    .map((e) => _kv(e.key, e.value.toString())),
-
-                if (skills.isNotEmpty) ...[
-                  const SizedBox(height: 14),
-                  const Text("Skills",
-                      style: TextStyle(fontWeight: FontWeight.w900)),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: skills
-                        .split(',')
-                        .map((s) => Container(
+                      if (skills.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        const Text("Skills",
+                            style: TextStyle(
+                                fontWeight: FontWeight.w900, fontSize: 14)),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: skills.split(',').map((s) {
+                            return Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 6),
+                                  horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(999),
+                                color: const Color(0xFFF3F4F6),
+                                borderRadius: BorderRadius.circular(20),
                               ),
-                              child: Text(s.trim(),
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w700)),
-                            ))
-                        .toList(),
+                              child: Text(
+                                s.trim(),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+
+                      if (notes.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        const Text("Notes",
+                            style: TextStyle(
+                                fontWeight: FontWeight.w900, fontSize: 14)),
+                        const SizedBox(height: 6),
+                        Text(notes),
+                      ],
+
+                      const SizedBox(height: 80),
+                    ],
                   ),
-                ],
+                ),
 
-                if (notes.isNotEmpty) ...[
-                  const SizedBox(height: 14),
-                  const Text("Notes",
-                      style: TextStyle(fontWeight: FontWeight.w900)),
-                  const SizedBox(height: 6),
-                  Text(notes),
-                ],
+                // ACTION BAR (CRITICAL FIX)
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      top: BorderSide(color: Color(0xFFE6E8EC)),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            Navigator.pop(context);
+                            await _setStatus(row, 'shortlisted');
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text("Shortlist"),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () async {
+                            Navigator.pop(context);
+                            await _setStatus(row, 'rejected');
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _muted,
+                            side: const BorderSide(color: _border),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text("Reject"),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
 
-                const SizedBox(height: 20),
-
-                Column(
-                  children: [
-                    ElevatedButton(
-                      onPressed: () async {
+                      // Resume icon
+                      _iconBtn(Icons.description_outlined, () async {
                         Navigator.pop(context);
                         await _openResume(row);
-                      },
-                      child: const Text("View Resume"),
-                    ),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: () async {
+                      }),
+
+                      const SizedBox(width: 8),
+
+                      // Schedule icon
+                      _iconBtn(Icons.calendar_today_outlined, () async {
                         Navigator.pop(context);
                         await _scheduleInterview(row);
-                      },
-                      child: const Text("Schedule Interview"),
-                    ),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        await _setStatus(row, 'shortlisted');
-                      },
-                      child: const Text("Shortlist"),
-                    ),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        await _setStatus(row, 'selected');
-                      },
-                      child: const Text("Select"),
-                    ),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        await _setStatus(row, 'rejected');
-                      },
-                      child: const Text("Reject"),
-                    ),
-                  ],
+                      }),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-        ),
+          );
+        },
       );
     },
   );
@@ -593,6 +630,51 @@ Widget build(BuildContext context) {
   // ------------------------------------------------------------
   // UI: FILTERS
   // ------------------------------------------------------------
+
+
+
+Widget _kvStack(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: _muted,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            color: _text,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+
+Widget _iconBtn(IconData icon, VoidCallback onTap) {
+  return Container(
+    width: 44,
+    height: 44,
+    decoration: BoxDecoration(
+      border: Border.all(color: _border),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: IconButton(
+      onPressed: onTap,
+      icon: Icon(icon, size: 20, color: _muted),
+    ),
+  );
+}
   Widget _topFilters() {
   return Container(
     padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
