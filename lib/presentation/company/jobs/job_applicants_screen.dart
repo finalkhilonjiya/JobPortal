@@ -304,22 +304,34 @@ Map<String, dynamic> _getApp(dynamic raw) {
   // OPEN RESUME (REAL)
   // ------------------------------------------------------------
   Future<void> _openResume(Map<String, dynamic> row) async {
-    final app = _getApp(row['job_applications']);
-    final url = (app['resume_file_url'] ?? '').toString().trim();
+  final app = _getApp(row['job_applications']);
+  String url = (app['resume_file_url'] ?? '').toString().trim();
 
-    if (url.isEmpty) {
-      _toast("Resume not uploaded");
-      return;
-    }
-
-    try {
-      final uri = Uri.parse(url);
-      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!ok) _toast("Cannot open resume");
-    } catch (e) {
-      _toast("Cannot open resume: ${e.toString()}");
-    }
+  if (url.isEmpty) {
+    _toast("Resume not uploaded");
+    return;
   }
+
+  try {
+    // ✅ DO NOT TOUCH if already full URL
+    if (!url.startsWith('http')) {
+      url = await _service._db.storage
+          .from('job-files')
+          .createSignedUrl(url, 3600);
+    }
+
+    final uri = Uri.parse(url);
+
+    final ok = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!ok) _toast("Cannot open resume");
+  } catch (e) {
+    _toast("Cannot open resume");
+  }
+}
 
   // ------------------------------------------------------------
   // DETAILS SHEET
