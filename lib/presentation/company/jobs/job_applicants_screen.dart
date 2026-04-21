@@ -305,18 +305,20 @@ Map<String, dynamic> _getApp(dynamic raw) {
   // ------------------------------------------------------------
   Future<void> _openResume(Map<String, dynamic> row) async {
   final app = _getApp(row['job_applications']);
-  String path = (app['resume_file_url'] ?? '').toString().trim();
+  final rawPath = (app['resume_file_url'] ?? '').toString().trim();
 
-  if (path.isEmpty) {
+  if (rawPath.isEmpty) {
     _toast("Resume not uploaded");
     return;
   }
 
   try {
-    // ALWAYS generate signed URL (your DB may store path OR URL)
-    final url = await _service._db.storage
-        .from('job-files')
-        .createSignedUrl(path.replaceFirst('job-files/', ''), 3600);
+    final url = await _service.getPublicOrSignedUrl(rawPath);
+
+    if (url == null || url.isEmpty) {
+      _toast("Invalid resume");
+      return;
+    }
 
     showModalBottomSheet(
       context: context,
@@ -856,30 +858,31 @@ Widget build(BuildContext context) {
   Widget _avatar(String name, {String? photoUrl}) {
   final letter = name.isNotEmpty ? name[0].toUpperCase() : "C";
 
-  if (photoUrl != null && photoUrl.isNotEmpty) {
-    String finalUrl = photoUrl;
-
-    // FIX: convert storage path → signed URL
-    if (!photoUrl.startsWith('http')) {
-      finalUrl = _service._db.storage
-          .from('job-files')
-          .createSignedUrlSync(
-              photoUrl.replaceFirst('job-files/', ''), 3600);
-    }
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(999),
-      child: Image.network(
-        finalUrl,
-        width: 44,
-        height: 44,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _fallbackAvatar(letter),
-      ),
-    );
+  if (photoUrl == null || photoUrl.trim().isEmpty) {
+    return _fallbackAvatar(letter);
   }
 
-  return _fallbackAvatar(letter);
+  return FutureBuilder<String?>(
+    future: _service.getPublicOrSignedUrl(photoUrl),
+    builder: (context, snap) {
+      final url = snap.data;
+
+      if (url != null && url.isNotEmpty) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: Image.network(
+            url,
+            width: 44,
+            height: 44,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _fallbackAvatar(letter),
+          ),
+        );
+      }
+
+      return _fallbackAvatar(letter);
+    },
+  );
 }
 
 
