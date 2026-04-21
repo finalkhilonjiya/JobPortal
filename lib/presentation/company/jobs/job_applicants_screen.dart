@@ -305,81 +305,66 @@ Map<String, dynamic> _getApp(dynamic raw) {
   // ------------------------------------------------------------
   Future<void> _openResume(Map<String, dynamic> row) async {
   final app = _getApp(row['job_applications']);
-  String url = (app['resume_file_url'] ?? '').toString().trim();
+  String path = (app['resume_file_url'] ?? '').toString().trim();
 
-  if (url.isEmpty) {
+  if (path.isEmpty) {
     _toast("Resume not uploaded");
     return;
   }
 
-  // FIX: if stored path instead of full URL → convert to signed URL
-  if (!url.startsWith('http')) {
-    try {
-      url = await EmployerApplicantsService()
-          ._db
-          .storage
-          .from('job-files')
-          .createSignedUrl(url, 60 * 60);
-    } catch (e) {
-      _toast("Failed to load resume");
-      return;
-    }
-  }
+  try {
+    // ALWAYS generate signed URL (your DB may store path OR URL)
+    final url = await _service._db.storage
+        .from('job-files')
+        .createSignedUrl(path.replaceFirst('job-files/', ''), 3600);
 
-  // OPEN INSIDE APP (BOTTOM SHEET)
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (_) {
-      return SafeArea(
-        child: Column(
-          children: [
-            // HEADER
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  const Text(
-                    "Resume",
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.download_rounded),
-                    onPressed: () async {
-                      final uri = Uri.parse(url);
-                      await launchUrl(uri,
-                          mode: LaunchMode.externalApplication);
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    const Text("Resume",
+                        style: TextStyle(fontWeight: FontWeight.w900)),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.download),
+                      onPressed: () async {
+                        await launchUrl(Uri.parse(url),
+                            mode: LaunchMode.externalApplication);
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
               ),
-            ),
-
-            // PDF VIEW
-            Expanded(
-              child: url.toLowerCase().endsWith('.pdf')
-                  ? Center(
-                      child: Text(
-                        "PDF preview requires flutter_pdfview / syncfusion.\nTap download to open.",
-                        textAlign: TextAlign.center,
-                      ),
-                    )
-                  : Image.network(url, fit: BoxFit.contain),
-            ),
-          ],
-        ),
-      );
-    },
-  );
+              Expanded(
+                child: url.endsWith('.pdf')
+                    ? const Center(
+                        child: Text("Preview not enabled.\nUse download."),
+                      )
+                    : Image.network(url, fit: BoxFit.contain),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  } catch (e) {
+    _toast("Resume failed");
+  }
 }
   // ------------------------------------------------------------
   // DETAILS SHEET
@@ -400,7 +385,8 @@ Map<String, dynamic> _getApp(dynamic raw) {
     "District": app['district'],
     "Education": app['education'],
     "Experience": app['experience_level'],
-    "Expected Salary": app['expected_salary'],
+    "Salary": app['expected_salary'],
+    "Availability": app['availability'],
   };
 
   showModalBottomSheet(
@@ -408,7 +394,7 @@ Map<String, dynamic> _getApp(dynamic raw) {
     isScrollControlled: true,
     backgroundColor: Colors.white,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
     ),
     builder: (_) {
       return SafeArea(
@@ -423,19 +409,14 @@ Map<String, dynamic> _getApp(dynamic raw) {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // HEADER
                 Row(
                   children: [
                     _avatar(name, photoUrl: photo),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
+                      child: Text(name,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w900, fontSize: 16)),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close),
@@ -444,17 +425,14 @@ Map<String, dynamic> _getApp(dynamic raw) {
                   ],
                 ),
 
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
 
-                // DYNAMIC FIELDS
                 ...fields.entries
                     .where((e) => (e.value ?? '').toString().isNotEmpty)
                     .map((e) => _kv(e.key, e.value.toString())),
 
-                const SizedBox(height: 12),
-
-                // SKILLS
                 if (skills.isNotEmpty) ...[
+                  const SizedBox(height: 14),
                   const Text("Skills",
                       style: TextStyle(fontWeight: FontWeight.w900)),
                   const SizedBox(height: 6),
@@ -470,20 +448,16 @@ Map<String, dynamic> _getApp(dynamic raw) {
                                 color: const Color(0xFFF1F5F9),
                                 borderRadius: BorderRadius.circular(999),
                               ),
-                              child: Text(
-                                s.trim(),
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w700),
-                              ),
+                              child: Text(s.trim(),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w700)),
                             ))
                         .toList(),
                   ),
                 ],
 
-                const SizedBox(height: 14),
-
-                // NOTES
                 if (notes.isNotEmpty) ...[
+                  const SizedBox(height: 14),
                   const Text("Notes",
                       style: TextStyle(fontWeight: FontWeight.w900)),
                   const SizedBox(height: 6),
@@ -492,7 +466,6 @@ Map<String, dynamic> _getApp(dynamic raw) {
 
                 const SizedBox(height: 20),
 
-                // ACTIONS (AT BOTTOM - NOT FIXED)
                 Column(
                   children: [
                     ElevatedButton(
