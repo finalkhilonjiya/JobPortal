@@ -1,6 +1,10 @@
 // lib/presentation/company/jobs/job_applicants_screen.dart
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:io';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
 
 import '../../../core/ui/khilonjiya_ui.dart';
 import '../../../services/employer_applicants_service.dart';
@@ -320,6 +324,9 @@ Map<String, dynamic> _getApp(dynamic raw) {
       return;
     }
 
+    final uri = Uri.parse(url);
+    final isPdf = uri.path.toLowerCase().endsWith('.pdf');
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -328,39 +335,76 @@ Map<String, dynamic> _getApp(dynamic raw) {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) {
-        return SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    const Text("Resume",
-                        style: TextStyle(fontWeight: FontWeight.w900)),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.download),
-                      onPressed: () async {
-                        await launchUrl(Uri.parse(url),
-                            mode: LaunchMode.externalApplication);
-                      },
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            bool loading = true;
+            String? localPath;
+
+            Future<void> init() async {
+              if (isPdf) {
+                localPath = await _downloadPdf(url);
+              }
+              setModalState(() => loading = false);
+            }
+
+            // run once
+            if (loading && localPath == null) {
+              init();
+            }
+
+            return SafeArea(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        const Text("Resume",
+                            style: TextStyle(fontWeight: FontWeight.w900)),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.download),
+                          onPressed: () async {
+                            await launchUrl(
+                              Uri.parse(url),
+                              mode: LaunchMode.externalApplication,
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
+                  ),
+
+                  Expanded(
+                    child: loading
+                        ? const Center(child: CircularProgressIndicator())
+                        : isPdf
+                            ? PDFView(
+                                filePath: localPath!,
+                                enableSwipe: true,
+                                swipeHorizontal: false,
+                                autoSpacing: true,
+                                pageFling: true,
+                                pageSnap: true,
+                                fitPolicy: FitPolicy.BOTH,
+                              )
+                            : InteractiveViewer(
+                                minScale: 1,
+                                maxScale: 5,
+                                child: Image.network(
+                                  url,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: url.endsWith('.pdf')
-                    ? const Center(
-                        child: Text("Preview not enabled.\nUse download."),
-                      )
-                    : Image.network(url, fit: BoxFit.contain),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -555,6 +599,17 @@ Map<String, dynamic> _getApp(dynamic raw) {
       );
     },
   );
+}
+
+
+Future<String> _downloadPdf(String url) async {
+  final dir = await getTemporaryDirectory();
+  final file = File("${dir.path}/${DateTime.now().millisecondsSinceEpoch}.pdf");
+
+  final res = await http.get(Uri.parse(url));
+  await file.writeAsBytes(res.bodyBytes);
+
+  return file.path;
 }
 
   // ------------------------------------------------------------
