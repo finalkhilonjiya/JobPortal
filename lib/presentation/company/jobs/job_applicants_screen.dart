@@ -324,8 +324,7 @@ Map<String, dynamic> _getApp(dynamic raw) {
       return;
     }
 
-    final uri = Uri.parse(url);
-    final isPdf = uri.path.toLowerCase().endsWith('.pdf');
+    final isPdf = Uri.parse(url).path.toLowerCase().endsWith('.pdf');
 
     showModalBottomSheet(
       context: context,
@@ -335,26 +334,16 @@ Map<String, dynamic> _getApp(dynamic raw) {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            bool loading = true;
-            String? localPath;
-
-            Future<void> init() async {
-              if (isPdf) {
-                localPath = await _downloadPdf(url);
-              }
-              setModalState(() => loading = false);
-            }
-
-            // run once
-            if (loading && localPath == null) {
-              init();
-            }
+        return FutureBuilder<String?>(
+          future: isPdf ? _downloadPdf(url) : Future.value(null),
+          builder: (context, snap) {
+            final loading = snap.connectionState == ConnectionState.waiting;
+            final localPath = snap.data;
 
             return SafeArea(
               child: Column(
                 children: [
+                  // HEADER
                   Padding(
                     padding: const EdgeInsets.all(12),
                     child: Row(
@@ -379,6 +368,7 @@ Map<String, dynamic> _getApp(dynamic raw) {
                     ),
                   ),
 
+                  // CONTENT
                   Expanded(
                     child: loading
                         ? const Center(child: CircularProgressIndicator())
