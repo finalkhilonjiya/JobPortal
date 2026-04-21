@@ -720,6 +720,7 @@ Widget build(BuildContext context) {
   final district = (app['district'] ?? '').toString();
   final exp = (app['experience_level'] ?? '').toString();
   final salary = (app['expected_salary'] ?? '').toString();
+  final photo = (app['photo_file_url'] ?? '').toString();
 
   final status =
       (row['application_status'] ?? 'applied').toString().toLowerCase();
@@ -736,71 +737,39 @@ Widget build(BuildContext context) {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              _avatar(name),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w800,
-                        color: _text,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      appliedAt == null
-                          ? "Recently applied"
-                          : "Applied ${_timeAgo(appliedAt)}",
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: _muted,
-                      ),
-                    ),
-                  ],
+          _avatar(name, photoUrl: photo),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w900, fontSize: 14.5)),
+                const SizedBox(height: 4),
+                Text(
+                  appliedAt == null
+                      ? "Recently applied"
+                      : "Applied ${_timeAgo(appliedAt)}",
+                  style: const TextStyle(color: _muted, fontSize: 12),
                 ),
-              ),
-              _statusChip(status),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          Text(
-            "$district • ${exp.isEmpty ? "Experience -" : exp}",
-            style: const TextStyle(
-              fontSize: 12.5,
-              color: _muted,
-              fontWeight: FontWeight.w600,
+                const SizedBox(height: 6),
+                Text(
+                  "$district • ${exp.isEmpty ? "Experience -" : exp}",
+                  style: const TextStyle(color: _muted, fontSize: 12.5),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  salary.isEmpty ? "Expected salary -" : salary,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ],
             ),
           ),
-
-          const SizedBox(height: 6),
-
-          Text(
-            salary.isEmpty ? "Expected salary -" : salary,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: _text,
-            ),
-          ),
+          _statusChip(status),
         ],
       ),
     ),
