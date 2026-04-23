@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 import '../../../core/ui/khilonjiya_ui.dart';
 import '../../../services/employer_applicants_service.dart';
@@ -307,7 +308,7 @@ Map<String, dynamic> _getApp(dynamic raw) {
   // ------------------------------------------------------------
   // OPEN RESUME (REAL)
   // ------------------------------------------------------------
-  Future<void> _openResume(Map<String, dynamic> row) async {
+ Future<void> _openResume(Map<String, dynamic> row) async {
   final app = _getApp(row['job_applications']);
   final rawPath = (app['resume_file_url'] ?? '').toString().trim();
 
@@ -334,67 +335,46 @@ Map<String, dynamic> _getApp(dynamic raw) {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) {
-        return FutureBuilder<String?>(
-          future: isPdf ? _downloadPdf(url) : Future.value(null),
-          builder: (context, snap) {
-            final loading = snap.connectionState == ConnectionState.waiting;
-            final localPath = snap.data;
-
-            return SafeArea(
-              child: Column(
-                children: [
-                  // HEADER
-                  Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        const Text("Resume",
-                            style: TextStyle(fontWeight: FontWeight.w900)),
-                        const Spacer(),
-                        IconButton(
-                          icon: const Icon(Icons.download),
-                          onPressed: () async {
-                            await launchUrl(
-                              Uri.parse(url),
-                              mode: LaunchMode.externalApplication,
-                            );
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      ],
+        return SafeArea(
+          child: Column(
+            children: [
+              // HEADER
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    const Text("Resume",
+                        style: TextStyle(fontWeight: FontWeight.w900)),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.download),
+                      onPressed: () async {
+                        await launchUrl(
+                          Uri.parse(url),
+                          mode: LaunchMode.externalApplication,
+                        );
+                      },
                     ),
-                  ),
-
-                  // CONTENT
-                  Expanded(
-                    child: loading
-                        ? const Center(child: CircularProgressIndicator())
-                        : isPdf
-                            ? PDFView(
-                                filePath: localPath!,
-                                enableSwipe: true,
-                                swipeHorizontal: false,
-                                autoSpacing: true,
-                                pageFling: true,
-                                pageSnap: true,
-                                fitPolicy: FitPolicy.BOTH,
-                              )
-                            : InteractiveViewer(
-                                minScale: 1,
-                                maxScale: 5,
-                                child: Image.network(
-                                  url,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                  ),
-                ],
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
               ),
-            );
-          },
+
+              // CONTENT
+              Expanded(
+                child: isPdf
+                    ? SfPdfViewer.network(url) // ✅ ZOOM WORKS
+                    : InteractiveViewer(
+                        minScale: 1,
+                        maxScale: 5,
+                        child: Image.network(url),
+                      ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -414,6 +394,9 @@ Map<String, dynamic> _getApp(dynamic raw) {
   final photo = (app['photo_file_url'] ?? '').toString();
   final skills = (app['skills'] ?? '').toString();
   final notes = (row['employer_notes'] ?? '').toString();
+
+  final status =
+      (row['application_status'] ?? 'applied').toString().toLowerCase();
 
   final fields = {
     "Phone": app['phone'],
@@ -521,7 +504,7 @@ Map<String, dynamic> _getApp(dynamic raw) {
                   ),
                 ),
 
-                // ACTION BAR (CRITICAL FIX)
+                // ACTION BAR (STATUS BASED)
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: const BoxDecoration(
@@ -531,54 +514,79 @@ Map<String, dynamic> _getApp(dynamic raw) {
                   ),
                   child: Row(
                     children: [
+                      // PRIMARY BUTTON
+                      if (status == 'applied' || status == 'viewed')
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              await _setStatus(row, 'shortlisted');
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _primary,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text("Shortlist"),
+                          ),
+                        ),
+
+                      if (status == 'shortlisted')
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              await _scheduleInterview(row);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _primary,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text("Schedule Interview"),
+                          ),
+                        ),
+
+                      if (status == 'interview_scheduled')
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              await _setStatus(row, 'selected');
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _primary,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text("Select"),
+                          ),
+                        ),
+
+                      const SizedBox(width: 8),
+
+                      // REJECT (available until selected)
+                      if (status != 'selected')
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              await _setStatus(row, 'rejected');
+                            },
+                            child: const Text("Reject"),
+                          ),
+                        ),
+
+                      const SizedBox(width: 8),
+
+                      // RESUME (ALWAYS)
                       Expanded(
-                        child: ElevatedButton(
+                        child: OutlinedButton.icon(
                           onPressed: () async {
                             Navigator.pop(context);
-                            await _setStatus(row, 'shortlisted');
+                            await _openResume(row);
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text("Shortlist"),
+                          icon: const Icon(Icons.description_outlined),
+                          label: const Text("Resume"),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () async {
-                            Navigator.pop(context);
-                            await _setStatus(row, 'rejected');
-                          },
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: _muted,
-                            side: const BorderSide(color: _border),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text("Reject"),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-
-                      // Resume icon
-                      _iconBtn(Icons.description_outlined, () async {
-                        Navigator.pop(context);
-                        await _openResume(row);
-                      }),
-
-                      const SizedBox(width: 8),
-
-                      // Schedule icon
-                      _iconBtn(Icons.calendar_today_outlined, () async {
-                        Navigator.pop(context);
-                        await _scheduleInterview(row);
-                      }),
                     ],
                   ),
                 ),
@@ -590,7 +598,6 @@ Map<String, dynamic> _getApp(dynamic raw) {
     },
   );
 }
-
 
 Future<String> _downloadPdf(String url) async {
   final dir = await getTemporaryDirectory();
