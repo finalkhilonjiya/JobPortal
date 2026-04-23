@@ -408,6 +408,14 @@ Map<String, dynamic> _getApp(dynamic raw) {
     "Availability": app['availability'],
   };
 
+  ButtonStyle primaryStyle = ElevatedButton.styleFrom(
+    backgroundColor: _primary,
+    foregroundColor: Colors.white,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+  );
+
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -490,21 +498,36 @@ Map<String, dynamic> _getApp(dynamic raw) {
                         ),
                       ],
 
-                      if (notes.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        const Text("Notes",
-                            style: TextStyle(
-                                fontWeight: FontWeight.w900, fontSize: 14)),
-                        const SizedBox(height: 6),
-                        Text(notes),
-                      ],
+                      // ✅ NOTES WITH EDIT ICON (ALWAYS)
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          const Text("Notes",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w900, fontSize: 14)),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Icons.edit, size: 18),
+                            onPressed: () async {
+                              await _editNotes(row);
+                              Navigator.pop(context);
+                              _openApplicant(row); // reopen updated
+                            },
+                          )
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        notes.isEmpty ? "No notes added" : notes,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
 
                       const SizedBox(height: 80),
                     ],
                   ),
                 ),
 
-                // ACTION BAR (STATUS BASED)
+                // ACTION BAR
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: const BoxDecoration(
@@ -514,7 +537,6 @@ Map<String, dynamic> _getApp(dynamic raw) {
                   ),
                   child: Row(
                     children: [
-                      // PRIMARY BUTTON
                       if (status == 'applied' || status == 'viewed')
                         Expanded(
                           child: ElevatedButton(
@@ -522,10 +544,7 @@ Map<String, dynamic> _getApp(dynamic raw) {
                               Navigator.pop(context);
                               await _setStatus(row, 'shortlisted');
                             },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _primary,
-                              foregroundColor: Colors.white,
-                            ),
+                            style: primaryStyle,
                             child: const Text("Shortlist"),
                           ),
                         ),
@@ -537,11 +556,8 @@ Map<String, dynamic> _getApp(dynamic raw) {
                               Navigator.pop(context);
                               await _scheduleInterview(row);
                             },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _primary,
-                              foregroundColor: Colors.white,
-                            ),
-                            child: const Text("Schedule Interview"),
+                            style: primaryStyle,
+                            child: const Text("Schedule"),
                           ),
                         ),
 
@@ -552,39 +568,35 @@ Map<String, dynamic> _getApp(dynamic raw) {
                               Navigator.pop(context);
                               await _setStatus(row, 'selected');
                             },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _primary,
-                              foregroundColor: Colors.white,
-                            ),
+                            style: primaryStyle,
                             child: const Text("Select"),
                           ),
                         ),
 
-                      const SizedBox(width: 8),
+                      if (status != 'selected') const SizedBox(width: 8),
 
-                      // REJECT (available until selected)
                       if (status != 'selected')
                         Expanded(
-                          child: OutlinedButton(
+                          child: ElevatedButton(
                             onPressed: () async {
                               Navigator.pop(context);
                               await _setStatus(row, 'rejected');
                             },
+                            style: primaryStyle,
                             child: const Text("Reject"),
                           ),
                         ),
 
                       const SizedBox(width: 8),
 
-                      // RESUME (ALWAYS)
                       Expanded(
-                        child: OutlinedButton.icon(
+                        child: ElevatedButton(
                           onPressed: () async {
                             Navigator.pop(context);
                             await _openResume(row);
                           },
-                          icon: const Icon(Icons.description_outlined),
-                          label: const Text("Resume"),
+                          style: primaryStyle,
+                          child: const Text("Resume"),
                         ),
                       ),
                     ],
@@ -598,7 +610,6 @@ Map<String, dynamic> _getApp(dynamic raw) {
     },
   );
 }
-
 Future<String> _downloadPdf(String url) async {
   final dir = await getTemporaryDirectory();
   final file = File("${dir.path}/${DateTime.now().millisecondsSinceEpoch}.pdf");
