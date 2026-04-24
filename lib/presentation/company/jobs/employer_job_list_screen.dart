@@ -340,18 +340,24 @@ Widget build(BuildContext context) {
   // UI: FILTER
   // ------------------------------------------------------------
   Widget _statusFilter() {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
+  return SizedBox(
+    height: 40,
+    child: ListView(
+      scrollDirection: Axis.horizontal,
       children: [
         _chip("All", "all"),
+        const SizedBox(width: 10),
         _chip("Active", "active"),
+        const SizedBox(width: 10),
         _chip("Paused", "paused"),
+        const SizedBox(width: 10),
         _chip("Closed", "closed"),
+        const SizedBox(width: 10),
         _chip("Expired", "expired"),
       ],
-    );
-  }
+    ),
+  );
+}
 
   Widget _chip(String label, String key) {
   final selected = _status == key;
@@ -766,46 +772,44 @@ Widget build(BuildContext context) {
   // UI HELPERS
   // ------------------------------------------------------------
   Widget _statusChip(String status) {
-    Color bg;
-    Color fg;
-    String label;
+  Color bg;
+  Color fg;
+  String label;
 
-    if (status == 'active') {
-      bg = const Color(0xFFECFDF5);
-      fg = const Color(0xFF166534);
-      label = 'Active';
-    } else if (status == 'paused') {
-      bg = const Color(0xFFFFFBEB);
-      fg = const Color(0xFF7C2D12);
-      label = 'Paused';
-    } else if (status == 'expired') {
-      bg = const Color(0xFFF1F5F9);
-      fg = const Color(0xFF475569);
-      label = 'Expired';
-    } else {
-      bg = const Color(0xFFFFF1F2);
-      fg = const Color(0xFF9F1239);
-      label = 'Closed';
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: fg.withOpacity(0.12)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w900,
-          color: fg,
-        ),
-      ),
-    );
+  if (status == 'active') {
+    bg = const Color(0xFFDCFCE7);
+    fg = const Color(0xFF166534);
+    label = 'Active';
+  } else if (status == 'paused') {
+    bg = const Color(0xFFFEF9C3);
+    fg = const Color(0xFF854D0E);
+    label = 'Paused';
+  } else if (status == 'expired') {
+    bg = const Color(0xFFF1F5F9);
+    fg = const Color(0xFF475569);
+    label = 'Expired';
+  } else {
+    bg = const Color(0xFFFEE2E2);
+    fg = const Color(0xFF991B1B);
+    label = 'Closed';
   }
 
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    decoration: BoxDecoration(
+      color: bg,
+      borderRadius: BorderRadius.circular(999),
+    ),
+    child: Text(
+      label,
+      style: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        color: fg,
+      ),
+    ),
+  );
+}
   String _salaryText(int min, int max, String period) {
     if (min <= 0 && max <= 0) return "Salary not specified";
     if (min > 0 && max <= 0) return "₹$min / $period";
