@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../routes/app_routes.dart';
 
 class HeaderWidget extends StatelessWidget {
   final Map<String, dynamic> company;
@@ -20,7 +21,6 @@ class HeaderWidget extends StatelessWidget {
 
     return Row(
       children: [
-        // LEFT SIDE
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,12 +46,14 @@ class HeaderWidget extends StatelessWidget {
           ),
         ),
 
-        // RIGHT SIDE (🔔 ALERT ICON HERE)
         Stack(
           children: [
             IconButton(
               onPressed: () {
-                // TODO: route to notifications screen later
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.employerNotifications, // ✅ SAME AS PRIMARY ACTIONS
+                );
               },
               icon: const Icon(Icons.notifications_none_rounded),
               color: _text,
