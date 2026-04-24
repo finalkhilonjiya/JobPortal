@@ -224,33 +224,24 @@ Widget build(BuildContext context) {
             child: const Icon(Icons.add),
           ),
 
-    // ✅ UPDATED NAVIGATION
     bottomNavigationBar: BottomNavigationBar(
       currentIndex: 0,
       type: BottomNavigationBarType.fixed,
       selectedItemColor: const Color(0xFF16A34A),
-      onTap: (i) async {
+      onTap: (i) {
         if (i == 1) {
-          // Jobs
           Navigator.pushNamed(context, AppRoutes.employerJobs);
         } else if (i == 2) {
-          // ✅ Applicants → open FIRST active job applicants
-          if (_jobs.isNotEmpty) {
-            final firstJob = _jobs.first;
-            final jobId = firstJob['id'].toString();
-
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => JobApplicantsScreen(
-                  jobId: jobId,
-                  companyId: _companyId,
-                ),
-              ),
-            );
-          }
+          // ✅ ALL APPLICANTS (NOT FIRST JOB)
+          Navigator.pushNamed(
+            context,
+            AppRoutes.jobApplicants,
+            arguments: {
+              'jobId': 'all',
+              'companyId': _companyId,
+            },
+          );
         } else if (i == 3) {
-          // Profile (we will build later)
           _openProfile();
         }
       },
