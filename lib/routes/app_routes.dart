@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../presentation/role_selection/role_selection_screen.dart';
 import '../presentation/auth/job_seeker_login_screen.dart';
 import '../presentation/auth/employer_login_screen.dart';
+import '../presentation/company/profile/employer_profile_screen.dart';
 
 import 'home_router.dart';
 
@@ -77,6 +78,8 @@ class AppRoutes {
     jobSeekerHome: (_) => const JobSeekerMainShell(),
 
     profileEdit: (_) => const ProfileEditPage(),
+
+    employerProfile: (_) => const EmployerProfileScreen(),
 
     settings: (_) => const SettingsPage(),
     notificationsSettings: (_) => const NotificationsSettingsPage(),
