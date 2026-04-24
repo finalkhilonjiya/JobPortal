@@ -34,7 +34,10 @@ class RecentApplicants extends StatelessWidget {
           final jobId = (listing['id'] ?? '').toString();
           final name = (app['name'] ?? 'Candidate').toString();
           final job = (listing['job_title'] ?? 'Job').toString();
-          final status = (item['application_status'] ?? 'applied').toString();
+          final status =
+              (item['application_status'] ?? 'applied').toString();
+
+          final photo = (app['photo_file_url'] ?? '').toString();
 
           return Column(
             children: [
@@ -53,27 +56,35 @@ class RecentApplicants extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   child: Row(
                     children: [
-                      _avatar(name),
+                      _avatar(name, photoUrl: photo),
                       const SizedBox(width: 10),
+
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(name,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w700)),
-                            Text(job,
-                                style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF6B7280))),
+                            Text(
+                              name,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w700),
+                            ),
+                            Text(
+                              job,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF6B7280),
+                              ),
+                            ),
                           ],
                         ),
                       ),
+
                       _status(status),
                     ],
                   ),
                 ),
               ),
+
               if (i != data.length - 1)
                 const Divider(height: 1, color: Color(0xFFE6E8EC)),
             ],
@@ -83,40 +94,58 @@ class RecentApplicants extends StatelessWidget {
     );
   }
 
-  Widget _avatar(String name, String? photoUrl) {
-  final letter = name.isNotEmpty ? name[0].toUpperCase() : "C";
+  // ------------------------------------------------------------
+  // AVATAR (FIXED)
+  // ------------------------------------------------------------
+  Widget _avatar(String name, {String? photoUrl}) {
+    final letter = name.isNotEmpty ? name[0].toUpperCase() : "C";
 
-  if (photoUrl == null || photoUrl.trim().isEmpty) {
-    return _fallback(letter);
+    if (photoUrl == null || photoUrl.trim().isEmpty) {
+      return _fallbackAvatar(letter);
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(999),
+      child: Image.network(
+        photoUrl,
+        width: 44,
+        height: 44,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _fallbackAvatar(letter),
+      ),
+    );
   }
 
-  return FutureBuilder<String?>(
-    future: _service.getPublicOrSignedUrl(photoUrl),
-    builder: (context, snap) {
-      final url = snap.data;
+  // ------------------------------------------------------------
+  // FALLBACK AVATAR (FIXED)
+  // ------------------------------------------------------------
+  Widget _fallbackAvatar(String letter) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: const Color(0xFFDCFCE7),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        letter,
+        style: const TextStyle(
+          fontWeight: FontWeight.w900,
+          color: Color(0xFF16A34A),
+        ),
+      ),
+    );
+  }
 
-      if (url != null && url.isNotEmpty) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(999),
-          child: Image.network(
-            url,
-            width: 40,
-            height: 40,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _fallback(letter),
-          ),
-        );
-      }
-
-      return _fallback(letter);
-    },
-  );
-}
-
+  // ------------------------------------------------------------
+  // STATUS
+  // ------------------------------------------------------------
   Widget _status(String s) {
     final v = s.toLowerCase();
 
     Color c = const Color(0xFF64748B);
+
     if (v == 'shortlisted') c = Colors.green;
     if (v == 'interview_scheduled') c = Colors.orange;
     if (v == 'selected') c = Colors.green;
@@ -124,10 +153,17 @@ class RecentApplicants extends StatelessWidget {
 
     return Text(
       s,
-      style: TextStyle(fontSize: 11, color: c),
+      style: TextStyle(
+        fontSize: 11,
+        color: c,
+        fontWeight: FontWeight.w600,
+      ),
     );
   }
 
+  // ------------------------------------------------------------
+  // CARD
+  // ------------------------------------------------------------
   BoxDecoration _card() {
     return BoxDecoration(
       color: Colors.white,
