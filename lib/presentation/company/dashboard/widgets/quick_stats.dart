@@ -18,11 +18,11 @@ class QuickStats extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _item(_v('active_jobs'), "Active"),
-          _divider(),
-          _item(_v('total_applicants'), "Applicants"),
-          _divider(),
-          _item(_v('total_views'), "Views"),
+          _item(_v('total_jobs'), "Total Jobs"),
+_divider(),
+_item(_v('active_jobs'), "Active Jobs"),
+_divider(),
+_item(_v('applicants'), "Applicants"),
         ],
       ),
     );
