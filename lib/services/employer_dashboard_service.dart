@@ -83,31 +83,28 @@ class EmployerDashboardService {
   Future<Map<String, dynamic>> fetchCompanyDashboardStats({
   required String companyId,
 }) async {
-  final client = Supabase.instance.client;
-
-  // 1. ACTIVE JOBS
-  final jobs = await client
+  final jobs = await _db
       .from('job_listings')
-      .select('id, applications_count')
-      .eq('company_id', companyId)
-      .eq('status', 'active');
+      .select('id, status, applications_count')
+      .eq('company_id', companyId);
 
-  final jobList = (jobs as List)
-      .map((e) => Map<String, dynamic>.from(e))
-      .toList();
+  final list = List<Map<String, dynamic>>.from(jobs);
 
-  final activeJobsCount = jobList.length;
+  final totalJobs = list.length;
 
-  // 2. TOTAL APPLICANTS (DO NOT REDUCE BASED ON STATUS)
-  int totalApplicants = 0;
+  final activeJobs = list
+      .where((j) => (j['status'] ?? 'active').toString() == 'active')
+      .length;
 
-  for (final j in jobList) {
-    totalApplicants += (j['applications_count'] ?? 0) as int;
-  }
+  final applicants = list.fold<int>(
+    0,
+    (sum, j) => sum + (j['applications_count'] ?? 0),
+  );
 
   return {
-    "active_jobs": activeJobsCount,
-    "total_applicants": totalApplicants,
+    "total_jobs": totalJobs,
+    "active_jobs": activeJobs,
+    "applicants": applicants,
   };
 }
 
