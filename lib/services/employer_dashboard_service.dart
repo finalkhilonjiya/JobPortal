@@ -66,16 +66,53 @@ class EmployerDashboardService {
   // JOBS
   // ============================================================
   Future<List<Map<String, dynamic>>> fetchCompanyJobs({
-    required String companyId,
-  }) async {
-    final res = await _db
-        .from('job_listings')
-        .select()
-        .eq('company_id', companyId)
-        .order('created_at', ascending: false);
+  required String companyId,
+}) async {
+  // 1. Fetch jobs
+  final jobs = await _db
+      .from('job_listings')
+      .select('''
+        id,
+        company_id,
+        job_title,
+        district,
+        job_type,
+        status,
+        views_count,
+        created_at
+      ''')
+      .eq('company_id', companyId)
+      .order('created_at', ascending: false);
 
-    return List<Map<String, dynamic>>.from(res);
+  final jobList = List<Map<String, dynamic>>.from(jobs);
+  if (jobList.isEmpty) return [];
+
+  final jobIds = jobList.map((e) => e['id'].toString()).toList();
+
+  // 2. REAL applications count (same as EmployerJobsService)
+  final appsRes = await _db
+      .from('job_applications_listings')
+      .select('listing_id')
+      .inFilter('listing_id', jobIds);
+
+  final rows = List<Map<String, dynamic>>.from(appsRes);
+
+  final Map<String, int> countMap = {};
+  for (final r in rows) {
+    final listingId = (r['listing_id'] ?? '').toString();
+    if (listingId.isEmpty) continue;
+    countMap[listingId] = (countMap[listingId] ?? 0) + 1;
   }
+
+  // 3. Attach correct counts
+  return jobList.map((j) {
+    final id = (j['id'] ?? '').toString();
+    return {
+      ...j,
+      'applications_count': countMap[id] ?? 0,
+    };
+  }).toList();
+}
 
   // ============================================================
   // STATS
