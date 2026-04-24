@@ -129,7 +129,7 @@ Future<List<Map<String, dynamic>>> fetchApplicantsForCompany({
   _requireUser();
   await ensureCanAccessJobAndGetJob(jobId);
 
-  // 1. Fetch listing rows
+  // 1. Fetch listing rows (WITH job_title)
   final listings = await _db
       .from('job_applications_listings')
       .select('''
@@ -140,7 +140,10 @@ Future<List<Map<String, dynamic>>> fetchApplicantsForCompany({
         application_status,
         employer_notes,
         interview_date,
-        user_id
+        user_id,
+        job_listings (
+          job_title
+        )
       ''')
       .eq('listing_id', jobId)
       .order('applied_at', ascending: false);
@@ -153,7 +156,7 @@ Future<List<Map<String, dynamic>>> fetchApplicantsForCompany({
       .where((e) => e != null)
       .toList();
 
-  // 3. Fetch FULL job_applications data (ALL fields)
+  // 3. Fetch FULL job_applications data
   final apps = await _db
       .from('job_applications')
       .select('''
@@ -181,21 +184,21 @@ Future<List<Map<String, dynamic>>> fetchApplicantsForCompany({
       ''')
       .inFilter('id', appIds);
 
-  // 4. Map applications by id
+  // 4. Map applications
   final appMap = {
     for (var a in apps) a['id']: Map<String, dynamic>.from(a)
   };
 
-  // 5. Merge manually (IMPORTANT)
+  // 5. Merge
   return listings.map<Map<String, dynamic>>((row) {
     final appId = row['application_id'];
+
     return {
       ...row,
       'job_applications': appMap[appId] ?? {},
     };
   }).toList();
 }
-
   // ------------------------------------------------------------
   // MARK VIEWED (REAL)
   // ------------------------------------------------------------
