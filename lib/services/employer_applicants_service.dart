@@ -106,6 +106,25 @@ Future<String?> getPublicOrSignedUrl(String path) async {
     return null;
   }
 }
+
+
+Future<List<Map<String, dynamic>>> fetchApplicantsForCompany({
+  required String companyId,
+}) async {
+  final res = await Supabase.instance.client
+      .from('job_applications_listings')
+      .select('''
+        *,
+        job_applications(*),
+        job_listings!inner(company_id)
+      ''')
+      .eq('job_listings.company_id', companyId)
+      .order('applied_at', ascending: false);
+
+  return (res as List)
+      .map((e) => Map<String, dynamic>.from(e))
+      .toList();
+}
   Future<List<Map<String, dynamic>>> fetchApplicantsForJob(String jobId) async {
   _requireUser();
   await ensureCanAccessJobAndGetJob(jobId);
