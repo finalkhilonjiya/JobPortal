@@ -326,8 +326,7 @@ Widget build(BuildContext context) {
 
 
 Widget _drawer() {
-  final companyName =
-      (_company['name'] ?? 'Company').toString();
+  final name = (_company['name'] ?? 'Company').toString();
 
   return Drawer(
     backgroundColor: Colors.white,
@@ -339,57 +338,33 @@ Widget _drawer() {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
               children: [
-                // Avatar (simple initial)
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDCFCE7),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    companyName.isNotEmpty
-                        ? companyName[0].toUpperCase()
-                        : "C",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF16A34A),
-                    ),
-                  ),
+                const CircleAvatar(
+                  radius: 24,
+                  backgroundColor: Color(0xFFDCFCE7),
+                  child: Icon(Icons.business, color: Color(0xFF16A34A)),
                 ),
+                const SizedBox(width: 12),
 
-                const SizedBox(width: 14),
-
-                // Company name
                 Expanded(
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.pushNamed(
-                          context, AppRoutes.employerProfile);
-                    },
-                    child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          companyName,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
                         ),
-                        const SizedBox(height: 2),
-                        const Text(
-                          "Edit profile",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF6B7280),
-                          ),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        "Employer Account",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF6B7280),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
 
@@ -406,63 +381,70 @@ Widget _drawer() {
           // ================= MENU =================
           Expanded(
             child: ListView(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 6),
+              padding: const EdgeInsets.symmetric(vertical: 6),
               children: [
-                _menuItem(
-                  Icons.work_outline,
-                  "My Jobs",
-                  () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(
-                        context, AppRoutes.employerJobs);
-                  },
-                ),
+                _drawerItem(Icons.work_outline, "My Jobs", () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.employerJobs);
+                }),
 
-                _menuItem(
-                  Icons.people_outline,
-                  "Applicants",
-                  () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.jobApplicants,
-                      arguments: {
-                        'jobId': 'all',
-                        'companyId': _companyId,
-                      },
-                    );
-                  },
-                ),
+                _drawerItem(Icons.people_outline, "Applicants", () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.jobApplicants,
+                    arguments: {
+                      'jobId': 'all',
+                      'companyId': _companyId,
+                    },
+                  );
+                }),
+
+                _drawerItem(Icons.person_outline, "Edit Profile", () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.employerProfile);
+                }),
 
                 const Divider(),
 
-                _menuItem(
-                  Icons.info_outline,
-                  "About Us",
-                  () {},
-                ),
+                _drawerItem(Icons.info_outline, "About Us", () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.aboutApp);
+                }),
 
-                _menuItem(
-                  Icons.phone_outlined,
-                  "Contact",
-                  () {},
-                ),
+                _drawerItem(Icons.support_agent, "Contact Us", () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.contactSupport);
+                }),
 
-                _menuItem(
-                  Icons.policy_outlined,
-                  "Policies",
-                  () {},
-                ),
+                _drawerItem(Icons.description_outlined, "Terms & Conditions", () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.termsAndConditions);
+                }),
+
+                _drawerItem(Icons.lock_outline, "Privacy Policy", () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.privacyPolicy);
+                }),
 
                 const Divider(),
 
-                _menuItem(
+                _drawerItem(
                   Icons.logout_rounded,
                   "Logout",
-                  _logout,
-                  titleColor: const Color(0xFFEF4444),
-                  iconColor: const Color(0xFFEF4444),
+                  () async {
+                    Navigator.pop(context);
+                    await _logout();
+
+                    if (!mounted) return;
+
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      AppRoutes.employerLogin, // ✅ FIXED (NOT role selection)
+                      (_) => false,
+                    );
+                  },
+                  color: const Color(0xFFEF4444),
                 ),
               ],
             ),
@@ -474,25 +456,19 @@ Widget _drawer() {
 }
 
 
-Widget _menuItem(
+Widget _drawerItem(
   IconData icon,
   String title,
   VoidCallback onTap, {
-  Color? titleColor,
-  Color? iconColor,
+  Color? color,
 }) {
   return InkWell(
     onTap: onTap,
     child: Padding(
-      padding: const EdgeInsets.symmetric(
-          horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 20,
-            color: iconColor ?? const Color(0xFF334155),
-          ),
+          Icon(icon, size: 20, color: color ?? const Color(0xFF334155)),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
@@ -500,8 +476,7 @@ Widget _menuItem(
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: titleColor ??
-                    const Color(0xFF111827),
+                color: color ?? const Color(0xFF111827),
               ),
             ),
           ),
