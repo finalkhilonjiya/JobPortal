@@ -165,29 +165,59 @@ class EmployerDashboardService {
   // RECENT APPLICANTS
   // ============================================================
   Future<List<Map<String, dynamic>>> fetchRecentApplicants({
-    required String companyId,
-    int limit = 6,
-  }) async {
-    final res = await _db
-        .from('job_applications_listings')
-        .select('''
-          application_status,
-          applied_at,
-          job_listings (
-            id,
-            job_title,
-            company_id
-          ),
-          job_applications (
-            name
-          )
-        ''')
-        .eq('job_listings.company_id', companyId)
-        .order('applied_at', ascending: false)
-        .limit(limit);
+  required String companyId,
+  int limit = 6,
+}) async {
+  // 1. Fetch listing rows
+  final listings = await _db
+      .from('job_applications_listings')
+      .select('''
+        id,
+        application_id,
+        applied_at,
+        application_status,
+        job_listings!inner(
+          id,
+          job_title,
+          company_id
+        )
+      ''')
+      .eq('job_listings.company_id', companyId)
+      .order('applied_at', ascending: false)
+      .limit(limit);
 
-    return List<Map<String, dynamic>>.from(res);
+  final list = List<Map<String, dynamic>>.from(listings);
+  if (list.isEmpty) return [];
+
+  // 2. Collect application IDs
+  final appIds = list
+      .map((e) => e['application_id'])
+      .where((e) => e != null)
+      .toList();
+
+  // 3. Fetch applications (IMPORTANT)
+  final apps = await _db
+      .from('job_applications')
+      .select('id, name, photo_file_url')
+      .inFilter('id', appIds);
+
+  // 4. Map
+  final Map<String, Map<String, dynamic>> appMap = {};
+  for (final a in apps) {
+    final m = Map<String, dynamic>.from(a);
+    appMap[m['id'].toString()] = m;
   }
+
+  // 5. Merge (CRITICAL)
+  return list.map<Map<String, dynamic>>((row) {
+    final appId = (row['application_id'] ?? '').toString();
+
+    return {
+      ...row,
+      'job_applications': appMap[appId] ?? {}, // ✅ MUST BE MAP
+    };
+  }).toList();
+}
 
   // ============================================================
   // TOP JOBS
