@@ -40,6 +40,7 @@ class AppRoutes {
 
   static const String home = '/home';
   static const String jobSeekerHome = '/job-seeker-home';
+  static const employerProfile = "/employer-profile";
 
   static const String profileEdit = '/profile-edit';
 
