@@ -57,7 +57,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
 
 void _openProfile() {
-  Navigator.pushNamed(context, AppRoutes.employerProfile);
+  Scaffold.of(context).openDrawer();
 }
 
   // ============================================================
@@ -206,6 +206,9 @@ Widget build(BuildContext context) {
   return Scaffold(
     backgroundColor: const Color(0xFFF7F8FA),
 
+    // ✅ POINT 9: DRAWER ADDED
+    drawer: _drawer(),
+
     body: _loading
         ? const Center(child: CircularProgressIndicator())
         : _needsOrganization
@@ -232,7 +235,6 @@ Widget build(BuildContext context) {
         if (i == 1) {
           Navigator.pushNamed(context, AppRoutes.employerJobs);
         } else if (i == 2) {
-          // ✅ ALL APPLICANTS (NOT FIRST JOB)
           Navigator.pushNamed(
             context,
             AppRoutes.jobApplicants,
@@ -315,6 +317,194 @@ Widget build(BuildContext context) {
           TopJobs(jobs: _topJobs, companyId: _companyId),
 
           const SizedBox(height: 100),
+        ],
+      ),
+    ),
+  );
+}
+
+
+
+Widget _drawer() {
+  final companyName =
+      (_company['name'] ?? 'Company').toString();
+
+  return Drawer(
+    backgroundColor: Colors.white,
+    child: SafeArea(
+      child: Column(
+        children: [
+          // ================= HEADER =================
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Row(
+              children: [
+                // Avatar (simple initial)
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    companyName.isNotEmpty
+                        ? companyName[0].toUpperCase()
+                        : "C",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF16A34A),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 14),
+
+                // Company name
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(
+                          context, AppRoutes.employerProfile);
+                    },
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          companyName,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          "Edit profile",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+          ),
+
+          const Divider(height: 1),
+
+          // ================= MENU =================
+          Expanded(
+            child: ListView(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 6),
+              children: [
+                _menuItem(
+                  Icons.work_outline,
+                  "My Jobs",
+                  () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(
+                        context, AppRoutes.employerJobs);
+                  },
+                ),
+
+                _menuItem(
+                  Icons.people_outline,
+                  "Applicants",
+                  () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.jobApplicants,
+                      arguments: {
+                        'jobId': 'all',
+                        'companyId': _companyId,
+                      },
+                    );
+                  },
+                ),
+
+                const Divider(),
+
+                _menuItem(
+                  Icons.info_outline,
+                  "About Us",
+                  () {},
+                ),
+
+                _menuItem(
+                  Icons.phone_outlined,
+                  "Contact",
+                  () {},
+                ),
+
+                _menuItem(
+                  Icons.policy_outlined,
+                  "Policies",
+                  () {},
+                ),
+
+                const Divider(),
+
+                _menuItem(
+                  Icons.logout_rounded,
+                  "Logout",
+                  _logout,
+                  titleColor: const Color(0xFFEF4444),
+                  iconColor: const Color(0xFFEF4444),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+
+Widget _menuItem(
+  IconData icon,
+  String title,
+  VoidCallback onTap, {
+  Color? titleColor,
+  Color? iconColor,
+}) {
+  return InkWell(
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(
+          horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: iconColor ?? const Color(0xFF334155),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: titleColor ??
+                    const Color(0xFF111827),
+              ),
+            ),
+          ),
         ],
       ),
     ),
