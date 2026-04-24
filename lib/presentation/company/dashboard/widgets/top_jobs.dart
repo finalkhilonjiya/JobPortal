@@ -20,31 +20,62 @@ class TopJobs extends StatelessWidget {
           final j = jobs[i];
 
           final id = j['id'];
-          final title = j['job_title'];
-          final apps = j['applications_count'];
-          final views = j['views_count'];
-          final status = j['status'];
+          final title = j['job_title'] ?? '';
+          final apps = j['applications_count'] ?? 0;
+          final views = j['views_count'] ?? 0;
 
-          return Column(
-            children: [
-              ListTile(
-                onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.jobApplicants,
-                    arguments: {
-                      'jobId': id,
-                      'companyId': companyId,
-                    },
-                  );
+          return InkWell(
+            onTap: () {
+              Navigator.pushNamed(
+                context,
+                AppRoutes.jobApplicants,
+                arguments: {
+                  'jobId': id,
+                  'companyId': companyId,
                 },
-                title: Text(title),
-                subtitle: Text("$apps applicants • $views views"),
-                trailing: Text(status),
-              ),
-              if (i != jobs.length - 1)
-                const Divider(height: 1, color: Color(0xFFE6E8EC)),
-            ],
+              );
+            },
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            "$apps Applicants",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF16A34A),
+                            ),
+                          ),
+                          Text(
+                            "$views Views",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF6B7280),
+                            ),
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
+                ),
+                if (i != jobs.length - 1)
+                  const Divider(height: 1, color: Color(0xFFE6E8EC)),
+              ],
+            ),
           );
         }),
       ),
