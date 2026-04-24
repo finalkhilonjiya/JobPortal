@@ -27,7 +27,9 @@ class ActiveJobs extends StatelessWidget {
           final jobId = (j['id'] ?? '').toString();
           final title = j['job_title'] ?? 'Job';
           final district = j['district'] ?? '';
-          final apps = j['applications_count'] ?? 0;
+
+          // ✅ REAL COUNT (DO NOT FILTER STATUS)
+          final apps = (j['applications_count'] ?? 0) as int;
 
           return Column(
             children: [
@@ -41,17 +43,24 @@ class ActiveJobs extends StatelessWidget {
                         children: [
                           Text(title,
                               style: const TextStyle(
-                                  fontWeight: FontWeight.w700)),
+                                  fontWeight: FontWeight.w800)),
+
+                          const SizedBox(height: 4),
+
+                          // ✅ FIXED LABEL
                           Text(
-                            "$district • $apps applicants",
+                            "$district • $apps Applicants",
                             style: const TextStyle(
-                                fontSize: 12, color: Color(0xFF6B7280)),
+                                fontSize: 12,
+                                color: Color(0xFF6B7280)),
                           ),
                         ],
                       ),
                     ),
+
                     Row(
                       children: [
+                        // 👇 Applicants button (correct)
                         IconButton(
                           icon: const Icon(Icons.people_outline),
                           onPressed: () {
@@ -65,6 +74,7 @@ class ActiveJobs extends StatelessWidget {
                             );
                           },
                         ),
+
                         IconButton(
                           icon: const Icon(Icons.edit_outlined),
                           onPressed: () {
