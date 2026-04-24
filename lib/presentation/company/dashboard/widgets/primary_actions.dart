@@ -12,7 +12,7 @@ class PrimaryActions extends StatelessWidget {
       (Icons.add, "Post Job", AppRoutes.createJob),
       (Icons.work_outline, "Jobs", AppRoutes.employerJobs),
       (Icons.people_outline, "Applicants", AppRoutes.employerJobs),
-      (Icons.notifications_none, "Alerts", AppRoutes.employerNotifications),
+      
     ];
 
     return SizedBox(
