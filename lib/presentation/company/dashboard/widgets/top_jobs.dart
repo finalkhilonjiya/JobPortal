@@ -51,24 +51,17 @@ class TopJobs extends StatelessWidget {
                       ),
 
                       Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            "$apps Applicants",
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFF16A34A),
-                            ),
-                          ),
-                          Text(
-                            "$views Views",
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF6B7280),
-                            ),
-                          ),
-                        ],
-                      )
+  crossAxisAlignment: CrossAxisAlignment.end,
+  children: [
+    Text(
+      "$apps Applicants",
+      style: const TextStyle(
+        fontWeight: FontWeight.w900,
+        color: Color(0xFF16A34A),
+      ),
+    ),
+  ],
+)
                     ],
                   ),
                 ),
