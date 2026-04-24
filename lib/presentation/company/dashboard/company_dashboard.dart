@@ -263,76 +263,63 @@ Widget build(BuildContext context) {
   // DASHBOARD UI
   // ============================================================
   Widget _dashboard() {
-    return SafeArea(
-      child: RefreshIndicator(
-        onRefresh: _loadDashboard,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            HeaderWidget(company: _company, unread: _unreadNotifications),
+  return SafeArea(
+    child: RefreshIndicator(
+      onRefresh: _loadDashboard,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          HeaderWidget(company: _company, unread: _unreadNotifications),
 
-            const SizedBox(height: 16),
-            const HeroSlider(),
-            const SizedBox(height: 16),
+          const SizedBox(height: 16),
+          const HeroSlider(),
+          const SizedBox(height: 16),
 
-            QuickStats(stats: _stats),
-            const SizedBox(height: 16),
+          QuickStats(stats: _stats),
+          const SizedBox(height: 16),
 
-            PrimaryActions(companyId: _companyId),
-            const SizedBox(height: 20),
+          PrimaryActions(companyId: _companyId),
+          const SizedBox(height: 20),
 
-            const Text("Recent Applicants",
-                style: TextStyle(fontWeight: FontWeight.w800)),
-            const SizedBox(height: 10),
+          const Text("Recent Applicants",
+              style: TextStyle(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 10),
 
-            RecentApplicants(
-              data: _recentApplicants,
-              companyId: _companyId,
-            ),
+          RecentApplicants(
+            data: _recentApplicants,
+            companyId: _companyId,
+          ),
 
-            const SizedBox(height: 20),
+          const SizedBox(height: 20),
 
-            const Text("Active Jobs",
-                style: TextStyle(fontWeight: FontWeight.w800)),
-            const SizedBox(height: 10),
+          const Text("Active Jobs",
+              style: TextStyle(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 10),
 
-            ActiveJobs(jobs: _jobs, companyId: _companyId),
+          ActiveJobs(jobs: _jobs, companyId: _companyId),
 
-            const SizedBox(height: 20),
+          const SizedBox(height: 20),
 
-            const Text("Today's Interviews",
-                style: TextStyle(fontWeight: FontWeight.w800)),
-            const SizedBox(height: 10),
+          const Text("Today's Interviews",
+              style: TextStyle(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 10),
 
-            TodayInterviews(data: _todayInterviews),
+          TodayInterviews(data: _todayInterviews),
 
-            const SizedBox(height: 20),
+          const SizedBox(height: 20),
 
-            
+          const Text("Top Jobs",
+              style: TextStyle(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 10),
 
-            const Text("Top Jobs",
-                style: TextStyle(fontWeight: FontWeight.w800)),
-            const SizedBox(height: 10),
+          TopJobs(jobs: _topJobs, companyId: _companyId),
 
-            TopJobs(jobs: _topJobs, companyId: _companyId),
-
-            const SizedBox(height: 20),
-
-            const Text("Action Needed",
-                style: TextStyle(fontWeight: FontWeight.w800)),
-            const SizedBox(height: 10),
-
-            ActionNeeded(
-              applicants: _recentApplicants,
-              jobs: _jobs,
-            ),
-
-            const SizedBox(height: 100),
-          ],
-        ),
+          const SizedBox(height: 100),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   // ============================================================
   // NO ORG
