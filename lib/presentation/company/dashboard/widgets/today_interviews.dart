@@ -17,7 +17,6 @@ class TodayInterviews extends StatelessWidget {
         children: List.generate(data.length, (i) {
           final row = data[i];
 
-          final time = row['scheduled_at'] ?? '';
           final duration = row['duration_minutes'] ?? 30;
 
           final listing = (row['job_applications_listings'] ?? {}) as Map;
@@ -42,11 +41,12 @@ class TodayInterviews extends StatelessWidget {
                       color: const Color(0xFF16A34A),
                     ),
                     const SizedBox(width: 10),
+
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("$name",
+                          Text(name,
                               style:
                                   const TextStyle(fontWeight: FontWeight.w700)),
                           Text(jobTitle,
@@ -60,10 +60,6 @@ class TodayInterviews extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Text(
-                      isOnline ? "Online" : "Offline",
-                      style: const TextStyle(fontSize: 11),
-                    )
                   ],
                 ),
               ),
