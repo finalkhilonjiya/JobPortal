@@ -194,35 +194,35 @@ class EmployerDashboardService {
   // TODAY INTERVIEWS
   // ============================================================
   Future<List<Map<String, dynamic>>> fetchTodayInterviews({
-    required String companyId,
-    int limit = 10,
-  }) async {
-    final today = DateTime.now();
+  required String companyId,
+  int limit = 10,
+}) async {
+  final now = DateTime.now();
 
-    final start = DateTime(today.year, today.month, today.day);
-    final end = start.add(const Duration(days: 1));
+  final res = await _db
+      .from('interviews')
+      .select('''
+        scheduled_at,
+        interview_type,
+        duration_minutes,
+        meeting_link,
+        location_address,
+        job_application_listing_id,
+        job_applications_listings (
+          job_listings (job_title),
+          job_applications (name)
+        )
+      ''')
+      .eq('company_id', companyId)
 
-    final res = await _db
-        .from('interviews')
-        .select('''
-          scheduled_at,
-          interview_type,
-          duration_minutes,
-          meeting_link,
-          location_address,
-          job_application_listing_id,
-          job_applications_listings (
-            job_listings (job_title),
-            job_applications (name)
-          )
-        ''')
-        .eq('company_id', companyId)
-        .gte('scheduled_at', start.toIso8601String())
-        .lt('scheduled_at', end.toIso8601String())
-        .limit(limit);
+      // ✅ KEY FIX: ONLY FUTURE (includes today)
+      .gte('scheduled_at', now.toIso8601String())
 
-    return List<Map<String, dynamic>>.from(res);
-  }
+      .order('scheduled_at', ascending: true)
+      .limit(limit);
+
+  return List<Map<String, dynamic>>.from(res);
+}
 
   // ============================================================
   // PERFORMANCE
