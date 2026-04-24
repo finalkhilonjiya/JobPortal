@@ -728,13 +728,15 @@ ButtonStyle _primaryButtonStyle() {
     };
 
     if (_isEditMode) {
-      // ✅ UPDATE
+      if (_editingJobId == null || _editingJobId!.isEmpty) {
+        throw Exception("Invalid job id");
+      }
+
       await _client
           .from("job_listings")
           .update(payload)
-          .eq("id", _editingJobId);
+          .eq("id", _editingJobId!); // ✅ FIX
     } else {
-      // ✅ INSERT
       await _client.from("job_listings").insert({
         ...payload,
         "employer_id": user.id,
@@ -814,19 +816,20 @@ ButtonStyle _primaryButtonStyle() {
     return Scaffold(
       backgroundColor: _bg,
       appBar: AppBar(
-        backgroundColor: _bg,
-        surfaceTintColor: _bg,
-        elevation: 0,
-        titleSpacing: 4.w,
-        iconTheme: const IconThemeData(color: _text),
-        title: Text(_isEditMode ? "Edit Job" : "Post Job")
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            color: _text,
-            letterSpacing: -0.2,
-          ),
-        ),
-      ),
+  backgroundColor: _bg,
+  surfaceTintColor: _bg,
+  elevation: 0,
+  titleSpacing: 4.w,
+  iconTheme: const IconThemeData(color: _text),
+  title: Text(
+    _isEditMode ? "Edit Job" : "Post Job",
+    style: const TextStyle(
+      fontWeight: FontWeight.w800,
+      color: _text,
+      letterSpacing: -0.2,
+    ),
+  ),
+),
       body: Stack(
         children: [
           SingleChildScrollView(
