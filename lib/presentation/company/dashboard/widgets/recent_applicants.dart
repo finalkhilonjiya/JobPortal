@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../routes/app_routes.dart';
 
 class RecentApplicants extends StatelessWidget {
@@ -94,27 +95,61 @@ class RecentApplicants extends StatelessWidget {
     );
   }
 
+
+Future<String?> _getSignedUrl(String path) async {
+  try {
+    String clean = path.trim();
+
+    if (clean.startsWith('http')) return clean;
+
+    if (clean.startsWith('job-files/')) {
+      clean = clean.replaceFirst('job-files/', '');
+    }
+
+    if (!clean.startsWith('photos/')) return null;
+
+    final url = await Supabase.instance.client.storage
+        .from('job-files')
+        .createSignedUrl(clean, 60 * 60);
+
+    return url;
+  } catch (_) {
+    return null;
+  }
+}
+
   // ------------------------------------------------------------
   // AVATAR (FIXED)
   // ------------------------------------------------------------
   Widget _avatar(String name, {String? photoUrl}) {
-    final letter = name.isNotEmpty ? name[0].toUpperCase() : "C";
+  final letter = name.isNotEmpty ? name[0].toUpperCase() : "C";
 
-    if (photoUrl == null || photoUrl.trim().isEmpty) {
-      return _fallbackAvatar(letter);
-    }
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(999),
-      child: Image.network(
-        photoUrl,
-        width: 44,
-        height: 44,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _fallbackAvatar(letter),
-      ),
-    );
+  if (photoUrl == null || photoUrl.trim().isEmpty) {
+    return _fallbackAvatar(letter);
   }
+
+  return FutureBuilder<String?>(
+    future: _getSignedUrl(photoUrl),
+    builder: (context, snap) {
+      final url = snap.data;
+
+      if (url != null && url.isNotEmpty) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: Image.network(
+            url,
+            width: 44,
+            height: 44,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _fallbackAvatar(letter),
+          ),
+        );
+      }
+
+      return _fallbackAvatar(letter);
+    },
+  );
+}
 
   // ------------------------------------------------------------
   // FALLBACK AVATAR (FIXED)
