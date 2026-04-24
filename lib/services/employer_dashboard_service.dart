@@ -120,23 +120,39 @@ class EmployerDashboardService {
   Future<Map<String, dynamic>> fetchCompanyDashboardStats({
   required String companyId,
 }) async {
+  // 1. Fetch jobs
   final jobs = await _db
       .from('job_listings')
-      .select('id, status, applications_count')
+      .select('id, status')
       .eq('company_id', companyId);
 
-  final list = List<Map<String, dynamic>>.from(jobs);
+  final jobList = List<Map<String, dynamic>>.from(jobs);
 
-  final totalJobs = list.length;
+  final totalJobs = jobList.length;
 
-  final activeJobs = list
+  final activeJobs = jobList
       .where((j) => (j['status'] ?? 'active').toString() == 'active')
       .length;
 
-  final applicants = list.fold<int>(
-    0,
-    (sum, j) => sum + (j['applications_count'] as int? ?? 0), // ✅ FIX
-  );
+  if (jobList.isEmpty) {
+    return {
+      "total_jobs": 0,
+      "active_jobs": 0,
+      "applicants": 0,
+    };
+  }
+
+  final jobIds = jobList.map((e) => e['id'].toString()).toList();
+
+  // 2. REAL applicants count
+  final appsRes = await _db
+      .from('job_applications_listings')
+      .select('listing_id')
+      .inFilter('listing_id', jobIds);
+
+  final rows = List<Map<String, dynamic>>.from(appsRes);
+
+  final applicants = rows.length;
 
   return {
     "total_jobs": totalJobs,
@@ -177,18 +193,49 @@ class EmployerDashboardService {
   // TOP JOBS
   // ============================================================
   Future<List<Map<String, dynamic>>> fetchTopJobs({
-    required String companyId,
-    int limit = 6,
-  }) async {
-    final res = await _db
-        .from('job_listings')
-        .select()
-        .eq('company_id', companyId)
-        .order('applications_count', ascending: false)
-        .limit(limit);
+  required String companyId,
+  int limit = 6,
+}) async {
+  // 1. Fetch jobs
+  final jobs = await _db
+      .from('job_listings')
+      .select('id, job_title, company_id, created_at')
+      .eq('company_id', companyId);
 
-    return List<Map<String, dynamic>>.from(res);
+  final jobList = List<Map<String, dynamic>>.from(jobs);
+  if (jobList.isEmpty) return [];
+
+  final jobIds = jobList.map((e) => e['id'].toString()).toList();
+
+  // 2. Get real counts
+  final appsRes = await _db
+      .from('job_applications_listings')
+      .select('listing_id')
+      .inFilter('listing_id', jobIds);
+
+  final rows = List<Map<String, dynamic>>.from(appsRes);
+
+  final Map<String, int> countMap = {};
+  for (final r in rows) {
+    final id = (r['listing_id'] ?? '').toString();
+    if (id.isEmpty) continue;
+    countMap[id] = (countMap[id] ?? 0) + 1;
   }
+
+  // 3. Attach + sort
+  final enriched = jobList.map((j) {
+    final id = j['id'].toString();
+    return {
+      ...j,
+      'applications_count': countMap[id] ?? 0,
+    };
+  }).toList();
+
+  enriched.sort((a, b) =>
+      (b['applications_count'] as int).compareTo(a['applications_count'] as int));
+
+  return enriched.take(limit).toList();
+}
 
   // ============================================================
   // TODAY INTERVIEWS
@@ -199,14 +246,15 @@ class EmployerDashboardService {
 }) async {
   final now = DateTime.now();
 
+  final startOfDay = DateTime(now.year, now.month, now.day);
+  final endOfDay = startOfDay.add(const Duration(days: 1));
+
   final res = await _db
       .from('interviews')
       .select('''
         scheduled_at,
         interview_type,
         duration_minutes,
-        meeting_link,
-        location_address,
         job_application_listing_id,
         job_applications_listings (
           job_listings (job_title),
@@ -214,10 +262,8 @@ class EmployerDashboardService {
         )
       ''')
       .eq('company_id', companyId)
-
-      // ✅ KEY FIX: ONLY FUTURE (includes today)
-      .gte('scheduled_at', now.toIso8601String())
-
+      .gte('scheduled_at', startOfDay.toIso8601String())
+      .lt('scheduled_at', endOfDay.toIso8601String())
       .order('scheduled_at', ascending: true)
       .limit(limit);
 
