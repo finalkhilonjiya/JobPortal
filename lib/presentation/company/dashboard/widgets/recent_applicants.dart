@@ -83,21 +83,35 @@ class RecentApplicants extends StatelessWidget {
     );
   }
 
-  Widget _avatar(String name) {
-    return Container(
-      width: 38,
-      height: 38,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        name.isNotEmpty ? name[0].toUpperCase() : "C",
-        style: const TextStyle(fontWeight: FontWeight.w800),
-      ),
-    );
+  Widget _avatar(String name, String? photoUrl) {
+  final letter = name.isNotEmpty ? name[0].toUpperCase() : "C";
+
+  if (photoUrl == null || photoUrl.trim().isEmpty) {
+    return _fallback(letter);
   }
+
+  return FutureBuilder<String?>(
+    future: _service.getPublicOrSignedUrl(photoUrl),
+    builder: (context, snap) {
+      final url = snap.data;
+
+      if (url != null && url.isNotEmpty) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: Image.network(
+            url,
+            width: 40,
+            height: 40,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _fallback(letter),
+          ),
+        );
+      }
+
+      return _fallback(letter);
+    },
+  );
+}
 
   Widget _status(String s) {
     final v = s.toLowerCase();
