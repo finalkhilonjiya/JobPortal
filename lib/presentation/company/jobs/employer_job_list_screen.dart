@@ -238,12 +238,13 @@ Widget build(BuildContext context) {
       elevation: 0,
       surfaceTintColor: _bg,
       title: const Text(
-        "My Jobs",
-        style: TextStyle(
-          fontWeight: FontWeight.w800,
-          color: _text,
-        ),
-      ),
+  "My Jobs",
+  style: TextStyle(
+    fontWeight: FontWeight.w700,
+    fontSize: 16,
+    color: _text,
+  ),
+),
       actions: [
         IconButton(
           onPressed: _refreshing ? null : () => _load(silent: true),
@@ -385,26 +386,27 @@ Widget build(BuildContext context) {
   // UI: SUMMARY
   // ------------------------------------------------------------
   Widget _summaryRow() {
-    final total = _jobs.length;
-    final active = _jobs
-        .where((j) => (j['status'] ?? 'active').toString() == 'active')
-        .length;
+  final total = _jobs.length;
 
-    final applicants = _jobs.fold<int>(
-      0,
-      (sum, j) => sum + _service.toInt(j['applications_count']),
-    );
+  final active = _jobs
+      .where((j) => (j['status'] ?? 'active').toString() == 'active')
+      .length;
 
-    return Row(
-      children: [
-        Expanded(child: _miniMetric("Jobs", total.toString())),
-        const SizedBox(width: 12),
-        Expanded(child: _miniMetric("Active", active.toString())),
-        const SizedBox(width: 12),
-        Expanded(child: _miniMetric("Applicants", applicants.toString())),
-      ],
-    );
-  }
+  final applicants = _jobs.fold<int>(
+    0,
+    (sum, j) => sum + _service.toInt(j['applications_count']),
+  );
+
+  return Row(
+    children: [
+      Expanded(child: _miniMetric("Total Jobs", total.toString())),
+      const SizedBox(width: 12),
+      Expanded(child: _miniMetric("Active Jobs", active.toString())),
+      const SizedBox(width: 12),
+      Expanded(child: _miniMetric("Applicants", applicants.toString())),
+    ],
+  );
+}
 
   Widget _miniMetric(String label, String value) {
   return Container(
@@ -505,7 +507,6 @@ Widget build(BuildContext context) {
   final apps = _service.toInt(j['applications_count']);
 
   final createdAt = j['created_at'];
-  final expiresAt = j['expires_at'];
 
   return Container(
     margin: const EdgeInsets.only(bottom: 14),
@@ -533,7 +534,7 @@ Widget build(BuildContext context) {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 15.5,
+                  fontSize: 14.5, // ✅ aligned with dashboard
                   fontWeight: FontWeight.w800,
                   color: _text,
                 ),
@@ -545,12 +546,16 @@ Widget build(BuildContext context) {
 
         const SizedBox(height: 8),
 
-        Text(
-          "$district • $jobType",
-          style: const TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w600,
-            color: _muted,
+        // ✅ SINGLE LINE TAGS (NO WRAP)
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Text(
+            "$district • $jobType",
+            style: const TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: _muted,
+            ),
           ),
         ),
 
@@ -566,8 +571,9 @@ Widget build(BuildContext context) {
 
         const SizedBox(height: 10),
 
+        // ✅ FIXED LABEL CASE
         Text(
-          "$apps applicants • $views views",
+          "$apps Applicants • $views Views",
           style: const TextStyle(
             fontSize: 12.5,
             fontWeight: FontWeight.w600,
@@ -604,8 +610,11 @@ Widget build(BuildContext context) {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: const Text("Applicants"),
-            ),
+                child: const Text(
+                  "Applicants",
+                  style: TextStyle(color: Colors.white), // ✅ FIX
+                ),
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
