@@ -78,30 +78,38 @@ class _JobApplicantsScreenState extends State<JobApplicantsScreen> {
   }
 
   Future<void> _load() async {
-    if (!mounted) return;
-    setState(() => _loading = true);
+  if (!mounted) return;
+  setState(() => _loading = true);
 
-    try {
-      // FIXED: new access rule is organization membership, not employer_id
+  try {
+    // ✅ ALL APPLICANTS MODE
+    if (widget.jobId == "all") {
+      _resolvedCompanyId = widget.companyId ?? '';
+      _jobTitle = "All Applicants";
+
+      _rows = await _service.fetchApplicantsForCompany(
+        companyId: _resolvedCompanyId,
+      );
+    } else {
       final job = await _service.ensureCanAccessJobAndGetJob(widget.jobId);
 
       _resolvedCompanyId = (job['company_id'] ?? '').toString().trim();
       _jobTitle = (job['job_title'] ?? '').toString().trim();
 
-      // fallback if passed
       if (_resolvedCompanyId.isEmpty && widget.companyId != null) {
         _resolvedCompanyId = widget.companyId!.trim();
       }
 
       _rows = await _service.fetchApplicantsForJob(widget.jobId);
-    } catch (e) {
-      _rows = [];
-      _toast("Failed: ${e.toString()}");
     }
-
-    if (!mounted) return;
-    setState(() => _loading = false);
+  } catch (e) {
+    _rows = [];
+    _toast("Failed: ${e.toString()}");
   }
+
+  if (!mounted) return;
+  setState(() => _loading = false);
+}
 
   // ------------------------------------------------------------
   // FILTERING
