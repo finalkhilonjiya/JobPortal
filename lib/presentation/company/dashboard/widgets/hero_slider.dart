@@ -21,23 +21,24 @@ class _HeroSliderState extends State<HeroSlider> {
   }
 
   Future<void> _loadSlides() async {
-    try {
-      final res = await Supabase.instance.client
-          .from('slider')
-          .select()
-          .eq('is_active', true)
-          .order('display_order', ascending: true);
+  try {
+    final res = await Supabase.instance.client
+        .from('slider')
+        .select()
+        .eq('is_active', true)
+        .eq('slider_type', 'company') // ✅ FIXED
+        .order('display_order', ascending: true);
 
-      _slides = (res as List)
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-    } catch (_) {
-      _slides = [];
-    }
-
-    if (!mounted) return;
-    setState(() => _loading = false);
+    _slides = (res as List)
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+  } catch (_) {
+    _slides = [];
   }
+
+  if (!mounted) return;
+  setState(() => _loading = false);
+}
 
   @override
   Widget build(BuildContext context) {
