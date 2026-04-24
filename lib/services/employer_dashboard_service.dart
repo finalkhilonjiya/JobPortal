@@ -135,7 +135,7 @@ class EmployerDashboardService {
 
   final applicants = list.fold<int>(
     0,
-    (sum, j) => sum + (j['applications_count'] ?? 0),
+    (sum, j) => sum + (j['applications_count'] as int? ?? 0), // ✅ FIX
   );
 
   return {
