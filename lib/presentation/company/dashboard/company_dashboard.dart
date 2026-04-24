@@ -15,7 +15,6 @@ import 'widgets/primary_actions.dart';
 import 'widgets/recent_applicants.dart';
 import 'widgets/active_jobs.dart';
 import 'widgets/today_interviews.dart';
-import 'widgets/performance_widget.dart';
 import 'widgets/top_jobs.dart';
 import 'widgets/action_needed.dart';
 
@@ -55,6 +54,11 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     if (u == null) throw Exception("Session expired");
     return u;
   }
+
+
+void _openProfile() {
+  Navigator.pushNamed(context, AppRoutes.profile); // we will build this page next
+}
 
   // ============================================================
   // LOAD DASHBOARD (FINAL FIXED LOGIC)
@@ -198,54 +202,71 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   // BUILD
   // ============================================================
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: const Color(0xFFF7F8FA),
 
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _needsOrganization
-              ? _noOrg()
-              : _dashboard(),
+    body: _loading
+        ? const Center(child: CircularProgressIndicator())
+        : _needsOrganization
+            ? _noOrg()
+            : _dashboard(),
 
-      floatingActionButton: _needsOrganization
-          ? null
-          : FloatingActionButton(
-              backgroundColor: const Color(0xFF16A34A),
-              onPressed: () async {
-                final res =
-                    await Navigator.pushNamed(context, AppRoutes.createJob);
-                if (res == true) await _loadDashboard();
-              },
-              child: const Icon(Icons.add),
-            ),
+    floatingActionButton: _needsOrganization
+        ? null
+        : FloatingActionButton(
+            backgroundColor: const Color(0xFF16A34A),
+            onPressed: () async {
+              final res =
+                  await Navigator.pushNamed(context, AppRoutes.createJob);
+              if (res == true) await _loadDashboard();
+            },
+            child: const Icon(Icons.add),
+          ),
 
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF16A34A),
-        onTap: (i) {
-          if (i == 1) {
-            Navigator.pushNamed(context, AppRoutes.employerJobs);
-          } else if (i == 2) {
-            Navigator.pushNamed(context, AppRoutes.employerJobs);
+    // ✅ UPDATED NAVIGATION
+    bottomNavigationBar: BottomNavigationBar(
+      currentIndex: 0,
+      type: BottomNavigationBarType.fixed,
+      selectedItemColor: const Color(0xFF16A34A),
+      onTap: (i) async {
+        if (i == 1) {
+          // Jobs
+          Navigator.pushNamed(context, AppRoutes.employerJobs);
+        } else if (i == 2) {
+          // ✅ Applicants → open FIRST active job applicants
+          if (_jobs.isNotEmpty) {
+            final firstJob = _jobs.first;
+            final jobId = firstJob['id'].toString();
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => JobApplicantsScreen(
+                  jobId: jobId,
+                  companyId: _companyId,
+                ),
+              ),
+            );
           }
-        },
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home), label: "Dashboard"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.work), label: "Jobs"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.people), label: "Applicants"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.chat), label: "Messages"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person), label: "Profile"),
-        ],
-      ),
-    );
-  }
+        } else if (i == 3) {
+          // Profile (we will build later)
+          _openProfile();
+        }
+      },
+      items: const [
+        BottomNavigationBarItem(
+            icon: Icon(Icons.home), label: "Dashboard"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.work), label: "Jobs"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.people), label: "Applicants"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.person), label: "Profile"),
+      ],
+    ),
+  );
+}
 
   // ============================================================
   // DASHBOARD UI
@@ -296,13 +317,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
             const SizedBox(height: 20),
 
-            const Text("Performance",
-                style: TextStyle(fontWeight: FontWeight.w800)),
-            const SizedBox(height: 10),
-
-            PerformanceWidget(perf: _perf7d),
-
-            const SizedBox(height: 20),
+            
 
             const Text("Top Jobs",
                 style: TextStyle(fontWeight: FontWeight.w800)),
