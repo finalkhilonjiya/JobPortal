@@ -29,8 +29,10 @@ class RecentApplicants extends StatelessWidget {
 
           final listing =
               Map<String, dynamic>.from(item['job_listings'] ?? {});
-          final app =
-              Map<String, dynamic>.from(item['job_applications'] ?? {});
+          final appRaw = item['job_applications'];
+final app = appRaw is Map
+    ? Map<String, dynamic>.from(appRaw)
+    : {};
 
           final jobId = (listing['id'] ?? '').toString();
           final name = (app['name'] ?? 'Candidate').toString();
