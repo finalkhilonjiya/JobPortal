@@ -403,6 +403,10 @@ Map<String, dynamic> _getApp(dynamic raw) {
   final skills = (app['skills'] ?? '').toString();
   final notes = (row['employer_notes'] ?? '').toString();
 
+  // ✅ NEW (JOB TITLE)
+  final jobTitle =
+      (row['job_listings']?['job_title'] ?? '').toString();
+
   final status =
       (row['application_status'] ?? 'applied').toString().toLowerCase();
 
@@ -479,6 +483,7 @@ Map<String, dynamic> _getApp(dynamic raw) {
                               (e.value ?? '').toString().trim().isNotEmpty)
                           .map((e) => _kvStack(e.key, e.value.toString())),
 
+                      // SKILLS
                       if (skills.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         const Text("Skills",
@@ -506,7 +511,20 @@ Map<String, dynamic> _getApp(dynamic raw) {
                         ),
                       ],
 
-                      // ✅ NOTES WITH EDIT ICON (ALWAYS)
+                      // ✅ APPLIED FOR (NEW)
+                      if (jobTitle.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          "Applied for: $jobTitle",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13.5,
+                            color: _text,
+                          ),
+                        ),
+                      ],
+
+                      // NOTES
                       const SizedBox(height: 16),
                       Row(
                         children: [
@@ -519,7 +537,7 @@ Map<String, dynamic> _getApp(dynamic raw) {
                             onPressed: () async {
                               await _editNotes(row);
                               Navigator.pop(context);
-                              _openApplicant(row); // reopen updated
+                              _openApplicant(row);
                             },
                           )
                         ],
@@ -583,6 +601,7 @@ Map<String, dynamic> _getApp(dynamic raw) {
 
                       if (status != 'selected') const SizedBox(width: 8),
 
+                      // ✅ LIGHT RED REJECT
                       if (status != 'selected')
                         Expanded(
                           child: ElevatedButton(
@@ -590,8 +609,18 @@ Map<String, dynamic> _getApp(dynamic raw) {
                               Navigator.pop(context);
                               await _setStatus(row, 'rejected');
                             },
-                            style: primaryStyle,
-                            child: const Text("Reject"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFFF1F2),
+                              foregroundColor: const Color(0xFFDC2626),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              "Reject",
+                              style: TextStyle(fontWeight: FontWeight.w800),
+                            ),
                           ),
                         ),
 
