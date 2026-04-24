@@ -18,6 +18,8 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
   // JOB CONTROLLERS (REAL SCHEMA)
   // ------------------------------------------------------------
   final _jobTitleCtrl = TextEditingController();
+  bool _isEditMode = false;
+String? _editingJobId;
 
   final _jobDescriptionCtrl = TextEditingController();
   final _requirementsCtrl = TextEditingController();
@@ -128,10 +130,82 @@ static const _primary = Color(0xFF16A34A);
 
 
   @override
-  void initState() {
-    super.initState();
-    _loadEverything();
+void initState() {
+  super.initState();
+
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
+    if (args != null && args['mode'] == 'edit') {
+      _isEditMode = true;
+      _editingJobId = (args['jobId'] ?? '').toString();
+
+      await _loadEverything();
+      await _loadJobForEdit(); // 🔥 IMPORTANT
+    } else {
+      await _loadEverything();
+    }
+  });
+}
+
+
+Future<void> _loadJobForEdit() async {
+  if (_editingJobId == null || _editingJobId!.isEmpty) return;
+
+  try {
+    final res = await _client
+        .from('job_listings')
+        .select('*')
+        .eq('id', _editingJobId!)
+        .single();
+
+    final j = Map<String, dynamic>.from(res);
+
+    setState(() {
+      _selectedCompanyId = (j['company_id'] ?? '').toString();
+
+      _jobTitleCtrl.text = j['job_title'] ?? '';
+
+      _selectedCategory = j['job_category'];
+      _jobType = j['job_type'] ?? _jobType;
+      _employmentType = j['employment_type'] ?? _employmentType;
+      _workMode = j['work_mode'] ?? _workMode;
+
+      _jobDescriptionCtrl.text = j['job_description'] ?? '';
+      _requirementsCtrl.text = j['requirements'] ?? '';
+      _responsibilitiesCtrl.text = j['responsibilities'] ?? '';
+
+      _educationCtrl.text = j['education_required'] ?? '';
+      _experienceCtrl.text = j['experience_required'] ?? '';
+
+      _salaryMinCtrl.text = (j['salary_min'] ?? '').toString();
+      _salaryMaxCtrl.text = (j['salary_max'] ?? '').toString();
+      _salaryPeriod = j['salary_period'] ?? _salaryPeriod;
+
+      _selectedDistrict = j['district'];
+      _addressCtrl.text = j['job_address'] ?? '';
+
+      _hiringUrgency = j['hiring_urgency'] ?? _hiringUrgency;
+
+      _benefitsCtrl.text = j['benefits'] ?? '';
+      _additionalInfoCtrl.text = j['additional_info'] ?? '';
+
+      _openingsCtrl.text =
+          (j['number_of_openings'] ?? 1).toString();
+
+      _isWalkIn = j['is_walk_in'] ?? false;
+      _walkInDetailsCtrl.text = j['walk_in_details'] ?? '';
+
+      final skills = j['skills_required'];
+      if (skills is List) {
+        _skillsCtrl.text = skills.join(', ');
+      }
+    });
+  } catch (e) {
+    _showError("Failed to load job: $e");
   }
+}
 
   Future<void> _loadEverything() async {
     await Future.wait([
@@ -597,118 +671,86 @@ ButtonStyle _primaryButtonStyle() {
   // SUBMIT JOB (REAL INSERT)
   // ------------------------------------------------------------
   Future<void> _submit() async {
-    if (_loading) return;
+  if (_loading) return;
 
-    final ok = _formKey.currentState?.validate() ?? false;
-    if (!ok) return;
+  final ok = _formKey.currentState?.validate() ?? false;
+  if (!ok) return;
 
-    if (_selectedCompanyId == null || _selectedCompanyId!.trim().isEmpty) {
-      _showError("Please select an organization");
-      return;
-    }
+  if (_selectedCompanyId == null || _selectedCompanyId!.isEmpty) {
+    _showError("Please select an organization");
+    return;
+  }
 
-    if (_selectedCategory == null || _selectedCategory!.trim().isEmpty) {
-      _showError("Please select a job category");
-      return;
-    }
+  final user = _client.auth.currentUser;
+  if (user == null) {
+    _showError("Session expired");
+    return;
+  }
 
-    if (_selectedDistrict == null || _selectedDistrict!.trim().isEmpty) {
-      _showError("Please select a district");
-      return;
-    }
+  final salaryMin = int.tryParse(_salaryMinCtrl.text.trim());
+  final salaryMax = int.tryParse(_salaryMaxCtrl.text.trim());
+  final openings = int.tryParse(_openingsCtrl.text.trim()) ?? 1;
 
-    final user = _client.auth.currentUser;
-    if (user == null) {
-      _showError("Session expired. Please login again.");
-      return;
-    }
+  setState(() => _loading = true);
 
-    final salaryMin = int.tryParse(_salaryMinCtrl.text.trim());
-    final salaryMax = int.tryParse(_salaryMaxCtrl.text.trim());
-    final openings = int.tryParse(_openingsCtrl.text.trim()) ?? 1;
+  try {
+    final skills = _skillsCtrl.text
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
 
-    if (salaryMin == null || salaryMax == null) {
-      _showError("Salary must be a valid number");
-      return;
-    }
+    final payload = {
+      "company_id": _selectedCompanyId,
+      "job_title": _jobTitleCtrl.text.trim(),
+      "job_category": _selectedCategory,
+      "job_type": _jobType,
+      "employment_type": _employmentType,
+      "work_mode": _workMode,
+      "job_description": _jobDescriptionCtrl.text.trim(),
+      "requirements": _requirementsCtrl.text.trim(),
+      "education_required": _educationCtrl.text.trim(),
+      "experience_required": _experienceCtrl.text.trim(),
+      "salary_min": salaryMin,
+      "salary_max": salaryMax,
+      "salary_period": _salaryPeriod,
+      "district": _selectedDistrict,
+      "job_address": _addressCtrl.text.trim(),
+      "hiring_urgency": _hiringUrgency,
+      "responsibilities": _responsibilitiesCtrl.text.trim(),
+      "benefits": _benefitsCtrl.text.trim(),
+      "additional_info": _additionalInfoCtrl.text.trim(),
+      "skills_required": skills,
+      "number_of_openings": openings,
+      "is_walk_in": _isWalkIn,
+      "walk_in_details":
+          _isWalkIn ? _walkInDetailsCtrl.text.trim() : null,
+    };
 
-    if (salaryMin > salaryMax) {
-      _showError("Min salary cannot be greater than max salary");
-      return;
-    }
-
-    if (openings <= 0) {
-      _showError("Openings must be at least 1");
-      return;
-    }
-
-    if (_isWalkIn && _walkInDetailsCtrl.text.trim().isEmpty) {
-      _showError("Please enter walk-in details");
-      return;
-    }
-
-    setState(() => _loading = true);
-
-    try {
-      final skills = _skillsCtrl.text
-          .split(',')
-          .map((e) => e.trim())
-          .where((e) => e.isNotEmpty)
-          .toList();
-
+    if (_isEditMode) {
+      // ✅ UPDATE
+      await _client
+          .from("job_listings")
+          .update(payload)
+          .eq("id", _editingJobId);
+    } else {
+      // ✅ INSERT
       await _client.from("job_listings").insert({
+        ...payload,
         "employer_id": user.id,
-        "company_id": _selectedCompanyId,
-
-        "job_title": _jobTitleCtrl.text.trim(),
-        "job_category": _selectedCategory,
-        "job_type": _jobType,
-        "employment_type": _employmentType,
-        "work_mode": _workMode,
-
-        "job_description": _jobDescriptionCtrl.text.trim(),
-        "requirements": _requirementsCtrl.text.trim(),
-        "education_required": _educationCtrl.text.trim(),
-        "experience_required": _experienceCtrl.text.trim(),
-
-        "salary_min": salaryMin,
-        "salary_max": salaryMax,
-        "salary_period": _salaryPeriod,
-        "salary_currency": "INR",
-
-        "district": _selectedDistrict,
-        "job_address": _addressCtrl.text.trim(),
-
-        "hiring_urgency": _hiringUrgency,
-
-        "responsibilities": _responsibilitiesCtrl.text.trim().isEmpty
-            ? null
-            : _responsibilitiesCtrl.text.trim(),
-        "benefits":
-            _benefitsCtrl.text.trim().isEmpty ? null : _benefitsCtrl.text.trim(),
-        "additional_info": _additionalInfoCtrl.text.trim().isEmpty
-            ? null
-            : _additionalInfoCtrl.text.trim(),
-
-        "skills_required": skills.isEmpty ? null : skills,
-        "number_of_openings": openings,
-
-        "is_walk_in": _isWalkIn,
-        "walk_in_details": _isWalkIn ? _walkInDetailsCtrl.text.trim() : null,
-
         "status": "active",
       });
-
-      if (!mounted) return;
-      Navigator.pop(context, true);
-    } catch (e) {
-      _showError("Failed to create job: $e");
     }
 
     if (!mounted) return;
-    setState(() => _loading = false);
+    Navigator.pop(context, true);
+  } catch (e) {
+    _showError("Failed: $e");
   }
 
+  if (!mounted) return;
+  setState(() => _loading = false);
+}
   // ------------------------------------------------------------
   // VALIDATORS
   // ------------------------------------------------------------
@@ -777,8 +819,7 @@ ButtonStyle _primaryButtonStyle() {
         elevation: 0,
         titleSpacing: 4.w,
         iconTheme: const IconThemeData(color: _text),
-        title: const Text(
-          "Create Job",
+        title: Text(_isEditMode ? "Edit Job" : "Post Job")
           style: TextStyle(
             fontWeight: FontWeight.w800,
             color: _text,
