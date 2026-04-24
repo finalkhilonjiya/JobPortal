@@ -21,6 +21,22 @@ class HeaderWidget extends StatelessWidget {
 
     return Row(
       children: [
+        // =========================================================
+        // ✅ MENU BUTTON (DRAWER)
+        // =========================================================
+        IconButton(
+          onPressed: () {
+            Scaffold.of(context).openDrawer();
+          },
+          icon: const Icon(Icons.menu),
+          color: _text,
+        ),
+
+        const SizedBox(width: 4),
+
+        // =========================================================
+        // TITLE
+        // =========================================================
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,13 +62,16 @@ class HeaderWidget extends StatelessWidget {
           ),
         ),
 
+        // =========================================================
+        // ✅ NOTIFICATIONS (ONLY HERE)
+        // =========================================================
         Stack(
           children: [
             IconButton(
               onPressed: () {
                 Navigator.pushNamed(
                   context,
-                  AppRoutes.employerNotifications, // ✅ SAME AS PRIMARY ACTIONS
+                  AppRoutes.employerNotifications,
                 );
               },
               icon: const Icon(Icons.notifications_none_rounded),
