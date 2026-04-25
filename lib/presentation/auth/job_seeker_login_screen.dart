@@ -43,23 +43,18 @@ late final AnimationController _animController;
 
 @override
 void initState() {
-super.initState();
+  super.initState();
 
-_animController = AnimationController(
-vsync: this,
-duration: const Duration(milliseconds: 450),
-)..forward();
+  _animController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 450),
+  )..forward();
 
-_mobileController.addListener(_validateMobile);
+  _mobileController.addListener(_validateMobile);
 
-// START SMS AUTO READ
-listenForCode();
-SmsAutoFill().getAppSignature.then((signature) {
-  if (!mounted) return;
-  setState(() {
-    _appHash = signature;
-  });
-});
+  listenForCode();
+
+  // ❌ REMOVE app hash completely
 }
 
 @override
@@ -96,7 +91,13 @@ void codeUpdated() {
   }
 }
 
-
+void _goBack() {
+  Navigator.pushNamedAndRemoveUntil(
+    context,
+    AppRoutes.roleSelection,
+    (_) => false,
+  );
+}
 
 void _validateMobile() {
 final value = _mobileController.text.trim();
@@ -258,23 +259,21 @@ child: Column(
 children: [
 const SizedBox(height: 12),
 
+Align(
+  alignment: Alignment.centerLeft,
+  child: IconButton(
+    onPressed: _goBack,
+    icon: const Icon(Icons.arrow_back_ios_new_rounded),
+  ),
+),
+
 const SizedBox(height: 26),
 _header(),
 const SizedBox(height: 38),
 Expanded(
 child: _showOtpStep ? _otpStep() : _mobileStep(),
 ),
-if (_appHash.isNotEmpty) ...[
-  const SizedBox(height: 10),
-  SelectableText(
-    "HASH: $_appHash",
-    style: const TextStyle(
-      fontSize: 12,
-      color: Colors.red,
-      fontWeight: FontWeight.w600,
-    ),
-  ),
-],
+
 const SizedBox(height: 10),
 const Text(
 'Made in Assam',
