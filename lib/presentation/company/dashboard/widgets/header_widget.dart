@@ -22,17 +22,25 @@ class HeaderWidget extends StatelessWidget {
     return Row(
       children: [
         // =========================================================
-        // ✅ MENU BUTTON (DRAWER)
+        // ✅ MENU BUTTON (BETTER TOUCH FEEL)
         // =========================================================
-        IconButton(
-          onPressed: () {
-            Scaffold.of(context).openDrawer();
-          },
-          icon: const Icon(Icons.menu),
-          color: _text,
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(999),
+            splashColor: const Color(0xFFDCFCE7),
+            highlightColor: Colors.transparent,
+            onTap: () {
+              Scaffold.of(context).openDrawer();
+            },
+            child: const Padding(
+              padding: EdgeInsets.all(8),
+              child: Icon(Icons.menu, color: _text),
+            ),
+          ),
         ),
 
-        const SizedBox(width: 4),
+        const SizedBox(width: 6),
 
         // =========================================================
         // TITLE
@@ -63,7 +71,7 @@ class HeaderWidget extends StatelessWidget {
         ),
 
         // =========================================================
-        // ✅ NOTIFICATIONS (ONLY HERE)
+        // ✅ NOTIFICATIONS (ALREADY GOOD)
         // =========================================================
         Stack(
           children: [
