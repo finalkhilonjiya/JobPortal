@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -14,31 +15,70 @@ class _HeroSliderState extends State<HeroSlider> {
   List<Map<String, dynamic>> _slides = [];
   bool _loading = true;
 
+  Timer? _timer;
+  int _currentIndex = 0;
+
+  // ✅ 20% bigger height
+  static const double _height = 190;
+
   @override
   void initState() {
     super.initState();
     _loadSlides();
   }
 
-  Future<void> _loadSlides() async {
-  try {
-    final res = await Supabase.instance.client
-        .from('slider')
-        .select()
-        .eq('is_active', true)
-        .eq('slider_type', 'company') // ✅ FIXED
-        .order('display_order', ascending: true);
-
-    _slides = (res as List)
-        .map((e) => Map<String, dynamic>.from(e))
-        .toList();
-  } catch (_) {
-    _slides = [];
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
   }
 
-  if (!mounted) return;
-  setState(() => _loading = false);
-}
+  Future<void> _loadSlides() async {
+    try {
+      final res = await Supabase.instance.client
+          .from('slider')
+          .select()
+          .eq('is_active', true)
+          .eq('slider_type', 'company')
+          .order('display_order', ascending: true);
+
+      _slides = (res as List)
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+    } catch (_) {
+      _slides = [];
+    }
+
+    if (!mounted) return;
+
+    setState(() => _loading = false);
+
+    // ✅ start auto slider
+    if (_slides.length > 1) {
+      _startAutoSlide();
+    }
+  }
+
+  void _startAutoSlide() {
+    _timer?.cancel();
+
+    _timer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!_controller.hasClients) return;
+
+      _currentIndex++;
+
+      if (_currentIndex >= _slides.length) {
+        _currentIndex = 0;
+      }
+
+      _controller.animateToPage(
+        _currentIndex,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,10 +91,13 @@ class _HeroSliderState extends State<HeroSlider> {
     }
 
     return SizedBox(
-      height: 160,
+      height: _height,
       child: PageView.builder(
         controller: _controller,
         itemCount: _slides.length,
+        onPageChanged: (i) {
+          _currentIndex = i; // keep sync with swipe
+        },
         itemBuilder: (_, i) {
           final s = _slides[i];
           final image = s['image_url'] ?? '';
@@ -78,7 +121,7 @@ class _HeroSliderState extends State<HeroSlider> {
 
   Widget _empty() {
     return Container(
-      height: 160,
+      height: _height,
       decoration: BoxDecoration(
         color: const Color(0xFFF3F4F6),
         borderRadius: BorderRadius.circular(16),
@@ -93,7 +136,7 @@ class _HeroSliderState extends State<HeroSlider> {
 
   Widget _shimmer() {
     return Container(
-      height: 160,
+      height: _height,
       decoration: BoxDecoration(
         color: const Color(0xFFE5E7EB),
         borderRadius: BorderRadius.circular(16),
