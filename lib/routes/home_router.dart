@@ -85,57 +85,61 @@ class _HomeRouterState extends State<HomeRouter> {
   // UI
   // ------------------------------------------------------------
   @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<UserRole?>(
-      future: _resolveRoleOrNull(),
-      builder: (context, roleSnap) {
-        if (roleSnap.connectionState != ConnectionState.done) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+Widget build(BuildContext context) {
+  return FutureBuilder<UserRole?>(
+    future: _resolveRoleOrNull(),
+    builder: (context, roleSnap) {
+      if (roleSnap.connectionState != ConnectionState.done) {
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      }
 
-        final role = roleSnap.data;
+      final role = roleSnap.data;
 
-        // ❌ no session
-        if (role == null) {
-          _goToRoleSelection();
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+      // ❌ no session
+      if (role == null) {
+        _goToRoleSelection();
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      }
 
-        // --------------------------------------------------------
-        // EMPLOYER
-        // --------------------------------------------------------
-        if (role == UserRole.employer) {
-          return FutureBuilder<bool>(
-            future: _hasCompany(),
-            builder: (context, companySnap) {
-              if (companySnap.connectionState != ConnectionState.done) {
-                return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                );
-              }
+      // --------------------------------------------------------
+      // EMPLOYER
+      // --------------------------------------------------------
+      if (role == UserRole.employer) {
+        return FutureBuilder<bool>(
+          future: _hasCompany(),
+          builder: (context, companySnap) {
+            if (companySnap.connectionState != ConnectionState.done) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
 
-              final hasCompany = companySnap.data ?? false;
+            final hasCompany = companySnap.data ?? false;
 
-              // ❌ NO COMPANY
-              if (!hasCompany) {
-                return const CreateOrganizationScreen();
-              }
+            if (!hasCompany) {
+              return const CreateOrganizationScreen();
+            }
 
-              // ✅ HAS COMPANY
-              return const CompanyDashboard();
-            },
-          );
-        }
+            return const CompanyDashboard();
+          },
+        );
+      }
 
-        // --------------------------------------------------------
-        // JOB SEEKER
-        // --------------------------------------------------------
-        return const JobSeekerMainShell();
-      },
-    );
-  }
+      // --------------------------------------------------------
+      // ✅ CONSTRUCTION (ADD THIS BLOCK)
+      // --------------------------------------------------------
+      if (role == UserRole.construction) {
+        return const ConstructionServicesHomePage(); // ✅ your page
+      }
+
+      // --------------------------------------------------------
+      // JOB SEEKER (default)
+      // --------------------------------------------------------
+      return const JobSeekerMainShell();
+    },
+  );
 }
