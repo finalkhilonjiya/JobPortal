@@ -37,6 +37,8 @@ class _ConstructionServiceLoginState
 
   late final AnimationController _animController;
 
+  static const Color _primary = Color(0xFFF59E0B); // 🔶 ORANGE
+
   @override
   void initState() {
     super.initState();
@@ -107,7 +109,7 @@ class _ConstructionServiceLoginState
     try {
       await _auth.sendOtp(
         mobile: _mobileController.text.trim(),
-        role: UserRole.construction, // ✅ NEW ROLE
+        role: UserRole.construction,
       );
 
       setState(() {
@@ -172,12 +174,11 @@ class _ConstructionServiceLoginState
       await _auth.verifyOtp(
         mobile: _mobileController.text.trim(),
         otp: otp,
-        role: UserRole.construction, // ✅ NEW ROLE
+        role: UserRole.construction,
       );
 
       if (!mounted) return;
 
-      // ✅ REDIRECT TO CONSTRUCTION HOME
       Navigator.pushReplacementNamed(
         context,
         AppRoutes.constructionHome,
@@ -215,6 +216,16 @@ class _ConstructionServiceLoginState
     }
   }
 
+  void _handleOtpBackspace(int index, RawKeyEvent event) {
+    if (event is RawKeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.backspace) {
+      if (_otpControllers[index].text.isEmpty && index > 0) {
+        _otpControllers[index - 1].clear();
+        _otpFocusNodes[index - 1].requestFocus();
+      }
+    }
+  }
+
   void _goBack() {
     Navigator.pushNamedAndRemoveUntil(
       context,
@@ -235,6 +246,7 @@ class _ConstructionServiceLoginState
             child: Column(
               children: [
                 const SizedBox(height: 12),
+
                 Align(
                   alignment: Alignment.centerLeft,
                   child: IconButton(
@@ -242,6 +254,7 @@ class _ConstructionServiceLoginState
                     icon: const Icon(Icons.arrow_back_ios_new_rounded),
                   ),
                 ),
+
                 const SizedBox(height: 26),
 
                 const Text(
@@ -249,11 +262,21 @@ class _ConstructionServiceLoginState
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFFF59E0B),
+                    color: _primary,
                   ),
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: 8),
+
+                const Text(
+                  'Access construction services and manage projects',
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+
+                const SizedBox(height: 38),
 
                 Expanded(
                   child: _showOtpStep ? _otpStep() : _mobileStep(),
@@ -268,7 +291,17 @@ class _ConstructionServiceLoginState
 
   Widget _mobileStep() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const Text(
+          'Mobile number',
+          style: TextStyle(
+            fontSize: 14.5,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 10),
+
         TextField(
           controller: _mobileController,
           keyboardType: TextInputType.phone,
@@ -276,15 +309,34 @@ class _ConstructionServiceLoginState
             FilteringTextInputFormatter.digitsOnly,
             LengthLimitingTextInputFormatter(10),
           ],
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             prefixText: '+91 ',
             hintText: 'Enter mobile number',
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
           ),
         ),
-        const SizedBox(height: 20),
-        ElevatedButton(
-          onPressed: _handleSendOtp,
-          child: const Text('Send OTP'),
+
+        if (_error != null) ...[
+          const SizedBox(height: 14),
+          Text(_error!, style: const TextStyle(color: Colors.red)),
+        ],
+
+        const SizedBox(height: 26),
+
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton(
+            onPressed: _isMobileValid ? _handleSendOtp : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primary,
+            ),
+            child: const Text('Send OTP'),
+          ),
         ),
       ],
     );
@@ -297,20 +349,36 @@ class _ConstructionServiceLoginState
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(6, (i) {
             return SizedBox(
-              width: 40,
-              child: TextField(
-                controller: _otpControllers[i],
-                maxLength: 1,
-                textAlign: TextAlign.center,
-                onChanged: (v) => _handleOtpChange(i, v),
+              width: 46,
+              height: 56,
+              child: RawKeyboardListener(
+                focusNode: FocusNode(),
+                onKey: (e) => _handleOtpBackspace(i, e),
+                child: TextField(
+                  controller: _otpControllers[i],
+                  focusNode: _otpFocusNodes[i],
+                  maxLength: 1,
+                  textAlign: TextAlign.center,
+                  keyboardType: TextInputType.number,
+                  onChanged: (v) => _handleOtpChange(i, v),
+                ),
               ),
             );
           }),
         ),
-        const SizedBox(height: 20),
-        ElevatedButton(
-          onPressed: _handleVerifyOtp,
-          child: const Text('Verify'),
+
+        const SizedBox(height: 22),
+
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton(
+            onPressed: _handleVerifyOtp,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primary,
+            ),
+            child: const Text('Verify & Continue'),
+          ),
         ),
       ],
     );
