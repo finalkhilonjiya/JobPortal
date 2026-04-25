@@ -32,13 +32,11 @@ class _HomeRouterState extends State<HomeRouter> {
   // ROLE
   // ------------------------------------------------------------
   Future<UserRole?> _resolveRoleOrNull() async {
-    final user = _auth.currentUser;
-    if (user == null) return null;
+  final user = _auth.currentUser;
+  if (user == null) return null;
 
-    return await _auth.syncRoleFromDbStrict(
-      fallback: UserRole.jobSeeker,
-    );
-  }
+  return await _auth.getUserRole();
+}
 
   // ------------------------------------------------------------
   // COMPANY CHECK
