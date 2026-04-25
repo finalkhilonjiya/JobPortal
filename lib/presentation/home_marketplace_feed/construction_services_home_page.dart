@@ -3,6 +3,8 @@ import 'package:sizer/sizer.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../routes/app_routes.dart';
+import '../../../services/mobile_auth_service.dart';
 
 import 'rcc_works_form.dart';
 import 'assam_type_form.dart';
@@ -57,6 +59,18 @@ class _ConstructionServicesHomePageState
     }
   }
 
+
+Future<void> _logout() async {
+  await MobileAuthService().logout();
+
+  if (!mounted) return;
+
+  Navigator.pushNamedAndRemoveUntil(
+    context,
+    AppRoutes.roleSelection,
+    (_) => false,
+  );
+}
   Future<void> _loadInitial() async {
   final res = await _supabase
       .from('slider')
@@ -97,37 +111,219 @@ class _ConstructionServicesHomePageState
 }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-  backgroundColor: Colors.white,
-  elevation: 0,
-  automaticallyImplyLeading: true, // shows back arrow
-  title: const SizedBox.shrink(),   // removes title
-),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              controller: _scrollController,
-              child: Column(
-                children: [
-                  _buildWelcomeBanner(),
-_buildServicesGrid(context),
-_buildSliderSection(),   // 👈 moved here
-_buildFeaturesSection(),
-                  if (_loadingMore)
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 4.h),
-                      child: const CircularProgressIndicator(),
-                    ),
-                  SizedBox(height: 10.h),
-                ],
-              ),
-            ),
-    );
-  }
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Colors.grey[50],
 
+    drawer: _drawer(),
+
+    appBar: AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      leading: Builder(
+        builder: (context) => IconButton(
+          icon: const Icon(Icons.menu, color: Colors.black),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
+      ),
+      title: const Text(
+        "Khilonjiya Construction",
+        style: TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.w800,
+          fontSize: 16,
+        ),
+      ),
+    ),
+
+    body: _loading
+        ? const Center(child: CircularProgressIndicator())
+        : SingleChildScrollView(
+            controller: _scrollController,
+            child: Column(
+              children: [
+                _header(),
+
+                _buildWelcomeBanner(),
+                _buildServicesGrid(context),
+                _buildSliderSection(),
+                _buildFeaturesSection(),
+
+                if (_loadingMore)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4.h),
+                    child: const CircularProgressIndicator(),
+                  ),
+
+                SizedBox(height: 10.h),
+              ],
+            ),
+          ),
+  );
+}
+
+
+Widget _header() {
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.fromLTRB(4.w, 4.h, 4.w, 2.h),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Welcome to",
+          style: TextStyle(
+            fontSize: 11.sp,
+            color: Colors.grey,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        SizedBox(height: 0.5.h),
+        Text(
+          "Khilonjiya Construction Services",
+          style: TextStyle(
+            fontSize: 15.sp,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF2563EB),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+
+
+Widget _drawer() {
+  return Drawer(
+    backgroundColor: Colors.white,
+    child: SafeArea(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Row(
+              children: [
+                const CircleAvatar(
+                  radius: 24,
+                  backgroundColor: Color(0xFFFFFBEB),
+                  child: Icon(Icons.construction, color: Color(0xFFF59E0B)),
+                ),
+                const SizedBox(width: 12),
+
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Construction Account",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        "Khilonjiya Services",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+          ),
+
+          const Divider(height: 1),
+
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              children: [
+                _drawerItem(Icons.info_outline, "About Us", () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.aboutApp);
+                }),
+
+                _drawerItem(Icons.support_agent, "Contact Us", () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.contactSupport);
+                }),
+
+                _drawerItem(Icons.description_outlined, "Terms & Conditions", () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.termsAndConditions);
+                }),
+
+                _drawerItem(Icons.lock_outline, "Privacy Policy", () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.privacyPolicy);
+                }),
+
+                const Divider(),
+
+                _drawerItem(
+                  Icons.logout_rounded,
+                  "Logout",
+                  () async {
+                    Navigator.pop(context);
+                    await _logout();
+                  },
+                  color: const Color(0xFFEF4444),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+
+Widget _drawerItem(
+  IconData icon,
+  String title,
+  VoidCallback onTap, {
+  Color? color,
+}) {
+  return Material(
+    color: Colors.transparent,
+    child: InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Ink(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: color ?? const Color(0xFF334155)),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: color ?? const Color(0xFF111827),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
   // ================= SLIDER =================
 
   Widget _buildSliderSection() {
