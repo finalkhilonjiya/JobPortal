@@ -1,6 +1,7 @@
 enum UserRole {
   jobSeeker,
   employer,
+  construction, // ✅ ADDED
 }
 
 extension UserRoleApi on UserRole {
@@ -10,6 +11,8 @@ extension UserRoleApi on UserRole {
         return "job_seeker";
       case UserRole.employer:
         return "employer";
+      case UserRole.construction:
+        return "construction"; // ✅ ADDED
     }
   }
 }
@@ -18,6 +21,7 @@ UserRole parseUserRole(String? role) {
   final v = (role ?? "").trim().toLowerCase();
 
   if (v == "employer") return UserRole.employer;
+  if (v == "construction") return UserRole.construction; // ✅ ADDED
 
   // correct new DB values
   if (v == "job_seeker") return UserRole.jobSeeker;
