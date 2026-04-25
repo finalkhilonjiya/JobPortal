@@ -18,9 +18,6 @@ class _HeroSliderState extends State<HeroSlider> {
   Timer? _timer;
   int _currentIndex = 0;
 
-  // ✅ 20% bigger height
-  static const double _height = 190;
-
   @override
   void initState() {
     super.initState();
@@ -34,6 +31,9 @@ class _HeroSliderState extends State<HeroSlider> {
     super.dispose();
   }
 
+  // ============================================================
+  // LOAD SLIDES
+  // ============================================================
   Future<void> _loadSlides() async {
     try {
       final res = await Supabase.instance.client
@@ -54,12 +54,14 @@ class _HeroSliderState extends State<HeroSlider> {
 
     setState(() => _loading = false);
 
-    // ✅ start auto slider
     if (_slides.length > 1) {
       _startAutoSlide();
     }
   }
 
+  // ============================================================
+  // AUTO SLIDER (4 SEC)
+  // ============================================================
   void _startAutoSlide() {
     _timer?.cancel();
 
@@ -80,6 +82,9 @@ class _HeroSliderState extends State<HeroSlider> {
     });
   }
 
+  // ============================================================
+  // BUILD
+  // ============================================================
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -90,13 +95,13 @@ class _HeroSliderState extends State<HeroSlider> {
       return _empty();
     }
 
-    return SizedBox(
-      height: _height,
+    return AspectRatio(
+      aspectRatio: 16 / 7, // 🔥 PERFECT FIT FOR YOUR IMAGES
       child: PageView.builder(
         controller: _controller,
         itemCount: _slides.length,
         onPageChanged: (i) {
-          _currentIndex = i; // keep sync with swipe
+          _currentIndex = i;
         },
         itemBuilder: (_, i) {
           final s = _slides[i];
@@ -108,7 +113,7 @@ class _HeroSliderState extends State<HeroSlider> {
               borderRadius: BorderRadius.circular(16),
               child: Image.network(
                 image,
-                fit: BoxFit.cover,
+                fit: BoxFit.cover, // 🔥 fills perfectly
                 width: double.infinity,
                 errorBuilder: (_, __, ___) => _empty(),
               ),
@@ -119,27 +124,37 @@ class _HeroSliderState extends State<HeroSlider> {
     );
   }
 
+  // ============================================================
+  // EMPTY
+  // ============================================================
   Widget _empty() {
-    return Container(
-      height: _height,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      alignment: Alignment.center,
-      child: const Text(
-        "No slider images",
-        style: TextStyle(color: Color(0xFF6B7280)),
+    return AspectRatio(
+      aspectRatio: 16 / 7,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF3F4F6),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        alignment: Alignment.center,
+        child: const Text(
+          "No slider images",
+          style: TextStyle(color: Color(0xFF6B7280)),
+        ),
       ),
     );
   }
 
+  // ============================================================
+  // SHIMMER
+  // ============================================================
   Widget _shimmer() {
-    return Container(
-      height: _height,
-      decoration: BoxDecoration(
-        color: const Color(0xFFE5E7EB),
-        borderRadius: BorderRadius.circular(16),
+    return AspectRatio(
+      aspectRatio: 16 / 7,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFE5E7EB),
+          borderRadius: BorderRadius.circular(16),
+        ),
       ),
     );
   }
