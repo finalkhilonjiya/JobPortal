@@ -30,9 +30,9 @@ class RecentApplicants extends StatelessWidget {
           final listing =
               Map<String, dynamic>.from(item['job_listings'] ?? {});
           final appRaw = item['job_applications'];
-final app = appRaw is Map
-    ? Map<String, dynamic>.from(appRaw)
-    : {};
+          final app = appRaw is Map
+              ? Map<String, dynamic>.from(appRaw)
+              : {};
 
           final jobId = (listing['id'] ?? '').toString();
           final name = (app['name'] ?? 'Candidate').toString();
@@ -44,46 +44,53 @@ final app = appRaw is Map
 
           return Column(
             children: [
-              InkWell(
-                onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.jobApplicants,
-                    arguments: {
-                      'jobId': jobId,
-                      'companyId': companyId,
-                    },
-                  );
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      _avatar(name, photoUrl: photo),
-                      const SizedBox(width: 10),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  splashColor: const Color(0xFFDCFCE7),
+                  highlightColor: Colors.transparent,
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.jobApplicants,
+                      arguments: {
+                        'jobId': jobId,
+                        'companyId': companyId,
+                      },
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        _avatar(name, photoUrl: photo),
+                        const SizedBox(width: 10),
 
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              name,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w700),
-                            ),
-                            Text(
-                              job,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF6B7280),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                name,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700),
                               ),
-                            ),
-                          ],
+                              Text(
+                                job,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF6B7280),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
 
-                      _status(status),
-                    ],
+                        _status(status),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -97,65 +104,59 @@ final app = appRaw is Map
     );
   }
 
+  Future<String?> _getSignedUrl(String path) async {
+    try {
+      String clean = path.trim();
 
-Future<String?> _getSignedUrl(String path) async {
-  try {
-    String clean = path.trim();
+      if (clean.startsWith('http')) return clean;
 
-    if (clean.startsWith('http')) return clean;
-
-    if (clean.startsWith('job-files/')) {
-      clean = clean.replaceFirst('job-files/', '');
-    }
-
-    if (!clean.startsWith('photos/')) return null;
-
-    final url = await Supabase.instance.client.storage
-        .from('job-files')
-        .createSignedUrl(clean, 60 * 60);
-
-    return url;
-  } catch (_) {
-    return null;
-  }
-}
-
-  // ------------------------------------------------------------
-  // AVATAR (FIXED)
-  // ------------------------------------------------------------
-  Widget _avatar(String name, {String? photoUrl}) {
-  final letter = name.isNotEmpty ? name[0].toUpperCase() : "C";
-
-  if (photoUrl == null || photoUrl.trim().isEmpty) {
-    return _fallbackAvatar(letter);
-  }
-
-  return FutureBuilder<String?>(
-    future: _getSignedUrl(photoUrl),
-    builder: (context, snap) {
-      final url = snap.data;
-
-      if (url != null && url.isNotEmpty) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(999),
-          child: Image.network(
-            url,
-            width: 44,
-            height: 44,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _fallbackAvatar(letter),
-          ),
-        );
+      if (clean.startsWith('job-files/')) {
+        clean = clean.replaceFirst('job-files/', '');
       }
 
-      return _fallbackAvatar(letter);
-    },
-  );
-}
+      if (!clean.startsWith('photos/')) return null;
 
-  // ------------------------------------------------------------
-  // FALLBACK AVATAR (FIXED)
-  // ------------------------------------------------------------
+      final url = await Supabase.instance.client.storage
+          .from('job-files')
+          .createSignedUrl(clean, 60 * 60);
+
+      return url;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Widget _avatar(String name, {String? photoUrl}) {
+    final letter = name.isNotEmpty ? name[0].toUpperCase() : "C";
+
+    if (photoUrl == null || photoUrl.trim().isEmpty) {
+      return _fallbackAvatar(letter);
+    }
+
+    return FutureBuilder<String?>(
+      future: _getSignedUrl(photoUrl),
+      builder: (context, snap) {
+        final url = snap.data;
+
+        if (url != null && url.isNotEmpty) {
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: Image.network(
+              url,
+              width: 44,
+              height: 44,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) =>
+                  _fallbackAvatar(letter),
+            ),
+          );
+        }
+
+        return _fallbackAvatar(letter);
+      },
+    );
+  }
+
   Widget _fallbackAvatar(String letter) {
     return Container(
       width: 44,
@@ -175,9 +176,6 @@ Future<String?> _getSignedUrl(String path) async {
     );
   }
 
-  // ------------------------------------------------------------
-  // STATUS
-  // ------------------------------------------------------------
   Widget _status(String s) {
     final v = s.toLowerCase();
 
@@ -198,9 +196,6 @@ Future<String?> _getSignedUrl(String path) async {
     );
   }
 
-  // ------------------------------------------------------------
-  // CARD
-  // ------------------------------------------------------------
   BoxDecoration _card() {
     return BoxDecoration(
       color: Colors.white,
