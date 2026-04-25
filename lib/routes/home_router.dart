@@ -84,62 +84,71 @@ class _HomeRouterState extends State<HomeRouter> {
   // UI
   // ------------------------------------------------------------
   @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<UserRole?>(
-      future: _resolveRoleOrNull(),
-      builder: (context, roleSnap) {
-        if (roleSnap.connectionState != ConnectionState.done) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+Widget build(BuildContext context) {
+  return FutureBuilder<UserRole?>(
+    future: _resolveRoleOrNull(),
+    builder: (context, roleSnap) {
+      if (roleSnap.connectionState != ConnectionState.done) {
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      }
 
-        final role = roleSnap.data;
+      final user = _auth.currentUser;
 
-        // ❌ no session
-        if (role == null) {
-          _goToRoleSelection();
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+      // ❌ NO SESSION → go role selection
+      if (user == null) {
+        _goToRoleSelection();
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      }
 
-        // --------------------------------------------------------
-        // ✅ CONSTRUCTION (FIXED - NO CONST)
-        // --------------------------------------------------------
-        if (role == UserRole.construction) {
-          return ConstructionServicesHomePage();
-        }
+      final role = roleSnap.data;
 
-        // --------------------------------------------------------
-        // EMPLOYER
-        // --------------------------------------------------------
-        if (role == UserRole.employer) {
-          return FutureBuilder<bool>(
-            future: _hasCompany(),
-            builder: (context, companySnap) {
-              if (companySnap.connectionState != ConnectionState.done) {
-                return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                );
-              }
+      // ❌ SESSION EXISTS BUT NO ROLE → go role selection
+      if (role == null) {
+        _goToRoleSelection();
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      }
 
-              final hasCompany = companySnap.data ?? false;
+      // --------------------------------------------------------
+      // CONSTRUCTION
+      // --------------------------------------------------------
+      if (role == UserRole.construction) {
+        return ConstructionServicesHomePage();
+      }
 
-              if (!hasCompany) {
-                return const CreateOrganizationScreen();
-              }
+      // --------------------------------------------------------
+      // EMPLOYER
+      // --------------------------------------------------------
+      if (role == UserRole.employer) {
+        return FutureBuilder<bool>(
+          future: _hasCompany(),
+          builder: (context, companySnap) {
+            if (companySnap.connectionState != ConnectionState.done) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
 
-              return const CompanyDashboard();
-            },
-          );
-        }
+            final hasCompany = companySnap.data ?? false;
 
-        // --------------------------------------------------------
-        // JOB SEEKER (default)
-        // --------------------------------------------------------
-        return const JobSeekerMainShell();
-      },
-    );
-  }
+            if (!hasCompany) {
+              return const CreateOrganizationScreen();
+            }
+
+            return const CompanyDashboard();
+          },
+        );
+      }
+
+      // --------------------------------------------------------
+      // JOB SEEKER
+      // --------------------------------------------------------
+      return const JobSeekerMainShell();
+    },
+  );
 }
