@@ -73,8 +73,8 @@ void _openProfile() {
 
     Map<String, dynamic>? member;
 
-    // ✅ STRONG WAIT LOOP (NO RUSH)
-    for (int i = 0; i < 10; i++) {
+    // 🔁 RETRY (fix delay issue after org creation)
+    for (int i = 0; i < 3; i++) {
       final res = await Supabase.instance.client
           .from('company_members')
           .select('company_id')
@@ -86,10 +86,10 @@ void _openProfile() {
         break;
       }
 
-      await Future.delayed(const Duration(milliseconds: 800));
+      await Future.delayed(const Duration(milliseconds: 500));
     }
 
-    // ✅ FALLBACK
+    // 🔁 FALLBACK
     if (member == null) {
       final fallback = await Supabase.instance.client
           .from('companies')
@@ -102,25 +102,23 @@ void _openProfile() {
       }
     }
 
-    // ❌ STILL NOT READY → KEEP WAIT SCREEN (NO CRASH)
+    // ❌ STILL NULL → show loader instead of crash
     if (member == null) {
       if (!mounted) return;
 
       setState(() {
-        _loading = true; // 👈 STAY LOADING (IMPORTANT)
+        _needsOrganization = false;
+        _loading = true;
       });
 
       return;
     }
 
-    final companyId = member['company_id']?.toString();
+    final companyId = member['company_id'].toString();
 
-    if (companyId == null || companyId.isEmpty) {
-      setState(() => _loading = true);
-      return;
-    }
-
-    // ✅ FETCH DATA
+    // ============================================================
+    // FETCH ALL DATA
+    // ============================================================
     final company =
         await _service.fetchCompanyById(companyId: companyId);
 
@@ -134,22 +132,51 @@ void _openProfile() {
       _service.fetchUnreadNotificationsCount(),
     ]);
 
+    // ============================================================
+    // ✅ SAFE CASTING (FIXED)
+    // ============================================================
+    final jobs = (results[0] as List? ?? [])
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+
+    final stats = (results[1] is Map)
+        ? Map<String, dynamic>.from(results[1] as Map)
+        : {};
+
+    final applicants = (results[2] as List? ?? [])
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+
+    final topJobs = (results[3] as List? ?? [])
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+
+    final interviews = (results[4] as List? ?? [])
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+
+    final perf = (results[5] is Map)
+        ? Map<String, dynamic>.from(results[5] as Map)
+        : {};
+
+    final unread = (results[6] as int?) ?? 0;
+
     if (!mounted) return;
 
     setState(() {
       _companyId = companyId;
-      _company = company ?? {};
+      _company = company;
 
-      _jobs = (results[0] as List?)?.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
-      _stats = Map<String, dynamic>.from(results[1] ?? {});
-      _recentApplicants = (results[2] as List?)?.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
-      _topJobs = (results[3] as List?)?.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
-      _todayInterviews = (results[4] as List?)?.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
-      _perf7d = Map<String, dynamic>.from(results[5] ?? {});
-      _unreadNotifications = (results[6] as int?) ?? 0;
+      _jobs = jobs;
+      _stats = stats;
+      _recentApplicants = applicants;
+      _topJobs = topJobs;
+      _todayInterviews = interviews;
+      _perf7d = perf;
+      _unreadNotifications = unread;
 
-      _loading = false;
       _needsOrganization = false;
+      _loading = false;
     });
   } catch (e) {
     debugPrint("DASHBOARD ERROR: $e");
@@ -157,7 +184,8 @@ void _openProfile() {
     if (!mounted) return;
 
     setState(() {
-      _loading = true; // 👈 STILL SHOW LOADING (NO CRASH)
+      _loading = true; // stay in loading instead of crash
+      _needsOrganization = false;
     });
   }
 }
