@@ -73,7 +73,7 @@ void _openProfile() {
 
     Map<String, dynamic>? member;
 
-    // 🔁 RETRY (fix delay issue after org creation)
+    // 🔁 RETRY (important after org creation)
     for (int i = 0; i < 3; i++) {
       final res = await Supabase.instance.client
           .from('company_members')
@@ -82,7 +82,7 @@ void _openProfile() {
           .maybeSingle();
 
       if (res != null) {
-        member = res;
+        member = Map<String, dynamic>.from(res);
         break;
       }
 
@@ -102,22 +102,21 @@ void _openProfile() {
       }
     }
 
-    // ❌ STILL NULL → show loader instead of crash
+    // ❌ STILL NULL → keep loading screen (no crash)
     if (member == null) {
       if (!mounted) return;
 
       setState(() {
-        _needsOrganization = false;
         _loading = true;
+        _needsOrganization = false;
       });
-
       return;
     }
 
     final companyId = member['company_id'].toString();
 
     // ============================================================
-    // FETCH ALL DATA
+    // FETCH DATA
     // ============================================================
     final company =
         await _service.fetchCompanyById(companyId: companyId);
@@ -133,39 +132,52 @@ void _openProfile() {
     ]);
 
     // ============================================================
-    // ✅ SAFE CASTING (FIXED)
+    // ✅ SAFE TYPE HANDLING
     // ============================================================
-    final jobs = (results[0] as List? ?? [])
-        .map((e) => Map<String, dynamic>.from(e))
-        .toList();
 
-    final stats = (results[1] is Map)
-        ? Map<String, dynamic>.from(results[1] as Map)
-        : {};
+    final List<Map<String, dynamic>> jobs =
+        (results[0] as List? ?? [])
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
 
-    final applicants = (results[2] as List? ?? [])
-        .map((e) => Map<String, dynamic>.from(e))
-        .toList();
+    final Map<String, dynamic> stats =
+        (results[1] is Map)
+            ? Map<String, dynamic>.from(results[1] as Map)
+            : {};
 
-    final topJobs = (results[3] as List? ?? [])
-        .map((e) => Map<String, dynamic>.from(e))
-        .toList();
+    final List<Map<String, dynamic>> applicants =
+        (results[2] as List? ?? [])
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
 
-    final interviews = (results[4] as List? ?? [])
-        .map((e) => Map<String, dynamic>.from(e))
-        .toList();
+    final List<Map<String, dynamic>> topJobs =
+        (results[3] as List? ?? [])
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
 
-    final perf = (results[5] is Map)
-        ? Map<String, dynamic>.from(results[5] as Map)
-        : {};
+    final List<Map<String, dynamic>> interviews =
+        (results[4] as List? ?? [])
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
 
-    final unread = (results[6] as int?) ?? 0;
+    final Map<String, dynamic> perf =
+        (results[5] is Map)
+            ? Map<String, dynamic>.from(results[5] as Map)
+            : {};
+
+    final int unread = (results[6] as int?) ?? 0;
 
     if (!mounted) return;
 
+    // ============================================================
+    // ✅ FINAL SAFE SETSTATE (CRITICAL FIX)
+    // ============================================================
     setState(() {
       _companyId = companyId;
-      _company = company;
+
+      _company = (company is Map)
+          ? Map<String, dynamic>.from(company)
+          : {};
 
       _jobs = jobs;
       _stats = stats;
@@ -183,8 +195,9 @@ void _openProfile() {
 
     if (!mounted) return;
 
+    // ❌ NEVER CRASH → stay in loading UI
     setState(() {
-      _loading = true; // stay in loading instead of crash
+      _loading = true;
       _needsOrganization = false;
     });
   }
@@ -196,31 +209,28 @@ void _openProfile() {
 
 
 Widget _preparingScreen() {
-  return Scaffold(
-    backgroundColor: Colors.white,
-    body: Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          SizedBox(
-            width: 40,
-            height: 40,
-            child: CircularProgressIndicator(
-              strokeWidth: 3,
-              color: Color(0xFF16A34A),
-            ),
+  return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: const [
+        SizedBox(
+          width: 40,
+          height: 40,
+          child: CircularProgressIndicator(
+            strokeWidth: 3,
+            color: Color(0xFF16A34A),
           ),
-          SizedBox(height: 20),
-          Text(
-            "Your dashboard is being prepared...",
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF334155),
-            ),
+        ),
+        SizedBox(height: 20),
+        Text(
+          "Your dashboard is being prepared...",
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF334155),
           ),
-        ],
-      ),
+        ),
+      ],
     ),
   );
 }
