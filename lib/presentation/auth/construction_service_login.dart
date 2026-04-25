@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:sms_autofill/sms_autofill.dart';
 
 import '../../routes/app_routes.dart';
 import '../../core/auth/user_role.dart';
 import '../../services/mobile_auth_service.dart';
-import 'package:sms_autofill/sms_autofill.dart';
+import '../../services/location_service.dart';
 
 class ConstructionServiceLogin extends StatefulWidget {
   const ConstructionServiceLogin({Key? key}) : super(key: key);
@@ -22,7 +23,8 @@ class _ConstructionServiceLoginState
 
   final List<TextEditingController> _otpControllers =
       List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> _otpFocusNodes = List.generate(6, (_) => FocusNode());
+  final List<FocusNode> _otpFocusNodes =
+      List.generate(6, (_) => FocusNode());
 
   final _auth = MobileAuthService();
 
@@ -37,7 +39,7 @@ class _ConstructionServiceLoginState
 
   late final AnimationController _animController;
 
-  static const Color _primary = Color(0xFFF59E0B); // 🔶 ORANGE
+  static const Color _primary = Color(0xFFF59E0B);
 
   @override
   void initState() {
@@ -49,7 +51,8 @@ class _ConstructionServiceLoginState
     )..forward();
 
     _mobileController.addListener(_validateMobile);
-    listenForCode();
+
+    listenForCode(); // ✅ auto OTP detect
   }
 
   @override
@@ -125,17 +128,15 @@ class _ConstructionServiceLoginState
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _error = e is MobileAuthException ? e.message : 'Failed to send OTP';
+        _error =
+            e is MobileAuthException ? e.message : 'Failed to send OTP';
       });
     }
   }
 
   void _startResendTimer() {
     _timer?.cancel();
-
-    setState(() {
-      _resendSeconds = 30;
-    });
+    setState(() => _resendSeconds = 30);
 
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) return;
@@ -177,6 +178,8 @@ class _ConstructionServiceLoginState
         role: UserRole.construction,
       );
 
+      await LocationService.collectAndSaveLocation();
+
       if (!mounted) return;
 
       Navigator.pushReplacementNamed(
@@ -186,7 +189,8 @@ class _ConstructionServiceLoginState
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _error = e is MobileAuthException ? e.message : 'Invalid OTP';
+        _error =
+            e is MobileAuthException ? e.message : 'Invalid OTP';
       });
 
       _clearOtp();
@@ -201,6 +205,7 @@ class _ConstructionServiceLoginState
         for (int i = 0; i < 6; i++) {
           _otpControllers[i].text = digits[i];
         }
+        _otpFocusNodes.last.requestFocus();
         Future.delayed(const Duration(milliseconds: 250), _handleVerifyOtp);
       }
       return;
@@ -281,6 +286,25 @@ class _ConstructionServiceLoginState
                 Expanded(
                   child: _showOtpStep ? _otpStep() : _mobileStep(),
                 ),
+
+                const SizedBox(height: 10),
+                const Text(
+                  'Made in Assam',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF475569),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  '© Khilonjiya India Pvt. Ltd.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
+                const SizedBox(height: 18),
               ],
             ),
           ),
@@ -295,10 +319,7 @@ class _ConstructionServiceLoginState
       children: [
         const Text(
           'Mobile number',
-          style: TextStyle(
-            fontSize: 14.5,
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 10),
 
@@ -329,13 +350,16 @@ class _ConstructionServiceLoginState
 
         SizedBox(
           width: double.infinity,
-          height: 52,
+          height: 40,
           child: ElevatedButton(
-            onPressed: _isMobileValid ? _handleSendOtp : null,
+            onPressed:
+                _isMobileValid && !_isLoading ? _handleSendOtp : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: _primary,
             ),
-            child: const Text('Send OTP'),
+            child: _isLoading
+                ? const CircularProgressIndicator(color: Colors.white)
+                : const Text('Send OTP'),
           ),
         ),
       ],
@@ -344,34 +368,45 @@ class _ConstructionServiceLoginState
 
   Widget _otpStep() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(6, (i) {
-            return SizedBox(
-              width: 46,
-              height: 56,
-              child: RawKeyboardListener(
-                focusNode: FocusNode(),
-                onKey: (e) => _handleOtpBackspace(i, e),
-                child: TextField(
-                  controller: _otpControllers[i],
-                  focusNode: _otpFocusNodes[i],
-                  maxLength: 1,
-                  textAlign: TextAlign.center,
-                  keyboardType: TextInputType.number,
-                  onChanged: (v) => _handleOtpChange(i, v),
+        const Text('Enter OTP'),
+        const SizedBox(height: 8),
+
+        Text('+91 ${_mobileController.text.trim()}'),
+
+        const SizedBox(height: 22),
+
+        AutofillGroup(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(6, (i) {
+              return SizedBox(
+                width: 46,
+                height: 56,
+                child: RawKeyboardListener(
+                  focusNode: FocusNode(),
+                  onKey: (e) => _handleOtpBackspace(i, e),
+                  child: TextField(
+                    controller: _otpControllers[i],
+                    focusNode: _otpFocusNodes[i],
+                    maxLength: 1,
+                    keyboardType: TextInputType.number,
+                    autofillHints: const [AutofillHints.oneTimeCode],
+                    textAlign: TextAlign.center,
+                    onChanged: (v) => _handleOtpChange(i, v),
+                  ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ),
 
         const SizedBox(height: 22),
 
         SizedBox(
           width: double.infinity,
-          height: 52,
+          height: 40,
           child: ElevatedButton(
             onPressed: _handleVerifyOtp,
             style: ElevatedButton.styleFrom(
