@@ -172,13 +172,21 @@ class MobileAuthService {
   // ------------------------------------------------------------
   // ROLE
   // ------------------------------------------------------------
-  Future<UserRole> getUserRole() async {
-    final local = await _storage.read(key: _kRoleKey);
-    final parsedLocal = _parseRole(local);
-    if (parsedLocal != null) return parsedLocal;
+  Future<UserRole?> getUserRole() async {
+  final local = await _storage.read(key: _kRoleKey);
 
-    return await syncRoleFromDbStrict(fallback: UserRole.jobSeeker);
-  }
+  if (local == null) return null;
+
+  if (local == 'employer') return UserRole.employer;
+  if (local == 'construction') return UserRole.construction;
+  if (local == 'jobSeeker') return UserRole.jobSeeker;
+
+  return null;
+}
+
+  // fallback only if nothing saved
+  return await syncRoleFromDbStrict(fallback: UserRole.jobSeeker);
+}
 
   Future<UserRole> syncRoleFromDbStrict({
     UserRole fallback = UserRole.jobSeeker,
