@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import '../../../../routes/app_routes.dart';
 
 class TodayInterviews extends StatelessWidget {
   final List<Map<String, dynamic>> data;
+  final String companyId;
 
-  const TodayInterviews({super.key, required this.data});
+  const TodayInterviews({
+    super.key,
+    required this.data,
+    required this.companyId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,53 +25,78 @@ class TodayInterviews extends StatelessWidget {
 
           final duration = row['duration_minutes'] ?? 30;
 
-          final listing = (row['job_applications_listings'] ?? {}) as Map;
+          final listing =
+              (row['job_applications_listings'] ?? {}) as Map;
           final job = (listing['job_listings'] ?? {}) as Map;
           final app = (listing['job_applications'] ?? {}) as Map;
 
+          final jobId = (job['id'] ?? '').toString();
           final name = app['name'] ?? 'Candidate';
           final jobTitle = job['job_title'] ?? 'Job';
 
-          final isOnline = (row['interview_type'] ?? 'video') == 'video';
+          final isOnline =
+              (row['interview_type'] ?? 'video') == 'video';
 
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Icon(
-                      isOnline
-                          ? Icons.videocam_outlined
-                          : Icons.location_on_outlined,
-                      color: const Color(0xFF16A34A),
-                    ),
-                    const SizedBox(width: 10),
-
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(name,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w700)),
-                          Text(jobTitle,
-                              style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF6B7280))),
-                          Text("$duration min",
-                              style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Color(0xFF94A3B8))),
-                        ],
+          return InkWell(
+            onTap: () {
+              Navigator.pushNamed(
+                context,
+                AppRoutes.jobApplicants,
+                arguments: {
+                  'jobId': jobId,
+                  'companyId': companyId,
+                },
+              );
+            },
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isOnline
+                            ? Icons.videocam_outlined
+                            : Icons.location_on_outlined,
+                        color: const Color(0xFF16A34A),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 10),
+
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w700),
+                            ),
+                            Text(
+                              jobTitle,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF6B7280),
+                              ),
+                            ),
+                            Text(
+                              "$duration min",
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF94A3B8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              if (i != data.length - 1)
-                const Divider(height: 1, color: Color(0xFFE6E8EC)),
-            ],
+                if (i != data.length - 1)
+                  const Divider(
+                      height: 1, color: Color(0xFFE6E8EC)),
+              ],
+            ),
           );
         }),
       ),
