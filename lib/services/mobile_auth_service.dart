@@ -184,10 +184,6 @@ class MobileAuthService {
   return null;
 }
 
-  // fallback only if nothing saved
-  return await syncRoleFromDbStrict(fallback: UserRole.jobSeeker);
-}
-
   Future<UserRole> syncRoleFromDbStrict({
     UserRole fallback = UserRole.jobSeeker,
   }) async {
@@ -212,21 +208,21 @@ class MobileAuthService {
   }
 
   UserRole? _parseRole(String? role) {
-    if (role == null) return null;
+  if (role == null) return null;
 
-    final v = role.trim().toLowerCase();
+  final v = role.trim().toLowerCase();
 
-    if (v == 'employer') return UserRole.employer;
+  if (v == 'employer') return UserRole.employer;
+  if (v == 'construction') return UserRole.construction;
 
-    if (v == 'jobseeker') return UserRole.jobSeeker;
-    if (v == 'job_seeker') return UserRole.jobSeeker;
-    if (v == 'job-seeker') return UserRole.jobSeeker;
+  if (v == 'jobseeker') return UserRole.jobSeeker;
+  if (v == 'job_seeker') return UserRole.jobSeeker;
+  if (v == 'job-seeker') return UserRole.jobSeeker;
 
-    // legacy mapping
-    if (v == 'buyer') return UserRole.jobSeeker;
+  if (v == 'buyer') return UserRole.jobSeeker;
 
-    return null;
-  }
+  return null;
+}
 
   // ------------------------------------------------------------
   // LOGOUT
