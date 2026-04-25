@@ -21,51 +21,56 @@ Widget build(BuildContext context) {
 
         final id = j['id'];
         final title = j['job_title'] ?? '';
-
-        // ✅ use correct field (same as job list screen)
         final apps = j['applications_count'] ?? 0;
 
-        return InkWell(
-          onTap: () {
-            Navigator.pushNamed(
-              context,
-              AppRoutes.jobApplicants,
-              arguments: {
-                'jobId': id,
-                'companyId': companyId,
-              },
-            );
-          },
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(14),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
+        return Column(
+          children: [
+            // ✅ FIXED TOUCH FEEDBACK
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.jobApplicants,
+                    arguments: {
+                      'jobId': id,
+                      'companyId': companyId,
+                    },
+                  );
+                },
+                child: Ink(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
 
-                    // ✅ ONLY applicants (views removed)
-                    Text(
-                      "$apps Applicants",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF16A34A),
-                      ),
+                        Text(
+                          "$apps Applicants",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF16A34A),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-              if (i != jobs.length - 1)
-                const Divider(height: 1, color: Color(0xFFE6E8EC)),
-            ],
-          ),
+            ),
+
+            if (i != jobs.length - 1)
+              const Divider(height: 1, color: Color(0xFFE6E8EC)),
+          ],
         );
       }),
     ),
