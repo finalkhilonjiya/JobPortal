@@ -1,3 +1,5 @@
+// lib/routes/home_router.dart
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -6,6 +8,7 @@ import '../routes/app_routes.dart';
 import '../services/mobile_auth_service.dart';
 
 import '../presentation/home_marketplace_feed/job_seeker_main_shell.dart';
+import '../presentation/home_marketplace_feed/construction_services_home_page.dart'; // ✅ ADD
 import '../presentation/company/dashboard/company_dashboard.dart';
 import '../presentation/company/dashboard/create_organization_screen.dart';
 
@@ -38,7 +41,7 @@ class _HomeRouterState extends State<HomeRouter> {
   }
 
   // ------------------------------------------------------------
-  // ✅ FIXED COMPANY CHECK (CRITICAL)
+  // COMPANY CHECK
   // ------------------------------------------------------------
   Future<bool> _hasCompany() async {
     final user = _auth.currentUser;
@@ -46,7 +49,6 @@ class _HomeRouterState extends State<HomeRouter> {
 
     final db = Supabase.instance.client;
 
-    // 1️⃣ Check membership
     final member = await db
         .from('company_members')
         .select('id')
@@ -55,7 +57,6 @@ class _HomeRouterState extends State<HomeRouter> {
 
     if (member != null) return true;
 
-    // 2️⃣ Fallback → first-time creation case
     final created = await db
         .from('companies')
         .select('id')
@@ -85,61 +86,62 @@ class _HomeRouterState extends State<HomeRouter> {
   // UI
   // ------------------------------------------------------------
   @override
-Widget build(BuildContext context) {
-  return FutureBuilder<UserRole?>(
-    future: _resolveRoleOrNull(),
-    builder: (context, roleSnap) {
-      if (roleSnap.connectionState != ConnectionState.done) {
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
-      }
+  Widget build(BuildContext context) {
+    return FutureBuilder<UserRole?>(
+      future: _resolveRoleOrNull(),
+      builder: (context, roleSnap) {
+        if (roleSnap.connectionState != ConnectionState.done) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-      final role = roleSnap.data;
+        final role = roleSnap.data;
 
-      // ❌ no session
-      if (role == null) {
-        _goToRoleSelection();
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
-      }
+        // ❌ no session
+        if (role == null) {
+          _goToRoleSelection();
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-      // --------------------------------------------------------
-      // EMPLOYER
-      // --------------------------------------------------------
-      if (role == UserRole.employer) {
-        return FutureBuilder<bool>(
-          future: _hasCompany(),
-          builder: (context, companySnap) {
-            if (companySnap.connectionState != ConnectionState.done) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            }
+        // --------------------------------------------------------
+        // ✅ CONSTRUCTION (FIXED - NO CONST)
+        // --------------------------------------------------------
+        if (role == UserRole.construction) {
+          return ConstructionServicesHomePage();
+        }
 
-            final hasCompany = companySnap.data ?? false;
+        // --------------------------------------------------------
+        // EMPLOYER
+        // --------------------------------------------------------
+        if (role == UserRole.employer) {
+          return FutureBuilder<bool>(
+            future: _hasCompany(),
+            builder: (context, companySnap) {
+              if (companySnap.connectionState != ConnectionState.done) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
 
-            if (!hasCompany) {
-              return const CreateOrganizationScreen();
-            }
+              final hasCompany = companySnap.data ?? false;
 
-            return const CompanyDashboard();
-          },
-        );
-      }
+              if (!hasCompany) {
+                return const CreateOrganizationScreen();
+              }
 
-      // --------------------------------------------------------
-      // ✅ CONSTRUCTION (ADD THIS BLOCK)
-      // --------------------------------------------------------
-      if (role == UserRole.construction) {
-        return const ConstructionServicesHomePage(); // ✅ your page
-      }
+              return const CompanyDashboard();
+            },
+          );
+        }
 
-      // --------------------------------------------------------
-      // JOB SEEKER (default)
-      // --------------------------------------------------------
-      return const JobSeekerMainShell();
-    },
-  );
+        // --------------------------------------------------------
+        // JOB SEEKER (default)
+        // --------------------------------------------------------
+        return const JobSeekerMainShell();
+      },
+    );
+  }
 }
