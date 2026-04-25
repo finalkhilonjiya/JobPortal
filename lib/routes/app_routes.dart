@@ -7,6 +7,7 @@ import '../presentation/auth/job_seeker_login_screen.dart';
 import '../presentation/auth/employer_login_screen.dart';
 import '../presentation/company/profile/employer_profile_screen.dart';
 import '../presentation/auth/construction_service_login.dart';
+import '../presentation/home_marketplace_feed/construction_services_home_page.dart';
 
 import 'home_router.dart';
 
@@ -46,6 +47,7 @@ static const String constructionServiceLogin = '/construction-service-login';
   static const employerProfile = "/employer-profile";
 
   static const String profileEdit = '/profile-edit';
+static const String constructionHome = '/construction-services-home';
 
   static const String settings = '/settings';
   static const String notificationsSettings = '/settings-notifications';
@@ -80,6 +82,7 @@ static const String constructionServiceLogin = '/construction-service-login';
 
     home: (_) => const HomeRouter(),
     jobSeekerHome: (_) => const JobSeekerMainShell(),
+constructionHome: (_) => const ConstructionServicesHomePage(),
 
     profileEdit: (_) => const ProfileEditPage(),
 
