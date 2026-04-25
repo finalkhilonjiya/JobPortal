@@ -6,6 +6,7 @@ import '../presentation/role_selection/role_selection_screen.dart';
 import '../presentation/auth/job_seeker_login_screen.dart';
 import '../presentation/auth/employer_login_screen.dart';
 import '../presentation/company/profile/employer_profile_screen.dart';
+import '../presentation/auth/construction_service_login.dart';
 
 import 'home_router.dart';
 
@@ -38,6 +39,7 @@ class AppRoutes {
 
   static const String jobSeekerLogin = '/job-seeker-login';
   static const String employerLogin = '/employer-login';
+static const String constructionServiceLogin = '/construction-service-login';
 
   static const String home = '/home';
   static const String jobSeekerHome = '/job-seeker-home';
@@ -73,6 +75,8 @@ class AppRoutes {
 
     jobSeekerLogin: (_) => const JobSeekerLoginScreen(),
     employerLogin: (_) => const EmployerLoginScreen(),
+    constructionServiceLogin: (_) => const ConstructionServiceLogin(),
+
 
     home: (_) => const HomeRouter(),
     jobSeekerHome: (_) => const JobSeekerMainShell(),
