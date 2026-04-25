@@ -64,128 +64,138 @@ void _openProfile() {
   // LOAD DASHBOARD (FINAL FIXED LOGIC)
   // ============================================================
   Future<void> _loadDashboard() async {
+  if (!mounted) return;
+
+  setState(() => _loading = true);
+
+  try {
+    final user = _requireUser();
+
+    Map<String, dynamic>? member;
+
+    // ✅ STRONG WAIT LOOP (NO RUSH)
+    for (int i = 0; i < 10; i++) {
+      final res = await Supabase.instance.client
+          .from('company_members')
+          .select('company_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+      if (res != null) {
+        member = res;
+        break;
+      }
+
+      await Future.delayed(const Duration(milliseconds: 800));
+    }
+
+    // ✅ FALLBACK
+    if (member == null) {
+      final fallback = await Supabase.instance.client
+          .from('companies')
+          .select('id')
+          .eq('created_by', user.id)
+          .maybeSingle();
+
+      if (fallback != null) {
+        member = {'company_id': fallback['id']};
+      }
+    }
+
+    // ❌ STILL NOT READY → KEEP WAIT SCREEN (NO CRASH)
+    if (member == null) {
+      if (!mounted) return;
+
+      setState(() {
+        _loading = true; // 👈 STAY LOADING (IMPORTANT)
+      });
+
+      return;
+    }
+
+    final companyId = member['company_id']?.toString();
+
+    if (companyId == null || companyId.isEmpty) {
+      setState(() => _loading = true);
+      return;
+    }
+
+    // ✅ FETCH DATA
+    final company =
+        await _service.fetchCompanyById(companyId: companyId);
+
+    final results = await Future.wait([
+      _service.fetchCompanyJobs(companyId: companyId),
+      _service.fetchCompanyDashboardStats(companyId: companyId),
+      _service.fetchRecentApplicants(companyId: companyId),
+      _service.fetchTopJobs(companyId: companyId),
+      _service.fetchTodayInterviews(companyId: companyId),
+      _service.fetchLast7DaysPerformance(companyId: companyId),
+      _service.fetchUnreadNotificationsCount(),
+    ]);
+
     if (!mounted) return;
 
-    setState(() => _loading = true);
+    setState(() {
+      _companyId = companyId;
+      _company = company ?? {};
 
-    try {
-      final user = _requireUser();
+      _jobs = (results[0] as List?)?.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
+      _stats = Map<String, dynamic>.from(results[1] ?? {});
+      _recentApplicants = (results[2] as List?)?.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
+      _topJobs = (results[3] as List?)?.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
+      _todayInterviews = (results[4] as List?)?.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
+      _perf7d = Map<String, dynamic>.from(results[5] ?? {});
+      _unreadNotifications = (results[6] as int?) ?? 0;
 
-      Map<String, dynamic>? member;
+      _loading = false;
+      _needsOrganization = false;
+    });
+  } catch (e) {
+    debugPrint("DASHBOARD ERROR: $e");
 
-      // 🔁 RETRY (fix delay issue after org creation)
-      for (int i = 0; i < 3; i++) {
-        final res = await Supabase.instance.client
-            .from('company_members')
-            .select('company_id')
-            .eq('user_id', user.id)
-            .maybeSingle();
+    if (!mounted) return;
 
-        if (res != null) {
-          member = res;
-          break;
-        }
-
-        await Future.delayed(const Duration(milliseconds: 500));
-      }
-
-      // 🔁 FALLBACK (if membership not yet inserted)
-      if (member == null) {
-        final fallback = await Supabase.instance.client
-            .from('companies')
-            .select('id')
-            .eq('created_by', user.id)
-            .maybeSingle();
-
-        if (fallback != null) {
-          member = {'company_id': fallback['id']};
-        }
-      }
-
-      // ❌ STILL NULL → show create org
-      if (member == null) {
-        setState(() {
-          _needsOrganization = true;
-          _loading = false;
-        });
-        return;
-      }
-
-      final companyId = member['company_id'].toString();
-
-      // ============================================================
-      // FETCH ALL DATA
-      // ============================================================
-      final company =
-          await _service.fetchCompanyById(companyId: companyId);
-
-      final results = await Future.wait([
-        _service.fetchCompanyJobs(companyId: companyId),
-        _service.fetchCompanyDashboardStats(companyId: companyId),
-        _service.fetchRecentApplicants(companyId: companyId),
-        _service.fetchTopJobs(companyId: companyId),
-        _service.fetchTodayInterviews(companyId: companyId),
-        _service.fetchLast7DaysPerformance(companyId: companyId),
-        _service.fetchUnreadNotificationsCount(),
-      ]);
-
-      // ============================================================
-      // SAFE CASTING
-      // ============================================================
-      final jobs = (results[0] as List)
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-
-      final stats = Map<String, dynamic>.from(results[1] as Map);
-
-      final applicants = (results[2] as List)
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-
-      final topJobs = (results[3] as List)
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-
-      final interviews = (results[4] as List)
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-
-      final perf = Map<String, dynamic>.from(results[5] as Map);
-
-      final unread = (results[6] as int?) ?? 0;
-
-      if (!mounted) return;
-
-      setState(() {
-        _companyId = companyId;
-        _company = company;
-
-        _jobs = jobs;
-        _stats = stats;
-        _recentApplicants = applicants;
-        _topJobs = topJobs;
-        _todayInterviews = interviews;
-        _perf7d = perf;
-        _unreadNotifications = unread;
-
-        _needsOrganization = false;
-        _loading = false;
-      });
-    } catch (e) {
-      debugPrint("DASHBOARD ERROR: $e");
-
-      if (!mounted) return;
-
-      setState(() {
-        _needsOrganization = true;
-        _loading = false;
-      });
-    }
+    setState(() {
+      _loading = true; // 👈 STILL SHOW LOADING (NO CRASH)
+    });
   }
-
+}
   // ============================================================
   // LOGOUT
   // ============================================================
+
+
+
+Widget _preparingScreen() {
+  return Scaffold(
+    backgroundColor: Colors.white,
+    body: Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              color: Color(0xFF16A34A),
+            ),
+          ),
+          SizedBox(height: 20),
+          Text(
+            "Your dashboard is being prepared...",
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF334155),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
   Future<void> _logout() async {
     await MobileAuthService().logout();
 
@@ -210,7 +220,7 @@ Widget build(BuildContext context) {
     drawer: _drawer(),
 
     body: _loading
-        ? const Center(child: CircularProgressIndicator())
+    ? _preparingScreen()
         : _needsOrganization
             ? _noOrg()
             : _dashboard(),
