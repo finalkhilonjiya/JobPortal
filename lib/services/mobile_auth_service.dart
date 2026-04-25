@@ -146,7 +146,7 @@ class MobileAuthService {
       await _storage.write(key: _kRoleKey, value: role.name);
 
       // DB is final truth
-      await syncRoleFromDbStrict(fallback: role);
+      
     } catch (e) {
       if (e is MobileAuthException) rethrow;
       throw MobileAuthException('Invalid OTP');
