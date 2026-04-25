@@ -35,16 +35,19 @@ class ActionNeeded extends StatelessWidget {
       children: [
         if (waiting > 0)
           _card(
+            context,
             "Applicants waiting",
             () => Navigator.pushNamed(context, AppRoutes.employerJobs),
           ),
         if (expiring > 0)
           _card(
+            context,
             "Jobs expiring soon",
             () => Navigator.pushNamed(context, AppRoutes.employerJobs),
           ),
         if (paused > 0)
           _card(
+            context,
             "Paused jobs",
             () => Navigator.pushNamed(context, AppRoutes.employerJobs),
           ),
@@ -52,23 +55,37 @@ class ActionNeeded extends StatelessWidget {
     );
   }
 
-  Widget _card(String text, VoidCallback onTap) {
+  Widget _card(BuildContext context, String text, VoidCallback onTap) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
+      child: Material(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE6E8EC)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.warning_amber_outlined,
-              color: Colors.orange),
-          const SizedBox(width: 10),
-          Expanded(child: Text(text)),
-          TextButton(onPressed: onTap, child: const Text("View"))
-        ],
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          splashColor: const Color(0xFFFEF3C7),
+          highlightColor: Colors.transparent,
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE6E8EC)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.warning_amber_outlined,
+                    color: Colors.orange),
+                const SizedBox(width: 10),
+                Expanded(child: Text(text)),
+                TextButton(
+                  onPressed: onTap,
+                  child: const Text("View"),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
