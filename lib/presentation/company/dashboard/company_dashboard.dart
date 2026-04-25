@@ -306,7 +306,10 @@ Widget build(BuildContext context) {
               style: TextStyle(fontWeight: FontWeight.w800)),
           const SizedBox(height: 10),
 
-          TodayInterviews(data: _todayInterviews),
+          TodayInterviews(
+  data: _todayInterviews,
+  companyId: _companyId,
+),
 
           const SizedBox(height: 20),
 
