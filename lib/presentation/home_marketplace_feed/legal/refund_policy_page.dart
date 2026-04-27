@@ -35,7 +35,7 @@ class RefundPolicyPage extends StatelessWidget {
             title: "1. Scope",
             body:
                 "This policy applies to payments made for paid features or subscriptions inside the Khilonjiya app.\n\n"
-                "Refund eligibility depends on the payment method used (Google Play Billing or direct payments such as Razorpay).",
+                "All payments are processed through Google Play Billing.",
           ),
 
           _card(
@@ -68,41 +68,33 @@ class RefundPolicyPage extends StatelessWidget {
           _card(
             title: "5. Google Play purchases",
             body:
-                "Refunds for Google Play purchases are governed by Google Play policies.\n"
-                "Requests must be made directly through Google Play.",
+                "All payments and refunds are governed by Google Play policies.\n"
+                "Refund requests must be made directly through Google Play.",
           ),
 
           _card(
-            title: "6. Direct / Razorpay payments",
+            title: "6. How to request a refund",
             body:
-                "Refund decisions for direct payments are handled by Khilonjiya.\n"
-                "Approved refunds are returned to the original payment method.\n"
-                "Cash refunds are not provided.",
+                "For Google Play purchases:\n\n"
+                "• Open Google Play Store\n"
+                "• Go to Payments & Subscriptions\n"
+                "• Select the transaction\n"
+                "• Request a refund\n\n"
+                "You may also contact support for assistance.",
           ),
 
           _card(
-            title: "7. How to request a refund",
+            title: "7. Processing time",
             body:
-                "Go to: Settings → Contact & Support\n\n"
-                "Provide:\n"
-                "• Payment ID / Order ID\n"
-                "• Registered phone/email\n"
-                "• Date of transaction\n"
-                "• Screenshot (optional)",
-          ),
-
-          _card(
-            title: "8. Processing time",
-            body:
-                "If approved:\n"
-                "• Refund initiated within 3–7 working days\n"
+                "If approved by Google Play:\n"
+                "• Refund processing time depends on Google Play policies\n"
                 "• Bank processing time may vary",
           ),
 
           _card(
-            title: "9. Contact",
+            title: "8. Contact",
             body:
-                "For refund-related queries:\n"
+                "For refund-related queries:\n\n"
                 "Email: $_supportEmail\n\n"
                 "Khilonjiya India Pvt. Ltd.",
           ),
