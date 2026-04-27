@@ -25,8 +25,7 @@ String? _editingJobId;
   final _requirementsCtrl = TextEditingController();
   final _responsibilitiesCtrl = TextEditingController();
 
-  final _educationCtrl = TextEditingController();
-  final _experienceCtrl = TextEditingController();
+  
 
   final _salaryMinCtrl = TextEditingController();
   final _salaryMaxCtrl = TextEditingController();
@@ -51,6 +50,29 @@ String? _editingJobId;
   String _hiringUrgency = "Normal";
 
   bool _isWalkIn = false;
+
+
+// ✅ NEW DROPDOWN VALUES
+String _selectedEducation = "Any";
+String _selectedExperience = "0-1 years";
+
+final List<String> _educationList = [
+  "Any",
+  "10th Pass",
+  "12th Pass",
+  "Diploma",
+  "ITI",
+  "Graduate",
+  "Post Graduate",
+];
+
+final List<String> _experienceList = [
+  "Fresher",
+  "0-1 years",
+  "1-3 years",
+  "3-5 years",
+  "5+ years",
+];
 
   // ------------------------------------------------------------
   // MASTER TABLES
@@ -176,8 +198,8 @@ Future<void> _loadJobForEdit() async {
       _requirementsCtrl.text = j['requirements'] ?? '';
       _responsibilitiesCtrl.text = j['responsibilities'] ?? '';
 
-      _educationCtrl.text = j['education_required'] ?? '';
-      _experienceCtrl.text = j['experience_required'] ?? '';
+      _selectedEducation = j['education_required'] ?? _selectedEducation;
+_selectedExperience = j['experience_required'] ?? _selectedExperience;
 
       _salaryMinCtrl.text = (j['salary_min'] ?? '').toString();
       _salaryMaxCtrl.text = (j['salary_max'] ?? '').toString();
@@ -223,8 +245,6 @@ Future<void> _loadJobForEdit() async {
     _requirementsCtrl.dispose();
     _responsibilitiesCtrl.dispose();
 
-    _educationCtrl.dispose();
-    _experienceCtrl.dispose();
 
     _salaryMinCtrl.dispose();
     _salaryMaxCtrl.dispose();
@@ -709,8 +729,11 @@ ButtonStyle _primaryButtonStyle() {
       "work_mode": _workMode,
       "job_description": _jobDescriptionCtrl.text.trim(),
       "requirements": _requirementsCtrl.text.trim(),
-      "education_required": _educationCtrl.text.trim(),
-      "experience_required": _experienceCtrl.text.trim(),
+
+      // ✅ UPDATED
+      "education_required": _selectedEducation,
+      "experience_required": _selectedExperience,
+
       "salary_min": salaryMin,
       "salary_max": salaryMax,
       "salary_period": _salaryPeriod,
@@ -735,7 +758,7 @@ ButtonStyle _primaryButtonStyle() {
       await _client
           .from("job_listings")
           .update(payload)
-          .eq("id", _editingJobId!); // ✅ FIX
+          .eq("id", _editingJobId!);
     } else {
       await _client.from("job_listings").insert({
         ...payload,
@@ -745,7 +768,17 @@ ButtonStyle _primaryButtonStyle() {
     }
 
     if (!mounted) return;
+
+    // ✅ SUCCESS ANIMATION DIALOG
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _SuccessDialog(),
+    );
+
+    if (!mounted) return;
     Navigator.pop(context, true);
+
   } catch (e) {
     _showError("Failed: $e");
   }
@@ -776,13 +809,13 @@ ButtonStyle _primaryButtonStyle() {
     }
 
     if (step == 2) {
-      return _jobDescriptionCtrl.text.trim().isNotEmpty &&
-          _requirementsCtrl.text.trim().isNotEmpty &&
-          _educationCtrl.text.trim().isNotEmpty &&
-          _experienceCtrl.text.trim().isNotEmpty &&
-          _salaryMinCtrl.text.trim().isNotEmpty &&
-          _salaryMaxCtrl.text.trim().isNotEmpty;
-    }
+  return _jobDescriptionCtrl.text.trim().isNotEmpty &&
+      _requirementsCtrl.text.trim().isNotEmpty &&
+      _selectedEducation.isNotEmpty &&
+      _selectedExperience.isNotEmpty &&
+      _salaryMinCtrl.text.trim().isNotEmpty &&
+      _salaryMaxCtrl.text.trim().isNotEmpty;
+}
 
     if (step == 3) {
       return (_selectedDistrict ?? '').trim().isNotEmpty &&
@@ -1121,71 +1154,89 @@ ButtonStyle _primaryButtonStyle() {
 
   // STEP 2
   Widget _stepRequirements() {
-    return Column(
-      children: [
-        _cardSection(
-          title: "Salary",
-          subtitle: "Salary range visible to candidates",
-          child: Column(
-            children: [
-              _rowFields(
-                _field(
-                  "Min Salary",
-                  _salaryMinCtrl,
-                  number: true,
-                  keyboard: TextInputType.number,
-                  formatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(8),
-                  ],
-                ),
-                _field(
-                  "Max Salary",
-                  _salaryMaxCtrl,
-                  number: true,
-                  keyboard: TextInputType.number,
-                  formatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(8),
-                  ],
-                ),
-              ),
-              _dropdown(
-                "Salary Period",
-                _salaryPeriod,
-                _salaryPeriods,
-                (v) => setState(() => _salaryPeriod = v),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 3.h),
-        _cardSection(
-          title: "Requirements",
-          subtitle: "Describe role and what you need",
-          child: Column(
-            children: [
-              _multilineField("Job Description", _jobDescriptionCtrl),
-              _multilineField("Requirements", _requirementsCtrl),
-              _multilineField(
-                "Responsibilities (optional)",
-                _responsibilitiesCtrl,
-                required: false,
-              ),
-              _field("Education Required", _educationCtrl),
-              _field("Experience Required", _experienceCtrl),
+  return Column(
+    children: [
+      _cardSection(
+        title: "Salary",
+        subtitle: "Salary range visible to candidates",
+        child: Column(
+          children: [
+            _rowFields(
               _field(
-                "Skills (comma separated)",
-                _skillsCtrl,
-                hint: "Flutter, Firebase, Sales",
-                required: false,
+                "Min Salary",
+                _salaryMinCtrl,
+                number: true,
+                keyboard: TextInputType.number,
+                formatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(8),
+                ],
               ),
-            ],
-          ),
+              _field(
+                "Max Salary",
+                _salaryMaxCtrl,
+                number: true,
+                keyboard: TextInputType.number,
+                formatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(8),
+                ],
+              ),
+            ),
+            _dropdown(
+              "Salary Period",
+              _salaryPeriod,
+              _salaryPeriods,
+              (v) => setState(() => _salaryPeriod = v),
+            ),
+          ],
         ),
-      ],
-    );
-  }
+      ),
+
+      SizedBox(height: 3.h),
+
+      _cardSection(
+        title: "Requirements",
+        subtitle: "Describe role and what you need",
+        child: Column(
+          children: [
+            _multilineField("Job Description", _jobDescriptionCtrl),
+            _multilineField("Requirements", _requirementsCtrl),
+
+            _multilineField(
+              "Responsibilities (optional)",
+              _responsibilitiesCtrl,
+              required: false,
+            ),
+
+            // ✅ EDUCATION DROPDOWN
+            _dropdown(
+              "Education Required",
+              _selectedEducation,
+              _educationList,
+              (v) => setState(() => _selectedEducation = v),
+            ),
+
+            // ✅ EXPERIENCE DROPDOWN
+            _dropdown(
+              "Experience Required",
+              _selectedExperience,
+              _experienceList,
+              (v) => setState(() => _selectedExperience = v),
+            ),
+
+            _field(
+              "Skills (comma separated)",
+              _skillsCtrl,
+              hint: "Flutter, Firebase, Sales",
+              required: false,
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
 
   // STEP 3
   Widget _stepLocation() {
@@ -1697,6 +1748,120 @@ ButtonStyle _primaryButtonStyle() {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg)),
+    );
+  }
+}
+
+
+
+class _SuccessDialog extends StatefulWidget {
+  const _SuccessDialog({Key? key}) : super(key: key);
+
+  @override
+  State<_SuccessDialog> createState() => _SuccessDialogState();
+}
+
+class _SuccessDialogState extends State<_SuccessDialog>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scale;
+  late Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+
+    _scale = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+    );
+
+    _opacity = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+    );
+
+    _controller.forward();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 26),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ScaleTransition(
+              scale: _scale,
+              child: FadeTransition(
+                opacity: _opacity,
+                child: Container(
+                  width: 70,
+                  height: 70,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFDCFCE7),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check,
+                    size: 40,
+                    color: Color(0xFF16A34A),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            const Text(
+              "Job Submitted Successfully",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            const Text(
+              "Your job will be reviewed by the Khilonjiya Support Team and will be published shortly once approved.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13.5,
+                height: 1.4,
+                color: Color(0xFF475569),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF16A34A),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  "Done",
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
