@@ -57,7 +57,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
 
 void _openProfile() {
-  Scaffold.of(context).openDrawer();
+  Navigator.pushNamed(context, AppRoutes.employerProfile);
 }
 
   // ============================================================
