@@ -501,106 +501,104 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
   /// - inserts mapping row in `job_applications_listings`
   /// - returns true if applied, false if already applied
   Future<bool> applyToJob({
-    required String jobId,
-    required Map<String, dynamic> form,
-  }) async {
-    _ensureAuthenticatedSync();
-    final userId = _userId();
+  required String jobId,
+  required Map<String, dynamic> form,
+}) async {
+  _ensureAuthenticatedSync();
+  final userId = _userId();
 
-    // 0) already applied guard
-    final already = await hasAppliedToJob(jobId);
-    if (already) return false;
+  // 0) already applied guard
+  final already = await hasAppliedToJob(jobId);
+  if (already) return false;
 
-    // 1) load profile (for defaults)
-    final profile = await fetchMyProfile();
+  // 1) load profile (for defaults)
+  final profile = await fetchMyProfile();
 
-    final name = (form['name'] ?? profile['full_name'] ?? '').toString().trim();
-    final phone =
-        (form['phone'] ?? profile['mobile_number'] ?? '').toString().trim();
-    final email = (form['email'] ?? profile['email'] ?? '').toString().trim();
+  final name = (form['name'] ?? profile['full_name'] ?? '').toString().trim();
+  final phone =
+      (form['phone'] ?? profile['mobile_number'] ?? '').toString().trim();
+  final email = (form['email'] ?? profile['email'] ?? '').toString().trim();
 
-    final district = (form['district'] ?? '').toString().trim();
-    final address = (form['address'] ?? '').toString().trim();
+  final district = (form['district'] ?? '').toString().trim();
+  final address = (form['address'] ?? '').toString().trim();
 
-    final education =
-        (form['education'] ?? profile['highest_education'] ?? '')
-            .toString()
-            .trim();
+  final education =
+      (form['education'] ?? profile['highest_education'] ?? '')
+          .toString()
+          .trim();
 
-    final experienceLevel = (form['experience_level'] ?? '').toString().trim();
-    final experienceDetails =
-        (form['experience_details'] ?? '').toString().trim();
+  final experienceLevel = (form['experience_level'] ?? '').toString().trim();
+  final experienceDetails =
+      (form['experience_details'] ?? '').toString().trim();
 
-    // required by schema
-    final skills = (form['skills'] ??
-            _skillsToText(profile['skills']) ??
-            '')
-        .toString()
-        .trim();
+  final skills = (form['skills'] ??
+          _skillsToText(profile['skills']) ??
+          '')
+      .toString()
+      .trim();
 
-    final expectedSalary = (form['expected_salary'] ??
-            _expectedSalaryFromProfile(profile))
-        .toString()
-        .trim();
+  // ✅ FIXED: USE RAW NUMBER ONLY (NO STRING FORMAT)
+  final expectedSalaryMin = (form['expected_salary_min'] ??
+          profile['expected_salary_min'] ??
+          0);
 
-    final availability = (form['availability'] ?? '').toString().trim();
-    final additionalInfo = (form['additional_info'] ?? '').toString().trim();
+  final availability = (form['availability'] ?? '').toString().trim();
+  final additionalInfo = (form['additional_info'] ?? '').toString().trim();
 
-    // resume from profile (SIGNED url) is not good for DB.
-    // So fetch raw paths for resume/avatar.
-    final rawPaths = await fetchMyProfileRawPaths();
+  final rawPaths = await fetchMyProfileRawPaths();
 
-    final resumeRaw = (rawPaths['resume_url'] ?? '').toString().trim();
-    final photoRaw = (rawPaths['avatar_url'] ?? '').toString().trim();
+  final resumeRaw = (rawPaths['resume_url'] ?? '').toString().trim();
+  final photoRaw = (rawPaths['avatar_url'] ?? '').toString().trim();
 
-    // 2) ensure master application exists
-    final applicationId = await _getOrCreateMyMasterApplication(
-      name: name,
-      phone: phone,
-      email: email,
-      district: district,
-      address: address,
-      education: education,
-      experienceLevel: experienceLevel,
-      experienceDetails: experienceDetails,
-      skills: skills,
-      expectedSalary: expectedSalary,
-      availability: availability,
-      additionalInfo: additionalInfo,
-      resumeFileName: resumeRaw.isEmpty ? '' : 'resume',
-      resumeFileUrl: resumeRaw,
-      photoFileName: photoRaw.isEmpty ? '' : 'photo',
-      photoFileUrl: photoRaw,
-      jobCategories: _toStringList(form['job_categories']),
-    );
+  // 2) ensure master application exists
+  final applicationId = await _getOrCreateMyMasterApplication(
+    name: name,
+    phone: phone,
+    email: email,
+    district: district,
+    address: address,
+    education: education,
+    experienceLevel: experienceLevel,
+    experienceDetails: experienceDetails,
+    skills: skills,
 
-    // 3) insert listing mapping
-    try {
-      await _db.from('job_applications_listings').insert({
-        'application_id': applicationId,
-        'listing_id': jobId,
-        'user_id': userId,
-        'applied_at': DateTime.now().toIso8601String(),
-        'application_status': 'applied',
-      });
-    } catch (e) {
-      // if unique constraint exists, this catches duplicate apply
-      debugPrint("applyToJob insert error: $e");
-      return false;
-    }
+    // ✅ STORE NUMBER AS STRING (CLEAN)
+    expectedSalary: expectedSalaryMin.toString(),
 
-    // 4) track activity (optional)
-    try {
-      await _db.from('user_job_activity').insert({
-        'user_id': userId,
-        'job_id': jobId,
-        'activity_type': 'applied',
-        'activity_date': DateTime.now().toIso8601String(),
-      });
-    } catch (_) {}
+    availability: availability,
+    additionalInfo: additionalInfo,
+    resumeFileName: resumeRaw.isEmpty ? '' : 'resume',
+    resumeFileUrl: resumeRaw,
+    photoFileName: photoRaw.isEmpty ? '' : 'photo',
+    photoFileUrl: photoRaw,
+    jobCategories: _toStringList(form['job_categories']),
+  );
 
-    return true;
+  // 3) insert listing mapping
+  try {
+    await _db.from('job_applications_listings').insert({
+      'application_id': applicationId,
+      'listing_id': jobId,
+      'user_id': userId,
+      'applied_at': DateTime.now().toIso8601String(),
+      'application_status': 'applied',
+    });
+  } catch (e) {
+    debugPrint("applyToJob insert error: $e");
+    return false;
   }
+
+  try {
+    await _db.from('user_job_activity').insert({
+      'user_id': userId,
+      'job_id': jobId,
+      'activity_type': 'applied',
+      'activity_date': DateTime.now().toIso8601String(),
+    });
+  } catch (_) {}
+
+  return true;
+}
 
   String _skillsToText(dynamic raw) {
     if (raw == null) return '';
@@ -611,25 +609,7 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
     return raw.toString();
   }
 
-  String _expectedSalaryFromProfile(Map<String, dynamic> p) {
-    final min = p['expected_salary_min'];
-    final max = p['expected_salary_max'];
-
-    int toInt(dynamic v) {
-      if (v == null) return 0;
-      if (v is int) return v;
-      return int.tryParse(v.toString()) ?? 0;
-    }
-
-    final a = toInt(min);
-    final b = toInt(max);
-
-    if (a <= 0 && b <= 0) return '';
-    if (a > 0 && b <= 0) return "₹$a / month";
-    if (a <= 0 && b > 0) return "Up to ₹$b / month";
-    return "₹$a - ₹$b / month";
-  }
-
+  
   List<String> _toStringList(dynamic raw) {
     if (raw == null) return [];
     if (raw is List) {
