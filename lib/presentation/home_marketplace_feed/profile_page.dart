@@ -3,7 +3,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/ui/khilonjiya_ui.dart';
 import '../../services/job_seeker_home_service.dart';
-
 import 'profile_edit_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -37,8 +36,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (!_disposed) setState(() => _loading = true);
 
     try {
-      final p = await _service.fetchMyProfile();
-      _profile = p;
+      _profile = await _service.fetchMyProfile();
     } catch (_) {
       _profile = {};
     }
@@ -63,38 +61,43 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   String _salaryText(int v) {
-    if (v <= 0) return "Not set";
+    if (v <= 0) return "";
     if (v >= 100000) return "₹${(v / 100000).toStringAsFixed(1)}L / month";
     if (v >= 1000) return "₹${(v / 1000).toStringAsFixed(0)}k / month";
     return "₹$v / month";
   }
 
+  String _salaryRange() {
+    final min = _i(_profile['expected_salary_min']);
+    final max = _i(_profile['expected_salary_max']);
+
+    if (min <= 0 && max <= 0) return "";
+    if (min > 0 && max <= 0) return _salaryText(min);
+    if (min <= 0 && max > 0) return "Up to ${_salaryText(max)}";
+    return "${_salaryText(min)} - ${_salaryText(max)}";
+  }
+
   String _experienceText(int years) {
-    if (years <= 0) return "Fresher";
+    if (years <= 0) return "";
     if (years == 1) return "1 year";
     return "$years years";
   }
 
   String _skillsText(dynamic skills) {
-    if (skills is List) {
-      final list = skills
-          .map((e) => e.toString().trim())
-          .where((e) => e.isNotEmpty)
-          .toList();
-      if (list.isEmpty) return "Not set";
-      if (list.length <= 3) return list.join(", ");
-      return "${list.take(3).join(", ")} +${list.length - 3}";
+    if (skills is List && skills.isNotEmpty) {
+      return skills.join(", ");
     }
-    return "Not set";
+    return "";
   }
 
   String _locationText() {
     final city = _s(_profile['current_city']);
     final state = _s(_profile['current_state']);
+
     if (city.isNotEmpty && state.isNotEmpty) return "$city, $state";
     if (city.isNotEmpty) return city;
     if (state.isNotEmpty) return state;
-    return "Not set";
+    return "";
   }
 
   Future<void> _openUrl(String url) async {
@@ -112,23 +115,27 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _infoTile({
-    required IconData icon,
     required String title,
     required String value,
+    IconData? icon,
     VoidCallback? onTap,
-    Widget? trailing,
   }) {
+    if (value.isEmpty) return const SizedBox(); // ❌ no placeholder
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: KhilonjiyaUI.cardDecoration(radius: 14),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 18, color: KhilonjiyaUI.primary),
-            const SizedBox(width: 10),
+            if (icon != null) ...[
+              Icon(icon, size: 18, color: KhilonjiyaUI.primary),
+              const SizedBox(width: 10),
+            ],
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,20 +143,19 @@ class _ProfilePageState extends State<ProfilePage> {
                   Text(
                     title,
                     style: KhilonjiyaUI.caption.copyWith(
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
-                    value.isEmpty ? "—" : value,
+                    value,
                     style: KhilonjiyaUI.body.copyWith(
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
             ),
-            if (trailing != null) trailing,
           ],
         ),
       ),
@@ -174,12 +180,8 @@ class _ProfilePageState extends State<ProfilePage> {
               height: 54,
               color: const Color(0xFFF1F5F9),
               child: avatarUrl.isEmpty
-                  ? const Icon(Icons.person_outline,
-                      color: Color(0xFF64748B))
-                  : Image.network(
-                      avatarUrl,
-                      fit: BoxFit.cover,
-                    ),
+                  ? const Icon(Icons.person_outline)
+                  : Image.network(avatarUrl, fit: BoxFit.cover),
             ),
           ),
           const SizedBox(width: 12),
@@ -188,18 +190,15 @@ class _ProfilePageState extends State<ProfilePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  fullName.isEmpty ? "Your Profile" : fullName,
+                  fullName, // ✅ no placeholder
                   style: KhilonjiyaUI.hTitle.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "$completion% complete",
-                  style: KhilonjiyaUI.sub.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF64748B),
-                  ),
+                  "$completion% profile completed",
+                  style: KhilonjiyaUI.sub,
                 ),
               ],
             ),
@@ -210,12 +209,6 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _body() {
-    final salary = _i(_profile['expected_salary_min']);
-    final expYears = _i(_profile['total_experience_years']);
-    final edu = _s(_profile['highest_education']);
-    final openToWork = _b(_profile['is_open_to_work']);
-    final resumeUrl = _s(_profile['resume_url']);
-
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
@@ -223,41 +216,76 @@ class _ProfilePageState extends State<ProfilePage> {
         children: [
           _profileHeader(),
           const SizedBox(height: 14),
+
           _infoTile(
-            icon: Icons.currency_rupee_rounded,
-            title: "Expected salary",
-            value: _salaryText(salary),
+            title: "Full Name",
+            value: _s(_profile['full_name']),
+            icon: Icons.person_outline,
           ),
           _infoTile(
-            icon: Icons.work_outline_rounded,
-            title: "Experience",
-            value: _experienceText(expYears),
+            title: "Mobile Number",
+            value: _s(_profile['phone']),
+            icon: Icons.phone_outlined,
           ),
           _infoTile(
+            title: "Email Address",
+            value: _s(_profile['actual_email']),
+            icon: Icons.email_outlined,
+          ),
+          _infoTile(
+            title: "Expected Salary",
+            value: _salaryRange(),
+            icon: Icons.currency_rupee,
+          ),
+          _infoTile(
+            title: "Total Experience",
+            value: _experienceText(_i(_profile['total_experience_years'])),
+            icon: Icons.work_outline,
+          ),
+          _infoTile(
+            title: "Highest Education",
+            value: _s(_profile['highest_education']),
             icon: Icons.school_outlined,
-            title: "Highest education",
-            value: edu.isEmpty ? "Not set" : edu,
           ),
           _infoTile(
-            icon: Icons.location_on_outlined,
-            title: "Location",
-            value: _locationText(),
-          ),
-          _infoTile(
-            icon: Icons.psychology_alt_outlined,
             title: "Skills",
             value: _skillsText(_profile['skills']),
+            icon: Icons.psychology_alt_outlined,
           ),
           _infoTile(
+            title: "Bio",
+            value: _s(_profile['bio']),
+            icon: Icons.info_outline,
+          ),
+          _infoTile(
+            title: "Current Location",
+            value: _locationText(),
+            icon: Icons.location_on_outlined,
+          ),
+          _infoTile(
+            title: "Preferred Job Type",
+            value: _s(_profile['preferred_job_type']),
+            icon: Icons.badge_outlined,
+          ),
+          _infoTile(
+            title: "Notice Period (days)",
+            value: _i(_profile['notice_period_days']) > 0
+                ? "${_profile['notice_period_days']} days"
+                : "",
+            icon: Icons.timer_outlined,
+          ),
+          _infoTile(
+            title: "Open to Work",
+            value: _b(_profile['is_open_to_work']) ? "Yes" : "No",
             icon: Icons.flag_outlined,
-            title: "Open to work",
-            value: openToWork ? "Yes" : "No",
           ),
           _infoTile(
-            icon: Icons.description_outlined,
             title: "Resume",
-            value: resumeUrl.isEmpty ? "Not uploaded" : "View resume",
-            onTap: resumeUrl.isEmpty ? null : () => _openUrl(resumeUrl),
+            value: _s(_profile['resume_url']),
+            icon: Icons.description_outlined,
+            onTap: _s(_profile['resume_url']).isEmpty
+                ? null
+                : () => _openUrl(_profile['resume_url']),
           ),
         ],
       ),
@@ -272,23 +300,20 @@ class _ProfilePageState extends State<ProfilePage> {
         color: Colors.white,
         child: SizedBox(
           width: double.infinity,
-          height: 40,
+          height: 44,
           child: ElevatedButton(
             onPressed: _openEdit,
             style: ElevatedButton.styleFrom(
               backgroundColor: KhilonjiyaUI.primary,
-              foregroundColor: Colors.white, // FIXED HERE
+              foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),
             ),
             child: const Text(
-              "Update Profile",
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
+              "Edit Profile",
+              style: TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
         ),
@@ -312,14 +337,16 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text("Profile",
-                        style: KhilonjiyaUI.hTitle.copyWith(
-                          fontWeight: FontWeight.w600,
-                        )),
+                    child: Text(
+                      "Profile",
+                      style: KhilonjiyaUI.hTitle.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                   IconButton(
                     onPressed: _openEdit,
-                    icon: const Icon(Icons.edit_outlined, size: 20),
+                    icon: const Icon(Icons.edit_outlined),
                   ),
                 ],
               ),
