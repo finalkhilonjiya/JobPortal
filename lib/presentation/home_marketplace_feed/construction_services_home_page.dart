@@ -118,23 +118,15 @@ Widget build(BuildContext context) {
     drawer: _drawer(),
 
     appBar: AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      leading: Builder(
-        builder: (context) => IconButton(
-          icon: const Icon(Icons.menu, color: Colors.black),
-          onPressed: () => Scaffold.of(context).openDrawer(),
-        ),
-      ),
-      title: const Text(
-        "Khilonjiya Construction",
-        style: TextStyle(
-          color: Colors.black,
-          fontWeight: FontWeight.w800,
-          fontSize: 16,
-        ),
-      ),
+  backgroundColor: Colors.white,
+  elevation: 0,
+  leading: Builder(
+    builder: (context) => IconButton(
+      icon: const Icon(Icons.menu, color: Colors.black),
+      onPressed: () => Scaffold.of(context).openDrawer(),
     ),
+  ),
+),
 
     body: _loading
         ? const Center(child: CircularProgressIndicator())
