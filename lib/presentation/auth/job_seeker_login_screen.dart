@@ -248,296 +248,398 @@ _otpFocusNodes[index - 1].requestFocus();
 
 @override
 Widget build(BuildContext context) {
-return Scaffold(
-backgroundColor: const Color(0xFFF8FAFC),
-body: SafeArea(
-child: FadeTransition(
-opacity: _animController,
-child: Padding(
-padding: const EdgeInsets.symmetric(horizontal: 24),
-child: Column(
-children: [
-const SizedBox(height: 12),
+  return Scaffold(
+    backgroundColor: const Color(0xFFF8FAFC),
+    resizeToAvoidBottomInset: true,
+    body: SafeArea(
+      child: FadeTransition(
+        opacity: _animController,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
 
-Align(
-  alignment: Alignment.centerLeft,
-  child: IconButton(
-    onPressed: _goBack,
-    icon: const Icon(Icons.arrow_back_ios_new_rounded),
-  ),
-),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  onPressed: _goBack,
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                  color: const Color(0xFF0F172A),
+                  splashRadius: 22,
+                ),
+              ),
 
-const SizedBox(height: 26),
-_header(),
-const SizedBox(height: 38),
-Expanded(
-child: _showOtpStep ? _otpStep() : _mobileStep(),
-),
+              const SizedBox(height: 26),
 
-const SizedBox(height: 10),
-const Text(
-'Made in Assam',
-style: TextStyle(
-fontSize: 12.5,
-fontWeight: FontWeight.w800,
-color: Color(0xFF475569),
-letterSpacing: 0.2,
-),
-),
-const SizedBox(height: 6),
-const Text(
-'© Khilonjiya India Pvt. Ltd.',
-style: TextStyle(
-fontSize: 12,
-color: Color(0xFF94A3B8),
-),
-),
-const SizedBox(height: 18),
-],
-),
-),
-),
-),
-);
+              _header(),
+
+              const SizedBox(height: 20),
+
+              // ✅ FIXED: single scroll container (no overflow issues)
+              Expanded(
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: Column(
+                    children: [
+                      _showOtpStep ? _otpStep() : _mobileStep(),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              const Text(
+                'Made in Assam',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF475569),
+                  letterSpacing: 0.2,
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              const Text(
+                '© Khilonjiya India Pvt. Ltd.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF94A3B8),
+                ),
+              ),
+
+              const SizedBox(height: 18),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 Widget _header() {
-return Column(
-children: const [
-Text(
-'Khilonjiya Login',
-style: TextStyle(
-fontSize: 26,
-fontWeight: FontWeight.w800,
-color: Color(0xFF2563EB),
-letterSpacing: -0.4,
-),
-),
-SizedBox(height: 8),
-Text(
-'Find nearby jobs and apply instantly',
-style: TextStyle(
-fontSize: 14.5,
-color: Color(0xFF64748B),
-),
-),
-],
-);
+  return Column(
+    children: [
+      Container(
+        width: 72,
+        height: 72,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(10),
+        child: Image.asset(
+          'assets/icons/app_icon.png',
+          fit: BoxFit.contain,
+        ),
+      ),
+
+      const SizedBox(height: 16),
+
+      const Text(
+        'Khilonjiya',
+        style: TextStyle(
+          fontSize: 26,
+          fontWeight: FontWeight.w900,
+          color: Color(0xFF2563EB),
+          letterSpacing: -0.4,
+        ),
+      ),
+
+      const SizedBox(height: 4),
+
+      const Text(
+        'Job Seeker Login',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF0F172A),
+        ),
+      ),
+
+      const SizedBox(height: 8),
+
+      const Text(
+        'Find nearby jobs and apply instantly',
+        style: TextStyle(
+          fontSize: 14.5,
+          color: Color(0xFF64748B),
+        ),
+      ),
+    ],
+  );
 }
 
+
 Widget _mobileStep() {
-return Column(
-crossAxisAlignment: CrossAxisAlignment.start,
-children: [
-const Text(
-'Mobile number',
-style: TextStyle(
-fontSize: 14.5,
-fontWeight: FontWeight.w700,
-color: Color(0xFF0F172A),
-),
-),
-const SizedBox(height: 10),
-TextField(
-controller: _mobileController,
-keyboardType: TextInputType.phone,
-inputFormatters: [
-FilteringTextInputFormatter.digitsOnly,
-LengthLimitingTextInputFormatter(10),
-],
-decoration: InputDecoration(
-prefixText: '+91 ',
-hintText: 'Enter mobile number',
-filled: true,
-fillColor: Colors.white,
-contentPadding:
-const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-border: OutlineInputBorder(
-borderRadius: BorderRadius.circular(14),
-borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-),
-enabledBorder: OutlineInputBorder(
-borderRadius: BorderRadius.circular(14),
-borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-),
-focusedBorder: OutlineInputBorder(
-borderRadius: BorderRadius.circular(14),
-borderSide:
-const BorderSide(color: Color(0xFF2563EB), width: 1.4),
-),
-),
-),
-if (_error != null) ...[
-const SizedBox(height: 14),
-Text(
-_error!,
-style: const TextStyle(
-color: Color(0xFFEF4444),
-fontWeight: FontWeight.w600,
-),
-),
-],
-const SizedBox(height: 26),
-SizedBox(
-width: double.infinity,
-height: 40,
-child: ElevatedButton(
-onPressed:
-_isMobileValid && !_isLoading ? _handleSendOtp : null,
-style: ElevatedButton.styleFrom(
-backgroundColor: const Color(0xFF2563EB),
-disabledBackgroundColor: const Color(0xFFE2E8F0),
-foregroundColor: Colors.white,
-elevation: 0,
-shape: RoundedRectangleBorder(
-borderRadius: BorderRadius.circular(14),
-),
-),
-child: _isLoading
-? const SizedBox(
-width: 18,
-height: 18,
-child: CircularProgressIndicator(
-strokeWidth: 2.4,
-valueColor:
-AlwaysStoppedAnimation<Color>(Colors.white),
-),
-)
-: const Text(
-'Send OTP',
-style: TextStyle(
-fontSize: 14,
-fontWeight: FontWeight.w700,
-),
-),
-),
-),
-],
-);
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'Mobile number',
+        style: TextStyle(
+          fontSize: 14.5,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF0F172A),
+        ),
+      ),
+      const SizedBox(height: 10),
+
+      TextField(
+        controller: _mobileController,
+        keyboardType: TextInputType.phone,
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(10),
+        ],
+        decoration: InputDecoration(
+          prefixText: '+91 ',
+          hintText: 'Enter mobile number',
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide:
+                const BorderSide(color: Color(0xFF2563EB), width: 1.4),
+          ),
+        ),
+      ),
+
+      if (_error != null) ...[
+        const SizedBox(height: 14),
+        Text(
+          _error!,
+          style: const TextStyle(
+            color: Color(0xFFEF4444),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+
+      const SizedBox(height: 26),
+
+      SizedBox(
+        width: double.infinity,
+        height: 52, // ✅ MATCHED SIZE
+        child: ElevatedButton(
+          onPressed: _isMobileValid && !_isLoading
+              ? _handleSendOtp
+              : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF2563EB),
+            disabledBackgroundColor: const Color(0xFFE2E8F0),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          child: _isLoading
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.6,
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : const Text(
+                  'Send OTP',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+        ),
+      ),
+    ],
+  );
 }
 
 Widget _otpStep() {
-return Column(
-crossAxisAlignment: CrossAxisAlignment.start,
-children: [
-const Text(
-'Enter OTP',
-style: TextStyle(
-fontSize: 14.5,
-fontWeight: FontWeight.w700,
-color: Color(0xFF0F172A),
-),
-),
-const SizedBox(height: 8),
-Text(
-'+91 ${_mobileController.text.trim()}',
-style: const TextStyle(
-fontSize: 13.5,
-color: Color(0xFF64748B),
-),
-),
-const SizedBox(height: 22),
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'Enter OTP',
+        style: TextStyle(
+          fontSize: 14.5,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF0F172A),
+        ),
+      ),
+      const SizedBox(height: 8),
 
-AutofillGroup(  
-    child: Row(  
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,  
-      children: List.generate(6, (i) {  
-        return SizedBox(  
-          width: 46,  
-          height: 56,  
-          child: RawKeyboardListener(  
-            focusNode: FocusNode(),  
-            onKey: (event) => _handleOtpBackspace(i, event),  
-            child: TextField(  
-              controller: _otpControllers[i],  
-              focusNode: _otpFocusNodes[i],  
-              maxLength: 1,  
-              keyboardType: TextInputType.number,  
-              autofillHints: const [AutofillHints.oneTimeCode],  
-              textAlign: TextAlign.center,  
-              style: const TextStyle(  
-                fontSize: 20,  
-                fontWeight: FontWeight.w800,  
-                color: Color(0xFF0F172A),  
-              ),  
-              decoration: InputDecoration(  
-                counterText: '',  
-                filled: true,  
-                fillColor: Colors.white,  
-                contentPadding:  
-                    const EdgeInsets.symmetric(vertical: 14),  
-                border: OutlineInputBorder(  
-                  borderRadius: BorderRadius.circular(12),  
-                  borderSide:  
-                      const BorderSide(color: Color(0xFFE2E8F0)),  
-                ),  
-                enabledBorder: OutlineInputBorder(  
-                  borderRadius: BorderRadius.circular(12),  
-                  borderSide:  
-                      const BorderSide(color: Color(0xFFE2E8F0)),  
-                ),  
-                focusedBorder: OutlineInputBorder(  
-                  borderRadius: BorderRadius.circular(12),  
-                  borderSide: const BorderSide(  
-                      color: Color(0xFF2563EB), width: 1.4),  
-                ),  
-              ),  
-              onChanged: (v) => _handleOtpChange(i, v),  
-            ),  
-          ),  
-        );  
-      }),  
-    ),  
-  ),  
+      Text(
+        '+91 ${_mobileController.text.trim()}',
+        style: const TextStyle(
+          fontSize: 13.5,
+          color: Color(0xFF64748B),
+        ),
+      ),
 
-  if (_error != null) ...[  
-    const SizedBox(height: 14),  
-    Text(  
-      _error!,  
-      style: const TextStyle(  
-        color: Color(0xFFEF4444),  
-        fontWeight: FontWeight.w600,  
-      ),  
-    ),  
-  ],  
+      const SizedBox(height: 22),
 
-  const SizedBox(height: 22),  
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: List.generate(6, (i) {
+          return SizedBox(
+            width: 46,
+            height: 56,
+            child: RawKeyboardListener(
+              focusNode: FocusNode(),
+              onKey: (event) => _handleOtpBackspace(i, event),
+              child: TextField(
+                controller: _otpControllers[i],
+                focusNode: _otpFocusNodes[i],
+                maxLength: 1,
+                keyboardType: TextInputType.number,
+                autofillHints: const [AutofillHints.oneTimeCode],
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+                decoration: InputDecoration(
+                  counterText: '',
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2563EB),
+                      width: 1.4,
+                    ),
+                  ),
+                ),
+                onChanged: (v) => _handleOtpChange(i, v),
+              ),
+            ),
+          );
+        }),
+      ),
 
-  SizedBox(  
-    width: double.infinity,  
-    height: 40,  
-    child: ElevatedButton(  
-      onPressed: _isLoading ? null : _handleVerifyOtp,  
-      style: ElevatedButton.styleFrom(  
-        backgroundColor: const Color(0xFF2563EB),  
-        disabledBackgroundColor: const Color(0xFFE2E8F0),  
-        foregroundColor: Colors.white,  
-        elevation: 0,  
-        shape: RoundedRectangleBorder(  
-          borderRadius: BorderRadius.circular(14),  
-        ),  
-      ),  
-      child: _isLoading  
-          ? const SizedBox(  
-              width: 18,  
-              height: 18,  
-              child: CircularProgressIndicator(  
-                strokeWidth: 2.4,  
-                valueColor:  
-                    AlwaysStoppedAnimation<Color>(Colors.white),  
-              ),  
-            )  
-          : const Text(  
-              'Verify & Continue',  
-              style: TextStyle(  
-                fontSize: 14,  
-                fontWeight: FontWeight.w700,  
-              ),  
-            ),  
-    ),  
-  ),  
-],
+      if (_error != null) ...[
+        const SizedBox(height: 14),
+        Text(
+          _error!,
+          style: const TextStyle(
+            color: Color(0xFFEF4444),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
 
-);
+      const SizedBox(height: 22),
+
+      SizedBox(
+        width: double.infinity,
+        height: 52, // ✅ MATCHED SIZE
+        child: ElevatedButton(
+          onPressed: _isLoading ? null : _handleVerifyOtp,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF2563EB),
+            disabledBackgroundColor: const Color(0xFFE2E8F0),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          child: _isLoading
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.6,
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : const Text(
+                  'Verify & Continue',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+        ),
+      ),
+
+      const SizedBox(height: 12),
+
+      TextButton(
+        onPressed:
+            (_resendSeconds == 0 && !_isLoading) ? _handleSendOtp : null,
+        child: Text(
+          _resendSeconds == 0
+              ? 'Resend OTP'
+              : 'Resend in $_resendSeconds s',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: _resendSeconds == 0
+                ? const Color(0xFF2563EB)
+                : const Color(0xFF94A3B8),
+          ),
+        ),
+      ),
+
+      const SizedBox(height: 6),
+
+      TextButton(
+        onPressed: _isLoading
+            ? null
+            : () {
+                setState(() {
+                  _showOtpStep = false;
+                  _error = null;
+                });
+              },
+        child: const Text(
+          'Change mobile number',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF64748B),
+          ),
+        ),
+      ),
+    ],
+  );
 }
 }
