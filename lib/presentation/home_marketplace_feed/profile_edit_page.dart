@@ -158,116 +158,104 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   // LOAD
   // ============================================================
 
-  Future<void> _load() async {
-    if (!_disposed) setState(() => _loading = true);
+  Future _load() async {
+  if (!_disposed) setState(() => _loading = true);
 
+  try {
+    // districts
     try {
-      // 1) district master
-      try {
-        final d = await _service.fetchAssamDistrictMaster();
-        _districtOptions = d
-            .map((e) => (e['district_name'] ?? '').toString().trim())
-            .where((e) => e.isNotEmpty)
-            .toList();
-
-        _districtOptions.sort((a, b) => a.compareTo(b));
-      } catch (_) {
-        _districtOptions = [];
-      }
-
-      // 2) profile
-      _profile = await _service.fetchMyProfile();
-
-      _fullNameCtrl.text = (_profile['full_name'] ?? '').toString();
-      _phoneCtrl.text = (_profile['mobile_number'] ?? _profile['phone'] ?? '')
-          .toString();
-      _bioCtrl.text = (_profile['bio'] ?? '').toString();
-
-      _experienceYearsCtrl.text =
-          (_profile['total_experience_years'] ?? '').toString();
-
-      _expectedSalaryMinCtrl.text =
-          (_profile['expected_salary_min'] ?? '').toString();
-
-      _noticeDaysCtrl.text =
-          (_profile['notice_period_days'] ?? '').toString();
-
-      _openToWork = (_profile['is_open_to_work'] ?? false) == true;
-
-      // education
-      _selectedEducation =
-          (_profile['highest_education'] ?? '').toString().trim();
-      if (_selectedEducation.isNotEmpty &&
-          !_educationOptions.contains(_selectedEducation)) {
-        _selectedEducation = 'Other';
-      }
-
-      // location
-      _selectedState =
-          (_profile['current_state'] ?? 'Assam').toString().trim();
-      if (_selectedState.isEmpty) _selectedState = 'Assam';
-
-      _selectedDistrict = (_profile['current_city'] ?? '').toString().trim();
-      if (_selectedDistrict.isNotEmpty &&
-          _districtOptions.isNotEmpty &&
-          !_districtOptions.contains(_selectedDistrict)) {
-        _selectedDistrict = '';
-      }
-
-      // preferred locations (array)
-      _preferredDistricts.clear();
-      final pl = _profile['preferred_locations'];
-      if (pl is List) {
-        for (final x in pl) {
-          final v = x.toString().trim();
-          if (v.isNotEmpty && !_preferredDistricts.contains(v)) {
-            _preferredDistricts.add(v);
-          }
-        }
-      }
-
-      // job type
-      _jobType = (_profile['preferred_job_type'] ?? 'Any').toString().trim();
-      if (!_jobTypeOptions.contains(_jobType)) _jobType = 'Any';
-
-      // skills
-      _skills.clear();
-      final rawSkills = _profile['skills'];
-      if (rawSkills is List) {
-        for (final s in rawSkills) {
-          final v = s.toString().trim();
-          if (v.isNotEmpty) _skills.add(v);
-        }
-      }
-
-      // resume + avatar (service returns signed url for UI)
-      final resumeUrl = (_profile['resume_url'] ?? '').toString().trim();
-      if (resumeUrl.isNotEmpty) {
-        _resumeName = "Resume uploaded";
-      }
-
-      final avatar = (_profile['avatar_url'] ?? '').toString().trim();
-      if (avatar.isNotEmpty) {
-        _photoName = "Photo uploaded";
-      }
-
-      // IMPORTANT:
-      // We must also keep storage paths to save later.
-      // fetchMyProfile returns signed URLs, not paths.
-      // So we load raw path from DB separately.
-      try {
-        final raw = await _service.fetchMyProfileRawPaths();
-        _resumeStoragePath = (raw['resume_url'] ?? '').toString().trim();
-        _photoStoragePath = (raw['avatar_url'] ?? '').toString().trim();
-      } catch (_) {}
+      final d = await _service.fetchAssamDistrictMaster();
+      _districtOptions = d
+          .map((e) => (e['district_name'] ?? '').toString().trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+      _districtOptions.sort((a, b) => a.compareTo(b));
     } catch (_) {
-      _profile = {};
+      _districtOptions = [];
     }
 
-    if (_disposed) return;
-    setState(() => _loading = false);
+    // profile
+    _profile = await _service.fetchMyProfile();
+
+    // TEXT FIELDS
+    _fullNameCtrl.text = (_profile['full_name'] ?? '').toString();
+    _phoneCtrl.text =
+        (_profile['mobile_number'] ?? _profile['phone'] ?? '').toString();
+    _bioCtrl.text = (_profile['bio'] ?? '').toString();
+
+    _experienceYearsCtrl.text =
+        (_profile['total_experience_years'] ?? '').toString();
+
+    _expectedSalaryMinCtrl.text =
+        (_profile['expected_salary_min'] ?? '').toString();
+
+    _noticeDaysCtrl.text =
+        (_profile['notice_period_days'] ?? '').toString();
+
+    // SWITCH
+    _openToWork = (_profile['is_open_to_work'] ?? false) == true;
+
+    // EDUCATION
+    _selectedEducation =
+        (_profile['highest_education'] ?? '').toString().trim();
+
+    if (_selectedEducation.isNotEmpty &&
+        !_educationOptions.contains(_selectedEducation)) {
+      _selectedEducation = 'Other';
+    }
+
+    // LOCATION
+    _selectedState =
+        (_profile['current_state'] ?? 'Assam').toString().trim();
+
+    _selectedDistrict =
+        (_profile['current_city'] ?? '').toString().trim();
+
+    // JOB TYPE
+    _jobType =
+        (_profile['preferred_job_type'] ?? 'Any').toString().trim();
+
+    if (!_jobTypeOptions.contains(_jobType)) _jobType = 'Any';
+
+    // SKILLS
+    _skills.clear();
+    final rawSkills = _profile['skills'];
+    if (rawSkills is List) {
+      for (final s in rawSkills) {
+        final v = s.toString().trim();
+        if (v.isNotEmpty) _skills.add(v);
+      }
+    }
+
+    // FILES
+    final resumeUrl = (_profile['resume_url'] ?? '').toString().trim();
+    if (resumeUrl.isNotEmpty) _resumeName = "Resume uploaded";
+
+    final avatar = (_profile['avatar_url'] ?? '').toString().trim();
+    if (avatar.isNotEmpty) _photoName = "Photo uploaded";
+
+    // RAW PATHS
+    try {
+      final raw = await _service.fetchMyProfileRawPaths();
+      _resumeStoragePath =
+          (raw['resume_url'] ?? '').toString().trim();
+      _photoStoragePath =
+          (raw['avatar_url'] ?? '').toString().trim();
+    } catch (_) {}
+  } catch (_) {
+    _profile = {};
   }
 
+  if (_disposed) return;
+  setState(() => _loading = false);
+}
+
+
+
+bool _isLocked(String field) {
+  final v = (_profile[field] ?? '').toString().trim();
+  return v.isNotEmpty;
+}
   // ============================================================
   // PICKERS
   // ============================================================
@@ -408,63 +396,70 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
   int _toInt(String s) => int.tryParse(s.trim()) ?? 0;
 
-  Future<void> _save() async {
-    if (_saving) return;
+  Future _save() async {
+  if (_saving) return;
 
-    setState(() => _saving = true);
+  setState(() => _saving = true);
 
-    // 1) Upload files first
-    await _uploadPhotoIfNeeded();
-    await _uploadResumeIfNeeded();
+  await _uploadPhotoIfNeeded();
+  await _uploadResumeIfNeeded();
 
-    // 2) Save profile
-    final payload = <String, dynamic>{
+  final payload = <String, dynamic>{
+    // ❌ LOCKED FIELDS (only if empty allow update)
+    if (!_isLocked('full_name'))
       'full_name': _fullNameCtrl.text.trim(),
+
+    if (!_isLocked('mobile_number'))
       'phone': _phoneCtrl.text.trim(),
-      'bio': _bioCtrl.text.trim(),
 
-      'current_city': _selectedDistrict.trim(),
-      'current_state': _selectedState.trim(),
-      'location_text': '',
+    // EMAIL (actual_email)
+    'actual_email': (_profile['actual_email'] ?? '').toString().trim(),
 
-      'highest_education': _selectedEducation.trim(),
-      'total_experience_years': _toInt(_experienceYearsCtrl.text),
+    // NORMAL FIELDS
+    'bio': _bioCtrl.text.trim(),
 
-      'expected_salary_min': _toInt(_expectedSalaryMinCtrl.text),
-      'notice_period_days': _toInt(_noticeDaysCtrl.text),
+    'current_city': _selectedDistrict.trim(),
+    'current_state': _selectedState.trim(),
+    'location_text': '',
 
-      'preferred_job_type': _jobType,
-      'preferred_locations': _preferredDistricts,
+    'highest_education': _selectedEducation.trim(),
+    'total_experience_years': _toInt(_experienceYearsCtrl.text),
 
-      'is_open_to_work': _openToWork,
+    'expected_salary_min': _toInt(_expectedSalaryMinCtrl.text),
+    'notice_period_days': _toInt(_noticeDaysCtrl.text),
 
-      'skills': _skills,
+    'preferred_job_type': _jobType,
+    'preferred_locations': _preferredDistricts,
 
-      // IMPORTANT: save storage path, not signed url
-      if (_photoStoragePath.trim().isNotEmpty) 'avatar_url': _photoStoragePath,
-      if (_resumeStoragePath.trim().isNotEmpty) 'resume_url': _resumeStoragePath,
-    };
+    'is_open_to_work': _openToWork,
+    'skills': _skills,
 
-    try {
-      await _service.updateMyProfile(payload);
+    if (_photoStoragePath.trim().isNotEmpty)
+      'avatar_url': _photoStoragePath,
 
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Profile updated")),
-      );
+    if (_resumeStoragePath.trim().isNotEmpty)
+      'resume_url': _resumeStoragePath,
+  };
 
-      Navigator.pop(context, true);
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to update profile")),
-      );
-    }
+  try {
+    await _service.updateMyProfile(payload);
 
     if (!mounted) return;
-    setState(() => _saving = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Profile updated")),
+    );
+
+    Navigator.pop(context, true);
+  } catch (_) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Failed to update profile")),
+    );
   }
 
+  if (!mounted) return;
+  setState(() => _saving = false);
+}
   // ============================================================
   // UI HELPERS
   // ============================================================
@@ -862,177 +857,252 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   }
 
   Widget _body() {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+  final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 130 + bottomInset),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            decoration: KhilonjiyaUI.cardDecoration(radius: 22),
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  width: 54,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    color: KhilonjiyaUI.primary.withOpacity(0.10),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: const Icon(
-                    Icons.person_outline,
-                    color: KhilonjiyaUI.primary,
-                  ),
+  return SingleChildScrollView(
+    padding: EdgeInsets.fromLTRB(16, 16, 16, 130 + bottomInset),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // HEADER
+        Container(
+          decoration: KhilonjiyaUI.cardDecoration(radius: 22),
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: KhilonjiyaUI.primary.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(18),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Edit your profile", style: KhilonjiyaUI.hTitle),
-                      const SizedBox(height: 4),
-                      Text(
-                        "More details = better matches.",
-                        style: KhilonjiyaUI.sub,
-                      ),
-                    ],
-                  ),
+                child: const Icon(
+                  Icons.person_outline,
+                  color: KhilonjiyaUI.primary,
                 ),
-              ],
-            ),
-          ),
-
-          _sectionTitle("Mobile number", sub: "This is used for job applications."),
-          TextField(
-            controller: _phoneCtrl,
-            keyboardType: TextInputType.phone,
-            decoration: _dec("Mobile number", icon: Icons.phone_outlined),
-          ),
-
-          _sectionTitle("Basic details"),
-          TextField(
-            controller: _fullNameCtrl,
-            decoration: _dec("Full name", icon: Icons.badge_outlined),
-          ),
-
-          _sectionTitle("Location", sub: "Choose your district for nearby jobs."),
-          if (_districtOptions.isNotEmpty) ...[
-            _dropdownBox(
-              value: _selectedDistrict,
-              options: _districtOptions,
-              hint: "Select district",
-              icon: Icons.location_on_outlined,
-              onChanged: (v) => setState(() => _selectedDistrict = v),
-            ),
-          ] else ...[
-            TextField(
-              decoration: _dec(
-                "District",
-                icon: Icons.location_on_outlined,
               ),
-              onChanged: (v) => _selectedDistrict = v.trim(),
-            ),
-          ],
-          const SizedBox(height: 12),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Edit your profile", style: KhilonjiyaUI.hTitle),
+                    const SizedBox(height: 4),
+                    Text(
+                      "More details = better matches.",
+                      style: KhilonjiyaUI.sub,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // -------------------------------
+        // MOBILE (LOCK AFTER SET)
+        // -------------------------------
+        _sectionTitle("Mobile number",
+            sub: "Used for job applications"),
+
+        TextField(
+          controller: _phoneCtrl,
+          enabled: !_isLocked('mobile_number'),
+          keyboardType: TextInputType.phone,
+          decoration: _dec(
+            _isLocked('mobile_number')
+                ? "Mobile number (cannot change)"
+                : "Enter mobile number",
+            icon: Icons.phone_outlined,
+          ),
+        ),
+
+        // -------------------------------
+        // NAME (LOCK AFTER SET)
+        // -------------------------------
+        _sectionTitle("Full name"),
+
+        TextField(
+          controller: _fullNameCtrl,
+          enabled: !_isLocked('full_name'),
+          decoration: _dec(
+            _isLocked('full_name')
+                ? "Full name (cannot change)"
+                : "Enter full name",
+            icon: Icons.badge_outlined,
+          ),
+        ),
+
+        // -------------------------------
+        // EMAIL (READ ONLY)
+        // -------------------------------
+        _sectionTitle("Email address"),
+
+        TextField(
+          enabled: false,
+          controller: TextEditingController(
+            text: (_profile['actual_email'] ?? '').toString(),
+          ),
+          decoration: _dec(
+            "Email address",
+            icon: Icons.email_outlined,
+          ),
+        ),
+
+        // -------------------------------
+        // LOCATION
+        // -------------------------------
+        _sectionTitle("Location",
+            sub: "Used for nearby jobs"),
+
+        if (_districtOptions.isNotEmpty) ...[
           _dropdownBox(
-            value: _selectedState,
-            options: const ['Assam'],
-            hint: "Select state",
-            icon: Icons.map_outlined,
-            onChanged: (v) => setState(() => _selectedState = v),
+            value: _selectedDistrict,
+            options: _districtOptions,
+            hint: "Select district",
+            icon: Icons.location_on_outlined,
+            onChanged: (v) => setState(() => _selectedDistrict = v),
           ),
-
-          _sectionTitle("Education"),
-          _dropdownBox(
-            value: _selectedEducation,
-            options: _educationOptions,
-            hint: "Select highest education",
-            icon: Icons.school_outlined,
-            onChanged: (v) => setState(() => _selectedEducation = v),
-          ),
-
-          _sectionTitle("Career"),
+        ] else ...[
           TextField(
-            controller: _experienceYearsCtrl,
-            keyboardType: TextInputType.number,
-            decoration:
-                _dec("Total experience (years)", icon: Icons.work_outline)
-  .copyWith(labelText: "Total experience (years)"),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-  controller: _expectedSalaryMinCtrl,
-  keyboardType: TextInputType.number,
-  decoration: _dec(
-    "Expected salary per month",
-    icon: Icons.currency_rupee_rounded,
-  ).copyWith(
-    labelText: "Expected salary per month",
-  ),
-),
-const SizedBox(height: 12),
-          TextField(
-  controller: _noticeDaysCtrl,
-  keyboardType: TextInputType.number,
-  decoration: _dec(
-    "Notice period (days)",
-    icon: Icons.calendar_today_outlined,
-  ).copyWith(
-    labelText: "Notice period (days)",
-  ),
-),
-          _sectionTitle("Preferences"),
-          _dropdownBox(
-            value: _jobType,
-            options: _jobTypeOptions,
-            hint: "Preferred job type",
-            icon: Icons.tune_rounded,
-            onChanged: (v) => setState(() => _jobType = v),
-          ),
-          const SizedBox(height: 12),
-          SwitchListTile(
-            value: _openToWork,
-            onChanged: (v) => setState(() => _openToWork = v),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-            tileColor: const Color(0xFFF8FAFC),
-            title: Text(
-              "Open to work",
-              style: KhilonjiyaUI.body.copyWith(fontWeight: FontWeight.w900),
-            ),
-            subtitle: Text(
-              "Employers can see you as available.",
-              style: KhilonjiyaUI.sub,
-            ),
-          ),
-
-          _sectionTitle("Preferred locations", sub: "Optional. Helps recommendations."),
-          _preferredLocationsBox(),
-
-          _sectionTitle("Skills", sub: "Optional but improves recommendations."),
-          _skillsBox(),
-
-          _sectionTitle("Resume & Photo", sub: "Optional."),
-          _filePickers(),
-
-          _sectionTitle("About you"),
-          TextField(
-            controller: _bioCtrl,
-            maxLines: 5,
             decoration: _dec(
-              "Short bio",
-              icon: Icons.subject_rounded,
+              "Enter district",
+              icon: Icons.location_on_outlined,
             ),
+            onChanged: (v) => _selectedDistrict = v.trim(),
           ),
-
-          const SizedBox(height: 14),
         ],
-      ),
-    );
-  }
+
+        const SizedBox(height: 12),
+
+        _dropdownBox(
+          value: _selectedState,
+          options: const ['Assam'],
+          hint: "Select state",
+          icon: Icons.map_outlined,
+          onChanged: (v) => setState(() => _selectedState = v),
+        ),
+
+        // -------------------------------
+        // EDUCATION
+        // -------------------------------
+        _sectionTitle("Education"),
+
+        _dropdownBox(
+          value: _selectedEducation,
+          options: _educationOptions,
+          hint: "Select highest education",
+          icon: Icons.school_outlined,
+          onChanged: (v) => setState(() => _selectedEducation = v),
+        ),
+
+        // -------------------------------
+        // CAREER
+        // -------------------------------
+        _sectionTitle("Career details"),
+
+        TextField(
+          controller: _experienceYearsCtrl,
+          keyboardType: TextInputType.number,
+          decoration: _dec(
+            "Total experience (years)",
+            icon: Icons.work_outline,
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        TextField(
+          controller: _expectedSalaryMinCtrl,
+          keyboardType: TextInputType.number,
+          decoration: _dec(
+            "Expected salary per month",
+            icon: Icons.currency_rupee_rounded,
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        TextField(
+          controller: _noticeDaysCtrl,
+          keyboardType: TextInputType.number,
+          decoration: _dec(
+            "Notice period (days)",
+            icon: Icons.calendar_today_outlined,
+          ),
+        ),
+
+        // -------------------------------
+        // PREFERENCES
+        // -------------------------------
+        _sectionTitle("Preferences"),
+
+        _dropdownBox(
+          value: _jobType,
+          options: _jobTypeOptions,
+          hint: "Preferred job type",
+          icon: Icons.tune_rounded,
+          onChanged: (v) => setState(() => _jobType = v),
+        ),
+
+        const SizedBox(height: 12),
+
+        SwitchListTile(
+          value: _openToWork,
+          onChanged: (v) => setState(() => _openToWork = v),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18)),
+          tileColor: const Color(0xFFF8FAFC),
+          title: Text(
+            "Open to work",
+            style: KhilonjiyaUI.body.copyWith(
+                fontWeight: FontWeight.w900),
+          ),
+          subtitle: Text(
+            "Employers can see you as available",
+            style: KhilonjiyaUI.sub,
+          ),
+        ),
+
+        // -------------------------------
+        // PREFERRED LOCATIONS
+        // -------------------------------
+        _sectionTitle("Preferred locations"),
+        _preferredLocationsBox(),
+
+        // -------------------------------
+        // SKILLS
+        // -------------------------------
+        _sectionTitle("Skills"),
+        _skillsBox(),
+
+        // -------------------------------
+        // FILES
+        // -------------------------------
+        _sectionTitle("Resume & photo"),
+        _filePickers(),
+
+        // -------------------------------
+        // BIO
+        // -------------------------------
+        _sectionTitle("About you"),
+
+        TextField(
+          controller: _bioCtrl,
+          maxLines: 5,
+          decoration: _dec(
+            "Short description about you",
+            icon: Icons.subject_rounded,
+          ),
+        ),
+
+        const SizedBox(height: 14),
+      ],
+    ),
+  );
+}
 
   // ============================================================
   // BUILD
