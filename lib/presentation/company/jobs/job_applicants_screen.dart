@@ -403,21 +403,26 @@ Map<String, dynamic> _getApp(dynamic raw) {
   final skills = (app['skills'] ?? '').toString();
   final notes = (row['employer_notes'] ?? '').toString();
 
-  // ✅ NEW (JOB TITLE)
   final jobTitle =
       (row['job_listings']?['job_title'] ?? '').toString();
 
   final status =
       (row['application_status'] ?? 'applied').toString().toLowerCase();
 
+  // ✅ ALL RELEVANT FIELDS
   final fields = {
     "Phone": app['phone'],
     "Email": app['email'],
     "District": app['district'],
+    "Address": app['address'],
+    "Gender": app['gender'],
+    "DOB": app['date_of_birth'],
     "Education": app['education'],
-    "Experience": app['experience_level'],
-    "Salary": app['expected_salary'],
+    "Experience Level": app['experience_level'],
+    "Experience Details": app['experience_details'],
+    "Expected Salary": app['expected_salary'],
     "Availability": app['availability'],
+    "Additional Info": app['additional_info'],
   };
 
   ButtonStyle primaryStyle = ElevatedButton.styleFrom(
@@ -472,7 +477,7 @@ Map<String, dynamic> _getApp(dynamic raw) {
                   ),
                 ),
 
-                // CONTENT
+                // CONTENT (SCROLLABLE)
                 Expanded(
                   child: ListView(
                     controller: scrollController,
@@ -511,19 +516,6 @@ Map<String, dynamic> _getApp(dynamic raw) {
                         ),
                       ],
 
-                      // ✅ APPLIED FOR (NEW)
-                      if (jobTitle.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        Text(
-                          "Applied for: $jobTitle",
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 13.5,
-                            color: _text,
-                          ),
-                        ),
-                      ],
-
                       // NOTES
                       const SizedBox(height: 16),
                       Row(
@@ -547,6 +539,26 @@ Map<String, dynamic> _getApp(dynamic raw) {
                         notes.isEmpty ? "No notes added" : notes,
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
+
+                      // ✅ APPLIED FOR (PROMINENT AT BOTTOM)
+                      if (jobTitle.isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFECFDF5),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            "Applied for: $jobTitle",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                              color: _primary,
+                            ),
+                          ),
+                        ),
+                      ],
 
                       const SizedBox(height: 80),
                     ],
@@ -583,7 +595,7 @@ Map<String, dynamic> _getApp(dynamic raw) {
                               await _scheduleInterview(row);
                             },
                             style: primaryStyle,
-                            child: const Text("Schedule"),
+                            child: const Text("Schedule Interview"),
                           ),
                         ),
 
@@ -599,10 +611,11 @@ Map<String, dynamic> _getApp(dynamic raw) {
                           ),
                         ),
 
-                      if (status != 'selected') const SizedBox(width: 8),
+                      // ❌ AFTER REJECT → ONLY RESUME
+                      if (status != 'selected' && status != 'rejected')
+                        const SizedBox(width: 8),
 
-                      // ✅ LIGHT RED REJECT
-                      if (status != 'selected')
+                      if (status != 'selected' && status != 'rejected')
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () async {
@@ -610,9 +623,8 @@ Map<String, dynamic> _getApp(dynamic raw) {
                               await _setStatus(row, 'rejected');
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFFFF1F2),
-                              foregroundColor: const Color(0xFFDC2626),
-                              elevation: 0,
+                              backgroundColor: const Color(0xFFFFEDD5),
+                              foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
