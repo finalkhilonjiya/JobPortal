@@ -202,29 +202,43 @@ Padding(
   }
 
   Widget _houseSpecs() {
-    return Column(
-      children: [
-        _dropdown("House Type", _houseType,
-            ['Traditional Assam House','Modern Assam Style','Heritage Style','Fusion Style'],
-            (v) => setState(() => _houseType = v!)),
-        SizedBox(height: 3.w),
-        _dropdown("Stories", _floors,
-            ['Single Story','Double Story','Ground + First'],
-            (v) => setState(() => _floors = v!)),
-        SizedBox(height: 3.w),
-        _dropdown("Roof Type", _roofType,
-            ['Tin Roof','Tile Roof','Concrete Slab','Mixed'],
-            (v) => setState(() => _roofType = v!)),
-        SizedBox(height: 3.w),
-        _dropdown("Foundation Type", _foundationType,
-            ['Pillar Foundation','Concrete Foundation','Wooden Posts'],
-            (v) => setState(() => _foundationType = v!)),
-        SizedBox(height: 3.w),
-        _input(_plotSizeController, "Plot Size (sq ft)",
-            keyboardType: TextInputType.number),
-      ],
-    );
-  }
+  return Column(
+    children: [
+      _dropdown(
+        "House Type",
+        _houseType,
+        [
+          'Traditional Assam House',
+          'Modern Assam Style',
+          'Heritage Style',
+          'Fusion Style'
+        ],
+        (v) => setState(() => _houseType = v!),
+      ),
+      SizedBox(height: 3.w),
+      _dropdown(
+        "Stories",
+        _floors,
+        ['Single Story', 'Double Story', 'Ground + First'],
+        (v) => setState(() => _floors = v!),
+      ),
+      SizedBox(height: 3.w),
+      _dropdown(
+        "Roof Type",
+        _roofType,
+        ['Tin Roof', 'Tile Roof', 'Concrete Slab', 'Mixed'],
+        (v) => setState(() => _roofType = v!),
+      ),
+      SizedBox(height: 3.w),
+      _dropdown(
+        "Foundation Type",
+        _foundationType,
+        ['Pillar Foundation', 'Concrete Foundation', 'Wooden Posts'],
+        (v) => setState(() => _foundationType = v!),
+      ),
+    ],
+  );
+}
 
   Widget _services() {
     return Column(
@@ -320,7 +334,6 @@ Padding(
       'number_of_floors': _floors,
       'roof_type': _roofType,
       'foundation_type': _foundationType,
-      'plot_size': _plotSizeController.text,
       'budget_range': _budget,
       'timeline': _timeline,
       'needs_design': _needsDesign,
@@ -340,28 +353,96 @@ Padding(
 
     await showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        title: const Text("Request Submitted"),
-        content: const Text(
-  "Your Assam type construction request has been submitted successfully. Khilonjiya Support Team will contact you shortly.",
-),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("OK"),
+      barrierDismissible: false,
+      builder: (_) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-        ],
-      ),
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TweenAnimationBuilder<double>(
+                  duration: const Duration(milliseconds: 500),
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  builder: (context, value, child) {
+                    return Transform.scale(
+                      scale: value,
+                      child: Container(
+                        width: 70,
+                        height: 70,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF2563EB),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 36,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 20),
+
+                const Text(
+                  "Request Submitted",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                const Text(
+                  "Your Assam type construction request has been submitted successfully. Khilonjiya Support Team will contact you shortly.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                      "OK",
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
 
     if (!mounted) return;
     Navigator.pop(context);
-
   } catch (e) {
     if (!mounted) return;
+
     setState(() => _loading = false);
 
     ScaffoldMessenger.of(context)
