@@ -420,7 +420,10 @@ Map<String, dynamic> _getApp(dynamic raw) {
     "Education": app['education'],
     "Experience Level": app['experience_level'],
     "Experience Details": app['experience_details'],
-    "Expected Salary": app['expected_salary'],
+    "Expected Salary": (() {
+  final v = int.tryParse(app['expected_salary']?.toString() ?? '') ?? 0;
+  return v > 0 ? "₹$v / month" : "";
+})(),
     "Availability": app['availability'],
     "Additional Info": app['additional_info'],
   };
@@ -888,7 +891,13 @@ Widget _iconBtn(IconData icon, VoidCallback onTap) {
   final name = (app['name'] ?? 'Candidate').toString();
   final district = (app['district'] ?? '').toString();
   final exp = (app['experience_level'] ?? '').toString();
-  final salary = (app['expected_salary'] ?? '').toString();
+
+  // ✅ FIXED SALARY
+  final rawSalary = app['expected_salary'];
+  final salaryInt = int.tryParse(rawSalary?.toString() ?? '') ?? 0;
+  final salary =
+      salaryInt > 0 ? "₹$salaryInt / month" : "Expected salary -";
+
   final photo = (app['photo_file_url'] ?? '').toString();
 
   final status =
@@ -919,12 +928,10 @@ Widget _iconBtn(IconData icon, VoidCallback onTap) {
         children: [
           _avatar(name, photoUrl: photo),
           const SizedBox(width: 12),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // NAME + STATUS
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -944,10 +951,7 @@ Widget _iconBtn(IconData icon, VoidCallback onTap) {
                     _statusChip(status),
                   ],
                 ),
-
                 const SizedBox(height: 4),
-
-                // APPLIED TIME
                 Text(
                   appliedAt == null
                       ? "Recently applied"
@@ -957,10 +961,7 @@ Widget _iconBtn(IconData icon, VoidCallback onTap) {
                     fontSize: 12,
                   ),
                 ),
-
                 const SizedBox(height: 6),
-
-                // LOCATION + EXPERIENCE
                 Text(
                   district.isEmpty && exp.isEmpty
                       ? "-"
@@ -971,12 +972,11 @@ Widget _iconBtn(IconData icon, VoidCallback onTap) {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-
                 const SizedBox(height: 6),
 
-                // SALARY
+                // ✅ SALARY DISPLAY
                 Text(
-                  salary.isEmpty ? "Expected salary -" : salary,
+                  salary,
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 13.5,
@@ -991,7 +991,6 @@ Widget _iconBtn(IconData icon, VoidCallback onTap) {
     ),
   );
 }
-
 
   Widget _mini(IconData icon, String text) {
     return Row(
