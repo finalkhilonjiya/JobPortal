@@ -24,6 +24,7 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
   final _description = TextEditingController();
   final _location = TextEditingController();
   final _website = TextEditingController();
+  String? _logoPath; // ✅ for DB
 
   bool _loading = true;
   bool _saving = false;
@@ -39,62 +40,78 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
 
   // ================= LOAD =================
   Future<void> _load() async {
-    final user = supabase.auth.currentUser;
+  final user = supabase.auth.currentUser;
 
-    final profile = await supabase
-        .from('user_profiles')
-        .select()
-        .eq('id', user!.id)
-        .single();
+  final profile = await supabase
+      .from('user_profiles')
+      .select()
+      .eq('id', user!.id)
+      .single();
 
-    final member = await supabase
-        .from('company_members')
-        .select('company_id')
-        .eq('user_id', user.id)
-        .single();
+  final member = await supabase
+      .from('company_members')
+      .select('company_id')
+      .eq('user_id', user.id)
+      .single();
 
-    _companyId = member['company_id'];
+  _companyId = member['company_id'];
 
-    final company = await supabase
-        .from('companies')
-        .select()
-        .eq('id', _companyId!)
-        .single();
+  final company = await supabase
+      .from('companies')
+      .select()
+      .eq('id', _companyId!)
+      .single();
 
-    _name.text = profile['full_name'] ?? '';
-    _phone.text = profile['mobile_number'] ?? '';
+  _name.text = profile['full_name'] ?? '';
+  _phone.text = profile['mobile_number'] ?? '';
 
-    _companyName.text = company['name'] ?? '';
-    _description.text = company['description'] ?? '';
-    _location.text = company['location'] ?? '';
-    _website.text = company['website'] ?? '';
-    _logoUrl = company['logo_url'];
+  _companyName.text = company['name'] ?? '';
+  _description.text = company['description'] ?? '';
+  _location.text = company['location'] ?? '';
+  _website.text = company['website'] ?? '';
 
-    setState(() => _loading = false);
+  // ✅ FIXED
+  final raw = (company['logo_url'] ?? '').toString().trim();
+
+  _logoPath = raw;
+
+  if (raw.isNotEmpty) {
+    _logoUrl = supabase.storage
+        .from('company-assets')
+        .getPublicUrl(raw);
+  } else {
+    _logoUrl = null;
   }
+
+  setState(() => _loading = false);
+}
 
   // ================= LOGO =================
   Future<void> _pickLogo() async {
-    final picker = ImagePicker();
-    final file = await picker.pickImage(source: ImageSource.gallery);
+  final picker = ImagePicker();
+  final file = await picker.pickImage(source: ImageSource.gallery);
 
-    if (file == null) return;
+  if (file == null) return;
+  if (_companyId == null) return;
 
-    final user = supabase.auth.currentUser;
+  final path = 'company-logos/$_companyId.jpg';
 
-    final path = 'company-logos/${user!.id}.jpg';
+  await supabase.storage.from('company-assets').upload(
+        path,
+        File(file.path),
+        fileOptions: const FileOptions(upsert: true),
+      );
 
-    await supabase.storage.from('company-assets').upload(
-          path,
-          File(file.path),
-          fileOptions: const FileOptions(upsert: true),
-        );
+  // ✅ SAVE PATH
+  _logoPath = path;
 
-    final url =
-        supabase.storage.from('company-assets').getPublicUrl(path);
+  // ✅ UI URL
+  final url = supabase.storage
+      .from('company-assets')
+      .getPublicUrl(path);
 
-    setState(() => _logoUrl = url);
-  }
+  setState(() => _logoUrl = url);
+}
 
   // ================= SAVE =================
   Future<void> _save() async {
@@ -115,7 +132,7 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
         'description': _description.text.trim(),
         'location': _location.text.trim(),
         'website': _website.text.trim(),
-        'logo_url': _logoUrl,
+        'logo_url': _logoPath,
       }).eq('id', _companyId!);
 
       if (!mounted) return;
