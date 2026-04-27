@@ -1384,208 +1384,263 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
   // ============================================================
 
   Future<Map<String, dynamic>> fetchMyProfile() async {
-    _ensureAuthenticatedSync();
-    final userId = _userId();
+  _ensureAuthenticatedSync();
+  final userId = _userId();
 
-    final res = await _db
-        .from('user_profiles')
-        .select('''
-          id,
-          email,
-          full_name,
-          avatar_url,
-          mobile_number,
-          auth_provider,
+  final res = await _db
+      .from('user_profiles')
+      .select('''
+        id,
 
-          location,
-          current_location,
-          current_city,
-          current_state,
-          current_latitude,
-          current_longitude,
-          location_updated_at,
-          default_search_radius_km,
+        actual_email,
+        email,
 
-          bio,
-          skills,
-          highest_education,
-          total_experience_years,
+        full_name,
+        avatar_url,
+        mobile_number,
+        auth_provider,
 
-          preferred_job_types,
-          preferred_locations,
-          expected_salary_min,
-          expected_salary_max,
-          notice_period_days,
-          is_open_to_work,
+        location,
+        current_location,
+        current_city,
+        current_state,
+        current_latitude,
+        current_longitude,
+        location_updated_at,
+        default_search_radius_km,
 
-          resume_url,
-          resume_headline,
-          resume_updated_at,
+        bio,
+        skills,
+        highest_education,
+        total_experience_years,
 
-          is_profile_public,
-          notification_enabled,
-          job_alerts_enabled,
-          language_preference,
+        preferred_job_types,
+        preferred_locations,
+        expected_salary_min,
+        expected_salary_max,
+        notice_period_days,
+        is_open_to_work,
 
-          profile_completion_percentage,
-          last_profile_update,
+        resume_url,
+        resume_headline,
+        resume_updated_at,
 
-          current_job_title,
-          current_company
-        ''')
-        .eq('id', userId)
-        .maybeSingle();
+        is_profile_public,
+        notification_enabled,
+        job_alerts_enabled,
+        language_preference,
 
-    if (res == null) return {};
+        profile_completion_percentage,
+        last_profile_update,
 
-    final p = Map<String, dynamic>.from(res);
+        current_job_title,
+        current_company
+      ''')
+      .eq('id', userId)
+      .maybeSingle();
 
-    // convert stored paths -> signed URLs for UI
-    final avatarRaw = (p['avatar_url'] ?? '').toString();
-    final resumeRaw = (p['resume_url'] ?? '').toString();
+  if (res == null) return {};
 
-    final avatarSigned =
-        avatarRaw.trim().isEmpty ? '' : await _toSignedUrlIfNeeded(avatarRaw);
-    final resumeSigned =
-        resumeRaw.trim().isEmpty ? '' : await _toSignedUrlIfNeeded(resumeRaw);
+  final p = Map<String, dynamic>.from(res);
 
-    return {
-      ...p,
+  // signed URLs
+  final avatarRaw = (p['avatar_url'] ?? '').toString();
+  final resumeRaw = (p['resume_url'] ?? '').toString();
 
-      // signed urls for UI
-      'avatar_url': avatarSigned,
-      'resume_url': resumeSigned,
+  final avatarSigned =
+      avatarRaw.trim().isEmpty ? '' : await _toSignedUrlIfNeeded(avatarRaw);
 
-      // old UI expects:
-      'phone': p['mobile_number'],
-      'location_text': p['location'],
+  final resumeSigned =
+      resumeRaw.trim().isEmpty ? '' : await _toSignedUrlIfNeeded(resumeRaw);
 
-      // old UI expects string:
-      'preferred_job_type': _preferredJobTypeString(p['preferred_job_types']),
+  // ✅ FINAL MAP
+  return {
+    ...p,
 
-      // not in schema (kept for UI stability)
-      'preferred_employment_type': 'Any',
-    };
-  }
+    // 🔥 FORCE correct email usage
+    'actual_email': (p['actual_email'] ?? p['email'] ?? '').toString(),
+    'email': (p['actual_email'] ?? p['email'] ?? '').toString(),
+
+    // signed urls
+    'avatar_url': avatarSigned,
+    'resume_url': resumeSigned,
+
+    // legacy UI mappings
+    'phone': p['mobile_number'],
+    'location_text': p['location'],
+    'preferred_job_type': _preferredJobTypeString(p['preferred_job_types']),
+
+    // fallback
+    'preferred_employment_type': 'Any',
+  };
+}
 
   Future<void> updateMyProfile(Map<String, dynamic> payload) async {
-    _ensureAuthenticatedSync();
-    final userId = _userId();
+  _ensureAuthenticatedSync();
+  final userId = _userId();
 
-    final mapped = <String, dynamic>{};
+  final mapped = <String, dynamic>{};
 
-    void putString(String key, String payloadKey) {
-      if (!payload.containsKey(payloadKey)) return;
-      mapped[key] = (payload[payloadKey] ?? '').toString().trim();
+  void putString(String key, String payloadKey) {
+    if (!payload.containsKey(payloadKey)) return;
+    mapped[key] = (payload[payloadKey] ?? '').toString().trim();
+  }
+
+  void putInt(String key, String payloadKey) {
+    if (!payload.containsKey(payloadKey)) return;
+    mapped[key] = _toInt(payload[payloadKey]);
+  }
+
+  void putBool(String key, String payloadKey) {
+    if (!payload.containsKey(payloadKey)) return;
+    final v = payload[payloadKey];
+    mapped[key] = (v == true);
+  }
+
+  // --------------------------------------------------
+  // BASIC
+  // --------------------------------------------------
+  putString('full_name', 'full_name');
+  putString('mobile_number', 'phone');
+
+  // ✅ ACTUAL EMAIL (NEW)
+  if (payload.containsKey('actual_email')) {
+    final v = (payload['actual_email'] ?? '').toString().trim();
+    if (v.isNotEmpty) {
+      mapped['actual_email'] = v;
     }
+  }
 
-    void putInt(String key, String payloadKey) {
-      if (!payload.containsKey(payloadKey)) return;
-      mapped[key] = _toInt(payload[payloadKey]);
+  // --------------------------------------------------
+  // LOCATION
+  // --------------------------------------------------
+  putString('current_city', 'current_city');
+  putString('current_state', 'current_state');
+  putString('location', 'location_text');
+
+  // --------------------------------------------------
+  // PROFILE
+  // --------------------------------------------------
+  putString('bio', 'bio');
+
+  if (payload.containsKey('skills')) {
+    mapped['skills'] = payload['skills'] ?? [];
+  }
+
+  putString('highest_education', 'highest_education');
+  putInt('total_experience_years', 'total_experience_years');
+
+  // --------------------------------------------------
+  // SALARY
+  // --------------------------------------------------
+  if (payload.containsKey('expected_salary_min')) {
+    final clean = _toInt(payload['expected_salary_min']);
+    mapped['expected_salary_min'] = clean < 0 ? 0 : clean;
+    mapped['expected_salary_max'] = clean > 0 ? clean + 5000 : 0;
+  }
+
+  putInt('notice_period_days', 'notice_period_days');
+
+  // --------------------------------------------------
+  // PREFERENCES
+  // --------------------------------------------------
+  if (payload.containsKey('preferred_job_type')) {
+    final jt = (payload['preferred_job_type'] ?? 'Any').toString();
+    mapped['preferred_job_types'] = _preferredJobTypesArray(jt);
+  }
+
+  if (payload.containsKey('preferred_locations')) {
+    final v = payload['preferred_locations'];
+    if (v is List) {
+      mapped['preferred_locations'] = v
+          .map((e) => e.toString().trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
     }
+  }
 
-    void putBool(String key, String payloadKey) {
-      if (!payload.containsKey(payloadKey)) return;
-      final v = payload[payloadKey];
-      mapped[key] = (v == true);
+  putBool('is_open_to_work', 'is_open_to_work');
+
+  // --------------------------------------------------
+  // FILES (ONLY RAW PATHS)
+  // --------------------------------------------------
+  if (payload.containsKey('avatar_url')) {
+    final v = (payload['avatar_url'] ?? '').toString().trim();
+    if (v.isNotEmpty && !_looksLikeHttpUrl(v)) {
+      mapped['avatar_url'] = v;
     }
+  }
 
-    // basic
-    putString('full_name', 'full_name');
-    putString('mobile_number', 'phone');
-
-    // location
-    putString('current_city', 'current_city');
-    putString('current_state', 'current_state');
-    putString('location', 'location_text');
-
-    // profile
-    putString('bio', 'bio');
-
-    if (payload.containsKey('skills')) {
-      mapped['skills'] = payload['skills'] ?? [];
-    }
-
-    putString('highest_education', 'highest_education');
-    putInt('total_experience_years', 'total_experience_years');
-
-    // salary
-    if (payload.containsKey('expected_salary_min')) {
-      final expectedSalaryMin = _toInt(payload['expected_salary_min']);
-      final clean = expectedSalaryMin < 0 ? 0 : expectedSalaryMin;
-      mapped['expected_salary_min'] = clean;
-      mapped['expected_salary_max'] = clean > 0 ? clean + 5000 : 0;
-    }
-
-    putInt('notice_period_days', 'notice_period_days');
-
-    // preferred job types
-    if (payload.containsKey('preferred_job_type')) {
-      final jt = (payload['preferred_job_type'] ?? 'Any').toString();
-      mapped['preferred_job_types'] = _preferredJobTypesArray(jt);
-    }
-
-    // preferred locations
-    if (payload.containsKey('preferred_locations')) {
-      final v = payload['preferred_locations'];
-      if (v is List) {
-        mapped['preferred_locations'] = v
-            .map((e) => e.toString().trim())
-            .where((e) => e.isNotEmpty)
-            .toList();
-      } else {
-        mapped['preferred_locations'] = [];
-      }
-    }
-
-    // open to work
-    putBool('is_open_to_work', 'is_open_to_work');
-
-    // resume headline
-    if (payload.containsKey('resume_headline')) {
-      putString('resume_headline', 'resume_headline');
+  if (payload.containsKey('resume_url')) {
+    final v = (payload['resume_url'] ?? '').toString().trim();
+    if (v.isNotEmpty && !_looksLikeHttpUrl(v)) {
+      mapped['resume_url'] = v;
       mapped['resume_updated_at'] = DateTime.now().toIso8601String();
     }
-
-    // storage paths ONLY (never store signed URL)
-    if (payload.containsKey('avatar_url')) {
-      final v = (payload['avatar_url'] ?? '').toString().trim();
-      if (v.isNotEmpty && !_looksLikeHttpUrl(v)) {
-        mapped['avatar_url'] = v;
-      }
-    }
-
-    if (payload.containsKey('resume_url')) {
-      final v = (payload['resume_url'] ?? '').toString().trim();
-      if (v.isNotEmpty && !_looksLikeHttpUrl(v)) {
-        mapped['resume_url'] = v;
-        mapped['resume_updated_at'] = DateTime.now().toIso8601String();
-      }
-    }
-
-    if (mapped.isEmpty) return;
-
-    // completion needs existing + new values
-    final existing = await _db
-            .from('user_profiles')
-            .select(
-              'full_name, mobile_number, current_city, current_state, highest_education, total_experience_years, expected_salary_min, skills, bio, preferred_job_types, resume_url, avatar_url',
-            )
-            .eq('id', userId)
-            .maybeSingle() ??
-        {};
-
-    final completion = _calculateProfileCompletion({
-      ...Map<String, dynamic>.from(existing),
-      ...mapped,
-    });
-
-    await _db.from('user_profiles').update({
-      ...mapped,
-      'profile_completion_percentage': completion,
-      'last_profile_update': DateTime.now().toIso8601String(),
-    }).eq('id', userId);
   }
+
+  if (mapped.isEmpty) return;
+
+  // --------------------------------------------------
+  // 🔒 LOCK FIELDS (CRITICAL)
+  // --------------------------------------------------
+  final existing = await _db
+      .from('user_profiles')
+      .select('full_name, mobile_number, actual_email')
+      .eq('id', userId)
+      .maybeSingle();
+
+  if (existing != null) {
+    if ((existing['full_name'] ?? '').toString().trim().isNotEmpty) {
+      mapped.remove('full_name');
+    }
+
+    if ((existing['mobile_number'] ?? '').toString().trim().isNotEmpty) {
+      mapped.remove('mobile_number');
+    }
+
+    if ((existing['actual_email'] ?? '').toString().trim().isNotEmpty) {
+      mapped.remove('actual_email');
+    }
+  }
+
+  // --------------------------------------------------
+  // PROFILE COMPLETION
+  // --------------------------------------------------
+  final old = await _db
+          .from('user_profiles')
+          .select('''
+            full_name,
+            mobile_number,
+            current_city,
+            current_state,
+            highest_education,
+            total_experience_years,
+            expected_salary_min,
+            skills,
+            bio,
+            preferred_job_types,
+            resume_url,
+            avatar_url
+          ''')
+          .eq('id', userId)
+          .maybeSingle() ??
+      {};
+
+  final completion = _calculateProfileCompletion({
+    ...Map<String, dynamic>.from(old),
+    ...mapped,
+  });
+
+  // --------------------------------------------------
+  // FINAL UPDATE
+  // --------------------------------------------------
+  await _db.from('user_profiles').update({
+    ...mapped,
+    'profile_completion_percentage': completion,
+    'last_profile_update': DateTime.now().toIso8601String(),
+  }).eq('id', userId);
+}
 
   String _preferredJobTypeString(dynamic raw) {
     if (raw == null) return 'Any';
