@@ -34,7 +34,11 @@ class PrivacyPolicyPage extends StatelessWidget {
             title: "1. Who we are",
             body:
                 "Khilonjiya India Pvt. Ltd. (“we”, “our”, “us”) operates the Khilonjiya mobile application (“App”).\n\n"
-                "This Privacy Policy explains how we collect, use, store, process, and share information when you use the App.",
+                "This Privacy Policy explains how we collect, use, store, process, and share information when you use the App.\n\n"
+                "The Khilonjiya App is a job marketplace and construction service platform where:\n"
+                "• Job seekers can find and apply for jobs\n"
+                "• Employers can post jobs and hire candidates\n"
+                "• Users can access Assam-type construction services including plumbing, electrical works, RCC works, false ceiling, interior design, and related services",
           ),
 
           _card(
@@ -51,7 +55,8 @@ class PrivacyPolicyPage extends StatelessWidget {
                 "• Documents or images selected from your device\n\n"
                 "C) Job & App Activity\n"
                 "• Jobs viewed, saved, applied\n"
-                "• Employer interactions\n\n"
+                "• Employer interactions\n"
+                "• Construction service requests and interactions\n\n"
                 "D) Location Data (Optional)\n"
                 "• Approximate or precise location (only if permission granted)\n\n"
                 "E) Device & Technical Data\n"
@@ -81,10 +86,11 @@ class PrivacyPolicyPage extends StatelessWidget {
             title: "4. Why we collect your data",
             body:
                 "• Create and manage your account\n"
-                "• Match you with relevant jobs\n"
-                "• Enable job applications\n"
-                "• Enable employer communication\n"
-                "• Process payments (if applicable)\n"
+                "• Match job seekers with relevant jobs\n"
+                "• Allow employers to post jobs and hire candidates\n"
+                "• Enable job applications and communication\n"
+                "• Provide and manage construction service requests\n"
+                "• Connect users with construction-related services\n"
                 "• Improve app performance and security\n"
                 "• Prevent fraud and misuse",
           ),
@@ -103,7 +109,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             title: "6. Payments",
             body:
                 "If payments or subscriptions are enabled:\n\n"
-                "• Payments may be processed via Google Play Billing or third-party providers (e.g., Razorpay/UPI).\n"
+                "• Payments may be processed via Google Play Billing or other supported platform services.\n"
                 "• We do not store full debit/credit card details.\n"
                 "• We may store limited transaction data such as order ID, subscription status, or payment reference.",
           ),
@@ -121,7 +127,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           _card(
             title: "8. Data storage & security",
             body:
-                "Data is securely stored using Supabase infrastructure.\n\n"
+                "Data is securely stored using cloud infrastructure.\n\n"
                 "We implement:\n"
                 "• Authentication controls\n"
                 "• Role-based access policies (RLS)\n"
