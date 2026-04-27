@@ -1,7 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:io';
 
 import '../../../services/mobile_auth_service.dart';
 
@@ -15,6 +15,8 @@ class EmployerProfileScreen extends StatefulWidget {
 
 class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
   final supabase = Supabase.instance.client;
+
+  final _formKey = GlobalKey<FormState>();
 
   final _name = TextEditingController();
   final _phone = TextEditingController();
@@ -35,7 +37,7 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
     _load();
   }
 
-  // ================= LOAD DATA =================
+  // ================= LOAD =================
   Future<void> _load() async {
     final user = supabase.auth.currentUser;
 
@@ -71,7 +73,7 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
     setState(() => _loading = false);
   }
 
-  // ================= LOGO UPLOAD =================
+  // ================= LOGO =================
   Future<void> _pickLogo() async {
     final picker = ImagePicker();
     final file = await picker.pickImage(source: ImageSource.gallery);
@@ -82,31 +84,32 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
 
     final path = 'company-logos/${user!.id}.jpg';
 
-    await supabase.storage
-        .from('company-assets')
-        .upload(path, File(file.path),
-            fileOptions: const FileOptions(upsert: true));
+    await supabase.storage.from('company-assets').upload(
+          path,
+          File(file.path),
+          fileOptions: const FileOptions(upsert: true),
+        );
 
-    final publicUrl =
+    final url =
         supabase.storage.from('company-assets').getPublicUrl(path);
 
-    setState(() => _logoUrl = publicUrl);
+    setState(() => _logoUrl = url);
   }
 
   // ================= SAVE =================
   Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+
     final user = supabase.auth.currentUser;
 
     setState(() => _saving = true);
 
     try {
-      // update user profile
       await supabase.from('user_profiles').update({
         'full_name': _name.text.trim(),
         'mobile_number': _phone.text.trim(),
       }).eq('id', user!.id);
 
-      // update company
       await supabase.from('companies').update({
         'name': _companyName.text.trim(),
         'description': _description.text.trim(),
@@ -160,74 +163,82 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
 
-            // ===== LOGO =====
-            GestureDetector(
-              onTap: _pickLogo,
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundColor: Colors.grey[200],
-                    backgroundImage:
-                        _logoUrl != null ? NetworkImage(_logoUrl!) : null,
-                    child: _logoUrl == null
-                        ? const Icon(Icons.camera_alt, size: 30)
-                        : null,
+              // LOGO
+              GestureDetector(
+                onTap: _pickLogo,
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 42,
+                      backgroundColor: Colors.grey[200],
+                      backgroundImage:
+                          _logoUrl != null ? NetworkImage(_logoUrl!) : null,
+                      child: _logoUrl == null
+                          ? const Icon(Icons.camera_alt, size: 28)
+                          : null,
+                    ),
+                    const SizedBox(height: 8),
+                    const Text("Upload Logo"),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              _section("Personal Info", [
+                _input(_name, "Full Name"),
+                _input(_phone, "Phone",
+                    type: TextInputType.number),
+              ]),
+
+              _section("Company Info", [
+                _input(_companyName, "Company Name"),
+                _input(_location, "Location"),
+                _input(_website, "Website", required: false),
+                _input(_description, "About Company",
+                    maxLines: 3, required: false),
+              ]),
+
+              const SizedBox(height: 10),
+
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _saving ? null : _save,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
                   ),
-                  const SizedBox(height: 8),
-                  const Text("Upload Logo"),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            _section("Personal Info", [
-              _input(_name, "Full Name"),
-              _input(_phone, "Phone"),
-            ]),
-
-            _section("Company Info", [
-              _input(_companyName, "Company Name"),
-              _input(_location, "Location"),
-              _input(_website, "Website", required: false),
-              _input(_description, "About Company",
-                  maxLines: 3, required: false),
-            ]),
-
-            const SizedBox(height: 20),
-
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _saving ? null : _save,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
+                  child: _saving
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          "Save Changes",
+                          style:
+                              TextStyle(fontWeight: FontWeight.w700),
+                        ),
                 ),
-                child: _saving
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text("Save Changes"),
               ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _logout,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _logout,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                  ),
+                  child: const Text("Logout"),
                 ),
-                child: const Text("Logout"),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -257,17 +268,43 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
     );
   }
 
-  Widget _input(TextEditingController c, String label,
-      {int maxLines = 1, bool required = true}) {
+  Widget _input(
+    TextEditingController c,
+    String label, {
+    int maxLines = 1,
+    bool required = true,
+    TextInputType type = TextInputType.text,
+  }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 14),
       child: TextFormField(
         controller: c,
+        keyboardType: type,
         maxLines: maxLines,
+        validator: (v) {
+          if (required && (v == null || v.trim().isEmpty)) {
+            return "$label is required";
+          }
+
+          if (label == "Phone") {
+            if (v!.length != 10) return "Enter valid 10 digit number";
+          }
+
+          if (label == "Website" && v!.isNotEmpty) {
+            if (!v.startsWith("http")) {
+              return "Enter valid URL";
+            }
+          }
+
+          return null;
+        },
         decoration: InputDecoration(
           labelText: label,
+          filled: true,
+          fillColor: Colors.white,
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10)),
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
     );
