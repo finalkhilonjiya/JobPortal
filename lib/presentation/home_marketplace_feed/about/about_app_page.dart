@@ -65,11 +65,15 @@ class _AboutAppPageState extends State<AboutAppPage> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
           _card(
-            title: "What is Khilonjiya?",
-            body:
-                "Khilonjiya is a job marketplace app focused on Assam and nearby regions. "
-                "It helps job seekers find relevant opportunities and helps employers post genuine jobs.",
-          ),
+  title: "What is Khilonjiya?",
+  body:
+      "Khilonjiya is a multi-service platform focused on Assam and nearby regions. "
+      "It helps job seekers find relevant job opportunities and allows employers to post jobs "
+      "and hire directly from job seekers. In addition, Khilonjiya also provides Assam-type "
+      "construction and related services, including RCC works, plumbing, electrical work, "
+      "interior design, false ceiling, and general construction services. Users can connect "
+      "with workers for building, repair, and all types of construction needs — all in one place.",
+),
 
           _card(
             title: "Company",
