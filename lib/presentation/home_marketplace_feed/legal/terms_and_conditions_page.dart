@@ -34,7 +34,11 @@ class TermsAndConditionsPage extends StatelessWidget {
             title: "1. Company and service",
             body:
                 "Khilonjiya India Pvt. Ltd. operates the Khilonjiya mobile application (“App”).\n\n"
-                "The App connects job seekers and employers. We do not act as an employer or staffing agency unless explicitly stated.",
+                "The App provides:\n"
+                "• Job marketplace connecting job seekers and employers\n"
+                "• Hiring tools for employers\n"
+                "• Assam-type construction services including plumbing, electrical works, RCC works, false ceiling, interior design, and related services\n\n"
+                "We do not act as an employer, contractor, or service provider unless explicitly stated.",
           ),
 
           _card(
@@ -67,6 +71,7 @@ class TermsAndConditionsPage extends StatelessWidget {
                 "• Create fake profiles\n"
                 "• Upload false documents\n"
                 "• Spam employers\n"
+                "• Misrepresent skills or experience\n"
                 "• Upload illegal or abusive content\n"
                 "• Attempt to bypass security",
           ),
@@ -74,63 +79,97 @@ class TermsAndConditionsPage extends StatelessWidget {
           _card(
             title: "6. Employer responsibilities",
             body:
-                "Employers must not:\n"
+                "Employers must:\n"
+                "• Post only genuine and accurate jobs\n"
+                "• Clearly describe job roles and conditions\n\n"
+                "Employers must NOT:\n"
                 "• Post fake or misleading jobs\n"
-                "• Collect data illegally\n"
-                "• Discriminate unlawfully\n"
-                "• Request money from job seekers",
+                "• Request money from job seekers\n"
+                "• Conduct fraudulent hiring practices\n"
+                "• Collect user data illegally\n"
+                "• Discriminate unlawfully",
           ),
 
           _card(
-            title: "7. Prohibited behavior",
+            title: "7. Construction service responsibilities",
+            body:
+                "Users requesting or providing construction services must:\n"
+                "• Provide accurate project/service details\n"
+                "• Not engage in fraudulent or misleading activities\n\n"
+                "We act only as a platform and are not responsible for the quality, execution, or outcomes of construction services.",
+          ),
+
+          _card(
+            title: "8. Fraud and safety warning",
+            body:
+                "Users must remain cautious while interacting with others.\n\n"
+                "Important:\n"
+                "• Do NOT pay money for job offers\n"
+                "• Verify employer or service provider details independently\n"
+                "• Report suspicious or fraudulent activity immediately\n\n"
+                "We do not guarantee the authenticity of every listing and are not liable for fraud conducted by third parties.",
+          ),
+
+          _card(
+            title: "9. Prohibited behavior",
             body:
                 "Strictly prohibited:\n"
                 "• Fraud or scams\n"
+                "• Fake job postings\n"
+                "• Misleading construction service listings\n"
                 "• Violence or illegal content\n"
                 "• Harassment or hate speech\n"
                 "• Uploading harmful files",
           ),
 
           _card(
-            title: "8. Disclaimer",
+            title: "10. Disclaimer",
             body:
-                "We do not guarantee employment, interviews, or job accuracy.\n\n"
-                "Users must perform their own verification before accepting offers.",
+                "We do not guarantee:\n"
+                "• Employment or job offers\n"
+                "• Interview calls\n"
+                "• Accuracy of job or service listings\n\n"
+                "Users must perform their own verification before making decisions.",
           ),
 
           _card(
-            title: "9. Payments and subscriptions",
+            title: "11. Payments and subscriptions",
             body:
                 "Some features may require payment.\n"
-                "Pricing and benefits are shown inside the App before purchase.\n\n"
+                "All payments are processed through Google Play Billing.\n\n"
                 "Refund rules are described in the Refund Policy page.",
           ),
 
           _card(
-            title: "10. Suspension and termination",
+            title: "12. Suspension and termination",
             body:
                 "We may suspend or terminate accounts that:\n"
                 "• Violate these Terms\n"
-                "• Engage in fraud or spam\n"
+                "• Engage in fraud or scams\n"
+                "• Post fake jobs or services\n"
                 "• Upload prohibited content",
           ),
 
           _card(
-            title: "11. Limitation of liability",
+            title: "13. Limitation of liability",
             body:
-                "We are not responsible for job outcomes, employer conduct, or third-party links.\n\n"
+                "We are not responsible for:\n"
+                "• Job outcomes\n"
+                "• Employer or service provider conduct\n"
+                "• Construction service results\n"
+                "• Third-party interactions\n\n"
                 "Use of the App is at your own risk.",
           ),
 
           _card(
-            title: "12. Governing law",
+            title: "14. Governing law",
             body:
                 "These Terms are governed by the laws of India.\n\n"
                 "Disputes are subject to Indian jurisdiction.",
           ),
 
           _card(
-            title: "13. Contact",
+            title: "15. Contact",
             body:
                 "For support:\n"
                 "Email: $_supportEmail\n\n"
