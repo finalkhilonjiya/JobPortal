@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:io';
 
 import '../../../services/mobile_auth_service.dart';
-import '../../../core/ui/khilonjiya_ui.dart';
 
 class EmployerProfileScreen extends StatefulWidget {
   const EmployerProfileScreen({super.key});
@@ -13,11 +14,20 @@ class EmployerProfileScreen extends StatefulWidget {
 }
 
 class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
+  final supabase = Supabase.instance.client;
+
   final _name = TextEditingController();
   final _phone = TextEditingController();
-  final _company = TextEditingController();
+  final _companyName = TextEditingController();
+  final _description = TextEditingController();
+  final _location = TextEditingController();
+  final _website = TextEditingController();
 
   bool _loading = true;
+  bool _saving = false;
+
+  String? _logoUrl;
+  String? _companyId;
 
   @override
   void initState() {
@@ -25,35 +35,100 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
     _load();
   }
 
+  // ================= LOAD DATA =================
   Future<void> _load() async {
-    final user = Supabase.instance.client.auth.currentUser;
+    final user = supabase.auth.currentUser;
 
-    final data = await Supabase.instance.client
+    final profile = await supabase
         .from('user_profiles')
         .select()
         .eq('id', user!.id)
         .single();
 
-    _name.text = data['full_name'] ?? '';
-    _phone.text = data['mobile_number'] ?? '';
-    _company.text = data['current_company'] ?? '';
+    final member = await supabase
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+    _companyId = member['company_id'];
+
+    final company = await supabase
+        .from('companies')
+        .select()
+        .eq('id', _companyId!)
+        .single();
+
+    _name.text = profile['full_name'] ?? '';
+    _phone.text = profile['mobile_number'] ?? '';
+
+    _companyName.text = company['name'] ?? '';
+    _description.text = company['description'] ?? '';
+    _location.text = company['location'] ?? '';
+    _website.text = company['website'] ?? '';
+    _logoUrl = company['logo_url'];
 
     setState(() => _loading = false);
   }
 
-  Future<void> _save() async {
-    final user = Supabase.instance.client.auth.currentUser;
+  // ================= LOGO UPLOAD =================
+  Future<void> _pickLogo() async {
+    final picker = ImagePicker();
+    final file = await picker.pickImage(source: ImageSource.gallery);
 
-    await Supabase.instance.client.from('user_profiles').update({
-      'full_name': _name.text.trim(),
-      'mobile_number': _phone.text.trim(),
-      'current_company': _company.text.trim(),
-    }).eq('id', user!.id);
+    if (file == null) return;
 
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text("Profile updated")));
+    final user = supabase.auth.currentUser;
+
+    final path = 'company-logos/${user!.id}.jpg';
+
+    await supabase.storage
+        .from('company-assets')
+        .upload(path, File(file.path),
+            fileOptions: const FileOptions(upsert: true));
+
+    final publicUrl =
+        supabase.storage.from('company-assets').getPublicUrl(path);
+
+    setState(() => _logoUrl = publicUrl);
   }
 
+  // ================= SAVE =================
+  Future<void> _save() async {
+    final user = supabase.auth.currentUser;
+
+    setState(() => _saving = true);
+
+    try {
+      // update user profile
+      await supabase.from('user_profiles').update({
+        'full_name': _name.text.trim(),
+        'mobile_number': _phone.text.trim(),
+      }).eq('id', user!.id);
+
+      // update company
+      await supabase.from('companies').update({
+        'name': _companyName.text.trim(),
+        'description': _description.text.trim(),
+        'location': _location.text.trim(),
+        'website': _website.text.trim(),
+        'logo_url': _logoUrl,
+      }).eq('id', _companyId!);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Profile updated successfully")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+
+    setState(() => _saving = false);
+  }
+
+  // ================= LOGOUT =================
   Future<void> _logout() async {
     await MobileAuthService().logout();
 
@@ -66,6 +141,7 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
     );
   }
 
+  // ================= UI =================
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -75,35 +151,136 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Profile")),
-      body: Padding(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        title: const Text("Profile"),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            TextField(controller: _name, decoration: const InputDecoration(labelText: "Full Name")),
-            const SizedBox(height: 10),
 
-            TextField(controller: _phone, decoration: const InputDecoration(labelText: "Phone")),
-            const SizedBox(height: 10),
-
-            TextField(controller: _company, decoration: const InputDecoration(labelText: "Company")),
-            const SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: _save,
-              child: const Text("Save"),
+            // ===== LOGO =====
+            GestureDetector(
+              onTap: _pickLogo,
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundColor: Colors.grey[200],
+                    backgroundImage:
+                        _logoUrl != null ? NetworkImage(_logoUrl!) : null,
+                    child: _logoUrl == null
+                        ? const Icon(Icons.camera_alt, size: 30)
+                        : null,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text("Upload Logo"),
+                ],
+              ),
             ),
 
-            const Spacer(),
+            const SizedBox(height: 20),
 
-            ElevatedButton(
-              onPressed: _logout,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text("Logout"),
+            _section("Personal Info", [
+              _input(_name, "Full Name"),
+              _input(_phone, "Phone"),
+            ]),
+
+            _section("Company Info", [
+              _input(_companyName, "Company Name"),
+              _input(_location, "Location"),
+              _input(_website, "Website", required: false),
+              _input(_description, "About Company",
+                  maxLines: 3, required: false),
+            ]),
+
+            const SizedBox(height: 20),
+
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _saving ? null : _save,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                ),
+                child: _saving
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text("Save Changes"),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _logout,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                ),
+                child: const Text("Logout"),
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  // ================= UI HELPERS =================
+
+  Widget _section(String title, List<Widget> children) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: const TextStyle(
+                  fontWeight: FontWeight.w700, fontSize: 16)),
+          const SizedBox(height: 12),
+          ...children
+        ],
+      ),
+    );
+  }
+
+  Widget _input(TextEditingController c, String label,
+      {int maxLines = 1, bool required = true}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextFormField(
+        controller: c,
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10)),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _phone.dispose();
+    _companyName.dispose();
+    _description.dispose();
+    _location.dispose();
+    _website.dispose();
+    super.dispose();
   }
 }
