@@ -300,28 +300,68 @@ void codeUpdated() {
   }
 
   Widget _header() {
-    return Column(
-      children: const [
-        Text(
-          'Employer Login',
-          style: TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF16A34A),
-            letterSpacing: -0.4,
-          ),
+  return Column(
+    children: [
+      // ✅ APP LOGO (ROUNDED)
+      Container(
+        width: 72,
+        height: 72,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        SizedBox(height: 8),
-        Text(
-          'Post jobs, manage applicants and hire faster',
-          style: TextStyle(
-            fontSize: 14.5,
-            color: Color(0xFF64748B),
-          ),
+        padding: const EdgeInsets.all(10),
+        child: Image.asset(
+          'assets/icons/app_icon.png',
+          fit: BoxFit.contain,
         ),
-      ],
-    );
-  }
+      ),
+
+      const SizedBox(height: 16),
+
+      // ✅ APP NAME
+      const Text(
+        'Khilonjiya',
+        style: TextStyle(
+          fontSize: 26,
+          fontWeight: FontWeight.w900,
+          color: Color(0xFF16A34A),
+          letterSpacing: -0.4,
+        ),
+      ),
+
+      const SizedBox(height: 4),
+
+      // ✅ SUB TITLE (EMPLOYER LOGIN)
+      const Text(
+        'Employer Login',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF0F172A),
+        ),
+      ),
+
+      const SizedBox(height: 8),
+
+      // ✅ TAGLINE (UNCHANGED)
+      const Text(
+        'Post jobs, manage applicants and hire faster',
+        style: TextStyle(
+          fontSize: 14.5,
+          color: Color(0xFF64748B),
+        ),
+      ),
+    ],
+  );
+}
 
   Widget _mobileStep() {
   return Column(
