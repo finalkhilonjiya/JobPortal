@@ -52,7 +52,7 @@ class RoleSelectionScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w900,
-                    color: _textDark,
+                    color: Color(0xFF2563EB), // Job Seeker Blue
                   ),
                 ),
 
@@ -74,9 +74,7 @@ class RoleSelectionScreen extends StatelessWidget {
                   title: 'Job Seeker',
                   description:
                       'Find nearby jobs, apply instantly and track applications',
-                  icon: Icons.work_outline,
                   accent: const Color(0xFF2563EB),
-                  softBg: const Color(0xFFEFF6FF),
                   onTap: () {
                     Navigator.pushReplacementNamed(
                       context,
@@ -91,9 +89,7 @@ class RoleSelectionScreen extends StatelessWidget {
                   title: 'Employer',
                   description:
                       'Post jobs, manage applicants and hire faster',
-                  icon: Icons.business_center_outlined,
-                  accent: const Color(0xFF16A34A),
-                  softBg: const Color(0xFFECFDF5),
+                  accent: const Color(0xFF16A34A), // Employer color
                   onTap: () {
                     Navigator.pushReplacementNamed(
                       context,
@@ -108,9 +104,7 @@ class RoleSelectionScreen extends StatelessWidget {
                   title: 'Khilonjiya Construction',
                   description:
                       'Access construction services and manage projects',
-                  icon: Icons.construction_outlined,
-                  accent: const Color(0xFFF59E0B),
-                  softBg: const Color(0xFFFFFBEB),
+                  accent: const Color(0xFFF59E0B), // Construction color
                   onTap: () {
                     Navigator.pushReplacementNamed(
                       context,
@@ -153,26 +147,21 @@ class RoleSelectionScreen extends StatelessWidget {
 }
 
 // ============================================================
-// ROLE CARD
+// ROLE CARD (UPDATED CLEAN UI)
 // ============================================================
 class _RoleCard extends StatelessWidget {
   final String title;
   final String description;
-  final IconData icon;
   final Color accent;
-  final Color softBg;
   final VoidCallback onTap;
 
   const _RoleCard({
     required this.title,
     required this.description,
-    required this.icon,
     required this.accent,
-    required this.softBg,
     required this.onTap,
   });
 
-  static const _textDark = Color(0xFF0F172A);
   static const _textMid = Color(0xFF334155);
 
   @override
@@ -181,11 +170,10 @@ class _RoleCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        splashColor: softBg,
-        highlightColor: Colors.transparent,
+        splashColor: accent.withOpacity(0.08),
         onTap: onTap,
         child: Ink(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
@@ -200,29 +188,17 @@ class _RoleCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: softBg,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: accent.withOpacity(0.12)),
-                ),
-                child: Icon(icon, size: 28, color: accent),
-              ),
-
-              const SizedBox(width: 14),
-
+              // TEXT ONLY (NO ICON)
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
-                        color: _textDark,
+                        color: accent, // Dynamic color per role
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -240,6 +216,7 @@ class _RoleCard extends StatelessWidget {
 
               const SizedBox(width: 10),
 
+              // KEEP ARROW
               Container(
                 width: 36,
                 height: 36,
