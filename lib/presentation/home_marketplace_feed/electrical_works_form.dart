@@ -201,26 +201,24 @@ Padding(
   }
 
   Widget _project() {
-    return Column(
-      children: [
-        _dropdown("Type of Work", _workType,
-            ['New Installation','Repair/Maintenance','Upgrade','Complete Rewiring'],
-            (v) => setState(() => _workType = v!)),
-        SizedBox(height: 3.w),
-        _dropdown("Property Type", _propertyType,
-            ['Residential','Commercial','Industrial','Office'],
-            (v) => setState(() => _propertyType = v!)),
-        SizedBox(height: 3.w),
-        _dropdown("Load Requirement", _loadRequirement,
-            ['2 KW','5 KW','10 KW','15 KW','20 KW+','Not Sure'],
-            (v) => setState(() => _loadRequirement = v!)),
-        SizedBox(height: 3.w),
-        _input(_areaController, "Area Size (sq ft)",
-            keyboardType: TextInputType.number,
-            required: false),
-      ],
-    );
-  }
+  return Column(
+    children: [
+      _dropdown("Type of Work", _workType,
+          ['New Installation','Repair/Maintenance','Upgrade','Complete Rewiring'],
+          (v) => setState(() => _workType = v!)),
+      SizedBox(height: 3.w),
+
+      _dropdown("Property Type", _propertyType,
+          ['Residential','Commercial','Industrial','Office'],
+          (v) => setState(() => _propertyType = v!)),
+      SizedBox(height: 3.w),
+
+      _dropdown("Load Requirement", _loadRequirement,
+          ['2 KW','5 KW','10 KW','15 KW','20 KW+','Not Sure'],
+          (v) => setState(() => _loadRequirement = v!)),
+    ],
+  );
+}
 
   Widget _services() {
     return Column(
@@ -314,7 +312,6 @@ Padding(
       'work_type': _workType,
       'property_type': _propertyType,
       'load_requirement': _loadRequirement,
-      'area_size': _areaController.text,
       'budget_range': _budget,
       'timeline': _timeline,
       'needs_wiring': _needsWiring,
@@ -334,21 +331,8 @@ Padding(
 
     await showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        title: const Text("Request Submitted"),
-        content: const Text(
-  "Your Electrical Work request has been submitted successfully. Khilonjiya Support Team will contact you shortly.",
-),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("OK"),
-          ),
-        ],
-      ),
+      barrierDismissible: false,
+      builder: (_) => const _SuccessDialog(),
     );
 
     if (!mounted) return;
@@ -356,6 +340,7 @@ Padding(
 
   } catch (e) {
     if (!mounted) return;
+
     setState(() => _loading = false);
 
     ScaffoldMessenger.of(context)
@@ -414,5 +399,118 @@ Padding(
     _areaController.dispose();
     _additionalController.dispose();
     super.dispose();
+  }
+}
+
+
+
+class _SuccessDialog extends StatefulWidget {
+  const _SuccessDialog();
+
+  @override
+  State<_SuccessDialog> createState() => _SuccessDialogState();
+}
+
+class _SuccessDialogState extends State<_SuccessDialog>
+    with SingleTickerProviderStateMixin {
+
+  late AnimationController _controller;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
+    _scale = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.elasticOut,
+    );
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ScaleTransition(
+              scale: _scale,
+              child: Container(
+                width: 70,
+                height: 70,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF2563EB),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 36,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 18),
+
+            const Text(
+              "Request Submitted",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            const Text(
+              "Your Electrical Work request has been submitted successfully. Khilonjiya Support Team will contact you shortly.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFF64748B),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  "OK",
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
