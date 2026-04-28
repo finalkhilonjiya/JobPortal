@@ -213,6 +213,68 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+
+Future<void> _openResumeViewer(String url) async {
+  final uri = Uri.tryParse(url);
+  if (uri == null || url.isEmpty) return;
+
+  final isPdf = uri.path.toLowerCase().endsWith('.pdf');
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (_) {
+      return SafeArea(
+        child: Column(
+          children: [
+            // HEADER
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  const Text(
+                    "Resume",
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.download),
+                    onPressed: () async {
+                      await launchUrl(
+                        Uri.parse(url),
+                        mode: LaunchMode.externalApplication,
+                      );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+
+            // CONTENT
+            Expanded(
+              child: isPdf
+                  ? SfPdfViewer.network(url) // ✅ PDF viewer
+                  : InteractiveViewer(
+                      minScale: 1,
+                      maxScale: 5,
+                      child: Image.network(url),
+                    ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
   Widget _body() {
     return RefreshIndicator(
       onRefresh: _load,
@@ -285,9 +347,10 @@ class _ProfilePageState extends State<ProfilePage> {
             icon: Icons.flag_outlined,
           ),
           _infoTile(
-            title: "Resume",
-            value: _s(_profile['resume_url']),
-            icon: Icons.description_outlined,
+  title: "Resume",
+  value: _s(_profile['resume_url']),
+  icon: Icons.description_outlined,
+),
             onTap: _s(_profile['resume_url']).isEmpty
                 ? null
                 : () => _openUrl(_profile['resume_url']),
