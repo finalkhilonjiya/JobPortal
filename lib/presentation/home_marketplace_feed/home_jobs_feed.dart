@@ -953,7 +953,7 @@ if (_sliders.isNotEmpty) ...[
           ),
           RepaintBoundary(
   child: SizedBox(
-    height: 200,
+    height: 240,
     child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: jobsForNearbyHorizontal.length,
