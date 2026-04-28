@@ -56,16 +56,7 @@ class RoleSelectionScreen extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 6),
-
-                const Text(
-                  'India’s local job platform',
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w600,
-                    color: _textLight,
-                  ),
-                ),
+                
 
                 const SizedBox(height: 40),
 
