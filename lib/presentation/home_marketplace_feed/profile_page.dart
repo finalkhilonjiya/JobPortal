@@ -115,52 +115,57 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _infoTile({
-    required String title,
-    required String value,
-    IconData? icon,
-    VoidCallback? onTap,
-  }) {
-    if (value.isEmpty) return const SizedBox(); // ❌ no placeholder
+  required String title,
+  required String value,
+  IconData? icon,
+  VoidCallback? onTap,
+}) {
+  if (value.isEmpty) return const SizedBox();
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: KhilonjiyaUI.cardDecoration(radius: 14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 18, color: KhilonjiyaUI.primary),
-              const SizedBox(width: 10),
-            ],
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: KhilonjiyaUI.caption.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    value,
-                    style: KhilonjiyaUI.body.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+  final isResume = title.toLowerCase() == "resume";
+
+  return InkWell(
+    onTap: isResume ? () => _openResumeViewer(value) : onTap,
+    borderRadius: BorderRadius.circular(14),
+    child: Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: KhilonjiyaUI.cardDecoration(radius: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 18, color: KhilonjiyaUI.primary),
+            const SizedBox(width: 10),
           ],
-        ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: KhilonjiyaUI.caption.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isResume ? "View Resume" : value,
+                  style: KhilonjiyaUI.body.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: isResume
+                        ? KhilonjiyaUI.primary
+                        : null,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _profileHeader() {
     final fullName = _s(_profile["full_name"]);
