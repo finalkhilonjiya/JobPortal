@@ -511,13 +511,20 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
   final already = await hasAppliedToJob(jobId);
   if (already) return false;
 
-  // 1) load profile (for defaults)
+  // 1) load profile
   final profile = await fetchMyProfile();
 
   final name = (form['name'] ?? profile['full_name'] ?? '').toString().trim();
+
   final phone =
       (form['phone'] ?? profile['mobile_number'] ?? '').toString().trim();
-  final email = (form['email'] ?? profile['email'] ?? '').toString().trim();
+
+  // ✅ STRICT EMAIL (NO FALLBACK)
+  final email = (profile['actual_email'] ?? '').toString().trim();
+
+  if (email.isEmpty) {
+    throw Exception("Email is required");
+  }
 
   final district = (form['district'] ?? '').toString().trim();
   final address = (form['address'] ?? '').toString().trim();
@@ -527,7 +534,9 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
           .toString()
           .trim();
 
-  final experienceLevel = (form['experience_level'] ?? '').toString().trim();
+  final experienceLevel =
+      (form['experience_level'] ?? '').toString().trim();
+
   final experienceDetails =
       (form['experience_details'] ?? '').toString().trim();
 
@@ -537,21 +546,28 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
       .toString()
       .trim();
 
-  // ✅ FIXED: USE RAW NUMBER ONLY (NO STRING FORMAT)
+  // ✅ RAW NUMBER ONLY
   final expectedSalaryMin = (form['expected_salary_min'] ??
-          profile['expected_salary_min'] ??
-          0);
+      profile['expected_salary_min'] ??
+      0);
 
-  final availability = (form['availability'] ?? '').toString().trim();
-  final additionalInfo = (form['additional_info'] ?? '').toString().trim();
+  final availability =
+      (form['availability'] ?? '').toString().trim();
+
+  final additionalInfo =
+      (form['additional_info'] ?? '').toString().trim();
 
   final rawPaths = await fetchMyProfileRawPaths();
 
-  final resumeRaw = (rawPaths['resume_url'] ?? '').toString().trim();
-  final photoRaw = (rawPaths['avatar_url'] ?? '').toString().trim();
+  final resumeRaw =
+      (rawPaths['resume_url'] ?? '').toString().trim();
+
+  final photoRaw =
+      (rawPaths['avatar_url'] ?? '').toString().trim();
 
   // 2) ensure master application exists
-  final applicationId = await _getOrCreateMyMasterApplication(
+  final applicationId =
+      await _getOrCreateMyMasterApplication(
     name: name,
     phone: phone,
     email: email,
@@ -562,7 +578,7 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
     experienceDetails: experienceDetails,
     skills: skills,
 
-    // ✅ STORE NUMBER AS STRING (CLEAN)
+    // ✅ CLEAN NUMBER
     expectedSalary: expectedSalaryMin.toString(),
 
     availability: availability,
@@ -588,6 +604,7 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
     return false;
   }
 
+  // optional activity tracking
   try {
     await _db.from('user_job_activity').insert({
       'user_id': userId,
