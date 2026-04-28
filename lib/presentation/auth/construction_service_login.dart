@@ -209,12 +209,13 @@ Widget _header() {
 
       // TAGLINE
       const Text(
-        'Access construction services and manage projects',
-        style: TextStyle(
-          fontSize: 14.5,
-          color: Color(0xFF64748B),
-        ),
-      ),
+  'Find trusted construction services near you',
+  textAlign: TextAlign.center,
+  style: TextStyle(
+    fontSize: 14.5,
+    color: Color(0xFF64748B),
+  ),
+),
     ],
   );
 }
