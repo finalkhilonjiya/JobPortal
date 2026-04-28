@@ -157,20 +157,20 @@ String _selectedExperience = '';
   }
 
   @override
-  void dispose() {
-    _disposed = true;
+void dispose() {
+  _disposed = true;
 
-    _fullNameCtrl.dispose();
-    _phoneCtrl.dispose();
-    _bioCtrl.dispose();
-    _experienceYearsCtrl.dispose();
-    _expectedSalaryMinCtrl.dispose();
-    _noticeDaysCtrl.dispose();
+  _fullNameCtrl.dispose();
+  _phoneCtrl.dispose();
+  _bioCtrl.dispose();
 
-    _skillsCtrl.dispose();
+  _expectedSalaryMinCtrl.dispose();
+  _noticeDaysCtrl.dispose();
 
-    super.dispose();
-  }
+  _skillsCtrl.dispose();
+
+  super.dispose();
+}
 
   // ============================================================
   // LOAD
