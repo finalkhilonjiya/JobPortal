@@ -22,16 +22,17 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
   final _phone = TextEditingController();
   final _companyName = TextEditingController();
   final _description = TextEditingController();
-  final _city = TextEditingController(); // ✅ FIXED
   final _website = TextEditingController();
 
+  List<String> _districts = [];
+  String? _selectedDistrict;
+
   String? _logoPath;
+  String? _logoUrl;
+  String? _companyId;
 
   bool _loading = true;
   bool _saving = false;
-
-  String? _logoUrl;
-  String? _companyId;
 
   @override
   void initState() {
@@ -63,16 +64,24 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
         .eq('id', _companyId!)
         .single();
 
+    // load districts
+    final districtsRes = await supabase
+        .from('assam_districts_master')
+        .select('district_name')
+        .order('district_name');
+
+    _districts = List<Map<String, dynamic>>.from(districtsRes)
+        .map((e) => e['district_name'] as String)
+        .toList();
+
     _name.text = profile['full_name'] ?? '';
     _phone.text = profile['mobile_number'] ?? '';
 
     _companyName.text = company['name'] ?? '';
     _description.text = company['description'] ?? '';
-
-    // ✅ FIXED (NO location column)
-    _city.text = company['headquarters_city'] ?? '';
-
     _website.text = company['website'] ?? '';
+
+    _selectedDistrict = company['headquarters_city'];
 
     final raw = (company['logo_url'] ?? '').toString().trim();
     _logoPath = raw;
@@ -119,31 +128,36 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
     setState(() => _saving = true);
 
     try {
-      // USER
       await supabase.from('user_profiles').update({
         'full_name': _name.text.trim(),
-        'mobile_number': _phone.text.trim(),
       }).eq('id', user!.id);
 
-      // COMPANY
       await supabase.from('companies').update({
         'description': _description.text.trim(),
-        'headquarters_city': _city.text.trim(), // ✅ FIXED
+        'headquarters_city': _selectedDistrict,
         'website': _website.text.trim(),
         'logo_url': _logoPath,
       }).eq('id', _companyId!);
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Profile updated successfully")),
+      setState(() => _saving = false);
+
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const _SlimSuccessDialog(
+          message: "Profile updated successfully",
+        ),
       );
     } catch (e) {
+      if (!mounted) return;
+
+      setState(() => _saving = false);
+
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(e.toString())));
     }
-
-    setState(() => _saving = false);
   }
 
   // ================= UI =================
@@ -158,7 +172,7 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text("Profile"),
+        title: const Text("Employer Profile"),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -169,7 +183,6 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
           key: _formKey,
           child: Column(
             children: [
-              // LOGO
               GestureDetector(
                 onTap: _pickLogo,
                 child: Column(
@@ -193,34 +206,45 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
 
               _section("Personal Info", [
                 _input(_name, "Full Name"),
-                _input(_phone, "Phone",
-                    type: TextInputType.number),
+                _input(
+                  _phone,
+                  "Phone",
+                  enabled: false, // locked
+                ),
               ]),
 
-              _section("Company Info", [
-                // 🔒 LOCKED FIELD
+              _section("Employer Info", [
                 _input(
                   _companyName,
-                  "Company Name",
+                  "Employer Name",
                   enabled: false,
                 ),
 
-                _input(_city, "City"),
+                DropdownButtonFormField<String>(
+                  value: _selectedDistrict,
+                  decoration: _dec("District"),
+                  items: _districts
+                      .map((e) =>
+                          DropdownMenuItem(value: e, child: Text(e)))
+                      .toList(),
+                  onChanged: (v) =>
+                      setState(() => _selectedDistrict = v),
+                ),
+
                 _input(_website, "Website", required: false),
-                _input(_description, "About Company",
+                _input(_description, "About Employer",
                     maxLines: 3, required: false),
               ]),
 
               const SizedBox(height: 20),
 
-              // ✅ SMALL SLEEK BUTTON
               SizedBox(
                 width: double.infinity,
-                height: 44, // smaller
+                height: 44,
                 child: ElevatedButton(
                   onPressed: _saving ? null : _save,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
+                    backgroundColor: const Color(0xFF16A34A), // ✅ GREEN
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -238,7 +262,7 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
                           "Update",
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
-                            color: Colors.white, // ✅ visible
+                            color: Colors.white,
                           ),
                         ),
                 ),
@@ -249,8 +273,6 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
       ),
     );
   }
-
-  // ================= UI HELPERS =================
 
   Widget _section(String title, List<Widget> children) {
     return Container(
@@ -265,8 +287,8 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: const TextStyle(
-                  fontWeight: FontWeight.w700, fontSize: 16)),
+              style:
+                  const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
           const SizedBox(height: 12),
           ...children
         ],
@@ -293,28 +315,18 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
           if (required && (v == null || v.trim().isEmpty)) {
             return "$label is required";
           }
-
-          if (label == "Phone") {
-            if (v!.length != 10) return "Enter valid 10 digit number";
-          }
-
-          if (label == "Website" && v!.isNotEmpty) {
-            if (!v.startsWith("http")) {
-              return "Enter valid URL";
-            }
-          }
-
           return null;
         },
-        decoration: InputDecoration(
-          labelText: label,
-          filled: true,
-          fillColor:
-              enabled ? Colors.white : const Color(0xFFF1F5F9),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
+        decoration: _dec(label),
+      ),
+    );
+  }
+
+  InputDecoration _dec(String label) {
+    return InputDecoration(
+      labelText: label,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
     );
   }
@@ -325,8 +337,137 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
     _phone.dispose();
     _companyName.dispose();
     _description.dispose();
-    _city.dispose();
     _website.dispose();
     super.dispose();
+  }
+}
+
+// ================= SUCCESS DIALOG =================
+
+class _SlimSuccessDialog extends StatefulWidget {
+  final String message;
+
+  const _SlimSuccessDialog({required this.message});
+
+  @override
+  State<_SlimSuccessDialog> createState() => _SlimSuccessDialogState();
+}
+
+class _SlimSuccessDialogState extends State<_SlimSuccessDialog>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _progress;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
+    _progress = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+
+    _controller.forward();
+
+    Future.delayed(const Duration(milliseconds: 2200), () {
+      if (mounted) Navigator.pop(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const [
+              BoxShadow(color: Colors.black12, blurRadius: 20)
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: AnimatedBuilder(
+                  animation: _progress,
+                  builder: (_, __) {
+                    return CustomPaint(
+                      painter: _TickPainter(_progress.value),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  widget.message,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TickPainter extends CustomPainter {
+  final double progress;
+  _TickPainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF16A34A)
+      ..strokeWidth = 2.4
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final start = Offset(size.width * 0.2, size.height * 0.55);
+    final mid = Offset(size.width * 0.45, size.height * 0.75);
+    final end = Offset(size.width * 0.8, size.height * 0.3);
+
+    final path = Path();
+
+    if (progress < 0.5) {
+      final p = progress / 0.5;
+      path.moveTo(start.dx, start.dy);
+      path.lineTo(
+        start.dx + (mid.dx - start.dx) * p,
+        start.dy + (mid.dy - start.dy) * p,
+      );
+    } else {
+      path.moveTo(start.dx, start.dy);
+      path.lineTo(mid.dx, mid.dy);
+
+      final p = (progress - 0.5) / 0.5;
+      path.lineTo(
+        mid.dx + (end.dx - mid.dx) * p,
+        mid.dy + (end.dy - mid.dy) * p,
+      );
+    }
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _TickPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }
