@@ -351,32 +351,21 @@ Padding(
 
     setState(() => _loading = false);
 
-    // ✅ Show success dialog
     await showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        title: const Text("Request Submitted"),
-        content: const Text(
-  "Your Plumbing request has been submitted successfully. Khilonjiya Support Team will contact you shortly.",
-),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("OK"),
-          ),
-        ],
+      barrierDismissible: false,
+      builder: (_) => const _SlimSuccessDialog(
+        message:
+            "Request Submitted. Khilonjiya support team will connect with you shortly",
       ),
     );
 
-    // After user presses OK
     if (!mounted) return;
     Navigator.pop(context);
 
   } catch (e) {
     if (!mounted) return;
+
     setState(() => _loading = false);
 
     ScaffoldMessenger.of(context)
@@ -436,3 +425,147 @@ Padding(
     super.dispose();
   }
 }
+
+
+
+class _SlimSuccessDialog extends StatefulWidget {
+  final String message;
+
+  const _SlimSuccessDialog({
+    Key? key,
+    this.message = "Success",
+  }) : super(key: key);
+
+  @override
+  State<_SlimSuccessDialog> createState() => _SlimSuccessDialogState();
+}
+
+class _SlimSuccessDialogState extends State<_SlimSuccessDialog>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _progress;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
+    _progress = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+
+    _controller.forward();
+
+    Future.delayed(const Duration(milliseconds: 2500), () {
+      if (mounted) Navigator.pop(context);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: const [
+              BoxShadow(
+                blurRadius: 20,
+                color: Colors.black12,
+              )
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 34,
+                height: 34,
+                child: AnimatedBuilder(
+                  animation: _progress,
+                  builder: (_, __) {
+                    return CustomPaint(
+                      painter: _TickPainter(_progress.value),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  widget.message,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TickPainter extends CustomPainter {
+  final double progress;
+  _TickPainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF16A34A)
+      ..strokeWidth = 2.4
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+
+    final start = Offset(size.width * 0.2, size.height * 0.55);
+    final mid = Offset(size.width * 0.45, size.height * 0.75);
+    final end = Offset(size.width * 0.8, size.height * 0.3);
+
+    if (progress < 0.5) {
+      final p = progress / 0.5;
+      path.moveTo(start.dx, start.dy);
+      path.lineTo(
+        start.dx + (mid.dx - start.dx) * p,
+        start.dy + (mid.dy - start.dy) * p,
+      );
+    } else {
+      path.moveTo(start.dx, start.dy);
+      path.lineTo(mid.dx, mid.dy);
+
+      final p = (progress - 0.5) / 0.5;
+      path.lineTo(
+        mid.dx + (end.dx - mid.dx) * p,
+        mid.dy + (end.dy - mid.dy) * p,
+      );
+    }
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _TickPainter oldDelegate) {
+    return oldDelegate.progress != progress;
+  }
+}
+
+
