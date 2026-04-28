@@ -351,11 +351,11 @@ Future<void> _openResumeViewer(String url) async {
   title: "Resume",
   value: _s(_profile['resume_url']),
   icon: Icons.description_outlined,
+  onTap: _s(_profile['resume_url']).isEmpty
+      ? null
+      : () => _openResumeViewer(_profile['resume_url']),
 ),
-            onTap: _s(_profile['resume_url']).isEmpty
-                ? null
-                : () => _openUrl(_profile['resume_url']),
-          ),
+          
         ],
       ),
     );
