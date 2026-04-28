@@ -329,10 +329,14 @@ Padding(
 
     setState(() => _loading = false);
 
+    // ✅ NEW SUCCESS ANIMATION (NO BUTTON)
     await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const _SuccessDialog(),
+      builder: (_) => _SlimSuccessDialog(
+        message:
+            "Request Submitted. Khilonjiya support team will connect with you shortly",
+      ),
     );
 
     if (!mounted) return;
@@ -404,18 +408,22 @@ Padding(
 
 
 
-class _SuccessDialog extends StatefulWidget {
-  const _SuccessDialog();
+class _SlimSuccessDialog extends StatefulWidget {
+  final String message;
+
+  const _SlimSuccessDialog({
+    Key? key,
+    this.message = "Success",
+  }) : super(key: key);
 
   @override
-  State<_SuccessDialog> createState() => _SuccessDialogState();
+  State<_SlimSuccessDialog> createState() => _SlimSuccessDialogState();
 }
 
-class _SuccessDialogState extends State<_SuccessDialog>
+class _SlimSuccessDialogState extends State<_SlimSuccessDialog>
     with SingleTickerProviderStateMixin {
-
   late AnimationController _controller;
-  late Animation<double> _scale;
+  late Animation<double> _progress;
 
   @override
   void initState() {
@@ -426,12 +434,17 @@ class _SuccessDialogState extends State<_SuccessDialog>
       duration: const Duration(milliseconds: 500),
     );
 
-    _scale = CurvedAnimation(
+    _progress = CurvedAnimation(
       parent: _controller,
-      curve: Curves.elasticOut,
+      curve: Curves.easeOut,
     );
 
     _controller.forward();
+
+    // ✅ 2.5 sec duration
+    Future.delayed(const Duration(milliseconds: 2500), () {
+      if (mounted) Navigator.pop(context);
+    });
   }
 
   @override
@@ -442,75 +455,101 @@ class _SuccessDialogState extends State<_SuccessDialog>
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ScaleTransition(
-              scale: _scale,
-              child: Container(
-                width: 70,
-                height: 70,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF2563EB),
-                  shape: BoxShape.circle,
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: const [
+              BoxShadow(
+                blurRadius: 20,
+                color: Colors.black12,
+              )
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 34,
+                height: 34,
+                child: AnimatedBuilder(
+                  animation: _progress,
+                  builder: (_, __) {
+                    return CustomPaint(
+                      painter: _TickPainter(_progress.value),
+                    );
+                  },
                 ),
-                child: const Icon(
-                  Icons.check,
-                  color: Colors.white,
-                  size: 36,
-                ),
               ),
-            ),
-
-            const SizedBox(height: 18),
-
-            const Text(
-              "Request Submitted",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            const Text(
-              "Your Electrical Work request has been submitted successfully. Khilonjiya Support Team will contact you shortly.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Color(0xFF64748B),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  widget.message,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14.5,
                   ),
                 ),
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  "OK",
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
+class _TickPainter extends CustomPainter {
+  final double progress;
+  _TickPainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF16A34A)
+      ..strokeWidth = 2.4
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+
+    final start = Offset(size.width * 0.2, size.height * 0.55);
+    final mid = Offset(size.width * 0.45, size.height * 0.75);
+    final end = Offset(size.width * 0.8, size.height * 0.3);
+
+    if (progress < 0.5) {
+      final p = progress / 0.5;
+      path.moveTo(start.dx, start.dy);
+      path.lineTo(
+        start.dx + (mid.dx - start.dx) * p,
+        start.dy + (mid.dy - start.dy) * p,
+      );
+    } else {
+      path.moveTo(start.dx, start.dy);
+      path.lineTo(mid.dx, mid.dy);
+
+      final p = (progress - 0.5) / 0.5;
+      path.lineTo(
+        mid.dx + (end.dx - mid.dx) * p,
+        mid.dy + (end.dy - mid.dy) * p,
+      );
+    }
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _TickPainter oldDelegate) {
+    return oldDelegate.progress != progress;
+  }
+}
+
+
+
+
+
