@@ -14,20 +14,29 @@ class SectionHeader extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            title,
-            style: KhilonjiyaUI.hTitle.copyWith(fontWeight: FontWeight.w900),
-          ),
+Widget build(BuildContext context) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(
+        title,
+        style: KhilonjiyaUI.hTitle.copyWith(
+          fontWeight: FontWeight.w600, // lighter
+          color: const Color(0xFF334155), // softer color
         ),
+      ),
+      if (ctaText.isNotEmpty)
         InkWell(
           onTap: onTap,
-          child: Text(ctaText, style: KhilonjiyaUI.link),
+          child: Text(
+            ctaText,
+            style: KhilonjiyaUI.sub.copyWith(
+              fontWeight: FontWeight.w500,
+              color: KhilonjiyaUI.primary,
+            ),
+          ),
         ),
-      ],
-    );
-  }
+    ],
+  );
+}
 }
