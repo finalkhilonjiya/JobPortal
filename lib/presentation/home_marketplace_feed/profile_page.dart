@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/ui/khilonjiya_ui.dart';
 import '../../services/job_seeker_home_service.dart';
 import 'profile_edit_page.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
