@@ -847,40 +847,23 @@ if (_sliders.isNotEmpty) ...[
       children: [
         // ================= CIRCULAR PROGRESS =================
         SizedBox(
-          width: 58,
-          height: 58,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              TweenAnimationBuilder<double>(
-                tween: Tween(
-                  begin: 0,
-                  end: (_profileCompletion.clamp(0, 100)) / 100,
-                ),
-                duration: const Duration(milliseconds: 800),
-                builder: (_, value, __) {
-                  return CircularProgressIndicator(
-                    value: value,
-                    strokeWidth: 4,
-                    backgroundColor: const Color(0xFFDBEAFE),
-                    valueColor: const AlwaysStoppedAnimation(
-                      Color(0xFF2563EB),
-                    ),
-                  );
-                },
-              ),
-              Text(
-                "${_profileCompletion}%",
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1E3A8A),
-                ),
-              ),
-            ],
-          ),
-        ),
-
+  width: 70,
+  height: 70,
+  child: TweenAnimationBuilder<double>(
+    tween: Tween(
+      begin: 0,
+      end: (_profileCompletion.clamp(0, 100)) / 100,
+    ),
+    duration: const Duration(milliseconds: 900),
+    builder: (_, value, __) {
+      return _GlassPulseProgress(
+        progress: value,
+        percentage: _profileCompletion,
+      );
+    },
+  ),
+),
+        
         const SizedBox(width: 14),
 
         // ================= TEXT =================
@@ -1419,5 +1402,131 @@ InkWell(
         ],
       ),
     );
+  }
+}
+
+
+class _GlassPulseProgress extends StatefulWidget {
+  final double progress;
+  final int percentage;
+
+  const _GlassPulseProgress({
+    required this.progress,
+    required this.percentage,
+  });
+
+  @override
+  State<_GlassPulseProgress> createState() => _GlassPulseProgressState();
+}
+
+class _GlassPulseProgressState extends State<_GlassPulseProgress>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _pulse,
+      builder: (_, __) {
+        final scale = 1 + (_pulse.value * 0.06);
+
+        return Transform.scale(
+          scale: scale,
+          child: CustomPaint(
+            painter: _GlassRingPainter(widget.progress),
+            child: Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                  child: Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.65),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        "${widget.percentage}%",
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1E3A8A),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _GlassRingPainter extends CustomPainter {
+  final double progress;
+
+  _GlassRingPainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final stroke = 6.0;
+    final radius = (size.width / 2) - stroke;
+
+    final rect = Rect.fromCircle(
+      center: size.center(Offset.zero),
+      radius: radius,
+    );
+
+    final bg = Paint()
+      ..color = const Color(0xFFDBEAFE)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke;
+
+    canvas.drawArc(rect, 0, 2 * 3.1416, false, bg);
+
+    final gradient = SweepGradient(
+      startAngle: -3.14 / 2,
+      endAngle: 3.14 * 1.5,
+      colors: const [
+        Color(0xFF2563EB),
+        Color(0xFF3B82F6),
+      ],
+    );
+
+    final paint = Paint()
+      ..shader = gradient.createShader(rect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..strokeCap = StrokeCap.round;
+
+    final sweep = 2 * 3.1416 * progress;
+
+    canvas.drawArc(rect, -3.14 / 2, sweep, false, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _GlassRingPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }
