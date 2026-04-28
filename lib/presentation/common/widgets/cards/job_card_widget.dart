@@ -224,51 +224,186 @@ class _CompanyLogo extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final letter =
-        name.isNotEmpty ? name[0].toUpperCase() : "C";
+Widget build(BuildContext context) {
+  final title =
+      (job['job_title'] ?? job['title'] ?? 'Job').toString().trim();
 
-    final colors = [
-      const Color(0xFFE0F2FE),
-      const Color(0xFFFCE7F3),
-      const Color(0xFFEDE9FE),
-      const Color(0xFFDCFCE7),
-      const Color(0xFFFFEDD5),
-    ];
+  final companyMap = job['companies'];
+  final companyName = (companyMap is Map<String, dynamic>)
+      ? (companyMap['name'] ?? '').toString().trim()
+      : '';
 
-    final bg = colors[Random().nextInt(colors.length)];
+  final company = companyName.isNotEmpty
+      ? companyName
+      : (job['company_name'] ?? job['company'] ?? 'Company')
+          .toString()
+          .trim();
 
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: logoUrl.isEmpty
-          ? Center(
-              child: Text(
-                letter,
-                style: TextStyle(
-                  fontSize: size * 0.45,
-                  fontWeight: FontWeight.w600,
+  final location = (job['district'] ??
+          job['location'] ??
+          job['job_address'] ??
+          'Location')
+      .toString()
+      .trim();
+
+  final salary = _salaryText(
+    salaryMin: job['salary_min'],
+    salaryMax: job['salary_max'],
+  );
+
+  final exp = _experience(job);
+  final postedAt = job['created_at']?.toString();
+  final companyLogoUrl =
+      (job['companies']?['logo_url'] ?? '').toString().trim();
+
+  final skills = _extractSkills(job);
+
+  return InkWell(
+    onTap: onTap,
+    borderRadius: KhilonjiyaUI.r12,
+    child: Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: KhilonjiyaUI.cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ================= TOP ROW =================
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _CompanyLogo(
+                name: company,
+                logoUrl: companyLogoUrl,
+                size: _companyLogoSize,
+              ),
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: KhilonjiyaUI.cardTitle,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      company,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: KhilonjiyaUI.company,
+                    ),
+                  ],
                 ),
               ),
-            )
-          : Image.network(
-              logoUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Center(
-                child: Text(
-                  letter,
-                  style: TextStyle(
-                    fontSize: size * 0.45,
-                    fontWeight: FontWeight.w600,
+
+              InkWell(
+                onTap: onSaveToggle,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    isSaved
+                        ? Icons.bookmark
+                        : Icons.bookmark_border,
+                    size: 22,
+                    color: isSaved
+                        ? KhilonjiyaUI.primary
+                        : KhilonjiyaUI.muted,
                   ),
                 ),
               ),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+
+          // ================= INFO =================
+          _infoRow(Icons.location_on_outlined,
+              const Color(0xFF2563EB), location),
+
+          const SizedBox(height: 6),
+
+          _infoRow(Icons.work_outline_rounded,
+              const Color(0xFF475569), exp),
+
+          const SizedBox(height: 6),
+
+          _infoRow(Icons.currency_rupee_rounded,
+              const Color(0xFF16A34A), salary),
+
+          // ================= SKILLS (SINGLE LINE CHIP FIT) =================
+          if (skills.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            _buildFittedSkillChips(skills),
+          ],
+
+          const SizedBox(height: 10),
+
+          // ================= TIME =================
+          Text(
+            _postedAgo(postedAt),
+            style: KhilonjiyaUI.sub,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildFittedSkillChips(List<String> skills) {
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      final maxWidth = constraints.maxWidth;
+
+      double usedWidth = 0;
+      final List<Widget> chips = [];
+
+      for (final skill in skills) {
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text: skill,
+            style: KhilonjiyaUI.tagTextStyle,
+          ),
+          maxLines: 1,
+          textDirection: TextDirection.ltr,
+        )..layout();
+
+        final chipWidth = textPainter.width + 28; // padding + spacing
+
+        if (usedWidth + chipWidth > maxWidth) break;
+
+        usedWidth += chipWidth + 6;
+
+        chips.add(
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFEDD5), // 🔥 light orange
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: const Color(0xFFFCD34D),
+              ),
             ),
-    );
-  }
+            child: Text(
+              skill,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: KhilonjiyaUI.tagTextStyle.copyWith(
+                color: const Color(0xFF9A3412),
+              ),
+            ),
+          ),
+        );
+      }
+
+      return Row(
+        children: chips,
+      );
+    },
+  );
+}
 }
