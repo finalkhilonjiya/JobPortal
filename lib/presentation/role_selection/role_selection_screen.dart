@@ -92,17 +92,16 @@ class RoleSelectionScreen extends StatelessWidget {
                 const SizedBox(height: 18),
 
                 _RoleCard(
-                  title: 'Khilonjiya Construction',
-                  description:
-                      'Access construction services and manage projects',
-                  accent: const Color(0xFFF59E0B), // Construction color
-                  onTap: () {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      AppRoutes.constructionServiceLogin,
-                    );
-                  },
-                ),
+  title: 'Khilonjiya Construction',
+  description: 'Find trusted construction services near you',
+  accent: const Color(0xFFF59E0B),
+  onTap: () {
+    Navigator.pushReplacementNamed(
+      context,
+      AppRoutes.constructionServiceLogin,
+    );
+  },
+),
 
                 const SizedBox(height: 50),
 
