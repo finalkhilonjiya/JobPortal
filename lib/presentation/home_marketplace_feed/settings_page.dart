@@ -28,17 +28,6 @@ class SettingsPage extends StatelessWidget {
         children: [
           _tile(
             context,
-            icon: Icons.notifications_outlined,
-            title: "Notifications",
-            subtitle: "Manage job alerts & updates",
-            onTap: () {
-              Navigator.pushNamed(
-                  context, AppRoutes.notificationsSettings);
-            },
-          ),
-
-          _tile(
-            context,
             icon: Icons.currency_rupee_rounded,
             title: "Refund & Cancellation Policy",
             subtitle: "For subscriptions & payments",
