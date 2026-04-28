@@ -290,14 +290,7 @@ void _applyHomeData(Map<String, dynamic> data) {
 }
 
 
- void _onScroll() {
-  if (_mainScrollController.position.pixels >
-          _mainScrollController.position.maxScrollExtent - 300 &&
-      !_loadingMoreRecommended &&
-      _hasMoreRecommended) {
-    _loadMoreRecommendedJobs();
-  }
-}
+ 
 void _listenToNotificationChanges() {
   final user = _supabase.auth.currentUser;
   if (user == null) return;
