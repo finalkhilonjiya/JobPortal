@@ -918,24 +918,7 @@ if (_sliders.isNotEmpty) ...[
 
         const SizedBox(height: 14),
 
-        BoostCard(
-          label: "Construction",
-          title:
-              "Khilonjiya Construction Service",
-          subtitle:
-              "Your trusted construction partner",
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) =>
-                    const ConstructionServicesHomePage(),
-              ),
-            );
-          },
-        ),
-
-        const SizedBox(height: 14),
+        
 
           // ✅ FIXED: ExpectedSalaryCard only supports onTap
           ExpectedSalaryCard(
