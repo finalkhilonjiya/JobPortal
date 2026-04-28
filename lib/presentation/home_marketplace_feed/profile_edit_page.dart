@@ -32,7 +32,25 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   final _phoneCtrl = TextEditingController();
   final _bioCtrl = TextEditingController();
 
-  final _experienceYearsCtrl = TextEditingController();
+  // REMOVE this:
+// final _experienceYearsCtrl = TextEditingController();
+
+// ADD THIS:
+final List<String> _experienceOptions = const [
+  'Fresher',
+  '1 year',
+  '2 years',
+  '3 years',
+  '4 years',
+  '5 years',
+  '6 years',
+  '7 years',
+  '8 years',
+  '9 years',
+  '10+ years',
+];
+
+String _selectedExperience = '';
   final _expectedSalaryMinCtrl = TextEditingController();
   final _noticeDaysCtrl = TextEditingController();
 
@@ -177,15 +195,26 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     // profile
     _profile = await _service.fetchMyProfile();
 
-    // TEXT FIELDS
+    // BASIC
     _fullNameCtrl.text = (_profile['full_name'] ?? '').toString();
     _phoneCtrl.text =
         (_profile['mobile_number'] ?? _profile['phone'] ?? '').toString();
     _bioCtrl.text = (_profile['bio'] ?? '').toString();
 
-    _experienceYearsCtrl.text =
-        (_profile['total_experience_years'] ?? '').toString();
+    // EXPERIENCE → map number → dropdown
+    final expYears =
+        int.tryParse((_profile['total_experience_years'] ?? '0').toString()) ??
+            0;
 
+    if (expYears <= 0) {
+      _selectedExperience = 'Fresher';
+    } else if (expYears >= 10) {
+      _selectedExperience = '10+ years';
+    } else {
+      _selectedExperience = '$expYears year${expYears > 1 ? 's' : ''}';
+    }
+
+    // SALARY / NOTICE
     _expectedSalaryMinCtrl.text =
         (_profile['expected_salary_min'] ?? '').toString();
 
@@ -401,39 +430,68 @@ bool _isLocked(String field) {
 
   setState(() => _saving = true);
 
+  // ---------------------------------
+  // Uploads first
+  // ---------------------------------
   await _uploadPhotoIfNeeded();
   await _uploadResumeIfNeeded();
 
+  // ---------------------------------
+  // EXPERIENCE (dropdown → int)
+  // ---------------------------------
+  int expYears = 0;
+
+  if (_selectedExperience == 'Fresher') {
+    expYears = 0;
+  } else if (_selectedExperience == '10+ years') {
+    expYears = 10;
+  } else {
+    expYears =
+        int.tryParse(_selectedExperience.split(' ').first) ?? 0;
+  }
+
+  // ---------------------------------
+  // PAYLOAD
+  // ---------------------------------
   final payload = <String, dynamic>{
-    // ❌ LOCKED FIELDS (only if empty allow update)
+    // LOCKED FIELDS
     if (!_isLocked('full_name'))
       'full_name': _fullNameCtrl.text.trim(),
 
     if (!_isLocked('mobile_number'))
       'phone': _phoneCtrl.text.trim(),
 
-    // EMAIL (actual_email)
+    // EMAIL (STRICT - NO FALLBACK)
     'actual_email': (_profile['actual_email'] ?? '').toString().trim(),
 
-    // NORMAL FIELDS
+    // BASIC
     'bio': _bioCtrl.text.trim(),
 
+    // LOCATION
     'current_city': _selectedDistrict.trim(),
     'current_state': _selectedState.trim(),
     'location_text': '',
 
+    // EDUCATION
     'highest_education': _selectedEducation.trim(),
-    'total_experience_years': _toInt(_experienceYearsCtrl.text),
 
+    // EXPERIENCE
+    'total_experience_years': expYears,
+
+    // SALARY
     'expected_salary_min': _toInt(_expectedSalaryMinCtrl.text),
+
+    // NOTICE
     'notice_period_days': _toInt(_noticeDaysCtrl.text),
 
+    // PREFERENCES
     'preferred_job_type': _jobType,
     'preferred_locations': _preferredDistricts,
 
     'is_open_to_work': _openToWork,
     'skills': _skills,
 
+    // FILES
     if (_photoStoragePath.trim().isNotEmpty)
       'avatar_url': _photoStoragePath,
 
@@ -441,17 +499,29 @@ bool _isLocked(String field) {
       'resume_url': _resumeStoragePath,
   };
 
+  // ---------------------------------
+  // SAVE TO DB
+  // ---------------------------------
   try {
     await _service.updateMyProfile(payload);
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Profile updated")),
+
+    // ---------------------------------
+    // SHOW SLIM SUCCESS ANIMATION
+    // ---------------------------------
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _SlimSuccessDialog(),
     );
+
+    if (!mounted) return;
 
     Navigator.pop(context, true);
   } catch (_) {
     if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Failed to update profile")),
     );
@@ -564,6 +634,9 @@ bool _isLocked(String field) {
       ),
     );
   }
+
+
+
 
   Widget _dropdownBox({
     required String value,
@@ -1000,38 +1073,46 @@ bool _isLocked(String field) {
         // -------------------------------
         // CAREER
         // -------------------------------
-        _sectionTitle("Career details"),
+        // -------------------------------
+// CAREER DETAILS (CLEAR LABELS)
+// -------------------------------
+_sectionTitle(
+  "Career details",
+  sub: "Your experience, salary & availability",
+),
 
-        TextField(
-          controller: _experienceYearsCtrl,
-          keyboardType: TextInputType.number,
-          decoration: _dec(
-            "Total experience (years)",
-            icon: Icons.work_outline,
-          ),
-        ),
+// EXPERIENCE DROPDOWN
+_dropdownBox(
+  value: _selectedExperience,
+  options: _experienceOptions,
+  hint: "Select total experience",
+  icon: Icons.work_outline,
+  onChanged: (v) => setState(() => _selectedExperience = v),
+),
 
-        const SizedBox(height: 12),
+const SizedBox(height: 12),
 
-        TextField(
-          controller: _expectedSalaryMinCtrl,
-          keyboardType: TextInputType.number,
-          decoration: _dec(
-            "Expected salary per month",
-            icon: Icons.currency_rupee_rounded,
-          ),
-        ),
+// SALARY
+TextField(
+  controller: _expectedSalaryMinCtrl,
+  keyboardType: TextInputType.number,
+  decoration: _dec(
+    "Expected salary per month (₹)",
+    icon: Icons.currency_rupee_rounded,
+  ),
+),
 
-        const SizedBox(height: 12),
+const SizedBox(height: 12),
 
-        TextField(
-          controller: _noticeDaysCtrl,
-          keyboardType: TextInputType.number,
-          decoration: _dec(
-            "Notice period (days)",
-            icon: Icons.calendar_today_outlined,
-          ),
-        ),
+// NOTICE PERIOD
+TextField(
+  controller: _noticeDaysCtrl,
+  keyboardType: TextInputType.number,
+  decoration: _dec(
+    "Notice period (in days)",
+    icon: Icons.calendar_today_outlined,
+  ),
+),
 
         // -------------------------------
         // PREFERENCES
@@ -1188,5 +1269,141 @@ bool _isLocked(String field) {
         ),
       ),
     );
+  }
+}
+
+
+class _SlimSuccessDialog extends StatefulWidget {
+  const _SlimSuccessDialog({Key? key}) : super(key: key);
+
+  @override
+  State<_SlimSuccessDialog> createState() => _SlimSuccessDialogState();
+}
+
+class _SlimSuccessDialogState extends State<_SlimSuccessDialog>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _progress;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
+    _progress = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+
+    _controller.forward();
+
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      if (mounted) Navigator.pop(context);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: const [
+              BoxShadow(
+                blurRadius: 20,
+                color: Colors.black12,
+              )
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 34,
+                height: 34,
+                child: AnimatedBuilder(
+                  animation: _progress,
+                  builder: (_, __) {
+                    return CustomPaint(
+                      painter: _TickPainter(_progress.value),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                "Profile Updated Successfully",
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+
+class _TickPainter extends CustomPainter {
+  final double progress;
+  _TickPainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF16A34A)
+      ..strokeWidth = 2.4
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+
+    final start = Offset(size.width * 0.2, size.height * 0.55);
+    final mid = Offset(size.width * 0.45, size.height * 0.75);
+    final end = Offset(size.width * 0.8, size.height * 0.3);
+
+    if (progress < 0.5) {
+      final p = progress / 0.5;
+      path.moveTo(start.dx, start.dy);
+      path.lineTo(
+        start.dx + (mid.dx - start.dx) * p,
+        start.dy + (mid.dy - start.dy) * p,
+      );
+    } else {
+      path.moveTo(start.dx, start.dy);
+      path.lineTo(mid.dx, mid.dy);
+
+      final p = (progress - 0.5) / 0.5;
+      path.lineTo(
+        mid.dx + (end.dx - mid.dx) * p,
+        mid.dy + (end.dy - mid.dy) * p,
+      );
+    }
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _TickPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }
