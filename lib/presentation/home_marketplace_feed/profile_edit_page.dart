@@ -1301,9 +1301,9 @@ class _SlimSuccessDialogState extends State<_SlimSuccessDialog>
 
     _controller.forward();
 
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (mounted) Navigator.pop(context);
-    });
+    Future.delayed(const Duration(milliseconds: 2500), () {
+  if (mounted) Navigator.pop(context);
+});
   }
 
   @override
