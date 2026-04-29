@@ -125,7 +125,7 @@ flutter_native_splash:
 
   android_12:
     color: "#ffffff"
-    image: assets/icons/app_icon.png
+    image: assets/icons/spash_logo.png
     icon_background_color: "#ffffff"
 
 flutter_launcher_icons:
