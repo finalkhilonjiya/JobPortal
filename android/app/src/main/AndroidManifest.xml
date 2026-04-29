@@ -36,15 +36,24 @@
         android:theme="@style/LaunchTheme"
         android:usesCleartextTraffic="true">
 
-        <!-- ✅ PUSH ICON (ADDED) -->
+        <!-- ✅ PUSH ICON (use white transparent icon ideally) -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@mipmap/ic_launcher" />
 
-        <!-- Notification channel -->
+        <!-- ✅ Notification channel -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="high_importance_channel"/>
+
+        <!-- ✅ Firebase Messaging Service (CRITICAL FIX) -->
+        <service
+            android:name="com.google.firebase.messaging.FirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
 
         <!-- Google Sign In -->
         <meta-data
