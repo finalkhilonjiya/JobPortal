@@ -3,8 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:sizer/sizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'services/force_update_service.dart'; // ADD TOP
-
+import 'services/force_update_service.dart';
 
 // Firebase
 import 'package:firebase_core/firebase_core.dart';
@@ -58,37 +57,30 @@ Future<void> _firebaseMessagingBackgroundHandler(
 }
 
 /// =============================================================
-/// PUSH INIT (FIXED FULL)
+/// PUSH INIT
 /// =============================================================
 Future<void> initPushNotifications() async {
   final messaging = FirebaseMessaging.instance;
 
-  // ✅ Permission
   await messaging.requestPermission(
     alert: true,
     badge: true,
     sound: true,
   );
 
-  // ✅ Get token
   final token = await messaging.getToken();
   print("FCM TOKEN: $token");
 
   final user = Supabase.instance.client.auth.currentUser;
 
   if (user != null && token != null) {
-    await Supabase.instance.client
-        .from('user_devices') // ✅ CORRECT TABLE
-        .upsert({
+    await Supabase.instance.client.from('user_devices').upsert({
       "user_id": user.id,
       "fcm_token": token,
       "platform": "android"
     });
   }
 
-  // =========================================================
-  // ✅ TOKEN REFRESH (CRITICAL FIX)
-  // =========================================================
   FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
     final user = Supabase.instance.client.auth.currentUser;
 
@@ -101,9 +93,6 @@ Future<void> initPushNotifications() async {
     }
   });
 
-  // =========================================================
-  // ✅ FOREGROUND NOTIFICATION (FIXED)
-  // =========================================================
   FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
     final title = message.notification?.title ?? "Notification";
     final body = message.notification?.body ?? "";
@@ -124,11 +113,9 @@ Future<void> initPushNotifications() async {
     );
   });
 
-  // =========================================================
-  // ✅ CLICK HANDLING
-  // =========================================================
+  // ✅ FIXED HERE
   FirebaseMessaging.onMessageOpenedApp.listen((message) {
-    NavigationService.pushNamed(AppRoutes.home);
+    NavigationService.pushReplacementNamed(AppRoutes.home);
   });
 }
 
@@ -143,9 +130,6 @@ Future<void> main() async {
     await dotenv.load(fileName: '.env');
   } catch (_) {}
 
-  // =========================================================
-  // SUPABASE
-  // =========================================================
   if (AppConfig.hasSupabase) {
     try {
       await Supabase.initialize(
@@ -155,9 +139,6 @@ Future<void> main() async {
     } catch (_) {}
   }
 
-  // =========================================================
-  // FIREBASE + PUSH
-  // =========================================================
   try {
     await Firebase.initializeApp();
 
@@ -165,7 +146,7 @@ Future<void> main() async {
       _firebaseMessagingBackgroundHandler,
     );
 
-    await initLocalNotifications(); // ✅ ADDED
+    await initLocalNotifications();
     await initPushNotifications();
   } catch (_) {}
 
@@ -182,7 +163,7 @@ Future<void> main() async {
 }
 
 /// =============================================================
-/// APP UI (UNCHANGED)
+/// APP UI
 /// =============================================================
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -226,31 +207,29 @@ class _AppInitializerState extends State<AppInitializer> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrap());
   }
 
-  
-Future<void> _bootstrap() async {
-  try {
-    // ✅ FORCE UPDATE CHECK (FIRST THING)
-    await ForceUpdateService.check();
+  Future<void> _bootstrap() async {
+    try {
+      await ForceUpdateService.check();
 
-    if (!AppConfig.hasSupabase) {
+      if (!AppConfig.hasSupabase) {
+        _go(AppRoutes.roleSelection);
+        return;
+      }
+
+      final client = Supabase.instance.client;
+      final session = client.auth.currentSession;
+      final user = client.auth.currentUser;
+
+      if (session != null && user != null) {
+        _go(AppRoutes.home);
+        return;
+      }
+
       _go(AppRoutes.roleSelection);
-      return;
+    } catch (_) {
+      _go(AppRoutes.roleSelection);
     }
-
-    final client = Supabase.instance.client;
-    final session = client.auth.currentSession;
-    final user = client.auth.currentUser;
-
-    if (session != null && user != null) {
-      _go(AppRoutes.home);
-      return;
-    }
-
-    _go(AppRoutes.roleSelection);
-  } catch (_) {
-    _go(AppRoutes.roleSelection);
   }
-}
 
   void _go(String route) {
     if (!mounted || _navigated) return;
