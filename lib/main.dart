@@ -35,29 +35,48 @@ Future<void> _firebaseMessagingBackgroundHandler(
 Future<void> initPushNotifications() async {
   final messaging = FirebaseMessaging.instance;
 
+  // Permission (important)
   await messaging.requestPermission(
     alert: true,
     badge: true,
     sound: true,
   );
 
+  // Get token
   final token = await messaging.getToken();
+
+  print("FCM TOKEN: $token");
 
   if (token == null) return;
 
   final user = Supabase.instance.client.auth.currentUser;
 
-  if (user == null) return;
+  if (user != null) {
+    // ✅ FIXED TABLE
+    await Supabase.instance.client
+        .from('user_push_tokens')
+        .upsert({
+      "user_id": user.id,
+      "fcm_token": token,
+      "platform": "android"
+    });
+  }
 
-  await Supabase.instance.client
-      .from('user_devices')
-      .upsert({
-        "user_id": user.id,
-        "fcm_token": token,
-        "platform": "android"
-      });
+  // =========================================================
+  // ✅ FOREGROUND NOTIFICATION HANDLER (MISSING IN YOUR CODE)
+  // =========================================================
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    print("Foreground message: ${message.notification?.title}");
 
-  print("FCM token saved to Supabase");
+    // You can later show local notification here
+  });
+
+  // =========================================================
+  // ✅ CLICK HANDLER
+  // =========================================================
+  FirebaseMessaging.onMessageOpenedApp.listen((message) {
+    print("Notification clicked");
+  });
 }
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
