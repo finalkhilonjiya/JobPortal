@@ -58,12 +58,41 @@ String _selectedExperience = "0-1 years";
 
 final List<String> _educationList = [
   "Any",
+
+  // School
+  "Below 10th",
   "10th Pass",
   "12th Pass",
-  "Diploma",
+
+  // Vocational / Skill
   "ITI",
-  "Graduate",
-  "Post Graduate",
+  "Diploma",
+  "Polytechnic",
+
+  // Graduation
+  "BA",
+  "BSc",
+  "BCom",
+  "BBA",
+  "BCA",
+  "B.Tech / BE",
+
+  // Post Graduation
+  "MA",
+  "MSc",
+  "MCom",
+  "MBA",
+  "MCA",
+  "M.Tech / ME",
+
+  // Professional
+  "CA",
+  "CS",
+  "ICWA",
+
+  // Others
+  "PhD",
+  "Other",
 ];
 
 final List<String> _experienceList = [
@@ -771,10 +800,13 @@ ButtonStyle _primaryButtonStyle() {
 
     // ✅ SUCCESS ANIMATION DIALOG
     await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const _SuccessDialog(),
-    );
+  context: context,
+  barrierDismissible: false,
+  builder: (_) => const _SlimSuccessDialog(
+    message:
+        "Your job will be reviewed by the Khilonjiya Support Team and will be published shortly once approved.",
+  ),
+);
 
     if (!mounted) return;
     Navigator.pop(context, true);
@@ -1863,5 +1895,148 @@ class _SuccessDialogState extends State<_SuccessDialog>
         ),
       ),
     );
+  }
+}
+
+
+
+class _SlimSuccessDialog extends StatefulWidget {
+  final String message;
+
+  const _SlimSuccessDialog({
+    Key? key,
+    this.message = "Success",
+  }) : super(key: key);
+
+  @override
+  State<_SlimSuccessDialog> createState() => _SlimSuccessDialogState();
+}
+
+class _SlimSuccessDialogState extends State<_SlimSuccessDialog>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _progress;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
+    _progress = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+
+    _controller.forward();
+
+    // ✅ auto close (same behavior)
+    Future.delayed(const Duration(milliseconds: 2500), () {
+      if (mounted) Navigator.pop(context);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: const [
+              BoxShadow(
+                blurRadius: 20,
+                color: Colors.black12,
+              )
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 34,
+                height: 34,
+                child: AnimatedBuilder(
+                  animation: _progress,
+                  builder: (_, __) {
+                    return CustomPaint(
+                      painter: _TickPainter(_progress.value),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  widget.message,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TickPainter extends CustomPainter {
+  final double progress;
+  _TickPainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF16A34A)
+      ..strokeWidth = 2.4
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+
+    final start = Offset(size.width * 0.2, size.height * 0.55);
+    final mid = Offset(size.width * 0.45, size.height * 0.75);
+    final end = Offset(size.width * 0.8, size.height * 0.3);
+
+    if (progress < 0.5) {
+      final p = progress / 0.5;
+      path.moveTo(start.dx, start.dy);
+      path.lineTo(
+        start.dx + (mid.dx - start.dx) * p,
+        start.dy + (mid.dy - start.dy) * p,
+      );
+    } else {
+      path.moveTo(start.dx, start.dy);
+      path.lineTo(mid.dx, mid.dy);
+
+      final p = (progress - 0.5) / 0.5;
+      path.lineTo(
+        mid.dx + (end.dx - mid.dx) * p,
+        mid.dy + (end.dy - mid.dy) * p,
+      );
+    }
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _TickPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }
