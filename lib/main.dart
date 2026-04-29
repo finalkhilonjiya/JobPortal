@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:sizer/sizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'services/force_update_service.dart'; // ADD TOP
+
 
 // Firebase
 import 'package:firebase_core/firebase_core.dart';
@@ -224,27 +226,31 @@ class _AppInitializerState extends State<AppInitializer> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrap());
   }
 
-  Future<void> _bootstrap() async {
-    try {
-      if (!AppConfig.hasSupabase) {
-        _go(AppRoutes.roleSelection);
-        return;
-      }
+  
+Future<void> _bootstrap() async {
+  try {
+    // ✅ FORCE UPDATE CHECK (FIRST THING)
+    await ForceUpdateService.check();
 
-      final client = Supabase.instance.client;
-      final session = client.auth.currentSession;
-      final user = client.auth.currentUser;
-
-      if (session != null && user != null) {
-        _go(AppRoutes.home);
-        return;
-      }
-
+    if (!AppConfig.hasSupabase) {
       _go(AppRoutes.roleSelection);
-    } catch (_) {
-      _go(AppRoutes.roleSelection);
+      return;
     }
+
+    final client = Supabase.instance.client;
+    final session = client.auth.currentSession;
+    final user = client.auth.currentUser;
+
+    if (session != null && user != null) {
+      _go(AppRoutes.home);
+      return;
+    }
+
+    _go(AppRoutes.roleSelection);
+  } catch (_) {
+    _go(AppRoutes.roleSelection);
   }
+}
 
   void _go(String route) {
     if (!mounted || _navigated) return;
