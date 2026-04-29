@@ -57,19 +57,17 @@ Future<void> _firebaseMessagingBackgroundHandler(
 }
 
 /// =============================================================
-/// PUSH INIT
+/// PUSH INIT (FIXED CLEAN)
 /// =============================================================
 Future<void> initPushNotifications() async {
   final messaging = FirebaseMessaging.instance;
 
-  // ✅ Permission (Android 13+)
   await messaging.requestPermission(
     alert: true,
     badge: true,
     sound: true,
   );
 
-  // ✅ TOKEN
   final token = await messaging.getToken();
   print("FCM TOKEN: $token");
 
@@ -83,7 +81,7 @@ Future<void> initPushNotifications() async {
     });
   }
 
-  // ✅ TOKEN REFRESH
+  /// TOKEN REFRESH
   FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
     final user = Supabase.instance.client.auth.currentUser;
 
@@ -96,9 +94,7 @@ Future<void> initPushNotifications() async {
     }
   });
 
-  // =========================================================
-  // ✅ FOREGROUND (APP OPEN)
-  // =========================================================
+  /// FOREGROUND
   FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
     final title = message.notification?.title ?? "Notification";
     final body = message.notification?.body ?? "";
@@ -119,59 +115,17 @@ Future<void> initPushNotifications() async {
     );
   });
 
-  // =========================================================
-  // ✅ WHEN APP IN BACKGROUND (CLICK)
-  // =========================================================
+  /// BACKGROUND CLICK
   FirebaseMessaging.onMessageOpenedApp.listen((message) {
     NavigationService.pushReplacementNamed(AppRoutes.home);
   });
 
-  // =========================================================
-  // ✅ WHEN APP TERMINATED (KILLED STATE)
-  // =========================================================
+  /// TERMINATED STATE
   final initialMessage = await messaging.getInitialMessage();
 
   if (initialMessage != null) {
     NavigationService.pushReplacementNamed(AppRoutes.home);
   }
-}
-
-  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
-    final user = Supabase.instance.client.auth.currentUser;
-
-    if (user != null) {
-      await Supabase.instance.client.from('user_devices').upsert({
-        "user_id": user.id,
-        "fcm_token": newToken,
-        "platform": "android"
-      });
-    }
-  });
-
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-    final title = message.notification?.title ?? "Notification";
-    final body = message.notification?.body ?? "";
-
-    await localNotifications.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000,
-      title,
-      body,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'high_importance_channel',
-          'High Importance Notifications',
-          importance: Importance.max,
-          priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
-        ),
-      ),
-    );
-  });
-
-  // ✅ FIXED HERE
-  FirebaseMessaging.onMessageOpenedApp.listen((message) {
-    NavigationService.pushReplacementNamed(AppRoutes.home);
-  });
 }
 
 Future<void> main() async {
