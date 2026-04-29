@@ -23,7 +23,6 @@ android {
     compileSdk 36
     ndkVersion "28.2.13676358"
 
-    // ✅ ADD THIS (SIGNING CONFIG)
     signingConfigs {
         release {
             storeFile file(System.getenv("CM_KEYSTORE_PATH"))
@@ -60,7 +59,6 @@ android {
 
     buildTypes {
 
-        // ✅ FIXED RELEASE
         release {
             signingConfig signingConfigs.release
             minifyEnabled true
@@ -110,6 +108,7 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.8.4"
     implementation "androidx.lifecycle:lifecycle-process:2.8.4"
 
-    // Firebase Messaging
-    implementation "com.google.firebase:firebase-messaging:24.0.0"
+    // ✅ Firebase Messaging (UPDATED via BOM)
+    implementation platform('com.google.firebase:firebase-bom:33.5.1')
+    implementation "com.google.firebase:firebase-messaging"
 }
