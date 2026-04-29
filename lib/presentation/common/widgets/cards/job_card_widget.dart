@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../../core/ui/khilonjiya_ui.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class JobCardWidget extends StatelessWidget {
   final Map<String, dynamic> job;
@@ -50,8 +51,14 @@ class JobCardWidget extends StatelessWidget {
 
     final postedAt = job['created_at']?.toString();
 
-    final companyLogoUrl =
-        (job['companies']?['logo_url'] ?? '').toString().trim();
+    final rawLogo =
+    (job['companies']?['logo_url'] ?? '').toString().trim();
+
+final companyLogoUrl = rawLogo.isEmpty
+    ? ''
+    : Supabase.instance.client.storage
+        .from('company-assets')
+        .getPublicUrl(rawLogo);
 
     final skills = _extractSkills(job);
 
