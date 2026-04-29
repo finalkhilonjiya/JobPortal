@@ -40,6 +40,10 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
     _load();
   }
 
+
+bool _hasNumber(String v) {
+  return RegExp(r'\d').hasMatch(v);
+}
   // ================= LOAD =================
   Future<void> _load() async {
     final user = supabase.auth.currentUser;
@@ -74,7 +78,13 @@ class _EmployerProfileScreenState extends State<EmployerProfileScreen> {
         .map((e) => e['district_name'] as String)
         .toList();
 
-    _name.text = profile['full_name'] ?? '';
+    final name = (profile['full_name'] ?? '').toString().trim();
+
+if (_hasNumber(name)) {
+  _name.text = ''; // hide invalid name
+} else {
+  _name.text = name; // show valid name
+}
     _phone.text = profile['mobile_number'] ?? '';
 
     _companyName.text = company['name'] ?? '';
