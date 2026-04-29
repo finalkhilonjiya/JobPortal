@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 // Firebase
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'core/navigation_service.dart';
 import 'core/ui/khilonjiya_ui.dart';
@@ -21,40 +22,61 @@ class AppConfig {
       supabaseAnonKey.trim().isNotEmpty;
 }
 
-/// ------------------------------------------------------------
+/// =============================================================
+/// LOCAL NOTIFICATION SETUP
+/// =============================================================
+final FlutterLocalNotificationsPlugin localNotifications =
+    FlutterLocalNotificationsPlugin();
+
+Future<void> initLocalNotifications() async {
+  const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  const settings = InitializationSettings(android: android);
+
+  await localNotifications.initialize(settings);
+
+  const channel = AndroidNotificationChannel(
+    'high_importance_channel',
+    'High Importance Notifications',
+    importance: Importance.max,
+  );
+
+  await localNotifications
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(channel);
+}
+
+/// =============================================================
 /// Firebase background handler
-/// ------------------------------------------------------------
+/// =============================================================
 Future<void> _firebaseMessagingBackgroundHandler(
     RemoteMessage message) async {
   await Firebase.initializeApp();
 }
 
-/// ------------------------------------------------------------
-/// Push notification initialization
-/// ------------------------------------------------------------
+/// =============================================================
+/// PUSH INIT (FIXED FULL)
+/// =============================================================
 Future<void> initPushNotifications() async {
   final messaging = FirebaseMessaging.instance;
 
-  // Permission (important)
+  // ✅ Permission
   await messaging.requestPermission(
     alert: true,
     badge: true,
     sound: true,
   );
 
-  // Get token
+  // ✅ Get token
   final token = await messaging.getToken();
-
   print("FCM TOKEN: $token");
-
-  if (token == null) return;
 
   final user = Supabase.instance.client.auth.currentUser;
 
-  if (user != null) {
-    // ✅ FIXED TABLE
+  if (user != null && token != null) {
     await Supabase.instance.client
-        .from('user_push_tokens')
+        .from('user_devices') // ✅ CORRECT TABLE
         .upsert({
       "user_id": user.id,
       "fcm_token": token,
@@ -63,21 +85,51 @@ Future<void> initPushNotifications() async {
   }
 
   // =========================================================
-  // ✅ FOREGROUND NOTIFICATION HANDLER (MISSING IN YOUR CODE)
+  // ✅ TOKEN REFRESH (CRITICAL FIX)
   // =========================================================
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print("Foreground message: ${message.notification?.title}");
+  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+    final user = Supabase.instance.client.auth.currentUser;
 
-    // You can later show local notification here
+    if (user != null) {
+      await Supabase.instance.client.from('user_devices').upsert({
+        "user_id": user.id,
+        "fcm_token": newToken,
+        "platform": "android"
+      });
+    }
   });
 
   // =========================================================
-  // ✅ CLICK HANDLER
+  // ✅ FOREGROUND NOTIFICATION (FIXED)
+  // =========================================================
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+    final title = message.notification?.title ?? "Notification";
+    final body = message.notification?.body ?? "";
+
+    await localNotifications.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title,
+      body,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'high_importance_channel',
+          'High Importance Notifications',
+          importance: Importance.max,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        ),
+      ),
+    );
+  });
+
+  // =========================================================
+  // ✅ CLICK HANDLING
   // =========================================================
   FirebaseMessaging.onMessageOpenedApp.listen((message) {
-    print("Notification clicked");
+    NavigationService.pushNamed(AppRoutes.home);
   });
 }
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -89,9 +141,9 @@ Future<void> main() async {
     await dotenv.load(fileName: '.env');
   } catch (_) {}
 
-  /// ------------------------------------------------------------
-  /// Supabase init (existing)
-  /// ------------------------------------------------------------
+  // =========================================================
+  // SUPABASE
+  // =========================================================
   if (AppConfig.hasSupabase) {
     try {
       await Supabase.initialize(
@@ -101,9 +153,9 @@ Future<void> main() async {
     } catch (_) {}
   }
 
-  /// ------------------------------------------------------------
-  /// Firebase init (added)
-  /// ------------------------------------------------------------
+  // =========================================================
+  // FIREBASE + PUSH
+  // =========================================================
   try {
     await Firebase.initializeApp();
 
@@ -111,6 +163,7 @@ Future<void> main() async {
       _firebaseMessagingBackgroundHandler,
     );
 
+    await initLocalNotifications(); // ✅ ADDED
     await initPushNotifications();
   } catch (_) {}
 
@@ -126,6 +179,9 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
+/// =============================================================
+/// APP UI (UNCHANGED)
+/// =============================================================
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -151,10 +207,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/// ------------------------------------------------------------
-/// AppInitializer
-/// Native splash already shown → NO artificial delay
-/// ------------------------------------------------------------
 class AppInitializer extends StatefulWidget {
   const AppInitializer({super.key});
 
@@ -163,46 +215,39 @@ class AppInitializer extends StatefulWidget {
       _AppInitializerState();
 }
 
-class _AppInitializerState
-    extends State<AppInitializer> {
-
+class _AppInitializerState extends State<AppInitializer> {
   bool _navigated = false;
-  String _loadingText = "Initializing...";
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _bootstrap());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrap());
   }
 
   Future<void> _bootstrap() async {
-  try {
-    if (!AppConfig.hasSupabase) {
+    try {
+      if (!AppConfig.hasSupabase) {
+        _go(AppRoutes.roleSelection);
+        return;
+      }
+
+      final client = Supabase.instance.client;
+      final session = client.auth.currentSession;
+      final user = client.auth.currentUser;
+
+      if (session != null && user != null) {
+        _go(AppRoutes.home);
+        return;
+      }
+
       _go(AppRoutes.roleSelection);
-      return;
+    } catch (_) {
+      _go(AppRoutes.roleSelection);
     }
-
-    final client = Supabase.instance.client;
-    final session = client.auth.currentSession;
-    final user = client.auth.currentUser;
-
-    // ✅ USER LOGGED IN → GO HOME
-    if (session != null && user != null) {
-      _go(AppRoutes.home);
-      return;
-    }
-
-    // ❌ NOT LOGGED IN → GO ROLE SELECTION
-    _go(AppRoutes.roleSelection);
-  } catch (_) {
-    _go(AppRoutes.roleSelection);
   }
-}
 
   void _go(String route) {
-    if (!mounted) return;
-    if (_navigated) return;
+    if (!mounted || _navigated) return;
 
     _navigated = true;
     NavigationService.pushReplacementNamed(route);
@@ -213,9 +258,7 @@ class _AppInitializerState
     return Scaffold(
       backgroundColor: KhilonjiyaUI.bg,
       body: const Center(
-        child: CircularProgressIndicator(
-          strokeWidth: 3,
-        ),
+        child: CircularProgressIndicator(strokeWidth: 3),
       ),
     );
   }
