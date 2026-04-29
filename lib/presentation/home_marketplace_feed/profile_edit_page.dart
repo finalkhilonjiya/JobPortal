@@ -31,6 +31,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   final _fullNameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _bioCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
 
   // REMOVE this:
 // final _experienceYearsCtrl = TextEditingController();
@@ -168,6 +169,7 @@ void dispose() {
   _noticeDaysCtrl.dispose();
 
   _skillsCtrl.dispose();
+  _emailCtrl.dispose();
 
   super.dispose();
 }
@@ -201,7 +203,11 @@ void dispose() {
         (_profile['mobile_number'] ?? _profile['phone'] ?? '').toString();
     _bioCtrl.text = (_profile['bio'] ?? '').toString();
 
-    // EXPERIENCE → map number → dropdown
+    // ✅ EMAIL (STRICT)
+    _emailCtrl.text =
+        (_profile['actual_email'] ?? '').toString().trim();
+
+    // EXPERIENCE
     final expYears =
         int.tryParse((_profile['total_experience_years'] ?? '0').toString()) ??
             0;
@@ -221,7 +227,6 @@ void dispose() {
     _noticeDaysCtrl.text =
         (_profile['notice_period_days'] ?? '').toString();
 
-    // SWITCH
     _openToWork = (_profile['is_open_to_work'] ?? false) == true;
 
     // EDUCATION
@@ -278,7 +283,6 @@ void dispose() {
   if (_disposed) return;
   setState(() => _loading = false);
 }
-
 
 
 bool _isLocked(String field) {
@@ -430,15 +434,9 @@ bool _isLocked(String field) {
 
   setState(() => _saving = true);
 
-  // ---------------------------------
-  // Uploads first
-  // ---------------------------------
   await _uploadPhotoIfNeeded();
   await _uploadResumeIfNeeded();
 
-  // ---------------------------------
-  // EXPERIENCE (dropdown → int)
-  // ---------------------------------
   int expYears = 0;
 
   if (_selectedExperience == 'Fresher') {
@@ -450,19 +448,17 @@ bool _isLocked(String field) {
         int.tryParse(_selectedExperience.split(' ').first) ?? 0;
   }
 
-  // ---------------------------------
-  // PAYLOAD
-  // ---------------------------------
   final payload = <String, dynamic>{
-    // LOCKED FIELDS
+    // LOCKED
     if (!_isLocked('full_name'))
       'full_name': _fullNameCtrl.text.trim(),
 
     if (!_isLocked('mobile_number'))
       'phone': _phoneCtrl.text.trim(),
 
-    // EMAIL (STRICT - NO FALLBACK)
-    'actual_email': (_profile['actual_email'] ?? '').toString().trim(),
+    // ✅ EMAIL STRICT (NO FALLBACK)
+    if (!_isLocked('actual_email'))
+      'actual_email': _emailCtrl.text.trim(),
 
     // BASIC
     'bio': _bioCtrl.text.trim(),
@@ -487,7 +483,6 @@ bool _isLocked(String field) {
     // PREFERENCES
     'preferred_job_type': _jobType,
     'preferred_locations': _preferredDistricts,
-
     'is_open_to_work': _openToWork,
     'skills': _skills,
 
@@ -499,17 +494,11 @@ bool _isLocked(String field) {
       'resume_url': _resumeStoragePath,
   };
 
-  // ---------------------------------
-  // SAVE TO DB
-  // ---------------------------------
   try {
     await _service.updateMyProfile(payload);
 
     if (!mounted) return;
 
-    // ---------------------------------
-    // SHOW SLIM SUCCESS ANIMATION
-    // ---------------------------------
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -517,7 +506,6 @@ bool _isLocked(String field) {
     );
 
     if (!mounted) return;
-
     Navigator.pop(context, true);
   } catch (_) {
     if (!mounted) return;
@@ -1012,17 +1000,17 @@ bool _isLocked(String field) {
         // -------------------------------
         _sectionTitle("Email address"),
 
-        TextField(
-          enabled: false,
-          controller: TextEditingController(
-            text: (_profile['actual_email'] ?? '').toString(),
-          ),
-          decoration: _dec(
-            "Email address",
-            icon: Icons.email_outlined,
-          ),
-        ),
-
+TextField(
+  controller: _emailCtrl,
+  enabled: !_isLocked('actual_email'),
+  keyboardType: TextInputType.emailAddress,
+  decoration: _dec(
+    _isLocked('actual_email')
+        ? "Email (cannot change)"
+        : "Enter your email",
+    icon: Icons.email_outlined,
+  ),
+),
         // -------------------------------
         // LOCATION
         // -------------------------------
@@ -1081,35 +1069,42 @@ _sectionTitle(
   sub: "Your experience, salary & availability",
 ),
 
-// EXPERIENCE DROPDOWN
+// EXPERIENCE
+const SizedBox(height: 6),
+Text("Total Experience", style: KhilonjiyaUI.caption),
+const SizedBox(height: 6),
 _dropdownBox(
   value: _selectedExperience,
   options: _experienceOptions,
-  hint: "Select total experience",
+  hint: "Select experience",
   icon: Icons.work_outline,
   onChanged: (v) => setState(() => _selectedExperience = v),
 ),
 
-const SizedBox(height: 12),
+const SizedBox(height: 14),
 
 // SALARY
+Text("Expected Salary (Monthly)", style: KhilonjiyaUI.caption),
+const SizedBox(height: 6),
 TextField(
   controller: _expectedSalaryMinCtrl,
   keyboardType: TextInputType.number,
   decoration: _dec(
-    "Expected salary per month (₹)",
+    "e.g. 15000",
     icon: Icons.currency_rupee_rounded,
   ),
 ),
 
-const SizedBox(height: 12),
+const SizedBox(height: 14),
 
-// NOTICE PERIOD
+// NOTICE
+Text("Notice Period (Days)", style: KhilonjiyaUI.caption),
+const SizedBox(height: 6),
 TextField(
   controller: _noticeDaysCtrl,
   keyboardType: TextInputType.number,
   decoration: _dec(
-    "Notice period (in days)",
+    "e.g. 30",
     icon: Icons.calendar_today_outlined,
   ),
 ),
