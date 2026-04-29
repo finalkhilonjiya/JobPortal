@@ -1,4 +1,5 @@
 // lib/presentation/company/notifications/employer_notifications_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -32,21 +33,13 @@ class _EmployerNotificationsPageState extends State<EmployerNotificationsPage> {
 
   User _requireUser() {
     final u = _db.auth.currentUser;
-    if (u == null) throw Exception("Session expired. Please login again.");
+    if (u == null) throw Exception("Session expired.");
     return u;
   }
 
-  void _toast(String msg) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg)),
-    );
-  }
-
-  // ------------------------------------------------------------
-  // LOAD (REAL)
-  // ------------------------------------------------------------
+  // =============================================================
+  // LOAD (ROLE SAFE)
+  // =============================================================
   Future<void> _load() async {
     if (!mounted) return;
     setState(() => _loading = true);
@@ -58,11 +51,12 @@ class _EmployerNotificationsPageState extends State<EmployerNotificationsPage> {
           .from('notifications')
           .select('id,type,title,body,data,is_read,created_at')
           .eq('user_id', user.id)
+          .eq('user_role', 'employer') // ✅ FIXED
           .order('created_at', ascending: false)
           .limit(50);
 
       _items = List<Map<String, dynamic>>.from(res);
-    } catch (e) {
+    } catch (_) {
       _items = [];
     }
 
@@ -70,9 +64,9 @@ class _EmployerNotificationsPageState extends State<EmployerNotificationsPage> {
     setState(() => _loading = false);
   }
 
-  // ------------------------------------------------------------
-  // MARK ALL READ (REAL + SAFE)
-  // ------------------------------------------------------------
+  // =============================================================
+  // MARK ALL READ
+  // =============================================================
   Future<void> _markAllRead() async {
     if (_busy) return;
 
@@ -85,9 +79,9 @@ class _EmployerNotificationsPageState extends State<EmployerNotificationsPage> {
           .from('notifications')
           .update({'is_read': true})
           .eq('user_id', user.id)
+          .eq('user_role', 'employer') // ✅ FIXED
           .eq('is_read', false);
 
-      // Update local instantly (no need reload)
       for (final n in _items) {
         n['is_read'] = true;
       }
@@ -99,43 +93,44 @@ class _EmployerNotificationsPageState extends State<EmployerNotificationsPage> {
     setState(() => _busy = false);
   }
 
-  // ------------------------------------------------------------
-  // MARK SINGLE READ (REAL + SAFE)
-  // ------------------------------------------------------------
+  // =============================================================
+  // MARK SINGLE READ
+  // =============================================================
   Future<void> _markRead(String id) async {
-    final nid = id.trim();
-    if (nid.isEmpty) return;
-
     try {
       final user = _requireUser();
 
       await _db
           .from('notifications')
           .update({'is_read': true})
-          .eq('id', nid)
+          .eq('id', id)
           .eq('user_id', user.id);
     } catch (_) {}
   }
 
-  // ------------------------------------------------------------
+  // =============================================================
   // BUILD
-  // ------------------------------------------------------------
+  // =============================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bg,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0.6,
-        title: const Text("Notifications"),
+        elevation: 0.4,
+        title: const Text(
+          "Notifications",
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
         foregroundColor: _text,
         actions: [
           TextButton(
-            onPressed: (_loading || _busy || _items.isEmpty) ? null : _markAllRead,
+            onPressed:
+                (_loading || _busy || _items.isEmpty) ? null : _markAllRead,
             child: Text(
-              _busy ? "..." : "Mark all read",
+              "Mark all",
               style: TextStyle(
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w600,
                 color: (_loading || _busy || _items.isEmpty)
                     ? const Color(0xFF94A3B8)
                     : _primary,
@@ -151,9 +146,10 @@ class _EmployerNotificationsPageState extends State<EmployerNotificationsPage> {
               : RefreshIndicator(
                   onRefresh: _load,
                   child: ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 20),
+                    padding: const EdgeInsets.all(12),
                     itemCount: _items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(height: 8),
                     itemBuilder: (_, i) => _tile(_items[i]),
                   ),
                 ),
@@ -161,166 +157,105 @@ class _EmployerNotificationsPageState extends State<EmployerNotificationsPage> {
   }
 
   Widget _empty() {
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _border),
-        ),
-        child: const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.notifications_none_outlined,
-                size: 40, color: _muted),
-            SizedBox(height: 10),
-            Text(
-              "No notifications",
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 16,
-                color: _text,
-              ),
-            ),
-            SizedBox(height: 6),
-            Text(
-              "When something happens, it will appear here.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: _muted,
-                height: 1.35,
-              ),
-            ),
-          ],
+    return const Center(
+      child: Text(
+        "No notifications",
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          color: _muted,
         ),
       ),
     );
   }
 
   Widget _tile(Map<String, dynamic> n) {
-    final id = (n['id'] ?? '').toString();
-    final title = (n['title'] ?? 'Notification').toString();
+    final id = n['id'].toString();
+    final title = (n['title'] ?? '').toString();
     final body = (n['body'] ?? '').toString();
-    final isRead = (n['is_read'] ?? false) == true;
-    final createdAt = n['created_at'];
+    final isRead = n['is_read'] == true;
 
     IconData icon = Icons.notifications_outlined;
-    final type = (n['type'] ?? '').toString().toLowerCase();
+    final type = (n['type'] ?? '').toString();
 
     if (type.contains('application')) icon = Icons.people_outline;
-    if (type.contains('interview')) icon = Icons.calendar_month_outlined;
+    if (type.contains('interview')) icon = Icons.calendar_today_outlined;
     if (type.contains('job')) icon = Icons.work_outline;
 
     return InkWell(
       onTap: () async {
         if (!isRead) await _markRead(id);
 
-        if (!mounted) return;
-        setState(() {
-          final idx =
-              _items.indexWhere((e) => (e['id'] ?? '').toString() == id);
-          if (idx != -1) _items[idx]['is_read'] = true;
-        });
+        // ✅ FUTURE NAVIGATION USING DATA
+        final data = n['data'] ?? {};
 
-        // OPTIONAL:
-        // Later we will route based on n['data'] (jobId, listingRowId etc.)
+        // Example:
+        // if (data['job_id'] != null) navigate to job details
+
+        if (!mounted) return;
+
+        setState(() {
+          n['is_read'] = true;
+        });
       },
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: _border),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 46,
-              height: 46,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
                 color: const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFBFDBFE)),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: _primary),
+              child: Icon(icon, size: 18, color: _primary),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
+
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            color: _text,
-                            fontSize: 13.8,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      if (!isRead)
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFEF4444),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                    ],
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: _text,
+                    ),
                   ),
-                  if (body.trim().isNotEmpty) ...[
-                    const SizedBox(height: 6),
+                  if (body.isNotEmpty) ...[
+                    const SizedBox(height: 2),
                     Text(
                       body,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
+                        fontSize: 12,
                         color: _muted,
-                        fontWeight: FontWeight.w700,
-                        height: 1.35,
                       ),
                     ),
                   ],
-                  const SizedBox(height: 10),
-                  Text(
-                    _timeAgo(createdAt),
-                    style: const TextStyle(
-                      color: Color(0xFF94A3B8),
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
-                    ),
-                  ),
                 ],
               ),
             ),
+
+            if (!isRead)
+              const Padding(
+                padding: EdgeInsets.only(left: 6),
+                child: Icon(Icons.circle, size: 8, color: Colors.red),
+              ),
           ],
         ),
       ),
     );
-  }
-
-  String _timeAgo(dynamic date) {
-    if (date == null) return 'recent';
-
-    final d = DateTime.tryParse(date.toString());
-    if (d == null) return 'recent';
-
-    final diff = DateTime.now().difference(d);
-
-    if (diff.inMinutes < 2) return 'just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays == 1) return '1d ago';
-    return '${diff.inDays}d ago';
   }
 }
