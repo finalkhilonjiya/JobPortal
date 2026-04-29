@@ -409,7 +409,6 @@ Map<String, dynamic> _getApp(dynamic raw) {
   final status =
       (row['application_status'] ?? 'applied').toString().toLowerCase();
 
-  // ✅ ALL RELEVANT FIELDS
   final fields = {
     "Phone": app['phone'],
     "Email": app['email'],
@@ -420,10 +419,6 @@ Map<String, dynamic> _getApp(dynamic raw) {
     "Education": app['education'],
     "Experience Level": app['experience_level'],
     "Experience Details": app['experience_details'],
-    "Expected Salary": (() {
-  final v = int.tryParse(app['expected_salary']?.toString() ?? '') ?? 0;
-  return v > 0 ? "₹$v / month" : "";
-})(),
     "Availability": app['availability'],
     "Additional Info": app['additional_info'],
   };
@@ -453,14 +448,8 @@ Map<String, dynamic> _getApp(dynamic raw) {
             ),
             child: Column(
               children: [
-                // HEADER
                 Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: Color(0xFFE6E8EC)),
-                    ),
-                  ),
                   child: Row(
                     children: [
                       _avatar(name, photoUrl: photo),
@@ -480,7 +469,6 @@ Map<String, dynamic> _getApp(dynamic raw) {
                   ),
                 ),
 
-                // CONTENT (SCROLLABLE)
                 Expanded(
                   child: ListView(
                     controller: scrollController,
@@ -491,13 +479,8 @@ Map<String, dynamic> _getApp(dynamic raw) {
                               (e.value ?? '').toString().trim().isNotEmpty)
                           .map((e) => _kvStack(e.key, e.value.toString())),
 
-                      // SKILLS
                       if (skills.isNotEmpty) ...[
                         const SizedBox(height: 16),
-                        const Text("Skills",
-                            style: TextStyle(
-                                fontWeight: FontWeight.w900, fontSize: 14)),
-                        const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
@@ -519,63 +502,13 @@ Map<String, dynamic> _getApp(dynamic raw) {
                         ),
                       ],
 
-                      // NOTES
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          const Text("Notes",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w900, fontSize: 14)),
-                          const Spacer(),
-                          IconButton(
-                            icon: const Icon(Icons.edit, size: 18),
-                            onPressed: () async {
-                              await _editNotes(row);
-                              Navigator.pop(context);
-                              _openApplicant(row);
-                            },
-                          )
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        notes.isEmpty ? "No notes added" : notes,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-
-                      // ✅ APPLIED FOR (PROMINENT AT BOTTOM)
-                      if (jobTitle.isNotEmpty) ...[
-                        const SizedBox(height: 24),
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFECFDF5),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            "Applied for: $jobTitle",
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 15,
-                              color: _primary,
-                            ),
-                          ),
-                        ),
-                      ],
-
                       const SizedBox(height: 80),
                     ],
                   ),
                 ),
 
-                // ACTION BAR
                 Container(
                   padding: const EdgeInsets.all(14),
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      top: BorderSide(color: Color(0xFFE6E8EC)),
-                    ),
-                  ),
                   child: Row(
                     children: [
                       if (status == 'applied' || status == 'viewed')
@@ -590,31 +523,6 @@ Map<String, dynamic> _getApp(dynamic raw) {
                           ),
                         ),
 
-                      if (status == 'shortlisted')
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              Navigator.pop(context);
-                              await _scheduleInterview(row);
-                            },
-                            style: primaryStyle,
-                            child: const Text("Schedule Interview"),
-                          ),
-                        ),
-
-                      if (status == 'interview_scheduled')
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              Navigator.pop(context);
-                              await _setStatus(row, 'selected');
-                            },
-                            style: primaryStyle,
-                            child: const Text("Select"),
-                          ),
-                        ),
-
-                      // ❌ AFTER REJECT → ONLY RESUME
                       if (status != 'selected' && status != 'rejected')
                         const SizedBox(width: 8),
 
@@ -625,17 +533,8 @@ Map<String, dynamic> _getApp(dynamic raw) {
                               Navigator.pop(context);
                               await _setStatus(row, 'rejected');
                             },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFFFEDD5),
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text(
-                              "Reject",
-                              style: TextStyle(fontWeight: FontWeight.w800),
-                            ),
+                            style: primaryStyle, // FIXED
+                            child: const Text("Reject"),
                           ),
                         ),
 
@@ -891,13 +790,6 @@ Widget _iconBtn(IconData icon, VoidCallback onTap) {
   final name = (app['name'] ?? 'Candidate').toString();
   final district = (app['district'] ?? '').toString();
   final exp = (app['experience_level'] ?? '').toString();
-
-  // ✅ FIXED SALARY
-  final rawSalary = app['expected_salary'];
-  final salaryInt = int.tryParse(rawSalary?.toString() ?? '') ?? 0;
-  final salary =
-      salaryInt > 0 ? "₹$salaryInt / month" : "Expected salary -";
-
   final photo = (app['photo_file_url'] ?? '').toString();
 
   final status =
@@ -970,17 +862,6 @@ Widget _iconBtn(IconData icon, VoidCallback onTap) {
                     color: _muted,
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 6),
-
-                // ✅ SALARY DISPLAY
-                Text(
-                  salary,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13.5,
-                    color: _text,
                   ),
                 ),
               ],
