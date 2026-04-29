@@ -103,6 +103,8 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
   final FocusNode _emailFocus = FocusNode();
   final FocusNode _skillsFocus = FocusNode();
 
+  bool _isNameLocked = false;
+
   @override
   void initState() {
     super.initState();
@@ -163,7 +165,14 @@ class _JobApplicationFormState extends State<JobApplicationForm> {
       // 2) profile
       final profile = await _service.fetchMyProfile();
 
-      _name.text = (profile['full_name'] ?? '').toString().trim();
+      final rawName = (profile['full_name'] ?? '').toString().trim();
+
+// ❌ contains number → allow edit
+final hasNumber = RegExp(r'\d').hasMatch(rawName);
+
+_name.text = rawName;
+
+_isNameLocked = rawName.isNotEmpty && !hasNumber;
       _phone.text =
           (profile['mobile_number'] ?? profile['phone'] ?? '').toString().trim();
       _email.text = (profile['email'] ?? '').toString().trim();
@@ -268,118 +277,103 @@ return true;
   // submit (REAL APPLY)
   // ------------------------------------------------------------
   Future<void> _submit() async {
-    if (_submitting) return;
-    if (!_validate()) return;
+  if (_submitting) return;
+  if (!_validate()) return;
 
-    setState(() => _submitting = true);
+  setState(() => _submitting = true);
 
-    String insertedApplicationId = '';
+  String insertedApplicationId = '';
 
-    try {
-      final user = _db.auth.currentUser;
-      if (user == null) {
-        throw Exception("Session expired. Please login again.");
-      }
-
-      final userId = user.id;
-
-      // 1) prevent duplicate apply
-      final already = await _db
-          .from('job_applications_listings')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('listing_id', widget.jobId)
-          .maybeSingle();
-
-      if (already != null) {
-        if (!mounted) return;
-        _toast("Already applied");
-        Navigator.pop(context, false);
-        return;
-      }
-
-      // 2) insert into job_applications
-      final insertedApp = await _db
-          .from('job_applications')
-          .insert({
-            'user_id': userId,
-            'created_at': DateTime.now().toIso8601String(),
-
-            'name': _name.text.trim(),
-            'phone': _phone.text.trim(),
-            'email': _email.text.trim(),
-
-            'district': _district.trim(),
-            'address': _address.text.trim(),
-
-            'gender': _gender.trim().isEmpty ? null : _gender.trim(),
-
-            'education': _education.trim(),
-
-            'experience_level': _experienceLevel.trim(),
-            'experience_details': _experienceDetails.text.trim(),
-
-            'skills': _skills.text.trim(),
-
-            'expected_salary': _expectedSalary.text.trim(),
-            'availability': _availability.trim(),
-
-            'additional_info': _additionalInfo.text.trim(),
-
-            // attachments
-            'resume_file_name': _resumeFileName.trim().isEmpty
-                ? null
-                : _resumeFileName.trim(),
-            'resume_file_url':
-                _resumeRawPath.trim().isEmpty ? null : _resumeRawPath.trim(),
-            'photo_file_name':
-                _photoFileName.trim().isEmpty ? null : _photoFileName.trim(),
-            'photo_file_url':
-                _photoRawPath.trim().isEmpty ? null : _photoRawPath.trim(),
-          })
-          .select('id')
-          .single();
-
-      insertedApplicationId = (insertedApp['id'] ?? '').toString().trim();
-      if (insertedApplicationId.isEmpty) {
-        throw Exception("Application insert failed (missing id)");
-      }
-
-      // 3) insert into job_applications_listings
-      // IMPORTANT:
-      // Your schema DOES NOT have pipeline_stage_id.
-      // Pipeline is stored in employer_notes tag.
-      await _db.from('job_applications_listings').insert({
-        'listing_id': widget.jobId,
-        'application_id': insertedApplicationId,
-        'user_id': userId,
-        'applied_at': DateTime.now().toIso8601String(),
-        'application_status': 'applied',
-      });
-
-      // 4) success
-      if (!mounted) return;
-      _toast("Application submitted");
-      Navigator.pop(context, true);
-    } catch (e) {
-      // rollback orphan job_applications if listing insert failed
-      try {
-        if (insertedApplicationId.trim().isNotEmpty) {
-          await _db
-              .from('job_applications')
-              .delete()
-              .eq('id', insertedApplicationId);
-        }
-      } catch (_) {}
-
-      if (!mounted) return;
-      _toast("Failed: ${e.toString()}");
+  try {
+    final user = _db.auth.currentUser;
+    if (user == null) {
+      throw Exception("Session expired. Please login again.");
     }
 
+    final userId = user.id;
+
+    final already = await _db
+        .from('job_applications_listings')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('listing_id', widget.jobId)
+        .maybeSingle();
+
+    if (already != null) {
+      _toast("Already applied");
+      Navigator.pop(context, false);
+      return;
+    }
+
+    final insertedApp = await _db
+        .from('job_applications')
+        .insert({
+          'user_id': userId,
+          'created_at': DateTime.now().toIso8601String(),
+          'name': _name.text.trim(),
+          'phone': _phone.text.trim(),
+          'email': _email.text.trim(),
+          'district': _district.trim(),
+          'address': _address.text.trim(),
+          'gender': _gender.trim().isEmpty ? null : _gender.trim(),
+          'education': _education.trim(),
+          'experience_level': _experienceLevel.trim(),
+          'experience_details': _experienceDetails.text.trim(),
+          'skills': _skills.text.trim(),
+          'expected_salary': _expectedSalary.text.trim(),
+          'availability': _availability.trim(),
+          'additional_info': _additionalInfo.text.trim(),
+          'resume_file_name': _resumeFileName.isEmpty ? null : _resumeFileName,
+          'resume_file_url': _resumeRawPath.isEmpty ? null : _resumeRawPath,
+          'photo_file_name': _photoFileName.isEmpty ? null : _photoFileName,
+          'photo_file_url': _photoRawPath.isEmpty ? null : _photoRawPath,
+        })
+        .select('id')
+        .single();
+
+    insertedApplicationId = insertedApp['id'];
+
+    await _db.from('job_applications_listings').insert({
+      'listing_id': widget.jobId,
+      'application_id': insertedApplicationId,
+      'user_id': userId,
+      'applied_at': DateTime.now().toIso8601String(),
+      'application_status': 'applied',
+    });
+
     if (!mounted) return;
+
     setState(() => _submitting = false);
+
+    // ✅ NEW SUCCESS ANIMATION
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _SlimSuccessDialog(
+        message:
+            "Your application has been successfully applied. Employer will update the status shortly.",
+      ),
+    );
+
+    if (!mounted) return;
+    Navigator.pop(context, true);
+  } catch (e) {
+    try {
+      if (insertedApplicationId.isNotEmpty) {
+        await _db
+            .from('job_applications')
+            .delete()
+            .eq('id', insertedApplicationId);
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
+    _toast("Failed: ${e.toString()}");
   }
 
+  if (!mounted) return;
+  setState(() => _submitting = false);
+}
   // ------------------------------------------------------------
   // UI
   // ------------------------------------------------------------
@@ -414,17 +408,15 @@ return true;
                       const SizedBox(height: 8),
 
                       _input(
-                        "Full Name *",
-                        _name,
-                        textInputAction: TextInputAction.next,
-                      ),
+  "Full Name *",
+  _name,
+  enabled: !_isNameLocked,
+),
                       _input(
-                        "Phone *",
-                        _phone,
-                        focusNode: _phoneFocus,
-                        keyboard: TextInputType.phone,
-                        textInputAction: TextInputAction.next,
-                      ),
+  "Phone *",
+  _phone,
+  enabled: false,
+),
                       _input(
                         "Email *",
                         _email,
@@ -700,34 +692,36 @@ return true;
   }
 
   Widget _input(
-    String label,
-    TextEditingController c, {
-    int maxLines = 1,
-    TextInputType keyboard = TextInputType.text,
-    TextInputAction textInputAction = TextInputAction.done,
-    FocusNode? focusNode,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: KhilonjiyaUI.r16,
-        border: Border.all(color: KhilonjiyaUI.border),
+  String label,
+  TextEditingController c, {
+  int maxLines = 1,
+  TextInputType keyboard = TextInputType.text,
+  TextInputAction textInputAction = TextInputAction.done,
+  FocusNode? focusNode,
+  bool enabled = true,
+}) {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    decoration: BoxDecoration(
+      color: enabled ? Colors.white : const Color(0xFFF1F5F9),
+      borderRadius: KhilonjiyaUI.r16,
+      border: Border.all(color: KhilonjiyaUI.border),
+    ),
+    child: TextField(
+      controller: c,
+      focusNode: focusNode,
+      enabled: enabled,
+      maxLines: maxLines,
+      keyboardType: keyboard,
+      textInputAction: textInputAction,
+      decoration: InputDecoration(
+        labelText: label,
+        border: InputBorder.none,
       ),
-      child: TextField(
-        controller: c,
-        focusNode: focusNode,
-        maxLines: maxLines,
-        keyboardType: keyboard,
-        textInputAction: textInputAction,
-        decoration: InputDecoration(
-          labelText: label,
-          border: InputBorder.none,
-        ),
-      ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _dropdown({
     required String label,
@@ -888,5 +882,131 @@ Future<void> _pickPhoto() async {
     }
 
     return raw.trim();
+  }
+}
+
+
+
+class _SlimSuccessDialog extends StatefulWidget {
+  final String message;
+
+  const _SlimSuccessDialog({Key? key, required this.message})
+      : super(key: key);
+
+  @override
+  State<_SlimSuccessDialog> createState() => _SlimSuccessDialogState();
+}
+
+class _SlimSuccessDialogState extends State<_SlimSuccessDialog>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _progress;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
+
+    _progress =
+        CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+
+    _controller.forward();
+
+    Future.delayed(const Duration(milliseconds: 2500), () {
+      if (mounted) Navigator.pop(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: const [
+              BoxShadow(blurRadius: 20, color: Colors.black12)
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 34,
+                height: 34,
+                child: AnimatedBuilder(
+                  animation: _progress,
+                  builder: (_, __) {
+                    return CustomPaint(
+                      painter: _TickPainter(_progress.value),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  widget.message,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TickPainter extends CustomPainter {
+  final double progress;
+  _TickPainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF16A34A)
+      ..strokeWidth = 2.4
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+
+    final start = Offset(size.width * 0.2, size.height * 0.55);
+    final mid = Offset(size.width * 0.45, size.height * 0.75);
+    final end = Offset(size.width * 0.8, size.height * 0.3);
+
+    if (progress < 0.5) {
+      final p = progress / 0.5;
+      path.moveTo(start.dx, start.dy);
+      path.lineTo(
+        start.dx + (mid.dx - start.dx) * p,
+        start.dy + (mid.dy - start.dy) * p,
+      );
+    } else {
+      path.moveTo(start.dx, start.dy);
+      path.lineTo(mid.dx, mid.dy);
+
+      final p = (progress - 0.5) / 0.5;
+      path.lineTo(
+        mid.dx + (end.dx - mid.dx) * p,
+        mid.dy + (end.dy - mid.dy) * p,
+      );
+    }
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _TickPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }
