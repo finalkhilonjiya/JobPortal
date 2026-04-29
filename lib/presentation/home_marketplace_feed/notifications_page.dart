@@ -14,6 +14,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   final SupabaseClient _db = Supabase.instance.client;
 
   bool _loading = true;
+  bool _busy = false;
   bool _disposed = false;
 
   List<Map<String, dynamic>> _items = [];
@@ -30,6 +31,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
     super.dispose();
   }
 
+  // =============================================================
+  // LOAD (ROLE SAFE)
+  // =============================================================
   Future<void> _load() async {
     if (!_disposed) setState(() => _loading = true);
 
@@ -42,8 +46,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
     try {
       final res = await _db
           .from('notifications')
-          .select('id, type, title, body, data, is_read, created_at')
+          .select('id,type,title,body,data,is_read,created_at')
           .eq('user_id', user.id)
+          .eq('user_role', 'job_seeker') // ✅ FIXED
           .order('created_at', ascending: false)
           .limit(80);
 
@@ -56,11 +61,19 @@ class _NotificationsPageState extends State<NotificationsPage> {
     setState(() => _loading = false);
   }
 
+  // =============================================================
+  // MARK SINGLE
+  // =============================================================
   Future<void> _markRead(String id) async {
     try {
-      await _db.from('notifications').update({
-        'is_read': true,
-      }).eq('id', id);
+      final user = _db.auth.currentUser;
+      if (user == null) return;
+
+      await _db
+          .from('notifications')
+          .update({'is_read': true})
+          .eq('id', id)
+          .eq('user_id', user.id);
 
       if (_disposed) return;
       setState(() {
@@ -70,14 +83,24 @@ class _NotificationsPageState extends State<NotificationsPage> {
     } catch (_) {}
   }
 
+  // =============================================================
+  // MARK ALL
+  // =============================================================
   Future<void> _markAllRead() async {
+    if (_busy) return;
+
+    setState(() => _busy = true);
+
     final user = _db.auth.currentUser;
     if (user == null) return;
 
     try {
-      await _db.from('notifications').update({
-        'is_read': true,
-      }).eq('user_id', user.id);
+      await _db
+          .from('notifications')
+          .update({'is_read': true})
+          .eq('user_id', user.id)
+          .eq('user_role', 'job_seeker') // ✅ FIXED
+          .eq('is_read', false);
 
       if (_disposed) return;
       setState(() {
@@ -85,40 +108,39 @@ class _NotificationsPageState extends State<NotificationsPage> {
           n['is_read'] = true;
         }
       });
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to mark all as read")),
-      );
-    }
+    } catch (_) {}
+
+    if (!_disposed) setState(() => _busy = false);
   }
 
+  // =============================================================
+  // ICON
+  // =============================================================
   IconData _iconForType(String type) {
-    switch (type) {
-      case 'job':
-        return Icons.work_outline_rounded;
-      case 'application':
-        return Icons.assignment_turned_in_outlined;
-      case 'interview':
-        return Icons.video_call_outlined;
-      case 'system':
-      default:
-        return Icons.notifications_none_rounded;
-    }
+    if (type.contains('application')) return Icons.assignment_outlined;
+    if (type.contains('interview')) return Icons.calendar_today_outlined;
+    if (type.contains('job')) return Icons.work_outline;
+    return Icons.notifications_none_outlined;
   }
 
+  // =============================================================
+  // TIME
+  // =============================================================
   String _timeAgo(String iso) {
     final d = DateTime.tryParse(iso);
-    if (d == null) return "Recently";
+    if (d == null) return "recent";
 
     final diff = DateTime.now().difference(d);
 
-    if (diff.inMinutes < 60) return "${diff.inMinutes} min ago";
-    if (diff.inHours < 24) return "${diff.inHours} hours ago";
-    if (diff.inDays == 1) return "1 day ago";
-    return "${diff.inDays} days ago";
+    if (diff.inMinutes < 2) return 'just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+    if (diff.inHours < 24) return '${diff.inHours}h';
+    return '${diff.inDays}d';
   }
 
+  // =============================================================
+  // BUILD
+  // =============================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -126,7 +148,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top bar
+            // ================= HEADER =================
             Container(
               padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
               decoration: BoxDecoration(
@@ -139,169 +161,151 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.arrow_back_rounded),
                   ),
-                  const SizedBox(width: 2),
                   Expanded(
                     child: Text(
                       "Notifications",
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: KhilonjiyaUI.hTitle,
+                      style: KhilonjiyaUI.hTitle.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   TextButton(
-                    onPressed: _items.isEmpty ? null : _markAllRead,
-                    child: const Text(
-                      "Mark all read",
-                      style: TextStyle(fontWeight: FontWeight.w900),
+                    onPressed:
+                        (_items.isEmpty || _busy) ? null : _markAllRead,
+                    child: Text(
+                      "Mark all",
+                      style: KhilonjiyaUI.sub.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
 
+            // ================= BODY =================
             Expanded(
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : RefreshIndicator(
                       onRefresh: _load,
                       child: _items.isEmpty
-                          ? ListView(
-                              padding: const EdgeInsets.all(16),
-                              children: [
-                                const SizedBox(height: 80),
-                                Icon(
-                                  Icons.notifications_none_rounded,
-                                  size: 48,
-                                  color: Colors.black.withOpacity(0.35),
+                          ? const Center(
+                              child: Text(
+                                "No notifications",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF6B7280),
                                 ),
-                                const SizedBox(height: 14),
-                                Center(
-                                  child: Text(
-                                    "No notifications",
-                                    style: KhilonjiyaUI.hTitle,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Center(
-                                  child: Text(
-                                    "Important updates will appear here.",
-                                    style: KhilonjiyaUI.sub,
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ],
+                              ),
                             )
-                          : ListView.builder(
-                              padding:
-                                  const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                          : ListView.separated(
+                              padding: const EdgeInsets.all(12),
                               itemCount: _items.length,
-                              itemBuilder: (_, i) {
-                                final n = _items[i];
-
-                                final id = n['id'].toString();
-                                final type = (n['type'] ?? 'system').toString();
-                                final title = (n['title'] ?? '').toString();
-                                final body = (n['body'] ?? '').toString();
-                                final isRead = n['is_read'] == true;
-                                final createdAt =
-                                    (n['created_at'] ?? '').toString();
-
-                                return GestureDetector(
-                                  onTap: () => _markRead(id),
-                                  child: Container(
-                                    margin: const EdgeInsets.only(bottom: 12),
-                                    padding: const EdgeInsets.all(14),
-                                    decoration: BoxDecoration(
-                                      color: isRead
-                                          ? Colors.white
-                                          : KhilonjiyaUI.primary
-                                              .withOpacity(0.06),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: isRead
-                                            ? KhilonjiyaUI.border
-                                            : KhilonjiyaUI.primary
-                                                .withOpacity(0.18),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Container(
-                                          width: 44,
-                                          height: 44,
-                                          decoration: BoxDecoration(
-                                            color: KhilonjiyaUI.primary
-                                                .withOpacity(0.10),
-                                            borderRadius:
-                                                BorderRadius.circular(16),
-                                          ),
-                                          child: Icon(
-                                            _iconForType(type),
-                                            color: KhilonjiyaUI.primary,
-                                            size: 22,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                title.isEmpty
-                                                    ? "Notification"
-                                                    : title,
-                                                style:
-                                                    KhilonjiyaUI.body.copyWith(
-                                                  fontWeight: FontWeight.w900,
-                                                ),
-                                              ),
-                                              if (body.trim().isNotEmpty) ...[
-                                                const SizedBox(height: 6),
-                                                Text(
-                                                  body,
-                                                  style: KhilonjiyaUI.body
-                                                      .copyWith(
-                                                    color:
-                                                        const Color(0xFF475569),
-                                                    height: 1.45,
-                                                  ),
-                                                ),
-                                              ],
-                                              const SizedBox(height: 10),
-                                              Text(
-                                                _timeAgo(createdAt),
-                                                style: KhilonjiyaUI.caption
-                                                    .copyWith(
-                                                  color:
-                                                      const Color(0xFF64748B),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        if (!isRead)
-                                          Container(
-                                            width: 10,
-                                            height: 10,
-                                            margin:
-                                                const EdgeInsets.only(top: 4),
-                                            decoration: BoxDecoration(
-                                              color: KhilonjiyaUI.primary,
-                                              borderRadius:
-                                                  BorderRadius.circular(99),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 8),
+                              itemBuilder: (_, i) =>
+                                  _tile(_items[i]),
                             ),
                     ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // =============================================================
+  // TILE (SLIM UI)
+  // =============================================================
+  Widget _tile(Map<String, dynamic> n) {
+    final id = n['id'].toString();
+    final title = (n['title'] ?? '').toString();
+    final body = (n['body'] ?? '').toString();
+    final isRead = n['is_read'] == true;
+    final createdAt = (n['created_at'] ?? '').toString();
+
+    final type = (n['type'] ?? '').toString();
+
+    return InkWell(
+      onTap: () async {
+        if (!isRead) await _markRead(id);
+
+        // ✅ future navigation using n['data']
+
+        if (!_disposed) {
+          setState(() => n['is_read'] = true);
+        }
+      },
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: KhilonjiyaUI.border),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: KhilonjiyaUI.primary.withOpacity(0.10),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                _iconForType(type),
+                size: 18,
+                color: KhilonjiyaUI.primary,
+              ),
+            ),
+            const SizedBox(width: 10),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title.isEmpty ? "Notification" : title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: KhilonjiyaUI.body.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                  if (body.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      body,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: KhilonjiyaUI.sub.copyWith(fontSize: 12),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            const SizedBox(width: 6),
+
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  _timeAgo(createdAt),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
+                if (!isRead)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4),
+                    child: Icon(Icons.circle, size: 7, color: Colors.red),
+                  ),
+              ],
             ),
           ],
         ),
