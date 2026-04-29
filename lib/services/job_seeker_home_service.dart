@@ -1470,13 +1470,12 @@ Future<List<Map<String, dynamic>>> fetchCompanyJobs({
   final resumeSigned =
       resumeRaw.trim().isEmpty ? '' : await _toSignedUrlIfNeeded(resumeRaw);
 
-  // ✅ FINAL MAP
   return {
     ...p,
 
-    // 🔥 FORCE correct email usage
-    'actual_email': (p['actual_email'] ?? p['email'] ?? '').toString(),
-    'email': (p['actual_email'] ?? p['email'] ?? '').toString(),
+    // ✅ STRICT EMAIL (NO FALLBACK)
+    'actual_email': (p['actual_email'] ?? '').toString(),
+    'email': (p['actual_email'] ?? '').toString(),
 
     // signed urls
     'avatar_url': avatarSigned,
