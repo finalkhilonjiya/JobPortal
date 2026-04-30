@@ -116,10 +116,10 @@ flutter:
 flutter_native_splash:
   color: "#ffffff"
   image: assets/icons/spash_logo.png
+
   android: true
   ios: false
   web: false
-  fullscreen: true
 
   android_gravity: center
 
