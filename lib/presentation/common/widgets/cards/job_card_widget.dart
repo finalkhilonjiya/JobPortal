@@ -35,12 +35,18 @@ class JobCardWidget extends StatelessWidget {
             .toString()
             .trim();
 
-    final location = (job['district'] ??
-            job['location'] ??
-            job['job_address'] ??
-            'Location')
-        .toString()
-        .trim();
+    final district = (job['district'] ?? '').toString().trim();
+final locality = (job['locality'] ?? '').toString().trim();
+
+final location = locality.isNotEmpty
+    ? "$locality, $district"
+    : (district.isNotEmpty
+        ? district
+        : (job['location'] ??
+                job['job_address'] ??
+                'Location')
+            .toString()
+            .trim());
 
     final salary = _salaryText(
       salaryMin: job['salary_min'],
