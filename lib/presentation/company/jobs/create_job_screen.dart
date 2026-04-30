@@ -50,6 +50,9 @@ String? _editingJobId;
   String _hiringUrgency = "Normal";
 
   bool _isWalkIn = false;
+  List<String> _localities = [];
+String? _selectedLocality;
+bool _loadingLocalities = false;
 
 
 // ✅ NEW DROPDOWN VALUES
@@ -228,7 +231,7 @@ Future<void> _loadJobForEdit() async {
       _responsibilitiesCtrl.text = j['responsibilities'] ?? '';
 
       _selectedEducation = j['education_required'] ?? _selectedEducation;
-_selectedExperience = j['experience_required'] ?? _selectedExperience;
+      _selectedExperience = j['experience_required'] ?? _selectedExperience;
 
       _salaryMinCtrl.text = (j['salary_min'] ?? '').toString();
       _salaryMaxCtrl.text = (j['salary_max'] ?? '').toString();
@@ -253,8 +256,57 @@ _selectedExperience = j['experience_required'] ?? _selectedExperience;
         _skillsCtrl.text = skills.join(', ');
       }
     });
+
+    // ✅ LOAD LOCALITY IF GUWAHATI
+    if ((j['district'] ?? "").toString().toLowerCase() == "guwahati") {
+      await _loadLocalities();
+
+      if (mounted) {
+        setState(() {
+          _selectedLocality = j['locality'];
+        });
+      }
+    }
+
   } catch (e) {
     _showError("Failed to load job: $e");
+  }
+}
+
+
+Future<void> _loadLocalities() async {
+  try {
+    setState(() => _loadingLocalities = true);
+
+    final res = await _client
+        .from("kamrup_metro_localities")
+        .select("locality_name")
+        .order("locality_name", ascending: true);
+
+    final items = List<Map<String, dynamic>>.from(res)
+        .map((e) => (e["locality_name"] ?? "").toString())
+        .where((e) => e.isNotEmpty)
+        .toList();
+
+    if (!mounted) return;
+
+    setState(() {
+      _localities = items;
+
+      // ✅ DO NOT override existing selection (important for edit mode)
+      if (_selectedLocality == null && items.isNotEmpty) {
+        _selectedLocality = items.first;
+      }
+
+      _loadingLocalities = false;
+    });
+  } catch (_) {
+    if (!mounted) return;
+    setState(() {
+      _localities = [];
+      _selectedLocality = null;
+      _loadingLocalities = false;
+    });
   }
 }
 
@@ -743,6 +795,14 @@ ButtonStyle _primaryButtonStyle() {
   setState(() => _loading = true);
 
   try {
+    // ✅ LOCALITY VALIDATION
+    if ((_selectedDistrict ?? "").toLowerCase() == "guwahati" &&
+        (_selectedLocality == null || _selectedLocality!.isEmpty)) {
+      _showError("Please select locality");
+      setState(() => _loading = false);
+      return;
+    }
+
     final skills = _skillsCtrl.text
         .split(',')
         .map((e) => e.trim())
@@ -758,15 +818,18 @@ ButtonStyle _primaryButtonStyle() {
       "work_mode": _workMode,
       "job_description": _jobDescriptionCtrl.text.trim(),
       "requirements": _requirementsCtrl.text.trim(),
-
-      // ✅ UPDATED
       "education_required": _selectedEducation,
       "experience_required": _selectedExperience,
-
       "salary_min": salaryMin,
       "salary_max": salaryMax,
       "salary_period": _salaryPeriod,
       "district": _selectedDistrict,
+
+      // ✅ FINAL LOCALITY FIELD
+      "locality": (_selectedDistrict ?? "").toLowerCase() == "guwahati"
+          ? _selectedLocality
+          : null,
+
       "job_address": _addressCtrl.text.trim(),
       "hiring_urgency": _hiringUrgency,
       "responsibilities": _responsibilitiesCtrl.text.trim(),
@@ -798,15 +861,14 @@ ButtonStyle _primaryButtonStyle() {
 
     if (!mounted) return;
 
-    // ✅ SUCCESS ANIMATION DIALOG
     await showDialog(
-  context: context,
-  barrierDismissible: false,
-  builder: (_) => const _SlimSuccessDialog(
-    message:
-        "Your job will be reviewed by the Khilonjiya Support Team and will be published shortly once approved.",
-  ),
-);
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _SlimSuccessDialog(
+        message:
+            "Your job will be reviewed by the Khilonjiya Support Team and will be published shortly once approved.",
+      ),
+    );
 
     if (!mounted) return;
     Navigator.pop(context, true);
@@ -1272,81 +1334,46 @@ ButtonStyle _primaryButtonStyle() {
 
   // STEP 3
   Widget _stepLocation() {
-    return Column(
-      children: [
-        _cardSection(
-          title: "Location",
-          subtitle: "Where the candidate will work",
-          child: Column(
-            children: [
-              _districtDropdown(),
-              _multilineField("Full Job Address", _addressCtrl),
-            ],
-          ),
-        ),
-        SizedBox(height: 3.h),
-        _cardSection(
-          title: "Other",
-          subtitle: "Openings, urgency and optional details",
-          child: Column(
-            children: [
-              _dropdown(
-                "Hiring Urgency",
-                _hiringUrgency,
-                _urgencies,
-                (v) => setState(() => _hiringUrgency = v),
-              ),
-              _field(
-                "Openings",
-                _openingsCtrl,
-                number: true,
-                keyboard: TextInputType.number,
-                formatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(3),
-                ],
-              ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text(
-                  "Walk-in interview",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: _text,
-                  ),
-                ),
-                subtitle: const Text(
-                  "Enable if candidates can directly come for interview",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: _muted,
-                  ),
-                ),
-                value: _isWalkIn,
-                onChanged: (v) => setState(() => _isWalkIn = v),
-              ),
-              if (_isWalkIn)
-                _multilineField(
-                  "Walk-in details",
-                  _walkInDetailsCtrl,
-                ),
-              _multilineField(
-                "Benefits (optional)",
-                _benefitsCtrl,
-                required: false,
-              ),
-              _multilineField(
-                "Additional Info (optional)",
-                _additionalInfoCtrl,
-                required: false,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+  return Column(
+    children: [
+      _cardSection(
+        title: "Location",
+        subtitle: "Where the candidate will work",
+        child: Column(
+          children: [
+            _districtDropdown(),
 
+            if (_selectedDistrict == "Guwahati")
+              _localityDropdown(),
+
+            _multilineField("Full Job Address", _addressCtrl),
+          ],
+        ),
+      ),
+      SizedBox(height: 3.h),
+      _cardSection(
+        title: "Other",
+        subtitle: "Openings, urgency and optional details",
+        child: Column(
+          children: [
+            _dropdown(
+              "Hiring Urgency",
+              _hiringUrgency,
+              _urgencies,
+              (v) => setState(() => _hiringUrgency = v),
+            ),
+            _field(
+              "Openings",
+              _openingsCtrl,
+              number: true,
+              keyboard: TextInputType.number,
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
   // ------------------------------------------------------------
   // BOTTOM BAR
   // ------------------------------------------------------------
@@ -1454,34 +1481,74 @@ ButtonStyle _primaryButtonStyle() {
   }
 
   Widget _districtDropdown() {
-    if (_loadingDistricts) {
-      return Padding(
-        padding: EdgeInsets.only(bottom: 1.5.h),
-        child: _infoBox(
-          text: "Loading districts...",
-          icon: Icons.hourglass_bottom_rounded,
-        ),
-      );
-    }
-
-    if (_districts.isEmpty) {
-      return Padding(
-        padding: EdgeInsets.only(bottom: 1.5.h),
-        child: _errorBox(
-          text: "No districts found in database",
-          actionText: "Retry",
-          onAction: _loadDistricts,
-        ),
-      );
-    }
-
-    return _dropdown(
-      "District",
-      _selectedDistrict!,
-      _districts,
-      (v) => setState(() => _selectedDistrict = v),
+  if (_loadingDistricts) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 1.5.h),
+      child: _infoBox(
+        text: "Loading districts...",
+        icon: Icons.hourglass_bottom_rounded,
+      ),
     );
   }
+
+  if (_districts.isEmpty) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 1.5.h),
+      child: _errorBox(
+        text: "No districts found in database",
+        actionText: "Retry",
+        onAction: _loadDistricts,
+      ),
+    );
+  }
+
+  return _dropdown(
+    "District",
+    _selectedDistrict!,
+    _districts,
+    (v) async {
+      setState(() {
+        _selectedDistrict = v;
+        _selectedLocality = null;
+        _localities = [];
+      });
+
+      if (v == "Guwahati") {
+        await _loadLocalities();
+      }
+    },
+  );
+}
+
+Widget _localityDropdown() {
+  if (_loadingLocalities) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 1.5.h),
+      child: _infoBox(
+        text: "Loading localities...",
+        icon: Icons.hourglass_bottom_rounded,
+      ),
+    );
+  }
+
+  if (_localities.isEmpty) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 1.5.h),
+      child: _errorBox(
+        text: "No localities found",
+        actionText: "Retry",
+        onAction: _loadLocalities,
+      ),
+    );
+  }
+
+  return _dropdown(
+    "Locality",
+    _selectedLocality!,
+    _localities,
+    (v) => setState(() => _selectedLocality = v),
+  );
+}
 
   // ------------------------------------------------------------
   // UI HELPERS
