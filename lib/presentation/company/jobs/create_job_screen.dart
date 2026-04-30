@@ -855,7 +855,7 @@ ButtonStyle _primaryButtonStyle() {
       await _client.from("job_listings").insert({
         ...payload,
         "employer_id": user.id,
-        "status": pending",
+        "status": "pending",
       });
     }
 
