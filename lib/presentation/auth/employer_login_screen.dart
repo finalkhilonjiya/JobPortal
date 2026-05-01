@@ -238,71 +238,84 @@ void codeUpdated() {
 
   @override
 Widget build(BuildContext context) {
+  final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
   return Scaffold(
     backgroundColor: const Color(0xFFF8FAFC),
     resizeToAvoidBottomInset: true,
     body: SafeArea(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.maxHeight,
+      child: Stack(
+        children: [
+          Column(
+            children: [
+              const SizedBox(height: 12),
+
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  onPressed: _goBackToRoleSelection,
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                  color: const Color(0xFF0F172A),
+                ),
               ),
-              child: IntrinsicHeight(
-                child: FadeTransition(
-                  opacity: _animController,
+
+              const SizedBox(height: 26),
+
+              _header(),
+
+              const SizedBox(height: 20),
+
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    24,
+                    0,
+                    24,
+                    bottomInset + 20,
+                  ),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   child: Column(
                     children: [
-                      const SizedBox(height: 12),
-
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: IconButton(
-                          onPressed: _goBackToRoleSelection,
-                          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                          color: const Color(0xFF0F172A),
-                        ),
-                      ),
-
-                      const SizedBox(height: 26),
-
-                      _header(),
-
-                      const SizedBox(height: 38),
-
                       _showOtpStep ? _otpStep() : _mobileStep(),
-
-                      const Spacer(),
-
-                      const Text(
-                        'Made in Assam',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF475569),
-                        ),
-                      ),
-
-                      const SizedBox(height: 6),
-
-                      const Text(
-                        '© Khilonjiya India Pvt. Ltd.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF94A3B8),
-                        ),
-                      ),
-
-                      const SizedBox(height: 18),
                     ],
                   ),
                 ),
               ),
+            ],
+          ),
+
+          // ✅ FIXED FOOTER
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              color: const Color(0xFFF8FAFC),
+              padding: const EdgeInsets.only(bottom: 18, top: 10),
+              child: Column(
+                children: const [
+                  Text(
+                    'Made in Assam',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF475569),
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    '© Khilonjiya India Pvt. Ltd.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          );
-        },
+          ),
+        ],
       ),
     ),
   );
