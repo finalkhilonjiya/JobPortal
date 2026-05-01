@@ -305,74 +305,74 @@ Widget _header() {
     );
   }
 
- @override
+@override
 Widget build(BuildContext context) {
   return Scaffold(
     backgroundColor: const Color(0xFFF8FAFC),
     resizeToAvoidBottomInset: true,
     body: SafeArea(
-      child: FadeTransition(
-        opacity: _animController,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              const SizedBox(height: 12),
-
-              Align(
-                alignment: Alignment.centerLeft,
-                child: IconButton(
-                  onPressed: _goBack,
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                  color: const Color(0xFF0F172A),
-                  splashRadius: 22,
-                ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            keyboardDismissBehavior:
+                ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight,
               ),
-
-              const SizedBox(height: 26),
-
-              _header(),
-
-              const SizedBox(height: 20),
-
-              // ✅ ONLY SCROLL HERE (single source of scroll)
-              Expanded(
-                child: SingleChildScrollView(
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
+              child: IntrinsicHeight(
+                child: FadeTransition(
+                  opacity: _animController,
                   child: Column(
                     children: [
+                      const SizedBox(height: 12),
+
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                          onPressed: _goBack,
+                          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                        ),
+                      ),
+
+                      const SizedBox(height: 26),
+
+                      _header(),
+
+                      const SizedBox(height: 20),
+
                       _showOtpStep ? _otpStep() : _mobileStep(),
+
+                      const Spacer(),
+
+                      const Text(
+                        'Made in Assam',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF475569),
+                        ),
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      const Text(
+                        '© Khilonjiya India Pvt. Ltd.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF94A3B8),
+                        ),
+                      ),
+
+                      const SizedBox(height: 18),
                     ],
                   ),
                 ),
               ),
-
-              const SizedBox(height: 10),
-
-              const Text(
-                'Made in Assam',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF475569),
-                ),
-              ),
-
-              const SizedBox(height: 6),
-
-              const Text(
-                '© Khilonjiya India Pvt. Ltd.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF94A3B8),
-                ),
-              ),
-
-              const SizedBox(height: 18),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     ),
   );
