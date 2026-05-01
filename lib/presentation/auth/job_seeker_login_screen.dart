@@ -248,15 +248,13 @@ _otpFocusNodes[index - 1].requestFocus();
 
 @override
 Widget build(BuildContext context) {
-  final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-
   return Scaffold(
     backgroundColor: const Color(0xFFF8FAFC),
-    resizeToAvoidBottomInset: true,
+    resizeToAvoidBottomInset: false, // ✅ CRITICAL FIX
     body: SafeArea(
       child: Stack(
         children: [
-          // 🔹 MAIN CONTENT
+          // MAIN CONTENT
           Column(
             children: [
               const SizedBox(height: 12),
@@ -275,14 +273,10 @@ Widget build(BuildContext context) {
 
               const SizedBox(height: 20),
 
-              // ✅ Scroll only form
+              // ONLY FORM SCROLLS
               Expanded(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.only(
-                    left: 24,
-                    right: 24,
-                    bottom: bottomInset + 20, // 👈 pushes content above keyboard
-                  ),
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 20), // ✅ FIXED
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
                   child: Column(
@@ -295,16 +289,14 @@ Widget build(BuildContext context) {
             ],
           ),
 
-          // 🔻 FIXED FOOTER (never moves)
+          // FIXED FOOTER
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
             child: Container(
+              color: const Color(0xFFF8FAFC),
               padding: const EdgeInsets.only(bottom: 18, top: 10),
-              decoration: const BoxDecoration(
-                color: Color(0xFFF8FAFC),
-              ),
               child: Column(
                 children: const [
                   Text(
