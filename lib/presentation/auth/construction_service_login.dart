@@ -307,11 +307,9 @@ Widget _header() {
 
 @override
 Widget build(BuildContext context) {
-  final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-
   return Scaffold(
     backgroundColor: const Color(0xFFF8FAFC),
-    resizeToAvoidBottomInset: true,
+    resizeToAvoidBottomInset: false, // ✅ FIXED
     body: SafeArea(
       child: Stack(
         children: [
@@ -337,12 +335,7 @@ Widget build(BuildContext context) {
               // ✅ ONLY FORM SCROLLS
               Expanded(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    24,
-                    0,
-                    24,
-                    bottomInset + 20,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 20), // ✅ FIXED
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
                   child: Column(
@@ -355,7 +348,7 @@ Widget build(BuildContext context) {
             ],
           ),
 
-          // 🔻 FIXED FOOTER (never moves)
+          // 🔻 FIXED FOOTER (NEVER MOVES)
           Positioned(
             left: 0,
             right: 0,
