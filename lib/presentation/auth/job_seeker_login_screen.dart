@@ -248,72 +248,86 @@ _otpFocusNodes[index - 1].requestFocus();
 
 @override
 Widget build(BuildContext context) {
+  final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
   return Scaffold(
     backgroundColor: const Color(0xFFF8FAFC),
     resizeToAvoidBottomInset: true,
     body: SafeArea(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            keyboardDismissBehavior:
-                ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.maxHeight,
+      child: Stack(
+        children: [
+          // 🔹 MAIN CONTENT
+          Column(
+            children: [
+              const SizedBox(height: 12),
+
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  onPressed: _goBack,
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                ),
               ),
-              child: IntrinsicHeight(
-                child: FadeTransition(
-                  opacity: _animController,
+
+              const SizedBox(height: 26),
+
+              _header(),
+
+              const SizedBox(height: 20),
+
+              // ✅ Scroll only form
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                    left: 24,
+                    right: 24,
+                    bottom: bottomInset + 20, // 👈 pushes content above keyboard
+                  ),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   child: Column(
                     children: [
-                      const SizedBox(height: 12),
-
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: IconButton(
-                          onPressed: _goBack,
-                          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                        ),
-                      ),
-
-                      const SizedBox(height: 26),
-
-                      _header(),
-
-                      const SizedBox(height: 20),
-
                       _showOtpStep ? _otpStep() : _mobileStep(),
-
-                      const Spacer(),
-
-                      const Text(
-                        'Made in Assam',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF475569),
-                        ),
-                      ),
-
-                      const SizedBox(height: 6),
-
-                      const Text(
-                        '© Khilonjiya India Pvt. Ltd.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF94A3B8),
-                        ),
-                      ),
-
-                      const SizedBox(height: 18),
                     ],
                   ),
                 ),
               ),
+            ],
+          ),
+
+          // 🔻 FIXED FOOTER (never moves)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              padding: const EdgeInsets.only(bottom: 18, top: 10),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF8FAFC),
+              ),
+              child: Column(
+                children: const [
+                  Text(
+                    'Made in Assam',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF475569),
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    '© Khilonjiya India Pvt. Ltd.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          );
-        },
+          ),
+        ],
       ),
     ),
   );
