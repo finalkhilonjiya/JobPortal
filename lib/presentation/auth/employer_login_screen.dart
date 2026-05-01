@@ -238,14 +238,13 @@ void codeUpdated() {
 
   @override
 Widget build(BuildContext context) {
-  final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-
   return Scaffold(
     backgroundColor: const Color(0xFFF8FAFC),
-    resizeToAvoidBottomInset: true,
+    resizeToAvoidBottomInset: false, // ✅ FIXED
     body: SafeArea(
       child: Stack(
         children: [
+          // MAIN CONTENT
           Column(
             children: [
               const SizedBox(height: 12),
@@ -255,7 +254,6 @@ Widget build(BuildContext context) {
                 child: IconButton(
                   onPressed: _goBackToRoleSelection,
                   icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                  color: const Color(0xFF0F172A),
                 ),
               ),
 
@@ -265,14 +263,10 @@ Widget build(BuildContext context) {
 
               const SizedBox(height: 20),
 
+              // ONLY THIS SCROLLS
               Expanded(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    24,
-                    0,
-                    24,
-                    bottomInset + 20,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 20), // ✅ FIXED
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
                   child: Column(
@@ -285,7 +279,7 @@ Widget build(BuildContext context) {
             ],
           ),
 
-          // ✅ FIXED FOOTER
+          // FIXED FOOTER (never moves)
           Positioned(
             left: 0,
             right: 0,
