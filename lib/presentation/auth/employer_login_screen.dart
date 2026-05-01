@@ -237,67 +237,76 @@ void codeUpdated() {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _animController,
-          child: Padding(
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: const Color(0xFFF8FAFC),
+    resizeToAvoidBottomInset: true,
+    body: SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                const SizedBox(height: 12),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight,
+              ),
+              child: IntrinsicHeight(
+                child: FadeTransition(
+                  opacity: _animController,
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 12),
 
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    onPressed: _goBackToRoleSelection,
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                    color: const Color(0xFF0F172A),
-                    splashRadius: 22,
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                          onPressed: _goBackToRoleSelection,
+                          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+
+                      const SizedBox(height: 26),
+
+                      _header(),
+
+                      const SizedBox(height: 38),
+
+                      _showOtpStep ? _otpStep() : _mobileStep(),
+
+                      const Spacer(),
+
+                      const Text(
+                        'Made in Assam',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF475569),
+                        ),
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      const Text(
+                        '© Khilonjiya India Pvt. Ltd.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF94A3B8),
+                        ),
+                      ),
+
+                      const SizedBox(height: 18),
+                    ],
                   ),
                 ),
-
-                const SizedBox(height: 26),
-
-                _header(),
-
-                const SizedBox(height: 38),
-
-                Expanded(
-                  child: _showOtpStep ? _otpStep() : _mobileStep(),
-                ),
-
-                const SizedBox(height: 10),
-
-                const Text(
-                  'Made in Assam',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF475569),
-                    letterSpacing: 0.2,
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                const Text(
-                  '© Khilonjiya India Pvt. Ltd.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF94A3B8),
-                  ),
-                ),
-                const SizedBox(height: 18),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _header() {
   return Column(
