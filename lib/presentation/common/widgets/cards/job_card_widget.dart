@@ -8,217 +8,210 @@ class JobCardWidget extends StatelessWidget {
   final bool isSaved;
   final VoidCallback onSaveToggle;
   final VoidCallback onTap;
+  final bool isHorizontal;
 
   const JobCardWidget({
-    super.key,
-    required this.job,
-    required this.isSaved,
-    required this.onSaveToggle,
-    required this.onTap,
-  });
+  super.key,
+  required this.job,
+  required this.isSaved,
+  required this.onSaveToggle,
+  required this.onTap,
+  required this.isHorizontal,
+});
+
 
   static const double _companyLogoSize = 46;
 
   @override
-  Widget build(BuildContext context) {
-    final title =
-        (job['job_title'] ?? job['title'] ?? 'Job').toString().trim();
+Widget build(BuildContext context) {
+  final title =
+      (job['job_title'] ?? job['title'] ?? 'Job').toString().trim();
 
-    final companyMap = job['companies'];
-    final companyName = (companyMap is Map<String, dynamic>)
-        ? (companyMap['name'] ?? '').toString().trim()
-        : '';
+  final companyMap = job['companies'];
+  final companyName = (companyMap is Map<String, dynamic>)
+      ? (companyMap['name'] ?? '').toString().trim()
+      : '';
 
-    final company = companyName.isNotEmpty
-        ? companyName
-        : (job['company_name'] ?? job['company'] ?? 'Company')
-            .toString()
-            .trim();
+  final company = companyName.isNotEmpty
+      ? companyName
+      : (job['company_name'] ?? job['company'] ?? 'Company')
+          .toString()
+          .trim();
 
-    final district = (job['district'] ?? '').toString().trim();
-final locality = (job['locality'] ?? '').toString().trim();
+  final district = (job['district'] ?? '').toString().trim();
+  final locality = (job['locality'] ?? '').toString().trim();
 
-final location = locality.isNotEmpty
-    ? "$locality, $district"
-    : (district.isNotEmpty
-        ? district
-        : (job['location'] ??
-                job['job_address'] ??
-                'Location')
-            .toString()
-            .trim());
+  final location = locality.isNotEmpty
+      ? "$locality, $district"
+      : (district.isNotEmpty
+          ? district
+          : (job['location'] ??
+                  job['job_address'] ??
+                  'Location')
+              .toString()
+              .trim());
 
-    final salary = _salaryText(
-      salaryMin: job['salary_min'],
-      salaryMax: job['salary_max'],
-    );
+  final salary = _salaryText(
+    salaryMin: job['salary_min'],
+    salaryMax: job['salary_max'],
+  );
 
-    final exp = _experience(job);
+  final exp = _experience(job);
 
-    final postedAt = job['created_at']?.toString();
+  final postedAt = job['created_at']?.toString();
 
-    final rawLogo =
-    (job['companies']?['logo_url'] ?? '').toString().trim();
+  final rawLogo =
+      (job['companies']?['logo_url'] ?? '').toString().trim();
 
-final companyLogoUrl = rawLogo.isEmpty
-    ? ''
-    : Supabase.instance.client.storage
-        .from('company-assets')
-        .getPublicUrl(rawLogo);
+  final companyLogoUrl = rawLogo.isEmpty
+      ? ''
+      : Supabase.instance.client.storage
+          .from('company-assets')
+          .getPublicUrl(rawLogo);
 
-    final skills = _extractSkills(job);
+  final skills = _extractSkills(job);
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: KhilonjiyaUI.r12,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(12),
-        decoration: KhilonjiyaUI.cardDecoration(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _CompanyLogo(
-                  name: company,
-                  logoUrl: companyLogoUrl,
-                  size: _companyLogoSize,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: KhilonjiyaUI.cardTitle,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        company,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: KhilonjiyaUI.company,
-                      ),
-                    ],
-                  ),
-                ),
-                InkWell(
-                  onTap: onSaveToggle,
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Icon(
-                      isSaved
-                          ? Icons.bookmark
-                          : Icons.bookmark_border,
-                      size: 22,
-                      color: isSaved
-                          ? KhilonjiyaUI.primary
-                          : KhilonjiyaUI.muted,
+  return InkWell(
+    onTap: onTap,
+    borderRadius: KhilonjiyaUI.r12,
+    child: Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: KhilonjiyaUI.cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _CompanyLogo(
+                name: company,
+                logoUrl: companyLogoUrl,
+                size: _companyLogoSize,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: KhilonjiyaUI.cardTitle,
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      company,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: KhilonjiyaUI.company,
+                    ),
+                  ],
+                ),
+              ),
+              InkWell(
+                onTap: onSaveToggle,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    isSaved
+                        ? Icons.bookmark
+                        : Icons.bookmark_border,
+                    size: 22,
+                    color: isSaved
+                        ? KhilonjiyaUI.primary
+                        : KhilonjiyaUI.muted,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            _infoRow(Icons.location_on_outlined,
-                const Color(0xFF2563EB), location),
-            const SizedBox(height: 6),
-            _infoRow(Icons.work_outline_rounded,
-                const Color(0xFF475569), exp),
-            const SizedBox(height: 6),
-            _infoRow(Icons.currency_rupee_rounded,
-                const Color(0xFF16A34A), salary),
-
-            if (skills.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: skills
-                    .take(4)
-                    .map(
-                      (e) => Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        decoration: KhilonjiyaUI.tagDecoration(),
-                        child: Text(
-                          e,
-                          style: KhilonjiyaUI.tagTextStyle,
-                        ),
-                      ),
-                    )
-                    .toList(),
               ),
             ],
-
+          ),
+          const SizedBox(height: 10),
+          _infoRow(Icons.location_on_outlined,
+              const Color(0xFF2563EB), location),
+          const SizedBox(height: 6),
+          _infoRow(Icons.work_outline_rounded,
+              const Color(0xFF475569), exp),
+          const SizedBox(height: 6),
+          _infoRow(Icons.currency_rupee_rounded,
+              const Color(0xFF16A34A), salary),
+          if (skills.isNotEmpty) ...[
             const SizedBox(height: 10),
-            Text(
-              _postedAgo(postedAt),
-              style: KhilonjiyaUI.sub,
-            ),
+            isHorizontal
+                ? _buildSingleLineSkillChips(skills)
+                : _buildWrapSkillChips(skills),
           ],
-        ),
+          const SizedBox(height: 10),
+          Text(
+            _postedAgo(postedAt),
+            style: KhilonjiyaUI.sub,
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-  // ================= KEEP YOUR FITTED CHIP FUNCTION =================
-  Widget _buildFittedSkillChips(List<String> skills) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth;
 
-        double usedWidth = 0;
-        final List<Widget> chips = [];
-
-        for (final skill in skills) {
-          final textPainter = TextPainter(
-            text: TextSpan(
-              text: skill,
-              style: KhilonjiyaUI.tagTextStyle,
-            ),
-            maxLines: 1,
-            textDirection: TextDirection.ltr,
-          )..layout();
-
-          final chipWidth = textPainter.width + 28;
-
-          if (usedWidth + chipWidth > maxWidth) break;
-
-          usedWidth += chipWidth + 6;
-
-          chips.add(
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+Widget _buildSingleLineSkillChips(List<String> skills) {
+  return SizedBox(
+    height: 32,
+    child: ClipRect(
+      child: Row(
+        children: skills.take(4).map((skill) {
+          return Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 90),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 5,
+              ),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFEDD5),
+                color: const Color(0xFFFFF3E0), // very light orange
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: const Color(0xFFFCD34D),
-                ),
               ),
               child: Text(
                 skill,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: KhilonjiyaUI.tagTextStyle.copyWith(
-                  color: const Color(0xFF9A3412),
+                  color: const Color(0xFFF97316), // clean orange text
                 ),
               ),
             ),
           );
-        }
+        }).toList(),
+      ),
+    ),
+  );
+}
 
-        return Row(children: chips);
-      },
-    );
-  }
-
+  Widget _buildWrapSkillChips(List<String> skills) {
+  return Wrap(
+    spacing: 6,
+    runSpacing: 6,
+    children: skills.take(6).map((skill) {
+      return Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 5,
+        ),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF3E0), // same light orange
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          skill,
+          style: KhilonjiyaUI.tagTextStyle.copyWith(
+            color: const Color(0xFFF97316),
+          ),
+        ),
+      );
+    }).toList(),
+  );
+}
   Widget _infoRow(IconData icon, Color iconColor, String text) {
     return Row(
       children: [
