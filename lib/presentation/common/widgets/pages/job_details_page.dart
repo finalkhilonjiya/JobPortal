@@ -235,120 +235,135 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   // BUILD
   // ------------------------------------------------------------
   @override
-  Widget build(BuildContext context) {
-    final job = widget.job;
+Widget build(BuildContext context) {
+  final job = widget.job;
 
-    final title = (job['job_title'] ?? '').toString();
+  final title = (job['job_title'] ?? '').toString();
 
-    // company (fallback safe)
-    final companyObj = job['companies'];
-    final companyName = (companyObj is Map
-            ? (companyObj['name'] ?? '').toString()
-            : (job['company_name'] ?? '').toString())
-        .trim();
+  final companyObj = job['companies'];
+  final companyName = (companyObj is Map
+          ? (companyObj['name'] ?? '').toString()
+          : (job['company_name'] ?? '').toString())
+      .trim();
 
-    final location = (job['district'] ?? '').toString();
+  final location = (job['district'] ?? '').toString();
 
-    final salaryMin = job['salary_min'];
-    final salaryMax = job['salary_max'];
-    final salaryPeriod = (job['salary_period'] ?? 'Month').toString().trim();
+  final salaryMin = job['salary_min'];
+  final salaryMax = job['salary_max'];
+  final salaryPeriod =
+      (job['salary_period'] ?? 'Month').toString().trim();
 
-    final description = (job['job_description'] ?? '').toString();
+  final description =
+      (job['job_description'] ?? '').toString();
 
-    final skills = _safeSkills(job['skills_required']);
+  final skills = _safeSkills(job['skills_required']);
 
-    final postedAt = job['created_at']?.toString();
+  final postedAt = job['created_at']?.toString();
 
-    final responsibilities = (job['responsibilities'] ?? '').toString().trim();
+  final responsibilities =
+      (job['responsibilities'] ?? '').toString().trim();
 
-    return Scaffold(
-      backgroundColor: KhilonjiyaUI.bg,
-      bottomNavigationBar: _buildApplyBottomBar(),
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: _buildTopBar()),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _jobHeroCard(
-                      title: title,
-                      company: companyName,
-                      location: location,
-                      salary: _salaryText(
-                        salaryMin: salaryMin,
-                        salaryMax: salaryMax,
-                        salaryPeriod: salaryPeriod,
-                      ),
-                      postedText: _postedAgo(postedAt),
+  // ✅ check if requirements exist
+  final hasRequirements =
+      (job['requirements'] ?? '').toString().trim().isNotEmpty ||
+      (job['education_required'] ?? '').toString().trim().isNotEmpty ||
+      (job['experience_required'] ?? '').toString().trim().isNotEmpty;
+
+  return Scaffold(
+    backgroundColor: KhilonjiyaUI.bg,
+    bottomNavigationBar: _buildApplyBottomBar(),
+    body: SafeArea(
+      child: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(child: _buildTopBar()),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // HERO
+                  _jobHeroCard(
+                    title: title,
+                    company: companyName,
+                    location: location,
+                    salary: _salaryText(
+                      salaryMin: salaryMin,
+                      salaryMax: salaryMax,
+                      salaryPeriod: salaryPeriod,
+                    ),
+                    postedText: _postedAgo(postedAt),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // QUICK INFO
+                  _quickInfoChips(job),
+
+                  const SizedBox(height: 16),
+
+                  // DESCRIPTION
+                  _sectionCard(
+                    title: "Job Description",
+                    child: _descriptionBlock(description),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // SKILLS
+                  if (skills.isNotEmpty) ...[
+                    _sectionCard(
+                      title: "Key Skills",
+                      child: _skillsWrap(skills),
                     ),
                     const SizedBox(height: 14),
-
-                    _quickInfoChips(job),
-                    const SizedBox(height: 16),
-
-                    _sectionCard(
-                      title: "Job Description",
-                      child: _descriptionBlock(description),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    if (skills.isNotEmpty)
-                      _sectionCard(
-                        title: "Key Skills",
-                        child: _skillsWrap(skills),
-                      ),
-
-                    if (skills.isNotEmpty) 
-const SizedBox(height: 14),
-
-_sectionCard(
-  title: "Requirements",
-  child: _requirementsBlock(job),
-),
-const SizedBox(height: 14),
-
-                    _sectionCard(
-                      title: "Roles & Responsibilities",
-                      child: responsibilities.isEmpty
-                          ? Text(
-                              "No responsibilities provided for this job.",
-                              style: KhilonjiyaUI.body.copyWith(
-                                color: const Color(0xFF475569),
-                                height: 1.55,
-                              ),
-                            )
-                          : Text(
-                              responsibilities,
-                              style: KhilonjiyaUI.body.copyWith(
-                                color: const Color(0xFF475569),
-                                height: 1.55,
-                              ),
-                            ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    _sectionCard(
-                      title: "Company Overview",
-                      child: _buildCompanyOverview(),
-                    ),
-
-                    
-                    
                   ],
-                ),
+
+                  // ✅ REQUIREMENTS (FIXED)
+                  if (hasRequirements) ...[
+                    _sectionCard(
+                      title: "Requirements",
+                      child: _requirementsBlock(job),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+
+                  // RESPONSIBILITIES
+                  _sectionCard(
+                    title: "Roles & Responsibilities",
+                    child: responsibilities.isEmpty
+                        ? Text(
+                            "No responsibilities provided for this job.",
+                            style: KhilonjiyaUI.body.copyWith(
+                              color: const Color(0xFF475569),
+                              height: 1.55,
+                            ),
+                          )
+                        : Text(
+                            responsibilities,
+                            style: KhilonjiyaUI.body.copyWith(
+                              color: const Color(0xFF475569),
+                              height: 1.55,
+                            ),
+                          ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // COMPANY
+                  _sectionCard(
+                    title: "Company Overview",
+                    child: _buildCompanyOverview(),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   // ------------------------------------------------------------
   // TOP BAR
@@ -647,23 +662,21 @@ const SizedBox(height: 14),
 }
 
 Widget _requirementsBlock(Map<String, dynamic> job) {
-  final qualification =
-      (job['qualification_required'] ?? job['qualification'] ?? '')
-          .toString()
-          .trim();
+  final requirements =
+      (job['requirements'] ?? '').toString().trim();
+
+  final education =
+      (job['education_required'] ?? '').toString().trim();
 
   final experience =
       (job['experience_required'] ?? '').toString().trim();
 
-  final education =
-      (job['education'] ?? '').toString().trim();
-
   final List<Map<String, String>> items = [];
 
-  if (qualification.isNotEmpty) {
+  if (requirements.isNotEmpty) {
     items.add({
-      "label": "Qualification",
-      "value": qualification,
+      "label": "Requirements",
+      "value": requirements,
     });
   }
 
@@ -698,8 +711,11 @@ Widget _requirementsBlock(Map<String, dynamic> job) {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.check_circle_outline,
-                size: 18, color: Color(0xFF2563EB)),
+            const Icon(
+              Icons.check_circle_outline,
+              size: 18,
+              color: Color(0xFF2563EB),
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: RichText(
