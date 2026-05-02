@@ -914,29 +914,30 @@ if (_sliders.isNotEmpty) ...[
   child: SizedBox(
     height: 240,
     child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: jobsForLatestHorizontal.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemBuilder: (_, i) {
-                final job = jobsForLatestHorizontal[i];
+      scrollDirection: Axis.horizontal,
+      itemCount: jobsForLatestHorizontal.length,
+      separatorBuilder: (_, __) => const SizedBox(width: 12),
+      itemBuilder: (_, i) {
+        final job = jobsForLatestHorizontal[i];
 
-                return Padding(
-  padding: const EdgeInsets.only(bottom: 4),
-  child: SizedBox(
-    width: 300,
-    child: JobCardWidget(
-      job: job,
-      isSaved: _savedJobIds.contains(job['id'].toString()),
-      onSaveToggle: () =>
-          _toggleSaveJob(job['id'].toString()),
-      onTap: () => _openJobDetails(job),
-    ),
-  ),
-);
-              },
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: SizedBox(
+            width: 300,
+            child: JobCardWidget(
+              job: job,
+              isSaved: _savedJobIds.contains(job['id'].toString()),
+              onSaveToggle: () =>
+                  _toggleSaveJob(job['id'].toString()),
+              onTap: () => _openJobDetails(job),
+              isHorizontal: true, // ✅ FIX
             ),
           ),
-        ),
+        );
+      },
+    ),
+  ),
+),
 
           const SizedBox(height: 18),
 
@@ -949,29 +950,30 @@ if (_sliders.isNotEmpty) ...[
   child: SizedBox(
     height: 240,
     child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: jobsForNearbyHorizontal.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemBuilder: (_, i) {
-                final job = jobsForNearbyHorizontal[i];
+      scrollDirection: Axis.horizontal,
+      itemCount: jobsForNearbyHorizontal.length,
+      separatorBuilder: (_, __) => const SizedBox(width: 12),
+      itemBuilder: (_, i) {
+        final job = jobsForNearbyHorizontal[i];
 
-                return Padding(
-  padding: const EdgeInsets.only(bottom: 4),
-  child: SizedBox(
-    width: 300,
-    child: JobCardWidget(
-      job: job,
-      isSaved: _savedJobIds.contains(job['id'].toString()),
-      onSaveToggle: () =>
-          _toggleSaveJob(job['id'].toString()),
-      onTap: () => _openJobDetails(job),
-    ),
-  ),
-);
-              },
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: SizedBox(
+            width: 300,
+            child: JobCardWidget(
+              job: job,
+              isSaved: _savedJobIds.contains(job['id'].toString()),
+              onSaveToggle: () =>
+                  _toggleSaveJob(job['id'].toString()),
+              onTap: () => _openJobDetails(job),
+              isHorizontal: true, // ✅ FIX
             ),
           ),
-        ),
+        );
+      },
+    ),
+  ),
+),
 
           const SizedBox(height: 18),
 
@@ -1052,7 +1054,6 @@ ListView.builder(
   itemCount: _recommendedJobs.length + 1,
   itemBuilder: (_, i) {
 
-    // ✅ ADD THIS PART HERE (TOP OF builder)
     if (i == _recommendedJobs.length) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1074,6 +1075,7 @@ ListView.builder(
         isSaved: _savedJobIds.contains(jobId),
         onSaveToggle: () => _toggleSaveJob(jobId),
         onTap: () => _openJobDetails(job),
+        isHorizontal: false, // ✅ FIX
       ),
     );
   },
