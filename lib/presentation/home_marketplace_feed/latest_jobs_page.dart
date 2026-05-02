@@ -169,7 +169,8 @@ class _LatestJobsPageState extends State<LatestJobsPage> {
     } catch (_) {}
 
     if (_disposed) return;
-    setState(() {});
+    if (!mounted) return; // ✅ FIX
+  setState(() {});
   }
 
   @override
