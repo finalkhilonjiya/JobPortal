@@ -10,15 +10,14 @@ class JobCardWidget extends StatelessWidget {
   final VoidCallback onTap;
   final bool isHorizontal;
 
-  const JobCardWidget({
+const JobCardWidget({
   super.key,
   required this.job,
   required this.isSaved,
   required this.onSaveToggle,
   required this.onTap,
-  required this.isHorizontal,
+  this.isHorizontal = false, // ✅ DEFAULT FIX
 });
-
 
   static const double _companyLogoSize = 46;
 
