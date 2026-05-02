@@ -156,33 +156,31 @@ Widget build(BuildContext context) {
 Widget _buildSingleLineSkillChips(List<String> skills) {
   return SizedBox(
     height: 32,
-    child: ClipRect(
-      child: Row(
-        children: skills.take(4).map((skill) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 90),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 5,
-              ),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF3E0), // very light orange
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                skill,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: KhilonjiyaUI.tagTextStyle.copyWith(
-                  color: const Color(0xFFF97316), // clean orange text
-                ),
+    child: Row(
+      children: skills.take(2).map((skill) { // ✅ LIMIT = 2
+        return Padding(
+          padding: const EdgeInsets.only(right: 6),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 120),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 5,
+            ),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF3E0),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              skill,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: KhilonjiyaUI.tagTextStyle.copyWith(
+                color: const Color(0xFFF97316),
               ),
             ),
-          );
-        }).toList(),
-      ),
+          ),
+        );
+      }).toList(),
     ),
   );
 }
