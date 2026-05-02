@@ -1,4 +1,5 @@
 // File: lib/presentation/common/widgets/pages/job_details_page.dart
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'dart:math';
 
@@ -406,77 +407,89 @@ Widget build(BuildContext context) {
   // HERO CARD
   // ------------------------------------------------------------
   Widget _jobHeroCard({
-    required String title,
-    required String company,
-    required String location,
-    required String salary,
-    required String postedText,
-  }) {
-    return Container(
-      decoration: KhilonjiyaUI.cardDecoration(radius: 20),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _CompanyLogo(company: company),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title.isEmpty ? "Job Title" : title,
-                      style: KhilonjiyaUI.h1,
+  required String title,
+  required String company,
+  required String location,
+  required String salary,
+  required String postedText,
+}) {
+  final rawLogo =
+      (widget.job['companies']?['logo_url'] ?? '').toString().trim();
+
+  final companyLogoUrl = rawLogo.isEmpty
+      ? ''
+      : Supabase.instance.client.storage
+          .from('company-assets')
+          .getPublicUrl(rawLogo);
+
+  return Container(
+    decoration: KhilonjiyaUI.cardDecoration(radius: 20),
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _CompanyLogo(
+              company: company,
+              logoUrl: companyLogoUrl,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title.isEmpty ? "Job Title" : title,
+                    style: KhilonjiyaUI.h1,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    company.isEmpty ? "Company" : company,
+                    style: KhilonjiyaUI.sub.copyWith(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      company.isEmpty ? "Company" : company,
-                      style: KhilonjiyaUI.sub.copyWith(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _metaRow(
-            Icons.location_on_outlined,
-            location.isEmpty ? "Location not set" : location,
-          ),
-          const SizedBox(height: 8),
-          _metaRow(Icons.currency_rupee_rounded, salary),
-          const SizedBox(height: 8),
-          _metaRow(Icons.access_time_rounded, postedText),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              decoration: BoxDecoration(
-                color: KhilonjiyaUI.primary.withOpacity(0.10),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: KhilonjiyaUI.primary.withOpacity(0.18),
-                ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _metaRow(
+          Icons.location_on_outlined,
+          location.isEmpty ? "Location not set" : location,
+        ),
+        const SizedBox(height: 8),
+        _metaRow(Icons.currency_rupee_rounded, salary),
+        const SizedBox(height: 8),
+        _metaRow(Icons.access_time_rounded, postedText),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: KhilonjiyaUI.primary.withOpacity(0.10),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: KhilonjiyaUI.primary.withOpacity(0.18),
               ),
-              child: Text(
-                "Actively hiring",
-                style: KhilonjiyaUI.caption.copyWith(
-                  color: KhilonjiyaUI.primary,
-                  fontWeight: FontWeight.w800,
-                ),
+            ),
+            child: Text(
+              "Actively hiring",
+              style: KhilonjiyaUI.caption.copyWith(
+                color: KhilonjiyaUI.primary,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _metaRow(IconData icon, String text) {
     return Row(
@@ -1046,29 +1059,49 @@ Widget _requirementsBlock(Map<String, dynamic> job) {
 
 class _CompanyLogo extends StatelessWidget {
   final String company;
-  const _CompanyLogo({required this.company});
+  final String logoUrl;
+
+  const _CompanyLogo({
+    required this.company,
+    required this.logoUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final letter = company.isNotEmpty ? company[0].toUpperCase() : 'C';
-    final color = Colors.primaries[
-        Random(company.hashCode).nextInt(Colors.primaries.length)];
+    if (logoUrl.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Image.network(
+          logoUrl,
+          width: 54,
+          height: 54,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _fallback(),
+        ),
+      );
+    }
+
+    return _fallback();
+  }
+
+  Widget _fallback() {
+    final initials = company.isNotEmpty
+        ? company.trim().split(' ').map((e) => e[0]).take(2).join()
+        : "C";
 
     return Container(
       width: 54,
       height: 54,
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: KhilonjiyaUI.border),
-      ),
       alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: KhilonjiyaUI.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(18),
+      ),
       child: Text(
-        letter,
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w900,
-          color: color,
+        initials.toUpperCase(),
+        style: KhilonjiyaUI.body.copyWith(
+          fontWeight: FontWeight.w800,
+          color: KhilonjiyaUI.primary,
         ),
       ),
     );
