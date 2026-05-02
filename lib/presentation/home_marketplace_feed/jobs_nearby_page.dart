@@ -193,29 +193,29 @@ final more = position == null
   }
 
   Future<void> _openJobDetails(Map<String, dynamic> job) async {
-    final jobId = job['id']?.toString() ?? '';
-    if (jobId.isEmpty) return;
+  final jobId = job['id']?.toString() ?? '';
+  if (jobId.isEmpty) return;
 
-    _homeService.trackJobView(jobId);
+  _homeService.trackJobView(jobId);
 
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => JobDetailsPage(
-          job: job,
-          isSaved: _savedJobIds.contains(jobId),
-          onSaveToggle: () => _toggleSaveJob(jobId),
-        ),
+  await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => JobDetailsPage(
+        job: job,
+        isSaved: _savedJobIds.contains(jobId),
+        onSaveToggle: () => _toggleSaveJob(jobId),
       ),
-    );
+    ),
+  );
 
-    try {
-      _savedJobIds = await _homeService.getUserSavedJobs();
-    } catch (_) {}
+  try {
+    _savedJobIds = await _homeService.getUserSavedJobs();
+  } catch (_) {}
 
-    if (_disposed) return;
-    setState(() {});
-  }
+  if (!mounted) return; // ✅ FIX
+  setState(() {});
+}
 
   @override
   Widget build(BuildContext context) {
@@ -319,48 +319,44 @@ final more = position == null
                               ],
                             )
                           : ListView.builder(
-                              controller: _scrollController,
-                              padding:
-                                  const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                              itemCount: _jobs.length + 1,
-                              itemBuilder: (_, i) {
-                                if (i == _jobs.length) {
-                                  if (!_hasMore)
-                                    return const SizedBox(height: 30);
+  controller: _scrollController,
+  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+  itemCount: _jobs.length + 1,
+  itemBuilder: (_, i) {
 
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 10),
-                                    child: Center(
-                                      child: _loadingMore
-                                          ? const Padding(
-                                              padding: EdgeInsets.all(12),
-                                              child:
-                                                  CircularProgressIndicator(),
-                                            )
-                                          : const SizedBox(height: 10),
-                                    ),
-                                  );
-                                }
+    // ================= LOADER =================
+    if (i == _jobs.length) {
+      if (!_hasMore) return const SizedBox(height: 30);
 
-                                final job = _jobs[i];
-                                final jobId =
-                                    job['id']?.toString() ?? '';
+      return Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: Center(
+          child: _loadingMore
+              ? const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: CircularProgressIndicator(),
+                )
+              : const SizedBox(height: 10),
+        ),
+      );
+    }
 
-                                return Padding(
-                                  padding:
-                                      const EdgeInsets.only(bottom: 12),
-                                  child: JobCardWidget(
-                                    job: job,
-                                    isSaved:
-                                        _savedJobIds.contains(jobId),
-                                    onSaveToggle: () =>
-                                        _toggleSaveJob(jobId),
-                                    onTap: () =>
-                                        _openJobDetails(job),
-                                  ),
-                                );
-                              },
-                            ),
+    // ================= JOB ITEM =================
+    final job = _jobs[i];
+    final jobId = job['id']?.toString() ?? '';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: JobCardWidget(
+        job: job,
+        isSaved: _savedJobIds.contains(jobId),
+        onSaveToggle: () => _toggleSaveJob(jobId),
+        onTap: () => _openJobDetails(job),
+        isHorizontal: false, // ✅ FORCE VERTICAL
+      ),
+    );
+  },
+),
                     ),
             ),
           ],
