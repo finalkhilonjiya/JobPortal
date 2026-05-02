@@ -303,7 +303,14 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
                         child: _skillsWrap(skills),
                       ),
 
-                    if (skills.isNotEmpty) const SizedBox(height: 14),
+                    if (skills.isNotEmpty) 
+const SizedBox(height: 14),
+
+_sectionCard(
+  title: "Requirements",
+  child: _requirementsBlock(job),
+),
+const SizedBox(height: 14),
 
                     _sectionCard(
                       title: "Roles & Responsibilities",
@@ -610,29 +617,115 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   // SKILLS
   // ------------------------------------------------------------
   Widget _skillsWrap(List<String> skills) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: skills.map((s) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: KhilonjiyaUI.primary.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: KhilonjiyaUI.primary.withOpacity(0.12)),
+  return Wrap(
+    spacing: 10,
+    runSpacing: 10,
+    children: skills.map((s) {
+      return Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 8,
+        ),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFEDD5), // ✅ LIGHT ORANGE
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: const Color(0xFFFCD34D),
           ),
-          child: Text(
-            s,
-            style: KhilonjiyaUI.body.copyWith(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w900,
-              color: KhilonjiyaUI.primary,
-            ),
+        ),
+        child: Text(
+          s,
+          style: KhilonjiyaUI.body.copyWith(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w900,
+            color: const Color(0xFF9A3412), // ✅ DARK ORANGE TEXT
           ),
-        );
-      }).toList(),
+        ),
+      );
+    }).toList(),
+  );
+}
+
+Widget _requirementsBlock(Map<String, dynamic> job) {
+  final qualification =
+      (job['qualification_required'] ?? job['qualification'] ?? '')
+          .toString()
+          .trim();
+
+  final experience =
+      (job['experience_required'] ?? '').toString().trim();
+
+  final education =
+      (job['education'] ?? '').toString().trim();
+
+  final List<Map<String, String>> items = [];
+
+  if (qualification.isNotEmpty) {
+    items.add({
+      "label": "Qualification",
+      "value": qualification,
+    });
+  }
+
+  if (education.isNotEmpty) {
+    items.add({
+      "label": "Education",
+      "value": education,
+    });
+  }
+
+  if (experience.isNotEmpty) {
+    items.add({
+      "label": "Experience",
+      "value": experience,
+    });
+  }
+
+  if (items.isEmpty) {
+    return Text(
+      "No requirements specified for this job.",
+      style: KhilonjiyaUI.body.copyWith(
+        color: const Color(0xFF475569),
+        height: 1.55,
+      ),
     );
   }
+
+  return Column(
+    children: items.map((item) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.check_circle_outline,
+                size: 18, color: Color(0xFF2563EB)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: RichText(
+                text: TextSpan(
+                  style: KhilonjiyaUI.body.copyWith(
+                    color: const Color(0xFF334155),
+                    height: 1.5,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: "${item['label']}: ",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    TextSpan(text: item['value']),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }).toList(),
+  );
+}
 
   // ------------------------------------------------------------
   // COMPANY OVERVIEW (REAL)
