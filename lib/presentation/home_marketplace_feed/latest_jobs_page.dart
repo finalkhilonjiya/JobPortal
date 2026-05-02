@@ -266,50 +266,43 @@ class _LatestJobsPageState extends State<LatestJobsPage> {
                               ],
                             )
                           : ListView.builder(
-                              controller: _scrollController,
-                              padding:
-                                  const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                              itemCount: _jobs.length + 1,
-                              itemBuilder: (_, i) {
-                                if (i == _jobs.length) {
-                                  if (!_hasMore)
-                                    return const SizedBox(height: 30);
+  controller: _scrollController,
+  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+  itemCount: _jobs.length + 1,
+  itemBuilder: (_, i) {
+    // ================= LOADER =================
+    if (i == _jobs.length) {
+      if (!_hasMore) return const SizedBox(height: 30);
 
-                                  return Padding(
-                                    padding:
-                                        const EdgeInsets.only(top: 10),
-                                    child: Center(
-                                      child: _loadingMore
-                                          ? const Padding(
-                                              padding:
-                                                  EdgeInsets.all(12),
-                                              child:
-                                                  CircularProgressIndicator(),
-                                            )
-                                          : const SizedBox(height: 10),
-                                    ),
-                                  );
-                                }
+      return Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: Center(
+          child: _loadingMore
+              ? const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: CircularProgressIndicator(),
+                )
+              : const SizedBox(height: 10),
+        ),
+      );
+    }
 
-                                final job = _jobs[i];
-                                final jobId =
-                                    job['id']?.toString() ?? '';
+    // ================= JOB ITEM =================
+    final job = _jobs[i];
+    final jobId = job['id']?.toString() ?? '';
 
-                                return Padding(
-                                  padding:
-                                      const EdgeInsets.only(bottom: 12),
-                                  child: JobCardWidget(
-                                    job: job,
-                                    isSaved: _savedJobIds
-                                        .contains(jobId),
-                                    onSaveToggle: () =>
-                                        _toggleSaveJob(jobId),
-                                    onTap: () =>
-                                        _openJobDetails(job),
-                                  ),
-                                );
-                              },
-                            ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: JobCardWidget(
+        job: job,
+        isSaved: _savedJobIds.contains(jobId),
+        onSaveToggle: () => _toggleSaveJob(jobId),
+        onTap: () => _openJobDetails(job),
+        isHorizontal: false, // ✅ FORCE VERTICAL
+      ),
+    );
+  },
+),
                     ),
             ),
           ],
