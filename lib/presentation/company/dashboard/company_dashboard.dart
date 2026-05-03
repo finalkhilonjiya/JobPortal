@@ -74,18 +74,37 @@ void _openProfile() {
   try {
     final user = _requireUser();
 
-    final member = await Supabase.instance.client
-    .from('company_members')
-    .select('company_id')
-    .eq('user_id', user.id)
-    .maybeSingle();
-if (member == null) {
-  setState(() {
-    _loading = true;
-    _needsOrganization = false;
-  });
-  return;
-}
+    Map<String, dynamic>? member;
+    int attempts = 0;
+
+    // ✅ RETRY UNTIL DB READY
+    while (attempts < 6) {
+      final res = await Supabase.instance.client
+          .from('company_members')
+          .select('company_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+      if (res != null) {
+        member = Map<String, dynamic>.from(res);
+        break;
+      }
+
+      await Future.delayed(const Duration(milliseconds: 500));
+      attempts++;
+    }
+
+    // ❌ STILL NOT FOUND → SHOW CREATE SCREEN
+    if (member == null) {
+      if (!mounted) return;
+
+      setState(() {
+        _loading = false;
+        _needsOrganization = true;
+      });
+      return;
+    }
+
     final companyId = member['company_id'].toString();
 
     final company =
@@ -106,29 +125,35 @@ if (member == null) {
     setState(() {
       _companyId = companyId;
 
-      _company = Map<String, dynamic>.from(company);
+      _company = (company is Map)
+          ? Map<String, dynamic>.from(company)
+          : {};
 
-      _jobs = (results[0] as List)
+      _jobs = (results[0] as List? ?? [])
           .map((e) => Map<String, dynamic>.from(e))
           .toList();
 
-      _stats = Map<String, dynamic>.from(results[1]);
+      _stats = (results[1] is Map)
+          ? Map<String, dynamic>.from(results[1] as Map)
+          : {};
 
-      _recentApplicants = (results[2] as List)
+      _recentApplicants = (results[2] as List? ?? [])
           .map((e) => Map<String, dynamic>.from(e))
           .toList();
 
-      _topJobs = (results[3] as List)
+      _topJobs = (results[3] as List? ?? [])
           .map((e) => Map<String, dynamic>.from(e))
           .toList();
 
-      _todayInterviews = (results[4] as List)
+      _todayInterviews = (results[4] as List? ?? [])
           .map((e) => Map<String, dynamic>.from(e))
           .toList();
 
-      _perf7d = Map<String, dynamic>.from(results[5]);
+      _perf7d = (results[5] is Map)
+          ? Map<String, dynamic>.from(results[5] as Map)
+          : {};
 
-      _unreadNotifications = results[6] ?? 0;
+      _unreadNotifications = (results[6] as int?) ?? 0;
 
       _loading = false;
       _needsOrganization = false;
