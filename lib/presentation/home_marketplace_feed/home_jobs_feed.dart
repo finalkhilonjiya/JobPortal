@@ -862,32 +862,32 @@ if (_sliders.isNotEmpty) ...[
 
         // ================= TEXT =================
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                (_profileName.trim().isNotEmpty &&
-                        _profileName != "Your Profile")
-                    ? "${_profileName.split(' ').first}'s Profile"
-                    : "Your Profile",
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
-                ),
-              ),
-              const SizedBox(height: 4),
-              
-              const Text(
-                "Complete your profile for better job suggestions",
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-            ],
-          ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        (_profileName.trim().isEmpty ||
+                _profileName.toLowerCase().startsWith("user") ||
+                RegExp(r'^\d+$').hasMatch(_profileName.trim()))
+            ? "Your Profile"
+            : "${_profileName.split(' ').first.trim()}'s Profile",
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF0F172A),
         ),
+      ),
+      const SizedBox(height: 4),
+      const Text(
+        "Complete your profile for better job suggestions",
+        style: TextStyle(
+          fontSize: 14,
+          color: Color(0xFF64748B),
+        ),
+      ),
+    ],
+  ),
+),
       ],
     ),
   ),
