@@ -249,20 +249,21 @@ Future<SharedPreferences> _getPrefs() async {
 }
 
 Future<bool> isUserProSubscribed() async {
-  final client = Supabase.instance.client;
-  final user = client.auth.currentUser;
-  if (user == null) return false;
+  _ensureAuthenticatedSync();
+  final userId = _userId();
 
-  final res = await client
-      .from('user_subscriptions') // ✅ FIXED TABLE
+  final res = await _db
+      .from('user_subscriptions')
       .select('status, expires_at')
-      .eq('user_id', user.id)
-      .eq('status', 'active')
+      .eq('user_id', userId)
       .order('expires_at', ascending: false)
       .limit(1)
       .maybeSingle();
 
   if (res == null) return false;
+
+  final status = (res['status'] ?? '').toString().toLowerCase();
+  if (status != 'active') return false;
 
   final expiresRaw = res['expires_at'];
   if (expiresRaw == null) return false;
