@@ -43,6 +43,12 @@ class _NaukriDrawerState extends State<NaukriDrawer> {
     _loadProStatus();
   }
 
+void _closeDrawer() {
+  if (Navigator.canPop(context)) {
+    Navigator.pop(context);
+  }
+}
+
   Future<void> _loadProStatus() async {
     try {
       final active = await _subscriptionService.isProActive();
