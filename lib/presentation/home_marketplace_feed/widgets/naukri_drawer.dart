@@ -70,16 +70,23 @@ class _NaukriDrawerState extends State<NaukriDrawer> {
   }
 
   String _displayName(String rawName) {
-    final name = rawName.trim();
-    if (_isFakeUserName(name)) return "Your Profile";
-    final firstName = name.split(" ").first.trim();
-    if (firstName.isEmpty) return "Your Profile";
-    return "$firstName's Profile";
+  final name = rawName.trim();
+
+  // ✅ blank or null-like → default
+  if (name.isEmpty) return "Your Profile";
+
+  // ✅ safety: remove unwanted generated names if any old data exists
+  final lower = name.toLowerCase();
+  if (lower.startsWith("user") && RegExp(r'user\d+').hasMatch(lower)) {
+    return "Your Profile";
   }
 
-  void _closeDrawer() {
-    Navigator.pop(context);
-  }
+  // ✅ normal case → FirstName's Profile
+  final firstName = name.split(" ").first.trim();
+  if (firstName.isEmpty) return "Your Profile";
+
+  return "$firstName's Profile";
+}
 
   Future<void> _pushNamed(String routeName, {Object? args}) async {
     _closeDrawer();
