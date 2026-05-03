@@ -57,22 +57,25 @@ class _SubscriptionPageState
   }
 
   Future<void> _initBilling() async {
-    if (!await _iap.isAvailable()) return;
+  if (!await _iap.isAvailable()) return;
 
-    final response =
-        await _iap.queryProductDetails({
-      SubscriptionPage.productId
-    });
+  final response =
+      await _iap.queryProductDetails({
+    SubscriptionPage.productId
+  });
 
-    if (response.productDetails.isNotEmpty) {
-      _product = response.productDetails.first;
-    }
-
-    _purchaseSub =
-        _iap.purchaseStream.listen(
-      _handlePurchaseUpdates,
-    );
+  if (response.productDetails.isNotEmpty) {
+    _product = response.productDetails.first;
   }
+
+  _purchaseSub =
+      _iap.purchaseStream.listen(
+    _handlePurchaseUpdates,
+  );
+
+  // ✅ IMPORTANT (fixes stuck ownership edge cases)
+  await _iap.restorePurchases();
+}
 
   Future<void> _startPayment() async {
   if (!_agreed) {
@@ -82,75 +85,81 @@ class _SubscriptionPageState
     return;
   }
 
-  if (_product == null || _isActive) return;
+  if (_product == null) return;
 
   setState(() => _paying = true);
 
-  _iap.buyConsumable(
+  await _iap.buyConsumable(
     purchaseParam: PurchaseParam(productDetails: _product!),
-    autoConsume: true,
+    autoConsume: false,
   );
 }
 
   Future<void> _handlePurchaseUpdates(
-    List<PurchaseDetails> purchases) async {
-
+  List<PurchaseDetails> purchases,
+) async {
   for (final purchase in purchases) {
-
     if (purchase.status == PurchaseStatus.purchased) {
+      try {
+        // 1. VERIFY
+        await _service.verifyPlayStorePurchase(
+          purchaseToken:
+              purchase.verificationData.serverVerificationData,
+          productId: purchase.productID,
+          orderId: purchase.purchaseID ?? "",
+        );
 
-      await _service.verifyPlayStorePurchase(
-        purchaseToken:
-            purchase.verificationData.serverVerificationData,
-        productId: purchase.productID,
-        orderId: purchase.purchaseID ?? "",
-      );
+        // 2. COMPLETE PURCHASE (this handles consumption internally)
+        if (purchase.pendingCompletePurchase) {
+          await _iap.completePurchase(purchase);
+        }
 
-      if (purchase.pendingCompletePurchase) {
-        await _iap.completePurchase(purchase);
+        // 3. RELOAD
+        await _loadSubscription();
+
+        // 4. CLOSE PAGE
+        if (mounted) {
+          Navigator.pop(context, true);
+        }
+      } catch (e) {
+        debugPrint("Purchase error: $e");
       }
+    }
 
-      await _loadSubscription();
-
-      // ✅ IMPORTANT: go back to job page
-      if (mounted) {
-        Navigator.pop(context, true);
-      }
+    if (purchase.status == PurchaseStatus.error ||
+        purchase.status == PurchaseStatus.canceled) {
+      debugPrint("Purchase failed/cancelled");
     }
   }
 
-  if (mounted) setState(() => _paying = false);
+  if (mounted) {
+    setState(() => _paying = false);
+  }
 }
 
   Future<void> _loadSubscription() async {
+  setState(() {
+    _loading = true;
+    _isActive = false; // ✅ add this
+  });
 
-    setState(() => _loading = true);
+  final sub = await _service.getMySubscription();
 
-    final sub =
-        await _service.getMySubscription();
+  if (sub != null) {
+    final exp =
+        DateTime.tryParse(sub['expires_at'].toString());
 
-    if (sub != null) {
+    final now = DateTime.now();
 
-      final exp =
-          DateTime.tryParse(
-              sub['expires_at']
-                  .toString());
-
-      final now = DateTime.now();
-
-      if (exp != null &&
-          exp.isAfter(now)) {
-
-        _expiry = exp;
-        _daysLeft =
-            exp.difference(now).inDays;
-
-        _isActive = true;
-      }
+    if (exp != null && exp.isAfter(now)) {
+      _expiry = exp;
+      _daysLeft = exp.difference(now).inDays;
+      _isActive = true;
     }
-
-    setState(() => _loading = false);
   }
+
+  setState(() => _loading = false);
+}
 
   void _onSubscribePressed() {
 
