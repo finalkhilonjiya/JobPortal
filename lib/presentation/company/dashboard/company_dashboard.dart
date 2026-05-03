@@ -66,58 +66,22 @@ void _openProfile() {
   Future<void> _loadDashboard() async {
   if (!mounted) return;
 
-  setState(() => _loading = true);
+  setState(() {
+    _loading = true;
+    _needsOrganization = false;
+  });
 
   try {
     final user = _requireUser();
 
-    Map<String, dynamic>? member;
-
-    // 🔁 RETRY (important after org creation)
-    for (int i = 0; i < 3; i++) {
-      final res = await Supabase.instance.client
-          .from('company_members')
-          .select('company_id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-      if (res != null) {
-        member = Map<String, dynamic>.from(res);
-        break;
-      }
-
-      await Future.delayed(const Duration(milliseconds: 500));
-    }
-
-    // 🔁 FALLBACK
-    if (member == null) {
-      final fallback = await Supabase.instance.client
-          .from('companies')
-          .select('id')
-          .eq('created_by', user.id)
-          .maybeSingle();
-
-      if (fallback != null) {
-        member = {'company_id': fallback['id']};
-      }
-    }
-
-    // ❌ STILL NULL → keep loading screen (no crash)
-    if (member == null) {
-      if (!mounted) return;
-
-      setState(() {
-        _loading = true;
-        _needsOrganization = false;
-      });
-      return;
-    }
+    final member = await Supabase.instance.client
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
 
     final companyId = member['company_id'].toString();
 
-    // ============================================================
-    // FETCH DATA
-    // ============================================================
     final company =
         await _service.fetchCompanyById(companyId: companyId);
 
@@ -131,74 +95,45 @@ void _openProfile() {
       _service.fetchUnreadNotificationsCount(),
     ]);
 
-    // ============================================================
-    // ✅ SAFE TYPE HANDLING
-    // ============================================================
-
-    final List<Map<String, dynamic>> jobs =
-        (results[0] as List? ?? [])
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
-
-    final Map<String, dynamic> stats =
-        (results[1] is Map)
-            ? Map<String, dynamic>.from(results[1] as Map)
-            : {};
-
-    final List<Map<String, dynamic>> applicants =
-        (results[2] as List? ?? [])
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
-
-    final List<Map<String, dynamic>> topJobs =
-        (results[3] as List? ?? [])
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
-
-    final List<Map<String, dynamic>> interviews =
-        (results[4] as List? ?? [])
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
-
-    final Map<String, dynamic> perf =
-        (results[5] is Map)
-            ? Map<String, dynamic>.from(results[5] as Map)
-            : {};
-
-    final int unread = (results[6] as int?) ?? 0;
-
     if (!mounted) return;
 
-    // ============================================================
-    // ✅ FINAL SAFE SETSTATE (CRITICAL FIX)
-    // ============================================================
     setState(() {
       _companyId = companyId;
 
-      _company = (company is Map)
-          ? Map<String, dynamic>.from(company)
-          : {};
+      _company = Map<String, dynamic>.from(company);
 
-      _jobs = jobs;
-      _stats = stats;
-      _recentApplicants = applicants;
-      _topJobs = topJobs;
-      _todayInterviews = interviews;
-      _perf7d = perf;
-      _unreadNotifications = unread;
+      _jobs = (results[0] as List)
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
 
-      _needsOrganization = false;
+      _stats = Map<String, dynamic>.from(results[1]);
+
+      _recentApplicants = (results[2] as List)
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+
+      _topJobs = (results[3] as List)
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+
+      _todayInterviews = (results[4] as List)
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+
+      _perf7d = Map<String, dynamic>.from(results[5]);
+
+      _unreadNotifications = results[6] ?? 0;
+
       _loading = false;
+      _needsOrganization = false;
     });
-  } catch (e) {
-    debugPrint("DASHBOARD ERROR: $e");
 
+  } catch (e) {
     if (!mounted) return;
 
-    // ❌ NEVER CRASH → stay in loading UI
     setState(() {
-      _loading = true;
-      _needsOrganization = false;
+      _loading = false;
+      _needsOrganization = true;
     });
   }
 }
