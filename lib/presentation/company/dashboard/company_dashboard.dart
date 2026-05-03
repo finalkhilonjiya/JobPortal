@@ -75,11 +75,17 @@ void _openProfile() {
     final user = _requireUser();
 
     final member = await Supabase.instance.client
-        .from('company_members')
-        .select('company_id')
-        .eq('user_id', user.id)
-        .single();
-
+    .from('company_members')
+    .select('company_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+if (member == null) {
+  setState(() {
+    _loading = true;
+    _needsOrganization = false;
+  });
+  return;
+}
     final companyId = member['company_id'].toString();
 
     final company =
