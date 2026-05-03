@@ -88,84 +88,68 @@ class _CreateOrganizationScreenState
   // CREATE ORGANIZATION (FINAL CLEAN)
   // ============================================================
   Future<void> _create() async {
-    final user = _requireUser();
+  final user = _requireUser();
 
-    final name = _name.text.trim();
+  final name = _name.text.trim();
 
-    if (name.isEmpty) {
-      _toast("Organization name required");
-      return;
-    }
-
-    if (_selectedBusinessTypeId == null) {
-      _toast("Select business type");
-      return;
-    }
-
-    if (_selectedDistrictId == null) {
-      _toast("Select district");
-      return;
-    }
-
-    setState(() => _saving = true);
-
-    try {
-      // 1️⃣ Prevent duplicate
-      final existing = await _db
-          .from('company_members')
-          .select('company_id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-      if (existing != null) {
-        if (!mounted) return;
-        Navigator.pop(context, true);
-        return;
-      }
-
-      // 2️⃣ Get district name
-      final districtObj = _districts.firstWhere(
-        (d) => d['id'].toString() == _selectedDistrictId,
-      );
-
-      final districtName = districtObj['district_name'];
-
-      // 3️⃣ Create company
-      final company = await _db
-          .from('companies')
-          .insert({
-            "name": name,
-            "business_type_id": _selectedBusinessTypeId,
-            "website": _website.text.trim(),
-            "description": _desc.text.trim(),
-            "headquarters_city": districtName,
-            "headquarters_state": "Assam",
-            "created_by": user.id,
-            "owner_id": user.id,
-          })
-          .select()
-          .single();
-
-      final companyId = company['id'];
-
-      // 4️⃣ Link user (role = member)
-      await _db.from('company_members').upsert({
-        "company_id": companyId,
-        "user_id": user.id,
-        "role": "member",   // ✅ FINAL
-        "status": "active",
-      }, onConflict: 'user_id');
-
-      // 5️⃣ Return success (dashboard will reload)
-      if (!mounted) return;
-      Navigator.pop(context, true);
-
-    } catch (e) {
-      _toast("Failed: $e");
-    }
-
-    setState(() => _saving = false);
+  if (name.isEmpty) {
+    _toast("Organization name required");
+    return;
   }
+
+  if (_selectedBusinessTypeId == null) {
+    _toast("Select business type");
+    return;
+  }
+
+  if (_selectedDistrictId == null) {
+    _toast("Select district");
+    return;
+  }
+
+  setState(() => _saving = true);
+
+  try {
+    final session = _db.auth.currentSession;
+    if (session == null) throw Exception("Session expired");
+
+    final districtObj = _districts.firstWhere(
+      (d) => d['id'].toString() == _selectedDistrictId,
+    );
+
+    final res = await http.post(
+      Uri.parse(
+        "https://rsskivonmfqrzxbmxrkl.supabase.co/functions/v1/create-company",
+      ),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer ${session.accessToken}",
+      },
+      body: jsonEncode({
+        "name": name,
+        "business_type_id": _selectedBusinessTypeId,
+        "website": _website.text.trim(),
+        "description": _desc.text.trim(),
+        "district": districtObj['district_name'],
+      }),
+    );
+
+    final body = jsonDecode(res.body);
+
+    if (res.statusCode != 200 || body["success"] != true) {
+      throw Exception(body["error"] ?? "Creation failed");
+    }
+
+    if (!mounted) return;
+
+    Navigator.pop(context, true);
+
+  } catch (e) {
+    _toast("Failed: $e");
+  }
+
+  setState(() => _saving = false);
+}
 
   @override
   Widget build(BuildContext context) {
