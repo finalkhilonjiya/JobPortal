@@ -48,9 +48,8 @@ class SubscriptionService {
         purchase_token
       ''')
       .eq('user_id', uid)
-      .eq('status', 'active')
-      .order('expires_at', ascending: false) // ✅ pick latest
-      .limit(1) // ✅ avoid multiple rows issue
+      .order('expires_at', ascending: false)
+      .limit(1)
       .maybeSingle();
 
   if (res == null) return null;
