@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 
 import '../../core/ui/khilonjiya_ui.dart';
 import '../../services/subscription_service.dart';
@@ -73,8 +74,7 @@ class _SubscriptionPageState
     _handlePurchaseUpdates,
   );
 
-  // ✅ IMPORTANT (fixes stuck ownership edge cases)
-  await _iap.restorePurchases();
+  // ❌ DO NOT ADD restorePurchases ANYWHERE
 }
 
   Future<void> _startPayment() async {
@@ -91,7 +91,7 @@ class _SubscriptionPageState
 
   await _iap.buyConsumable(
     purchaseParam: PurchaseParam(productDetails: _product!),
-    autoConsume: false,
+    autoConsume: false, // IMPORTANT: we will manually consume
   );
 }
 
@@ -99,6 +99,7 @@ class _SubscriptionPageState
   List<PurchaseDetails> purchases,
 ) async {
   for (final purchase in purchases) {
+
     if (purchase.status == PurchaseStatus.purchased) {
       try {
         // 1. VERIFY
@@ -109,18 +110,25 @@ class _SubscriptionPageState
           orderId: purchase.purchaseID ?? "",
         );
 
-        // 2. COMPLETE PURCHASE (this handles consumption internally)
+        // 2. COMPLETE PURCHASE (ACKNOWLEDGE FIRST)
         if (purchase.pendingCompletePurchase) {
           await _iap.completePurchase(purchase);
         }
 
-        // 3. RELOAD
+        // 3. 🔥 CONSUME AFTER ACKNOWLEDGE
+        final androidAddition =
+            _iap.getPlatformAddition<
+                InAppPurchaseAndroidPlatformAddition>();
+
+        await androidAddition.consumePurchase(purchase);
+
+        // 4. RELOAD STATE
         await _loadSubscription();
 
-        // 4. CLOSE PAGE
         if (mounted) {
           Navigator.pop(context, true);
         }
+
       } catch (e) {
         debugPrint("Purchase error: $e");
       }
@@ -136,7 +144,6 @@ class _SubscriptionPageState
     setState(() => _paying = false);
   }
 }
-
   Future<void> _loadSubscription() async {
   setState(() {
     _loading = true;
