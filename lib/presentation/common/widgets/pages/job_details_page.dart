@@ -184,10 +184,12 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   if (!isPro) {
     if (!mounted) return;
 
-    final res =
-        await Navigator.pushNamed(context, AppRoutes.subscribe);
+    final res = await Navigator.pushNamed(
+      context,
+      AppRoutes.subscribe,
+    );
 
-    // ✅ retry after subscription
+    // retry after subscription
     if (res == true) {
       await _applyNow();
     }
