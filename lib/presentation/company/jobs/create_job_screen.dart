@@ -24,6 +24,7 @@ String? _editingJobId;
   final _jobDescriptionCtrl = TextEditingController();
   final _requirementsCtrl = TextEditingController();
   final _responsibilitiesCtrl = TextEditingController();
+final ScrollController _scrollController = ScrollController();
 
   
 
@@ -221,9 +222,8 @@ Future<void> _loadJobForEdit() async {
 
       _jobTitleCtrl.text = j['job_title'] ?? '';
 
-      _selectedCategory = j['job_category'];
+ 
       _jobType = j['job_type'] ?? _jobType;
-      _employmentType = j['employment_type'] ?? _employmentType;
       _workMode = j['work_mode'] ?? _workMode;
 
       _jobDescriptionCtrl.text = j['job_description'] ?? '';
@@ -317,31 +317,29 @@ Future<void> _loadLocalities() async {
       _loadDistricts(),
     ]);
   }
+@override
+void dispose() {
+  _jobTitleCtrl.dispose();
+  _jobDescriptionCtrl.dispose();
+  _requirementsCtrl.dispose();
+  _responsibilitiesCtrl.dispose();
 
-  @override
-  void dispose() {
-    _jobTitleCtrl.dispose();
+  _salaryMinCtrl.dispose();
+  _salaryMaxCtrl.dispose();
 
-    _jobDescriptionCtrl.dispose();
-    _requirementsCtrl.dispose();
-    _responsibilitiesCtrl.dispose();
+  _addressCtrl.dispose();
+  _openingsCtrl.dispose();
 
+  _skillsCtrl.dispose();
+  _benefitsCtrl.dispose();
+  _additionalInfoCtrl.dispose();
 
-    _salaryMinCtrl.dispose();
-    _salaryMaxCtrl.dispose();
+  _walkInDetailsCtrl.dispose();
 
-    _addressCtrl.dispose();
-    _openingsCtrl.dispose();
+  _scrollController.dispose(); // ✅ IMPORTANT FIX
 
-    _skillsCtrl.dispose();
-    _benefitsCtrl.dispose();
-    _additionalInfoCtrl.dispose();
-
-    _walkInDetailsCtrl.dispose();
-
-    super.dispose();
-  }
-
+  super.dispose();
+}
   // ------------------------------------------------------------
   // LOAD: COMPANIES WHERE I AM ACTIVE MEMBER
   // (SAFE VERSION: NO RELATIONSHIP DEPENDENCY)
@@ -795,7 +793,6 @@ ButtonStyle _primaryButtonStyle() {
   setState(() => _loading = true);
 
   try {
-    // ✅ LOCALITY VALIDATION
     if ((_selectedDistrict ?? "").toLowerCase() == "guwahati" &&
         (_selectedLocality == null || _selectedLocality!.isEmpty)) {
       _showError("Please select locality");
@@ -812,31 +809,39 @@ ButtonStyle _primaryButtonStyle() {
     final payload = {
       "company_id": _selectedCompanyId,
       "job_title": _jobTitleCtrl.text.trim(),
-      "job_category": _selectedCategory,
+
+      // ❌ REMOVED job_category
+      // ❌ REMOVED employment_type
+
       "job_type": _jobType,
-      "employment_type": _employmentType,
       "work_mode": _workMode,
+
       "job_description": _jobDescriptionCtrl.text.trim(),
       "requirements": _requirementsCtrl.text.trim(),
+
       "education_required": _selectedEducation,
       "experience_required": _selectedExperience,
+
       "salary_min": salaryMin,
       "salary_max": salaryMax,
       "salary_period": _salaryPeriod,
+
       "district": _selectedDistrict,
 
-      // ✅ FINAL LOCALITY FIELD
       "locality": (_selectedDistrict ?? "").toLowerCase() == "guwahati"
           ? _selectedLocality
           : null,
 
       "job_address": _addressCtrl.text.trim(),
       "hiring_urgency": _hiringUrgency,
+
       "responsibilities": _responsibilitiesCtrl.text.trim(),
       "benefits": _benefitsCtrl.text.trim(),
       "additional_info": _additionalInfoCtrl.text.trim(),
+
       "skills_required": skills,
       "number_of_openings": openings,
+
       "is_walk_in": _isWalkIn,
       "walk_in_details":
           _isWalkIn ? _walkInDetailsCtrl.text.trim() : null,
@@ -893,102 +898,121 @@ ButtonStyle _primaryButtonStyle() {
   // STEP VALIDATION
   // ------------------------------------------------------------
   bool _isStepValid(int step) {
-    if (step == 0) {
-      return _selectedCompanyId != null && _selectedCompanyId!.trim().isNotEmpty;
-    }
+  if (step == 0) {
+    return _selectedCompanyId != null &&
+        _selectedCompanyId!.trim().isNotEmpty;
+  }
 
-    if (step == 1) {
-      return _jobTitleCtrl.text.trim().isNotEmpty &&
-          (_selectedCategory ?? '').trim().isNotEmpty;
-    }
+  if (step == 1) {
+    // ❌ REMOVED CATEGORY + EMPLOYMENT TYPE REQUIREMENT
+    return _jobTitleCtrl.text.trim().isNotEmpty;
+  }
 
-    if (step == 2) {
-  return _jobDescriptionCtrl.text.trim().isNotEmpty &&
-      _requirementsCtrl.text.trim().isNotEmpty &&
-      _selectedEducation.isNotEmpty &&
-      _selectedExperience.isNotEmpty &&
-      _salaryMinCtrl.text.trim().isNotEmpty &&
-      _salaryMaxCtrl.text.trim().isNotEmpty;
+  if (step == 2) {
+    return _jobDescriptionCtrl.text.trim().isNotEmpty &&
+        _requirementsCtrl.text.trim().isNotEmpty &&
+        _selectedEducation.isNotEmpty &&
+        _selectedExperience.isNotEmpty &&
+        _salaryMinCtrl.text.trim().isNotEmpty &&
+        _salaryMaxCtrl.text.trim().isNotEmpty;
+  }
+
+  if (step == 3) {
+    return (_selectedDistrict ?? '').trim().isNotEmpty &&
+        _addressCtrl.text.trim().isNotEmpty &&
+        (_selectedDistrict != "Guwahati" ||
+            (_selectedLocality != null &&
+                _selectedLocality!.isNotEmpty));
+  }
+
+  return true;
 }
 
-    if (step == 3) {
-      return (_selectedDistrict ?? '').trim().isNotEmpty &&
-          _addressCtrl.text.trim().isNotEmpty;
-    }
-
-    return true;
-  }
-
   void _nextStep() {
-    if (_step >= 3) return;
+  if (_step >= 3) return;
 
-    if (!_isStepValid(_step)) {
-      _showError("Please complete the required fields to continue.");
-      return;
-    }
-
-    setState(() => _step++);
+  if (!_isStepValid(_step)) {
+    _showError("Please complete required fields");
+    return;
   }
+
+  setState(() => _step++);
+
+  // ✅ FORCE TOP SCROLL (NO FAIL)
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+  });
+}
 
   void _prevStep() {
-    if (_step <= 0) return;
-    setState(() => _step--);
-  }
+  if (_step <= 0) return;
 
+  setState(() => _step--);
+
+  // ✅ FORCE TOP SCROLL (NO FAIL)
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+  });
+}
   // ------------------------------------------------------------
   // UI
   // ------------------------------------------------------------
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: _bg,
+    appBar: AppBar(
       backgroundColor: _bg,
-      appBar: AppBar(
-  backgroundColor: _bg,
-  surfaceTintColor: _bg,
-  elevation: 0,
-  titleSpacing: 4.w,
-  iconTheme: const IconThemeData(color: _text),
-  title: Text(
-    _isEditMode ? "Edit Job" : "Post Job",
-    style: const TextStyle(
-      fontWeight: FontWeight.w800,
-      color: _text,
-      letterSpacing: -0.2,
+      surfaceTintColor: _bg,
+      elevation: 0,
+      titleSpacing: 4.w,
+      iconTheme: const IconThemeData(color: _text),
+      title: Text(
+        _isEditMode ? "Edit Job" : "Post Job",
+        style: const TextStyle(
+          fontWeight: FontWeight.w800,
+          color: _text,
+          letterSpacing: -0.2,
+        ),
+      ),
     ),
-  ),
-),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(4.w, 1.2.h, 4.w, 14.h),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  _topHeader(),
-                  SizedBox(height: 2.5.h),
-                  _stepIndicator(),
-                  SizedBox(height: 2.2.h),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 220),
-                    switchInCurve: Curves.easeOut,
-                    switchOutCurve: Curves.easeIn,
-                    child: _stepBody(),
-                  ),
-                ],
-              ),
+    body: Stack(
+      children: [
+        SingleChildScrollView(
+          controller: _scrollController, // ✅ FIXED (THIS WAS MISSING)
+          padding: EdgeInsets.fromLTRB(4.w, 1.2.h, 4.w, 14.h),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                _topHeader(),
+                SizedBox(height: 2.5.h),
+                _stepIndicator(),
+                SizedBox(height: 2.2.h),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeIn,
+                  child: _stepBody(),
+                ),
+              ],
             ),
           ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _bottomActionBar(),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: _bottomActionBar(),
+        ),
+      ],
+    ),
+  );
+}
 
   // ------------------------------------------------------------
   // HEADER
@@ -1222,29 +1246,28 @@ ButtonStyle _primaryButtonStyle() {
 
   // STEP 1
   Widget _stepJob() {
-    return _cardSection(
-      title: "Job Details",
-      subtitle: "Title, category and working type",
-      child: Column(
-        children: [
-          _field("Job Title", _jobTitleCtrl),
-          _categoryDropdown(),
-          _dropdown("Job Type", _jobType, _jobTypes, (v) {
-            setState(() => _jobType = v);
-          }),
-          _dropdown(
-            "Employment Type",
-            _employmentType,
-            _employmentTypes,
-            (v) => setState(() => _employmentType = v),
-          ),
-          _dropdown("Work Mode", _workMode, _workModes, (v) {
-            setState(() => _workMode = v);
-          }),
-        ],
-      ),
-    );
-  }
+  return _cardSection(
+    title: "Job Details",
+    subtitle: "Basic job information",
+    child: Column(
+      children: [
+        _field("Job Title", _jobTitleCtrl),
+
+        // ❌ REMOVED CATEGORY
+
+        _dropdown("Job Type", _jobType, _jobTypes, (v) {
+          setState(() => _jobType = v);
+        }),
+
+        // ❌ REMOVED EMPLOYMENT TYPE
+
+        _dropdown("Work Mode", _workMode, _workModes, (v) {
+          setState(() => _workMode = v);
+        }),
+      ],
+    ),
+  );
+}
 
   // STEP 2
   Widget _stepRequirements() {
