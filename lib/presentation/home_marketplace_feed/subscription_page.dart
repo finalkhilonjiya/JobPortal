@@ -9,8 +9,7 @@ import '../../services/subscription_service.dart';
 class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({Key? key}) : super(key: key);
 
-  static const String productId = "khilonjiya_pro_access";
-
+  static const String productId = "khilonjiya_pro_subscription";
   @override
   State<SubscriptionPage> createState() =>
       _SubscriptionPageState();
@@ -102,6 +101,9 @@ class _SubscriptionPageState
 
     if (purchase.status == PurchaseStatus.purchased) {
       try {
+        // Prevent duplicate processing
+        if (!purchase.pendingCompletePurchase) continue;
+
         // 1. VERIFY
         await _service.verifyPlayStorePurchase(
           purchaseToken:
@@ -110,19 +112,19 @@ class _SubscriptionPageState
           orderId: purchase.purchaseID ?? "",
         );
 
-        // 2. COMPLETE PURCHASE (ACKNOWLEDGE FIRST)
-        if (purchase.pendingCompletePurchase) {
-          await _iap.completePurchase(purchase);
+        // 2. 🔥 CONSUME FIRST (ANDROID ONLY)
+        if (purchase is GooglePlayPurchaseDetails) {
+          final androidAddition =
+              _iap.getPlatformAddition<
+                  InAppPurchaseAndroidPlatformAddition>();
+
+          await androidAddition.consumePurchase(purchase);
         }
 
-        // 3. 🔥 CONSUME AFTER ACKNOWLEDGE
-        final androidAddition =
-            _iap.getPlatformAddition<
-                InAppPurchaseAndroidPlatformAddition>();
+        // 3. ACKNOWLEDGE (VERY IMPORTANT)
+        await _iap.completePurchase(purchase);
 
-        await androidAddition.consumePurchase(purchase);
-
-        // 4. RELOAD STATE
+        // 4. UPDATE UI
         await _loadSubscription();
 
         if (mounted) {
@@ -259,14 +261,11 @@ class _SubscriptionPageState
           const SizedBox(height: 14),
 
           Text(
-            "₹4",
-            style:
-                KhilonjiyaUI
-                    .cardTitle
-                    .copyWith(
-                        fontSize:
-                            22),
-          ),
+  _product?.price ?? "₹9",
+  style: KhilonjiyaUI
+      .cardTitle
+      .copyWith(fontSize: 22),
+),
 
           const SizedBox(height: 14),
 
