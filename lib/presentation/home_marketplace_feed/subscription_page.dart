@@ -96,58 +96,83 @@ class _SubscriptionPageState
 }
 
   Future<void> _handlePurchaseUpdates(
-  List<PurchaseDetails> purchases,
+List<PurchaseDetails> purchases,
 ) async {
-  for (final purchase in purchases) {
+for (final purchase in purchases) {
 
-    // ✅ prevent duplicate execution
-    if (_processingPurchase) return;
+// prevent duplicate execution
+if (_processingPurchase) return;
 
-    if (purchase.status != PurchaseStatus.purchased ||
-        !purchase.pendingCompletePurchase) {
-      continue;
-    }
+if (purchase.status != PurchaseStatus.purchased ||
+    !purchase.pendingCompletePurchase) {
+  continue;
+}
 
-    _processingPurchase = true;
+_processingPurchase = true;
 
-    try {
-      // 1. VERIFY
-      await _service.verifyPlayStorePurchase(
-        purchaseToken:
-            purchase.verificationData.serverVerificationData,
-        productId: purchase.productID,
-        orderId: purchase.purchaseID ?? "",
-      );
+try {
+  // ======================================================
+  // ✅ CORRECT GOOGLE PURCHASE TOKEN
+  // ======================================================
+  final purchaseToken =
+      (purchase as GooglePlayPurchaseDetails)
+          .billingClientPurchase
+          .purchaseToken;
 
-      // 2. 🔥 CONSUME FIRST (ANDROID ONLY)
-      if (purchase is GooglePlayPurchaseDetails) {
-        final androidAddition =
-            _iap.getPlatformAddition<
-                InAppPurchaseAndroidPlatformAddition>();
+  // DEBUG
+  print("🔥 PURCHASE TOKEN: $purchaseToken");
 
-        await androidAddition.consumePurchase(purchase);
-      }
+  // ======================================================
+  // VERIFY WITH BACKEND
+  // ======================================================
+  await _service.verifyPlayStorePurchase(
+    purchaseToken: purchaseToken,
+    productId: purchase.productID,
+    orderId: purchase.purchaseID ?? "",
+  );
 
-      // 3. ACKNOWLEDGE
-      await _iap.completePurchase(purchase);
+  // ======================================================
+  // CONSUME (ANDROID ONLY)
+  // ======================================================
+  final androidAddition =
+      _iap.getPlatformAddition<
+          InAppPurchaseAndroidPlatformAddition>();
 
-      // 4. UPDATE UI
-      await _loadSubscription();
+  await androidAddition.consumePurchase(purchase);
 
-      if (mounted) {
-        Navigator.pop(context, true);
-      }
+  // ======================================================
+  // COMPLETE PURCHASE
+  // ======================================================
+  await _iap.completePurchase(purchase);
 
-    } catch (e) {
-      debugPrint("Purchase error: $e");
-    } finally {
-      _processingPurchase = false;
-    }
-  }
+  // ======================================================
+  // RELOAD SUBSCRIPTION
+  // ======================================================
+  await _loadSubscription();
 
   if (mounted) {
-    setState(() => _paying = false);
+    Navigator.pop(context, true);
   }
+
+} catch (e) {
+  print("❌ VERIFY FAILED: $e");
+
+  if (mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Payment verification failed"),
+      ),
+    );
+  }
+} finally {
+  _processingPurchase = false;
+}
+
+}
+
+if (mounted) {
+setState(() => _paying = false);
+}
 }
   Future<void> _loadSubscription() async {
   setState(() {
