@@ -49,6 +49,18 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     _loadDashboard();
   }
 
+
+Future<void> _waitUntilInserted() async {
+  while (true) {
+    final companyId = await _service.resolveCompanyIdSafe();
+
+    if (companyId != null && companyId.isNotEmpty) {
+      return; // ✅ only exit when DB confirms
+    }
+
+    await Future.delayed(const Duration(milliseconds: 300));
+  }
+}
   User _requireUser() {
     final u = Supabase.instance.client.auth.currentUser;
     if (u == null) throw Exception("Session expired");
@@ -75,10 +87,9 @@ void _openProfile() {
     final user = _requireUser();
 
     Map<String, dynamic>? member;
-    int attempts = 0;
 
-    // ✅ RETRY UNTIL DB READY
-    while (attempts < 6) {
+    // ⛔ WAIT FOREVER UNTIL MEMBER EXISTS
+    while (member == null) {
       final res = await Supabase.instance.client
           .from('company_members')
           .select('company_id')
@@ -90,19 +101,7 @@ void _openProfile() {
         break;
       }
 
-      await Future.delayed(const Duration(milliseconds: 500));
-      attempts++;
-    }
-
-    // ❌ STILL NOT FOUND → SHOW CREATE SCREEN
-    if (member == null) {
-      if (!mounted) return;
-
-      setState(() {
-        _loading = false;
-        _needsOrganization = true;
-      });
-      return;
+      await Future.delayed(const Duration(milliseconds: 300));
     }
 
     final companyId = member['company_id'].toString();
@@ -513,49 +512,64 @@ Widget _drawerItem(
   // NO ORG
   // ============================================================
   Widget _noOrg() {
-    return SafeArea(
-      child: Center(
-        child: Padding(
+  return SafeArea(
+    child: Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Container(
           padding: const EdgeInsets.all(20),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE6E8EC)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text("Start hiring",
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 8),
-                const Text(
-                  "Create your organization to post jobs",
-                  style: TextStyle(color: Color(0xFF6B7280)),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE6E8EC)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Start hiring",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
                 ),
-                const SizedBox(height: 16),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                "Create your organization to post jobs",
+                style: TextStyle(color: Color(0xFF6B7280)),
+              ),
+              const SizedBox(height: 16),
 
-                ElevatedButton(
-                  onPressed: () async {
-                    final res = await Navigator.pushNamed(
-                        context, AppRoutes.createOrganization);
+              ElevatedButton(
+                onPressed: () async {
+                  final res = await Navigator.pushNamed(
+                    context,
+                    AppRoutes.createOrganization,
+                  );
 
-                    if (res == true) {
-                      await _loadDashboard();
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF16A34A),
-                  ),
-                  child: const Text("Create Organization"),
+                  if (res == true) {
+                    if (!mounted) return;
+
+                    setState(() => _loading = true);
+
+                    // ⛔ HARD WAIT UNTIL DB CONFIRMS INSERT
+                    await _waitUntilInserted();
+
+                    if (!mounted) return;
+
+                    await _loadDashboard(); // ✅ now safe
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF16A34A),
                 ),
-              ],
-            ),
+                child: const Text("Create Organization"),
+              ),
+            ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
