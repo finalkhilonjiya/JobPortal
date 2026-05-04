@@ -401,18 +401,7 @@ class EmployerDashboardService {
     'status': 'active',
   });
 
-  // 5. 🔥 WAIT UNTIL DB CONFIRMS (NO TIME LIMIT)
-  while (true) {
-    final check = await _db
-        .from('company_members')
-        .select('company_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-    if (check != null) {
-      return check['company_id'].toString();
-    }
-
-    await Future.delayed(const Duration(milliseconds: 300));
-  }
+  // ✅ RETURN IMMEDIATELY (NO WAIT)
+  return companyId;
+}
 }
