@@ -23,6 +23,7 @@ class _SubscriptionPageState
 
   final InAppPurchase _iap =
       InAppPurchase.instance;
+ bool _processingPurchase = false;
 
   StreamSubscription<List<PurchaseDetails>>?
       _purchaseSub;
@@ -99,46 +100,48 @@ class _SubscriptionPageState
 ) async {
   for (final purchase in purchases) {
 
-    if (purchase.status == PurchaseStatus.purchased) {
-      try {
-        // Prevent duplicate processing
-        if (!purchase.pendingCompletePurchase) continue;
+    // ✅ prevent duplicate execution
+    if (_processingPurchase) return;
 
-        // 1. VERIFY
-        await _service.verifyPlayStorePurchase(
-          purchaseToken:
-              purchase.verificationData.serverVerificationData,
-          productId: purchase.productID,
-          orderId: purchase.purchaseID ?? "",
-        );
-
-        // 2. 🔥 CONSUME FIRST (ANDROID ONLY)
-        if (purchase is GooglePlayPurchaseDetails) {
-          final androidAddition =
-              _iap.getPlatformAddition<
-                  InAppPurchaseAndroidPlatformAddition>();
-
-          await androidAddition.consumePurchase(purchase);
-        }
-
-        // 3. ACKNOWLEDGE (VERY IMPORTANT)
-        await _iap.completePurchase(purchase);
-
-        // 4. UPDATE UI
-        await _loadSubscription();
-
-        if (mounted) {
-          Navigator.pop(context, true);
-        }
-
-      } catch (e) {
-        debugPrint("Purchase error: $e");
-      }
+    if (purchase.status != PurchaseStatus.purchased ||
+        !purchase.pendingCompletePurchase) {
+      continue;
     }
 
-    if (purchase.status == PurchaseStatus.error ||
-        purchase.status == PurchaseStatus.canceled) {
-      debugPrint("Purchase failed/cancelled");
+    _processingPurchase = true;
+
+    try {
+      // 1. VERIFY
+      await _service.verifyPlayStorePurchase(
+        purchaseToken:
+            purchase.verificationData.serverVerificationData,
+        productId: purchase.productID,
+        orderId: purchase.purchaseID ?? "",
+      );
+
+      // 2. 🔥 CONSUME FIRST (ANDROID ONLY)
+      if (purchase is GooglePlayPurchaseDetails) {
+        final androidAddition =
+            _iap.getPlatformAddition<
+                InAppPurchaseAndroidPlatformAddition>();
+
+        await androidAddition.consumePurchase(purchase);
+      }
+
+      // 3. ACKNOWLEDGE
+      await _iap.completePurchase(purchase);
+
+      // 4. UPDATE UI
+      await _loadSubscription();
+
+      if (mounted) {
+        Navigator.pop(context, true);
+      }
+
+    } catch (e) {
+      debugPrint("Purchase error: $e");
+    } finally {
+      _processingPurchase = false;
     }
   }
 
