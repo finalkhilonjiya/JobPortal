@@ -50,17 +50,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   }
 
 
-Future<void> _waitUntilInserted() async {
-  while (true) {
-    final companyId = await _service.resolveCompanyIdSafe();
 
-    if (companyId != null && companyId.isNotEmpty) {
-      return; // ✅ only exit when DB confirms
-    }
-
-    await Future.delayed(const Duration(milliseconds: 300));
-  }
-}
   User _requireUser() {
     final u = Supabase.instance.client.auth.currentUser;
     if (u == null) throw Exception("Session expired");
@@ -84,27 +74,24 @@ void _openProfile() {
   });
 
   try {
-    final user = _requireUser();
+    String companyId = _companyId;
 
-    Map<String, dynamic>? member;
+    // ✅ Try resolve ONCE (no loop)
+    if (companyId.isEmpty) {
+      final resolved = await _service.resolveCompanyIdSafe();
 
-    // ⛔ WAIT FOREVER UNTIL MEMBER EXISTS
-    while (member == null) {
-      final res = await Supabase.instance.client
-          .from('company_members')
-          .select('company_id')
-          .eq('user_id', user.id)
-          .maybeSingle();
+      if (resolved == null || resolved.isEmpty) {
+        if (!mounted) return;
 
-      if (res != null) {
-        member = Map<String, dynamic>.from(res);
-        break;
+        setState(() {
+          _loading = false;
+          _needsOrganization = true;
+        });
+        return;
       }
 
-      await Future.delayed(const Duration(milliseconds: 300));
+      companyId = resolved;
     }
-
-    final companyId = member['company_id'].toString();
 
     final company =
         await _service.fetchCompanyById(companyId: companyId);
@@ -157,7 +144,6 @@ void _openProfile() {
       _loading = false;
       _needsOrganization = false;
     });
-
   } catch (e) {
     if (!mounted) return;
 
@@ -542,24 +528,23 @@ Widget _drawerItem(
 
               ElevatedButton(
                 onPressed: () async {
-                  final res = await Navigator.pushNamed(
-                    context,
-                    AppRoutes.createOrganization,
-                  );
+  final res = await Navigator.pushNamed(
+    context,
+    AppRoutes.createOrganization,
+  );
 
-                  if (res == true) {
-                    if (!mounted) return;
+  if (res != null && res.toString().isNotEmpty) {
+    if (!mounted) return;
 
-                    setState(() => _loading = true);
+    setState(() {
+      _companyId = res.toString();
+      _loading = true;
+      _needsOrganization = false;
+    });
 
-                    // ⛔ HARD WAIT UNTIL DB CONFIRMS INSERT
-                    await _waitUntilInserted();
-
-                    if (!mounted) return;
-
-                    await _loadDashboard(); // ✅ now safe
-                  }
-                },
+    await _loadDashboard();
+  }
+},
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF16A34A),
                 ),
