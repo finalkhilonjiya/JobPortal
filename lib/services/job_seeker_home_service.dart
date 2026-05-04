@@ -254,24 +254,14 @@ Future<bool> isUserProSubscribed() async {
 
   final res = await _db
       .from('user_subscriptions')
-      .select('status, expires_at')
+      .select('id')
       .eq('user_id', userId)
-      .order('expires_at', ascending: false)
+      .eq('status', 'active')
+      .gte('expires_at', DateTime.now().toIso8601String())
       .limit(1)
       .maybeSingle();
 
-  if (res == null) return false;
-
-  final status = (res['status'] ?? '').toString().toLowerCase();
-  if (status != 'active') return false;
-
-  final expiresRaw = res['expires_at'];
-  if (expiresRaw == null) return false;
-
-  final expires = DateTime.tryParse(expiresRaw.toString());
-  if (expires == null) return false;
-
-  return expires.isAfter(DateTime.now());
+  return res != null;
 }
 
 Future<void> updateMyCurrentLocationFromDevice() async {
