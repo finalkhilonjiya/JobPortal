@@ -345,58 +345,74 @@ class EmployerDashboardService {
   // CREATE ORGANIZATION (FINAL SAFE VERSION)
   // ============================================================
   Future<String> createOrganization({
-    required String name,
-    required String businessTypeId,
-    required String districtId,
-    String website = '',
-    String description = '',
-  }) async {
-    final user = _requireUser();
+  required String name,
+  required String businessTypeId,
+  required String districtId,
+  String website = '',
+  String description = '',
+}) async {
+  final user = _requireUser();
 
-    // Prevent duplicate org
-    final existing = await _db
+  // 1. Prevent duplicate
+  final existing = await _db
+      .from('company_members')
+      .select('company_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+  if (existing != null) {
+    return existing['company_id'].toString();
+  }
+
+  // 2. Get district name
+  final distRow = await _db
+      .from('assam_districts_master')
+      .select('district_name')
+      .eq('id', districtId)
+      .maybeSingle();
+
+  if (distRow == null) {
+    throw Exception("Invalid district");
+  }
+
+  // 3. Insert company
+  final inserted = await _db
+      .from('companies')
+      .insert({
+        'name': name,
+        'business_type_id': businessTypeId,
+        'headquarters_city': distRow['district_name'],
+        'headquarters_state': 'Assam',
+        'website': website,
+        'description': description,
+        'created_by': user.id,
+        'owner_id': user.id,
+      })
+      .select('id')
+      .single();
+
+  final companyId = inserted['id'].toString();
+
+  // 4. Insert membership
+  await _db.from('company_members').upsert({
+    'company_id': companyId,
+    'user_id': user.id,
+    'role': 'member',
+    'status': 'active',
+  });
+
+  // 5. 🔥 WAIT UNTIL DB CONFIRMS (NO TIME LIMIT)
+  while (true) {
+    final check = await _db
         .from('company_members')
         .select('company_id')
         .eq('user_id', user.id)
         .maybeSingle();
 
-    if (existing != null) {
-      return existing['company_id'];
+    if (check != null) {
+      return check['company_id'].toString();
     }
 
-    final distRow = await _db
-        .from('assam_districts_master')
-        .select('district_name')
-        .eq('id', districtId)
-        .maybeSingle();
-
-    if (distRow == null) throw Exception("Invalid district");
-
-    final inserted = await _db
-        .from('companies')
-        .insert({
-          'name': name,
-          'business_type_id': businessTypeId,
-          'headquarters_city': distRow['district_name'],
-          'headquarters_state': 'Assam',
-          'website': website,
-          'description': description,
-          'created_by': user.id,
-          'owner_id': user.id,
-        })
-        .select('id')
-        .single();
-
-    final companyId = inserted['id'];
-
-    // ✅ role = member (as you requested)
-    await _db.from('company_members').upsert({
-      'company_id': companyId,
-      'user_id': user.id,
-      'role': 'member',
-      'status': 'active',
-    }, onConflict: 'user_id');
-
-    return companyId;
+    await Future.delayed(const Duration(milliseconds: 300));
   }
 }
