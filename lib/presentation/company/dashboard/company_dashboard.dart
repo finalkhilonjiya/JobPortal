@@ -544,24 +544,30 @@ Widget _drawerItem(
 Future<void> _waitForCompanyReady(String companyId) async {
   int tries = 0;
 
-  while (tries < 10) {
+  final user = Supabase.instance.client.auth.currentUser;
+  if (user == null) return;
+
+  while (tries < 12) {
     try {
-      // 1. Check company exists
+      // ✅ 1. Company exists
       final company =
           await _service.fetchCompanyById(companyId: companyId);
 
-      // 2. Check membership exists (CRITICAL)
+      // ✅ 2. Membership exists for THIS USER (CRITICAL FIX)
       final memberCheck = await Supabase.instance.client
           .from('company_members')
           .select('company_id')
-          .eq('company_id', companyId)
+          .eq('user_id', user.id)
           .maybeSingle();
 
-      if (company.isNotEmpty && memberCheck != null) {
+      if (company.isNotEmpty &&
+          memberCheck != null &&
+          memberCheck['company_id'] != null) {
+
         if (!mounted) return;
 
         setState(() {
-          _companyId = companyId;
+          _companyId = memberCheck['company_id'].toString();
         });
 
         await _loadDashboard();
@@ -569,11 +575,11 @@ Future<void> _waitForCompanyReady(String companyId) async {
       }
     } catch (_) {}
 
-    await Future.delayed(const Duration(milliseconds: 400));
+    await Future.delayed(const Duration(milliseconds: 500));
     tries++;
   }
 
-  // fallback (no crash)
+  // fallback (safe)
   if (!mounted) return;
 
   setState(() {
