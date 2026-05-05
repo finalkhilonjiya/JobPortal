@@ -114,42 +114,46 @@ void _openProfile() {
     if (!mounted) return;
 
     setState(() {
-      _companyId = companyId;
+  _companyId = companyId;
 
-      _company = company is Map<String, dynamic>
-          ? company
-          : {};
+  _company = company is Map<String, dynamic>
+      ? company
+      : {};
 
-      _jobs = results[0] is List
-          ? List<Map<String, dynamic>>.from(results[0])
-          : [];
+  _jobs = (results[0] as List?)
+          ?.map((e) => Map<String, dynamic>.from(e))
+          .toList() ??
+      [];
 
-      _stats = results[1] is Map
-          ? Map<String, dynamic>.from(results[1])
-          : {};
+  _stats = results[1] is Map
+      ? Map<String, dynamic>.from(results[1] as Map)
+      : {};
 
-      _recentApplicants = results[2] is List
-          ? List<Map<String, dynamic>>.from(results[2])
-          : [];
+  _recentApplicants = (results[2] as List?)
+          ?.map((e) => Map<String, dynamic>.from(e))
+          .toList() ??
+      [];
 
-      _topJobs = results[3] is List
-          ? List<Map<String, dynamic>>.from(results[3])
-          : [];
+  _topJobs = (results[3] as List?)
+          ?.map((e) => Map<String, dynamic>.from(e))
+          .toList() ??
+      [];
 
-      _todayInterviews = results[4] is List
-          ? List<Map<String, dynamic>>.from(results[4])
-          : [];
+  _todayInterviews = (results[4] as List?)
+          ?.map((e) => Map<String, dynamic>.from(e))
+          .toList() ??
+      [];
 
-      _perf7d = results[5] is Map
-          ? Map<String, dynamic>.from(results[5])
-          : {};
+  _perf7d = results[5] is Map
+      ? Map<String, dynamic>.from(results[5] as Map)
+      : {};
 
-      _unreadNotifications =
-          results[6] is int ? results[6] : 0;
+  _unreadNotifications =
+      (results[6] as int?) ?? 0;
 
-      _loading = false;
-      _needsOrganization = false;
-    });
+  _loading = false;
+  _needsOrganization = false;
+});
   } catch (e) {
     print("❌ DASHBOARD ERROR: $e");
 
