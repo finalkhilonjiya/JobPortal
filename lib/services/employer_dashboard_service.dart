@@ -353,7 +353,7 @@ class EmployerDashboardService {
 }) async {
   final user = _requireUser();
 
-  // 1. Prevent duplicate
+  // prevent duplicate
   final existing = await _db
       .from('company_members')
       .select('company_id')
@@ -364,7 +364,6 @@ class EmployerDashboardService {
     return existing['company_id'].toString();
   }
 
-  // 2. Get district name
   final distRow = await _db
       .from('assam_districts_master')
       .select('district_name')
@@ -375,7 +374,6 @@ class EmployerDashboardService {
     throw Exception("Invalid district");
   }
 
-  // 3. Insert company
   final inserted = await _db
       .from('companies')
       .insert({
@@ -393,15 +391,13 @@ class EmployerDashboardService {
 
   final companyId = inserted['id'].toString();
 
-  // 4. Insert membership
-  await _db.from('company_members').upsert({
+  await _db.from('company_members').insert({
     'company_id': companyId,
     'user_id': user.id,
     'role': 'member',
     'status': 'active',
   });
 
-  // ✅ RETURN IMMEDIATELY (NO WAIT)
-  return companyId;
+  return companyId; // 🚀 immediate return
 }
 }
