@@ -5,7 +5,14 @@ class QuickStats extends StatelessWidget {
 
   const QuickStats({super.key, required this.stats});
 
-  int _v(String k) => int.tryParse(stats[k].toString()) ?? 0;
+  int _v(String k) {
+    final val = stats[k];
+
+    if (val == null) return 0;
+    if (val is int) return val;
+
+    return int.tryParse(val.toString()) ?? 0;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,10 +26,10 @@ class QuickStats extends StatelessWidget {
       child: Row(
         children: [
           _item(_v('total_jobs'), "Total Jobs"),
-_divider(),
-_item(_v('active_jobs'), "Active Jobs"),
-_divider(),
-_item(_v('applicants'), "Applicants"),
+          _divider(),
+          _item(_v('active_jobs'), "Active Jobs"),
+          _divider(),
+          _item(_v('applicants'), "Applicants"),
         ],
       ),
     );
@@ -31,9 +38,12 @@ _item(_v('applicants'), "Applicants"),
   Widget _item(int v, String label) {
     return Expanded(
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             v.toString(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 20,
@@ -43,6 +53,8 @@ _item(_v('applicants'), "Applicants"),
           const SizedBox(height: 2),
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 12,
               color: Color(0xFF6B7280),
