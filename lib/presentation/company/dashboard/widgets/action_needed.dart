@@ -13,19 +13,26 @@ class ActionNeeded extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final waiting = applicants
-        .where((a) =>
-            (a['application_status'] ?? 'applied') == 'applied')
-        .length;
-
-    final expiring = jobs.where((j) {
-      final d = DateTime.tryParse(j['expires_at'] ?? '');
-      if (d == null) return false;
-      return d.difference(DateTime.now()).inHours <= 48;
+    final waiting = applicants.where((a) {
+      final status = (a['application_status'] ?? 'applied').toString();
+      return status == 'applied';
     }).length;
 
-    final paused =
-        jobs.where((j) => j['status'] == 'paused').length;
+    final expiring = jobs.where((j) {
+      final raw = j['expires_at'];
+
+      if (raw == null) return false;
+
+      final date = DateTime.tryParse(raw.toString());
+      if (date == null) return false;
+
+      return date.difference(DateTime.now()).inHours <= 48;
+    }).length;
+
+    final paused = jobs.where((j) {
+      final status = (j['status'] ?? '').toString();
+      return status == 'paused';
+    }).length;
 
     if (waiting == 0 && expiring == 0 && paused == 0) {
       return _empty();
@@ -77,7 +84,13 @@ class ActionNeeded extends StatelessWidget {
                 const Icon(Icons.warning_amber_outlined,
                     color: Colors.orange),
                 const SizedBox(width: 10),
-                Expanded(child: Text(text)),
+                Expanded(
+                  child: Text(
+                    text,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
                 TextButton(
                   onPressed: onTap,
                   child: const Text("View"),
