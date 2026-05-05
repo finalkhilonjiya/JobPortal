@@ -357,7 +357,6 @@ class EmployerDashboardService {
   final user = _requireUser();
 
   try {
-    // 1. Prevent duplicate company
     final existing = await _db
         .from('company_members')
         .select('company_id')
@@ -368,7 +367,6 @@ class EmployerDashboardService {
       return existing['company_id'].toString();
     }
 
-    // 2. Get district name
     final distRow = await _db
         .from('assam_districts_master')
         .select('district_name')
@@ -381,24 +379,20 @@ class EmployerDashboardService {
 
     final districtName = distRow['district_name'];
 
-    // 3. CALL RPC (SAFE + TIMEOUT)
-    final res = await _db
-        .rpc(
-          'create_company_with_member',
-          params: {
-            'p_name': name,
-            'p_business_type_id': businessTypeId,
-            'p_district': districtName,
-            'p_user_id': user.id,
-          },
-        )
-        .timeout(const Duration(seconds: 10));
+    final res = await _db.rpc(
+      'create_company_with_member',
+      params: {
+        'p_name': name,
+        'p_business_type_id': businessTypeId,
+        'p_district': districtName,
+        'p_user_id': user.id,
+      },
+    );
 
     if (res == null) {
-      throw Exception("Failed to create organization");
+      throw Exception("RPC failed");
     }
 
-    // 4. SAFE PARSE (CRITICAL FIX)
     String companyId;
 
     if (res is String) {
@@ -412,18 +406,7 @@ class EmployerDashboardService {
     }
 
     if (companyId.isEmpty) {
-      throw Exception("Empty company ID returned");
-    }
-
-    // 5. VERIFY MEMBERSHIP (extra safety)
-    final check = await _db
-        .from('company_members')
-        .select('company_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-    if (check == null || check['company_id'] == null) {
-      throw Exception("Membership not created properly");
+      throw Exception("Empty company ID");
     }
 
     return companyId;
