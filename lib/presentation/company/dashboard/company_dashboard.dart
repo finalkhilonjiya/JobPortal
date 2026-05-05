@@ -76,7 +76,7 @@ void _openProfile() {
   try {
     String companyId = _companyId;
 
-    // 🔥 IMPORTANT: only resolve if NOT already set
+    // ✅ Resolve only if empty
     if (companyId.isEmpty) {
       final resolved = await _service.resolveCompanyIdSafe();
 
@@ -91,6 +91,11 @@ void _openProfile() {
       }
 
       companyId = resolved;
+    }
+
+    // 🚨 HARD SAFETY CHECK (prevents crash)
+    if (companyId.isEmpty) {
+      throw Exception("Invalid companyId");
     }
 
     final company =
@@ -110,19 +115,44 @@ void _openProfile() {
 
     setState(() {
       _companyId = companyId;
-      _company = Map<String, dynamic>.from(company ?? {});
-      _jobs = List<Map<String, dynamic>>.from(results[0] ?? []);
-      _stats = Map<String, dynamic>.from(results[1] ?? {});
-      _recentApplicants = List<Map<String, dynamic>>.from(results[2] ?? []);
-      _topJobs = List<Map<String, dynamic>>.from(results[3] ?? []);
-      _todayInterviews = List<Map<String, dynamic>>.from(results[4] ?? []);
-      _perf7d = Map<String, dynamic>.from(results[5] ?? {});
-      _unreadNotifications = (results[6] as int?) ?? 0;
+
+      _company = company is Map<String, dynamic>
+          ? company
+          : {};
+
+      _jobs = results[0] is List
+          ? List<Map<String, dynamic>>.from(results[0])
+          : [];
+
+      _stats = results[1] is Map
+          ? Map<String, dynamic>.from(results[1])
+          : {};
+
+      _recentApplicants = results[2] is List
+          ? List<Map<String, dynamic>>.from(results[2])
+          : [];
+
+      _topJobs = results[3] is List
+          ? List<Map<String, dynamic>>.from(results[3])
+          : [];
+
+      _todayInterviews = results[4] is List
+          ? List<Map<String, dynamic>>.from(results[4])
+          : [];
+
+      _perf7d = results[5] is Map
+          ? Map<String, dynamic>.from(results[5])
+          : {};
+
+      _unreadNotifications =
+          results[6] is int ? results[6] : 0;
 
       _loading = false;
       _needsOrganization = false;
     });
   } catch (e) {
+    print("❌ DASHBOARD ERROR: $e");
+
     if (!mounted) return;
 
     setState(() {
