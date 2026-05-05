@@ -4,14 +4,29 @@ import '../../../../routes/app_routes.dart';
 class PrimaryActions extends StatelessWidget {
   final String companyId;
 
-  const PrimaryActions({super.key, required this.companyId});
+  const PrimaryActions({
+    super.key,
+    required this.companyId,
+  });
 
   @override
   Widget build(BuildContext context) {
     final items = [
-      (Icons.add, "Post Job", "create"),
-      (Icons.work_outline, "Jobs", "jobs"),
-      (Icons.people_outline, "Applicants", "applicants"),
+      {
+        "icon": Icons.add,
+        "label": "Post Job",
+        "type": "create",
+      },
+      {
+        "icon": Icons.work_outline,
+        "label": "Jobs",
+        "type": "jobs",
+      },
+      {
+        "icon": Icons.people_outline,
+        "label": "Applicants",
+        "type": "applicants",
+      },
     ];
 
     return SizedBox(
@@ -20,6 +35,12 @@ class PrimaryActions extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         itemCount: items.length,
         itemBuilder: (_, i) {
+          final item = items[i];
+
+          final icon = item["icon"] as IconData;
+          final label = (item["label"] ?? '').toString();
+          final type = (item["type"] ?? '').toString();
+
           return Container(
             width: 90,
             margin: const EdgeInsets.only(right: 12),
@@ -31,8 +52,6 @@ class PrimaryActions extends StatelessWidget {
                 splashColor: const Color(0xFFDCFCE7),
                 highlightColor: Colors.transparent,
                 onTap: () {
-                  final type = items[i].$3;
-
                   if (type == "create") {
                     Navigator.pushNamed(context, AppRoutes.createJob);
                   } else if (type == "jobs") {
@@ -56,16 +75,17 @@ class PrimaryActions extends StatelessWidget {
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Icon(
-                        items[i].$1,
+                        icon,
                         size: 22,
                         color: const Color(0xFF16A34A),
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        items[i].$2,
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 12,
