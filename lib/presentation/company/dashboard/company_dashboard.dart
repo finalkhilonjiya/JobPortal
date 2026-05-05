@@ -540,6 +540,47 @@ Widget _drawerItem(
   );
 }
 
+
+Future<void> _waitForCompanyReady(String companyId) async {
+  int tries = 0;
+
+  while (tries < 10) {
+    try {
+      // 1. Check company exists
+      final company =
+          await _service.fetchCompanyById(companyId: companyId);
+
+      // 2. Check membership exists (CRITICAL)
+      final memberCheck = await Supabase.instance.client
+          .from('company_members')
+          .select('company_id')
+          .eq('company_id', companyId)
+          .maybeSingle();
+
+      if (company.isNotEmpty && memberCheck != null) {
+        if (!mounted) return;
+
+        setState(() {
+          _companyId = companyId;
+        });
+
+        await _loadDashboard();
+        return;
+      }
+    } catch (_) {}
+
+    await Future.delayed(const Duration(milliseconds: 400));
+    tries++;
+  }
+
+  // fallback (no crash)
+  if (!mounted) return;
+
+  setState(() {
+    _loading = false;
+    _needsOrganization = true;
+  });
+}
   // ============================================================
   // NO ORG
   // ============================================================
@@ -574,29 +615,26 @@ Widget _drawerItem(
 
               ElevatedButton(
                 onPressed: () async {
-  final res = await Navigator.pushNamed(
-    context,
-    AppRoutes.createOrganization,
-  );
+                  final res = await Navigator.pushNamed(
+                    context,
+                    AppRoutes.createOrganization,
+                  );
 
-  if (!mounted) return;
+                  if (!mounted) return;
+                  if (res == null || res.toString().isEmpty) return;
 
-  if (res == null || res.toString().isEmpty) return;
+                  setState(() {
+                    _companyId = res.toString();
+                    _loading = true;
+                    _needsOrganization = false;
+                  });
 
-  // 🔥 DO NOT reset everything blindly
-  setState(() {
-    _companyId = res.toString();
-    _loading = true;
-    _needsOrganization = false;
-  });
-
-  await _loadDashboard();
-},
-
+                  // 🔥 FIX: wait for FULL backend readiness
+                  await _waitForCompanyReady(_companyId);
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF16A34A),
                 ),
-
                 child: const Text("Create Organization"),
               ),
             ],
