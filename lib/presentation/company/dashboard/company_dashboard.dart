@@ -30,6 +30,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
 
   bool _loading = true;
   bool _needsOrganization = false;
+  bool _isFetching = false;
 
   String _companyId = "";
 
@@ -68,59 +69,63 @@ void _openProfile() {
   Future<void> _loadDashboard() async {
   if (!mounted) return;
 
+  if (_isFetching) return;
+  _isFetching = true;
+
   setState(() {
     _loading = true;
     _needsOrganization = false;
   });
 
   try {
-    String? companyId = _companyId.isNotEmpty ? _companyId : null;
+    String? companyId =
+        _companyId.isNotEmpty ? _companyId : null;
 
-    // RETRY resolve
+    // Resolve companyId with retry
     if (companyId == null) {
-      int tries = 0;
-
-      while (tries < 5) {
+      for (int i = 0; i < 5; i++) {
         companyId = await _service.resolveCompanyIdSafe();
-
         if (companyId != null && companyId.isNotEmpty) break;
-
         await Future.delayed(const Duration(milliseconds: 300));
-        tries++;
       }
 
       if (companyId == null || companyId.isEmpty) {
         if (!mounted) return;
+
         setState(() {
           _loading = false;
           _needsOrganization = true;
         });
+
         return;
       }
     }
 
-    // RETRY fetch company
+    // Fetch company with retry
     Map<String, dynamic> company = {};
-    int tries = 0;
 
-    while (tries < 5) {
-      company = await _service.fetchCompanyById(companyId: companyId);
+    for (int i = 0; i < 5; i++) {
+      company = await _service.fetchCompanyById(
+        companyId: companyId,
+      );
 
       if (company.isNotEmpty) break;
 
       await Future.delayed(const Duration(milliseconds: 300));
-      tries++;
     }
 
     if (company.isEmpty) {
       if (!mounted) return;
+
       setState(() {
         _loading = false;
         _needsOrganization = true;
       });
+
       return;
     }
 
+    // Safe API calls
     final results = await Future.wait([
       _service.fetchCompanyJobs(companyId: companyId),
       _service.fetchCompanyDashboardStats(companyId: companyId),
@@ -129,12 +134,12 @@ void _openProfile() {
       _service.fetchTodayInterviews(companyId: companyId),
       _service.fetchLast7DaysPerformance(companyId: companyId),
       _service.fetchUnreadNotificationsCount(),
-    ]);
+    ]).catchError((_) => List.filled(7, null));
 
     if (!mounted) return;
 
     setState(() {
-      _companyId = companyId!;
+      _companyId = companyId ?? "";
 
       _company = Map<String, dynamic>.from(company);
 
@@ -177,6 +182,8 @@ void _openProfile() {
       _loading = false;
       _needsOrganization = true;
     });
+  } finally {
+    _isFetching = false;
   }
 }
   // ============================================================
@@ -290,8 +297,7 @@ Widget build(BuildContext context) {
   // DASHBOARD UI
   // ============================================================
   Widget _dashboard() {
-  // 🔥 HARD GUARD
-  if (_company.isEmpty) {
+  if (_company.isEmpty && !_needsOrganization) {
     return _preparingScreen();
   }
 
@@ -307,7 +313,7 @@ Widget build(BuildContext context) {
           const HeroSlider(),
           const SizedBox(height: 16),
 
-          QuickStats(stats: _stats.isEmpty ? {} : _stats),
+          QuickStats(stats: _stats),
           const SizedBox(height: 16),
 
           PrimaryActions(companyId: _companyId),
@@ -318,7 +324,7 @@ Widget build(BuildContext context) {
           const SizedBox(height: 10),
 
           RecentApplicants(
-            data: _recentApplicants.isEmpty ? [] : _recentApplicants,
+            data: _recentApplicants,
             companyId: _companyId,
           ),
 
@@ -329,7 +335,7 @@ Widget build(BuildContext context) {
           const SizedBox(height: 10),
 
           ActiveJobs(
-            jobs: _jobs.isEmpty ? [] : _jobs,
+            jobs: _jobs,
             companyId: _companyId,
           ),
 
@@ -340,7 +346,7 @@ Widget build(BuildContext context) {
           const SizedBox(height: 10),
 
           TodayInterviews(
-            data: _todayInterviews.isEmpty ? [] : _todayInterviews,
+            data: _todayInterviews,
             companyId: _companyId,
           ),
 
@@ -351,7 +357,7 @@ Widget build(BuildContext context) {
           const SizedBox(height: 10),
 
           TopJobs(
-            jobs: _topJobs.isEmpty ? [] : _topJobs,
+            jobs: _topJobs,
             companyId: _companyId,
           ),
 
@@ -365,9 +371,7 @@ Widget build(BuildContext context) {
 
 
 Widget _drawer() {
-  final name = (_company.isNotEmpty &&
-          _company['name'] is String &&
-          _company['name'] != null)
+  final name = (_company['name'] is String)
       ? _company['name'] as String
       : 'Company';
 
@@ -386,6 +390,7 @@ Widget _drawer() {
                   child: Icon(Icons.business, color: Color(0xFF16A34A)),
                 ),
                 const SizedBox(width: 12),
+
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -408,6 +413,7 @@ Widget _drawer() {
                     ],
                   ),
                 ),
+
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close),
@@ -416,6 +422,7 @@ Widget _drawer() {
             ),
           ),
           const Divider(height: 1),
+
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 6),
@@ -440,42 +447,18 @@ Widget _drawer() {
                   Navigator.pushNamed(context, AppRoutes.employerProfile);
                 }),
                 const Divider(),
-                _drawerItem(Icons.info_outline, "About Us", () {
+                _drawerItem(Icons.logout_rounded, "Logout", () async {
                   Navigator.pop(context);
-                  Navigator.pushNamed(context, AppRoutes.aboutApp);
-                }),
-                _drawerItem(Icons.support_agent, "Contact Us", () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, AppRoutes.contactSupport);
-                }),
-                _drawerItem(Icons.description_outlined, "Terms & Conditions",
-                    () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(
-                      context, AppRoutes.termsAndConditions);
-                }),
-                _drawerItem(Icons.lock_outline, "Privacy Policy", () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, AppRoutes.privacyPolicy);
-                }),
-                const Divider(),
-                _drawerItem(
-                  Icons.logout_rounded,
-                  "Logout",
-                  () async {
-                    Navigator.pop(context);
-                    await _logout();
+                  await _logout();
 
-                    if (!mounted) return;
+                  if (!mounted) return;
 
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      AppRoutes.employerLogin,
-                      (_) => false,
-                    );
-                  },
-                  color: const Color(0xFFEF4444),
-                ),
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.employerLogin,
+                    (_) => false,
+                  );
+                }, color: const Color(0xFFEF4444)),
               ],
             ),
           ),
