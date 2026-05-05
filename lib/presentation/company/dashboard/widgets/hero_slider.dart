@@ -43,9 +43,13 @@ class _HeroSliderState extends State<HeroSlider> {
           .eq('slider_type', 'company')
           .order('display_order', ascending: true);
 
-      _slides = (res as List)
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
+      if (res is List) {
+        _slides = res
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      } else {
+        _slides = [];
+      }
     } catch (_) {
       _slides = [];
     }
@@ -60,13 +64,13 @@ class _HeroSliderState extends State<HeroSlider> {
   }
 
   // ============================================================
-  // AUTO SLIDER (4 SEC)
+  // AUTO SLIDER
   // ============================================================
   void _startAutoSlide() {
     _timer?.cancel();
 
     _timer = Timer.periodic(const Duration(seconds: 4), (_) {
-      if (!_controller.hasClients) return;
+      if (!mounted || !_controller.hasClients) return;
 
       _currentIndex++;
 
@@ -74,11 +78,13 @@ class _HeroSliderState extends State<HeroSlider> {
         _currentIndex = 0;
       }
 
-      _controller.animateToPage(
-        _currentIndex,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
+      try {
+        _controller.animateToPage(
+          _currentIndex,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      } catch (_) {}
     });
   }
 
@@ -87,16 +93,12 @@ class _HeroSliderState extends State<HeroSlider> {
   // ============================================================
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return _shimmer();
-    }
+    if (_loading) return _shimmer();
 
-    if (_slides.isEmpty) {
-      return _empty();
-    }
+    if (_slides.isEmpty) return _empty();
 
     return AspectRatio(
-      aspectRatio: 16 / 7, // 🔥 PERFECT FIT FOR YOUR IMAGES
+      aspectRatio: 16 / 7,
       child: PageView.builder(
         controller: _controller,
         itemCount: _slides.length,
@@ -105,7 +107,10 @@ class _HeroSliderState extends State<HeroSlider> {
         },
         itemBuilder: (_, i) {
           final s = _slides[i];
-          final image = s['image_url'] ?? '';
+
+          final image = (s['image_url'] ?? '').toString();
+
+          if (image.isEmpty) return _empty();
 
           return Padding(
             padding: const EdgeInsets.only(right: 8),
@@ -113,7 +118,7 @@ class _HeroSliderState extends State<HeroSlider> {
               borderRadius: BorderRadius.circular(16),
               child: Image.network(
                 image,
-                fit: BoxFit.cover, // 🔥 fills perfectly
+                fit: BoxFit.cover,
                 width: double.infinity,
                 errorBuilder: (_, __, ___) => _empty(),
               ),
