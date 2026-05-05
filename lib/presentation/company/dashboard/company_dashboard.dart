@@ -76,6 +76,7 @@ void _openProfile() {
   try {
     String companyId = _companyId;
 
+    // resolve only if empty
     if (companyId.isEmpty) {
       final resolved = await _service.resolveCompanyIdSafe();
 
@@ -92,80 +93,69 @@ void _openProfile() {
       companyId = resolved;
     }
 
-    // 🔥 CRITICAL: RETRY BLOCK (THIS FIXES EVERYTHING)
-    int attempts = 0;
+    // 🔥 NO RETRY — DB is already consistent (RPC fix)
+    final company =
+        await _service.fetchCompanyById(companyId: companyId);
 
-    while (attempts < 10) {
-      try {
-        final company =
-            await _service.fetchCompanyById(companyId: companyId);
+    final results = await Future.wait([
+      _service.fetchCompanyJobs(companyId: companyId),
+      _service.fetchCompanyDashboardStats(companyId: companyId),
+      _service.fetchRecentApplicants(companyId: companyId),
+      _service.fetchTopJobs(companyId: companyId),
+      _service.fetchTodayInterviews(companyId: companyId),
+      _service.fetchLast7DaysPerformance(companyId: companyId),
+      _service.fetchUnreadNotificationsCount(),
+    ]);
 
-        // 🚨 wait until company actually exists
-        if (company.isEmpty) {
-          throw Exception("Company not ready");
-        }
+    if (!mounted) return;
 
-        final results = await Future.wait([
-          _service.fetchCompanyJobs(companyId: companyId),
-          _service.fetchCompanyDashboardStats(companyId: companyId),
-          _service.fetchRecentApplicants(companyId: companyId),
-          _service.fetchTopJobs(companyId: companyId),
-          _service.fetchTodayInterviews(companyId: companyId),
-          _service.fetchLast7DaysPerformance(companyId: companyId),
-          _service.fetchUnreadNotificationsCount(),
-        ]);
+    setState(() {
+      _companyId = companyId;
 
-        if (!mounted) return;
+      _company = (company is Map)
+          ? Map<String, dynamic>.from(company)
+          : {};
 
-        setState(() {
-          _companyId = companyId;
-          _company = company;
+      _jobs = (results[0] is List)
+          ? (results[0] as List)
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList()
+          : [];
 
-          _jobs = (results[0] as List?)
-                  ?.map((e) => Map<String, dynamic>.from(e))
-                  .toList() ??
-              [];
+      _stats = (results[1] is Map)
+          ? Map<String, dynamic>.from(results[1] as Map)
+          : {};
 
-          _stats = results[1] is Map
-              ? Map<String, dynamic>.from(results[1] as Map)
-              : {};
+      _recentApplicants = (results[2] is List)
+          ? (results[2] as List)
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList()
+          : [];
 
-          _recentApplicants = (results[2] as List?)
-                  ?.map((e) => Map<String, dynamic>.from(e))
-                  .toList() ??
-              [];
+      _topJobs = (results[3] is List)
+          ? (results[3] as List)
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList()
+          : [];
 
-          _topJobs = (results[3] as List?)
-                  ?.map((e) => Map<String, dynamic>.from(e))
-                  .toList() ??
-              [];
+      _todayInterviews = (results[4] is List)
+          ? (results[4] as List)
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList()
+          : [];
 
-          _todayInterviews = (results[4] as List?)
-                  ?.map((e) => Map<String, dynamic>.from(e))
-                  .toList() ??
-              [];
+      _perf7d = (results[5] is Map)
+          ? Map<String, dynamic>.from(results[5] as Map)
+          : {};
 
-          _perf7d = results[5] is Map
-              ? Map<String, dynamic>.from(results[5] as Map)
-              : {};
+      _unreadNotifications =
+          (results[6] is int) ? results[6] as int : 0;
 
-          _unreadNotifications =
-              (results[6] as int?) ?? 0;
-
-          _loading = false;
-          _needsOrganization = false;
-        });
-
-        return; // ✅ SUCCESS EXIT
-      } catch (_) {
-        attempts++;
-        await Future.delayed(const Duration(milliseconds: 400));
-      }
-    }
-
-    throw Exception("Dashboard load failed after retries");
+      _loading = false;
+      _needsOrganization = false;
+    });
   } catch (e) {
-    print("❌ FINAL DASHBOARD ERROR: $e");
+    print("❌ DASHBOARD ERROR: $e");
 
     if (!mounted) return;
 
@@ -558,15 +548,23 @@ Widget _drawerItem(
   if (res != null && res.toString().isNotEmpty) {
     if (!mounted) return;
 
+    // 🔥 HARD RESET STATE (IMPORTANT)
     setState(() {
-      _companyId = res.toString(); // 🔥 THIS IS KEY
+      _companyId = res.toString();
+      _company = {};
+      _jobs = [];
+      _stats = {};
+      _recentApplicants = [];
+      _topJobs = [];
+      _todayInterviews = [];
+      _perf7d = {};
       _loading = true;
       _needsOrganization = false;
     });
 
     await _loadDashboard();
   }
-},
+}
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF16A34A),
                 ),
