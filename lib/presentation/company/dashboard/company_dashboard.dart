@@ -67,9 +67,8 @@ void _openProfile() {
   // LOAD DASHBOARD (FINAL FIXED LOGIC)
   // ============================================================
   Future<void> _loadDashboard() async {
-  if (!mounted) return;
+  if (!mounted || _isFetching) return;
 
-  if (_isFetching) return;
   _isFetching = true;
 
   setState(() {
@@ -81,7 +80,9 @@ void _openProfile() {
     String? companyId =
         _companyId.isNotEmpty ? _companyId : null;
 
-    // Resolve companyId with retry
+    // =========================
+    // RESOLVE COMPANY ID
+    // =========================
     if (companyId == null) {
       for (int i = 0; i < 5; i++) {
         companyId = await _service.resolveCompanyIdSafe();
@@ -101,15 +102,21 @@ void _openProfile() {
       }
     }
 
-    // Fetch company with retry
+    // =========================
+    // FETCH COMPANY
+    // =========================
     Map<String, dynamic> company = {};
 
     for (int i = 0; i < 5; i++) {
-      company = await _service.fetchCompanyById(
-        companyId: companyId,
-      );
+      final res =
+          await _service.fetchCompanyById(companyId: companyId);
 
-      if (company.isNotEmpty) break;
+      if (res is Map && res.isNotEmpty) {
+        company = Map<String, dynamic>.from(
+          res.map((k, v) => MapEntry(k.toString(), v)),
+        );
+        break;
+      }
 
       await Future.delayed(const Duration(milliseconds: 300));
     }
@@ -125,7 +132,9 @@ void _openProfile() {
       return;
     }
 
-    // Safe API calls
+    // =========================
+    // FETCH DASHBOARD DATA
+    // =========================
     final results = await Future.wait([
       _service.fetchCompanyJobs(companyId: companyId),
       _service.fetchCompanyDashboardStats(companyId: companyId),
@@ -138,36 +147,62 @@ void _openProfile() {
 
     if (!mounted) return;
 
+    // =========================
+    // SAFE PARSING
+    // =========================
+    final jobsRaw = results[0];
+    final statsRaw = results[1];
+    final applicantsRaw = results[2];
+    final topJobsRaw = results[3];
+    final interviewsRaw = results[4];
+    final perfRaw = results[5];
+    final unreadRaw = results[6];
+
     setState(() {
       _companyId = companyId ?? "";
 
-      _company = Map<String, dynamic>.from(company);
+      _company = company;
 
-      _jobs = (results[0] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
+      _jobs = (jobsRaw is List)
+          ? jobsRaw
+              .map((e) => Map<String, dynamic>.from(
+                  (e as Map).map((k, v) => MapEntry(k.toString(), v))))
+              .toList()
+          : [];
 
-      _stats = (results[1] is Map)
-          ? Map<String, dynamic>.from(results[1])
+      _stats = (statsRaw is Map)
+          ? Map<String, dynamic>.from(
+              statsRaw.map((k, v) => MapEntry(k.toString(), v)))
           : {};
 
-      _recentApplicants = (results[2] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
+      _recentApplicants = (applicantsRaw is List)
+          ? applicantsRaw
+              .map((e) => Map<String, dynamic>.from(
+                  (e as Map).map((k, v) => MapEntry(k.toString(), v))))
+              .toList()
+          : [];
 
-      _topJobs = (results[3] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
+      _topJobs = (topJobsRaw is List)
+          ? topJobsRaw
+              .map((e) => Map<String, dynamic>.from(
+                  (e as Map).map((k, v) => MapEntry(k.toString(), v))))
+              .toList()
+          : [];
 
-      _todayInterviews = (results[4] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
+      _todayInterviews = (interviewsRaw is List)
+          ? interviewsRaw
+              .map((e) => Map<String, dynamic>.from(
+                  (e as Map).map((k, v) => MapEntry(k.toString(), v))))
+              .toList()
+          : [];
 
-      _perf7d = (results[5] is Map)
-          ? Map<String, dynamic>.from(results[5])
+      _perf7d = (perfRaw is Map)
+          ? Map<String, dynamic>.from(
+              perfRaw.map((k, v) => MapEntry(k.toString(), v)))
           : {};
 
-      _unreadNotifications = results[6] as int? ?? 0;
+      _unreadNotifications =
+          (unreadRaw is int) ? unreadRaw : 0;
 
       _loading = false;
       _needsOrganization = false;
