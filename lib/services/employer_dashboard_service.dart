@@ -356,58 +356,79 @@ class EmployerDashboardService {
 }) async {
   final user = _requireUser();
 
-  // 1. Prevent duplicate (still important)
-  final existing = await _db
-      .from('company_members')
-      .select('company_id')
-      .eq('user_id', user.id)
-      .maybeSingle();
+  try {
+    // 1. Prevent duplicate company
+    final existing = await _db
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-  if (existing != null) {
-    return existing['company_id'].toString();
+    if (existing != null && existing['company_id'] != null) {
+      return existing['company_id'].toString();
+    }
+
+    // 2. Get district name
+    final distRow = await _db
+        .from('assam_districts_master')
+        .select('district_name')
+        .eq('id', districtId)
+        .maybeSingle();
+
+    if (distRow == null || distRow['district_name'] == null) {
+      throw Exception("Invalid district");
+    }
+
+    final districtName = distRow['district_name'];
+
+    // 3. CALL RPC (SAFE + TIMEOUT)
+    final res = await _db
+        .rpc(
+          'create_company_with_member',
+          params: {
+            'p_name': name,
+            'p_business_type_id': businessTypeId,
+            'p_district': districtName,
+            'p_user_id': user.id,
+          },
+        )
+        .timeout(const Duration(seconds: 10));
+
+    if (res == null) {
+      throw Exception("Failed to create organization");
+    }
+
+    // 4. SAFE PARSE (CRITICAL FIX)
+    String companyId;
+
+    if (res is String) {
+      companyId = res;
+    } else if (res is int) {
+      companyId = res.toString();
+    } else if (res is Map && res['company_id'] != null) {
+      companyId = res['company_id'].toString();
+    } else {
+      throw Exception("Invalid RPC response");
+    }
+
+    if (companyId.isEmpty) {
+      throw Exception("Empty company ID returned");
+    }
+
+    // 5. VERIFY MEMBERSHIP (extra safety)
+    final check = await _db
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+    if (check == null || check['company_id'] == null) {
+      throw Exception("Membership not created properly");
+    }
+
+    return companyId;
+  } catch (e) {
+    throw Exception("Create organization failed: $e");
   }
-
-  // 2. Get district name
-  final distRow = await _db
-      .from('assam_districts_master')
-      .select('district_name')
-      .eq('id', districtId)
-      .maybeSingle();
-
-  if (distRow == null) {
-    throw Exception("Invalid district");
-  }
-
-  final districtName = distRow['district_name'];
-
-  // 3. 🔥 CALL RPC (ATOMIC INSERT)
-  final res = await _db.rpc(
-    'create_company_with_member',
-    params: {
-      'p_name': name,
-      'p_business_type_id': businessTypeId,
-      'p_district': districtName,
-      'p_user_id': user.id,
-    },
-  );
-
-  if (res == null || res.toString().isEmpty) {
-    throw Exception("Failed to create organization");
-  }
-
-  final companyId = res.toString();
-
-  // 4. OPTIONAL EXTRA SAFETY (not required but bulletproof)
-  final check = await _db
-      .from('company_members')
-      .select('company_id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-  if (check == null) {
-    throw Exception("Membership not created properly");
-  }
-
-  return companyId;
 }
 }
