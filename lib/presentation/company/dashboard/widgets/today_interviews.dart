@@ -23,16 +23,30 @@ class TodayInterviews extends StatelessWidget {
         children: List.generate(data.length, (i) {
           final row = data[i];
 
-          final duration = row['duration_minutes'] ?? 30;
+          final duration =
+              (row['duration_minutes'] is int)
+                  ? row['duration_minutes']
+                  : 30;
 
-          final listing =
-              (row['job_applications_listings'] ?? {}) as Map;
-          final job = (listing['job_listings'] ?? {}) as Map;
-          final app = (listing['job_applications'] ?? {}) as Map;
+          final listingRaw = row['job_applications_listings'];
+          final listing = listingRaw is Map
+              ? Map<String, dynamic>.from(listingRaw)
+              : {};
+
+          final jobRaw = listing['job_listings'];
+          final job = jobRaw is Map
+              ? Map<String, dynamic>.from(jobRaw)
+              : {};
+
+          final appRaw = listing['job_applications'];
+          final app = appRaw is Map
+              ? Map<String, dynamic>.from(appRaw)
+              : {};
 
           final jobId = (job['id'] ?? '').toString();
-          final name = app['name'] ?? 'Candidate';
-          final jobTitle = job['job_title'] ?? 'Job';
+          final name = (app['name'] ?? 'Candidate').toString();
+          final jobTitle =
+              (job['job_title'] ?? 'Job').toString();
 
           final isOnline =
               (row['interview_type'] ?? 'video') == 'video';
@@ -69,11 +83,15 @@ class TodayInterviews extends StatelessWidget {
                           children: [
                             Text(
                               name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                   fontWeight: FontWeight.w700),
                             ),
                             Text(
                               jobTitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF6B7280),
