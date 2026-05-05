@@ -48,6 +48,26 @@ class EmployerDashboardService {
   }
 }
 
+
+List<Map<String, dynamic>> _safeList(dynamic res) {
+  if (res is List) {
+    return res
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(
+            e.map((k, v) => MapEntry(k.toString(), v))))
+        .toList();
+  }
+  return [];
+}
+
+Map<String, dynamic> _safeMap(dynamic res) {
+  if (res is Map) {
+    return Map<String, dynamic>.from(
+        res.map((k, v) => MapEntry(k.toString(), v)));
+  }
+  return {};
+}
+
   // ============================================================
   // COMPANY
   // ============================================================
@@ -71,8 +91,7 @@ class EmployerDashboardService {
   Future<List<Map<String, dynamic>>> fetchCompanyJobs({
   required String companyId,
 }) async {
-  // 1. Fetch jobs
-  final jobs = await _db
+  final res = await _db
       .from('job_listings')
       .select('''
         id,
@@ -87,27 +106,25 @@ class EmployerDashboardService {
       .eq('company_id', companyId)
       .order('created_at', ascending: false);
 
-  final jobList = List<Map<String, dynamic>>.from(jobs);
+  final jobList = _safeList(res);
   if (jobList.isEmpty) return [];
 
   final jobIds = jobList.map((e) => e['id'].toString()).toList();
 
-  // 2. REAL applications count (same as EmployerJobsService)
   final appsRes = await _db
       .from('job_applications_listings')
       .select('listing_id')
       .inFilter('listing_id', jobIds);
 
-  final rows = List<Map<String, dynamic>>.from(appsRes);
+  final rows = _safeList(appsRes);
 
   final Map<String, int> countMap = {};
   for (final r in rows) {
-    final listingId = (r['listing_id'] ?? '').toString();
-    if (listingId.isEmpty) continue;
-    countMap[listingId] = (countMap[listingId] ?? 0) + 1;
+    final id = (r['listing_id'] ?? '').toString();
+    if (id.isEmpty) continue;
+    countMap[id] = (countMap[id] ?? 0) + 1;
   }
 
-  // 3. Attach correct counts
   return jobList.map((j) {
     final id = (j['id'] ?? '').toString();
     return {
@@ -123,13 +140,12 @@ class EmployerDashboardService {
   Future<Map<String, dynamic>> fetchCompanyDashboardStats({
   required String companyId,
 }) async {
-  // 1. Fetch jobs
-  final jobs = await _db
+  final res = await _db
       .from('job_listings')
       .select('id, status')
       .eq('company_id', companyId);
 
-  final jobList = List<Map<String, dynamic>>.from(jobs);
+  final jobList = _safeList(res);
 
   final totalJobs = jobList.length;
 
@@ -147,20 +163,17 @@ class EmployerDashboardService {
 
   final jobIds = jobList.map((e) => e['id'].toString()).toList();
 
-  // 2. REAL applicants count
   final appsRes = await _db
       .from('job_applications_listings')
       .select('listing_id')
       .inFilter('listing_id', jobIds);
 
-  final rows = List<Map<String, dynamic>>.from(appsRes);
-
-  final applicants = rows.length;
+  final rows = _safeList(appsRes);
 
   return {
     "total_jobs": totalJobs,
     "active_jobs": activeJobs,
-    "applicants": applicants,
+    "applicants": rows.length,
   };
 }
 
@@ -171,8 +184,7 @@ class EmployerDashboardService {
   required String companyId,
   int limit = 6,
 }) async {
-  // 1. Fetch listing rows
-  final listings = await _db
+  final listingsRes = await _db
       .from('job_applications_listings')
       .select('''
         id,
@@ -189,35 +201,32 @@ class EmployerDashboardService {
       .order('applied_at', ascending: false)
       .limit(limit);
 
-  final list = List<Map<String, dynamic>>.from(listings);
+  final list = _safeList(listingsRes);
   if (list.isEmpty) return [];
 
-  // 2. Collect application IDs
   final appIds = list
       .map((e) => e['application_id'])
       .where((e) => e != null)
       .toList();
 
-  // 3. Fetch applications (IMPORTANT)
-  final apps = await _db
+  final appsRes = await _db
       .from('job_applications')
       .select('id, name, photo_file_url')
       .inFilter('id', appIds);
 
-  // 4. Map
+  final appsList = _safeList(appsRes);
+
   final Map<String, Map<String, dynamic>> appMap = {};
-  for (final a in apps) {
-    final m = Map<String, dynamic>.from(a);
-    appMap[m['id'].toString()] = m;
+  for (final a in appsList) {
+    appMap[a['id'].toString()] = a;
   }
 
-  // 5. Merge (CRITICAL)
   return list.map<Map<String, dynamic>>((row) {
     final appId = (row['application_id'] ?? '').toString();
 
     return {
       ...row,
-      'job_applications': appMap[appId] ?? {}, // ✅ MUST BE MAP
+      'job_applications': appMap[appId] ?? {},
     };
   }).toList();
 }
@@ -229,24 +238,22 @@ class EmployerDashboardService {
   required String companyId,
   int limit = 6,
 }) async {
-  // 1. Fetch jobs
-  final jobs = await _db
+  final res = await _db
       .from('job_listings')
       .select('id, job_title, company_id, created_at')
       .eq('company_id', companyId);
 
-  final jobList = List<Map<String, dynamic>>.from(jobs);
+  final jobList = _safeList(res);
   if (jobList.isEmpty) return [];
 
   final jobIds = jobList.map((e) => e['id'].toString()).toList();
 
-  // 2. Get real counts
   final appsRes = await _db
       .from('job_applications_listings')
       .select('listing_id')
       .inFilter('listing_id', jobIds);
 
-  final rows = List<Map<String, dynamic>>.from(appsRes);
+  final rows = _safeList(appsRes);
 
   final Map<String, int> countMap = {};
   for (final r in rows) {
@@ -255,7 +262,6 @@ class EmployerDashboardService {
     countMap[id] = (countMap[id] ?? 0) + 1;
   }
 
-  // 3. Attach + sort
   final enriched = jobList.map((j) {
     final id = j['id'].toString();
     return {
@@ -279,8 +285,8 @@ class EmployerDashboardService {
 }) async {
   final now = DateTime.now();
 
-  final startOfDay = DateTime(now.year, now.month, now.day);
-  final endOfDay = startOfDay.add(const Duration(days: 1));
+  final start = DateTime(now.year, now.month, now.day);
+  final end = start.add(const Duration(days: 1));
 
   final res = await _db
       .from('interviews')
@@ -295,55 +301,57 @@ class EmployerDashboardService {
         )
       ''')
       .eq('company_id', companyId)
-      .gte('scheduled_at', startOfDay.toIso8601String())
-      .lt('scheduled_at', endOfDay.toIso8601String())
-      .order('scheduled_at', ascending: true)
+      .gte('scheduled_at', start.toIso8601String())
+      .lt('scheduled_at', end.toIso8601String())
       .limit(limit);
 
-  return List<Map<String, dynamic>>.from(res);
+  return _safeList(res);
 }
 
   // ============================================================
   // PERFORMANCE
   // ============================================================
   Future<Map<String, dynamic>> fetchLast7DaysPerformance({
-    required String companyId,
-  }) async {
-    final res = await _db
-        .from('job_listings')
-        .select('views_count, applications_count')
-        .eq('company_id', companyId);
+  required String companyId,
+}) async {
+  final res = await _db
+      .from('job_listings')
+      .select('views_count, applications_count')
+      .eq('company_id', companyId);
 
-    int totalViews = 0;
-    int totalApps = 0;
+  final list = _safeList(res);
 
-    for (final j in res) {
-      totalViews += (j['views_count'] ?? 0) as int;
-      totalApps += (j['applications_count'] ?? 0) as int;
-    }
+  int views = 0;
+  int apps = 0;
 
-    return {
-      "total_views": totalViews,
-      "total_applications": totalApps,
-      "days": [],
-    };
+  for (final j in list) {
+    views += (j['views_count'] ?? 0) as int;
+    apps += (j['applications_count'] ?? 0) as int;
   }
+
+  return {
+    "total_views": views,
+    "total_applications": apps,
+    "days": [],
+  };
+}
 
   // ============================================================
   // NOTIFICATIONS
   // ============================================================
   Future<int> fetchUnreadNotificationsCount() async {
-    final user = _requireUser();
+  final user = _requireUser();
 
-    final res = await _db
-        .from('notifications')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('is_read', false);
+  final res = await _db
+      .from('notifications')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('is_read', false);
 
-    return List<Map<String, dynamic>>.from(res).length;
-  }
+  final list = _safeList(res);
 
+  return list.length;
+}
   // ============================================================
   // CREATE ORGANIZATION (FINAL SAFE VERSION)
   // ============================================================
