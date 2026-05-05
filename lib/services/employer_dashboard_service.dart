@@ -353,7 +353,7 @@ class EmployerDashboardService {
 }) async {
   final user = _requireUser();
 
-  // prevent duplicate
+  // 1. Prevent duplicate (still important)
   final existing = await _db
       .from('company_members')
       .select('company_id')
@@ -364,6 +364,7 @@ class EmployerDashboardService {
     return existing['company_id'].toString();
   }
 
+  // 2. Get district name
   final distRow = await _db
       .from('assam_districts_master')
       .select('district_name')
@@ -374,30 +375,36 @@ class EmployerDashboardService {
     throw Exception("Invalid district");
   }
 
-  final inserted = await _db
-      .from('companies')
-      .insert({
-        'name': name,
-        'business_type_id': businessTypeId,
-        'headquarters_city': distRow['district_name'],
-        'headquarters_state': 'Assam',
-        'website': website,
-        'description': description,
-        'created_by': user.id,
-        'owner_id': user.id,
-      })
-      .select('id')
-      .single();
+  final districtName = distRow['district_name'];
 
-  final companyId = inserted['id'].toString();
+  // 3. 🔥 CALL RPC (ATOMIC INSERT)
+  final res = await _db.rpc(
+    'create_company_with_member',
+    params: {
+      'p_name': name,
+      'p_business_type_id': businessTypeId,
+      'p_district': districtName,
+      'p_user_id': user.id,
+    },
+  );
 
-  await _db.from('company_members').insert({
-    'company_id': companyId,
-    'user_id': user.id,
-    'role': 'member',
-    'status': 'active',
-  });
+  if (res == null || res.toString().isEmpty) {
+    throw Exception("Failed to create organization");
+  }
 
-  return companyId; // 🚀 immediate return
+  final companyId = res.toString();
+
+  // 4. OPTIONAL EXTRA SAFETY (not required but bulletproof)
+  final check = await _db
+      .from('company_members')
+      .select('company_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+  if (check == null) {
+    throw Exception("Membership not created properly");
+  }
+
+  return companyId;
 }
 }
