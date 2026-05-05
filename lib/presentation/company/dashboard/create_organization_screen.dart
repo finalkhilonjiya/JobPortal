@@ -142,9 +142,33 @@ class _CreateOrganizationScreenState
       throw Exception(body["error"] ?? "Creation failed");
     }
 
+    // 🔥 GET COMPANY ID FROM RESPONSE
+    final companyId = body["company_id"];
+
+    if (companyId == null || companyId.toString().isEmpty) {
+      throw Exception("Company ID missing from response");
+    }
+
     if (!mounted) return;
 
-    Navigator.pop(context, true);
+    // 🔥 BLOCK (IMPORTANT)
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text("Success"),
+        content: const Text("Your organization has been created."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+
+    // ✅ RETURN REAL COMPANY ID
+    Navigator.pop(context, companyId.toString());
 
   } catch (e) {
     _toast("Failed: $e");
