@@ -112,46 +112,23 @@ class _CreateOrganizationScreenState
   setState(() => _saving = true);
 
   try {
-    final session = _db.auth.currentSession;
-    if (session == null) throw Exception("Session expired");
+    final service = EmployerDashboardService();
 
-    final districtObj = _districts.firstWhere(
-      (d) => d['id'].toString() == _selectedDistrictId,
+    final companyId = await service.createOrganization(
+      name: name,
+      businessTypeId: _selectedBusinessTypeId!,
+      districtId: _selectedDistrictId!,
+      website: _website.text.trim(),
+      description: _desc.text.trim(),
     );
 
-    final res = await http.post(
-      Uri.parse(
-        "https://rsskivonmfqrzxbmxrkl.supabase.co/functions/v1/create-company",
-      ),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer ${session.accessToken}",
-      },
-      body: jsonEncode({
-        "name": name,
-        "business_type_id": _selectedBusinessTypeId,
-        "website": _website.text.trim(),
-        "description": _desc.text.trim(),
-        "district": districtObj['district_name'],
-      }),
-    );
-
-    final body = jsonDecode(res.body);
-
-    if (res.statusCode != 200 || body["success"] != true) {
-      throw Exception(body["error"] ?? "Creation failed");
-    }
-
-    // 🔥 GET COMPANY ID FROM RESPONSE
-    final companyId = body["company_id"];
-
-    if (companyId == null || companyId.toString().isEmpty) {
-      throw Exception("Company ID missing from response");
+    if (companyId.isEmpty) {
+      throw Exception("Company ID not returned");
     }
 
     if (!mounted) return;
 
-    // 🔥 BLOCK (IMPORTANT)
+    // 🔥 BLOCK UI (GOOD PRACTICE)
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -167,9 +144,8 @@ class _CreateOrganizationScreenState
       ),
     );
 
-    // ✅ RETURN REAL COMPANY ID
-    Navigator.pop(context, companyId.toString());
-
+    // ✅ RETURN COMPANY ID (CRITICAL)
+    Navigator.pop(context, companyId);
   } catch (e) {
     _toast("Failed: $e");
   }
