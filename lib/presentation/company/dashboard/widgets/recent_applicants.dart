@@ -64,7 +64,7 @@ class RecentApplicants extends StatelessWidget {
                     padding: const EdgeInsets.all(12),
                     child: Row(
                       children: [
-                        _avatar(name, photoUrl: photo),
+                        _avatar(name, photo),
                         const SizedBox(width: 10),
 
                         Expanded(
@@ -74,11 +74,15 @@ class RecentApplicants extends StatelessWidget {
                             children: [
                               Text(
                                 name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                     fontWeight: FontWeight.w700),
                               ),
                               Text(
                                 job,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: Color(0xFF6B7280),
@@ -104,57 +108,33 @@ class RecentApplicants extends StatelessWidget {
     );
   }
 
-  Future<String?> _getSignedUrl(String path) async {
-    try {
-      String clean = path.trim();
-
-      if (clean.startsWith('http')) return clean;
-
-      if (clean.startsWith('job-files/')) {
-        clean = clean.replaceFirst('job-files/', '');
-      }
-
-      if (!clean.startsWith('photos/')) return null;
-
-      final url = await Supabase.instance.client.storage
-          .from('job-files')
-          .createSignedUrl(clean, 60 * 60);
-
-      return url;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Widget _avatar(String name, {String? photoUrl}) {
+  // =========================================================
+  // SAFE AVATAR (NO FutureBuilder = NO PERFORMANCE ISSUE)
+  // =========================================================
+  Widget _avatar(String name, String photoUrl) {
     final letter = name.isNotEmpty ? name[0].toUpperCase() : "C";
 
-    if (photoUrl == null || photoUrl.trim().isEmpty) {
+    if (photoUrl.isEmpty) {
       return _fallbackAvatar(letter);
     }
 
-    return FutureBuilder<String?>(
-      future: _getSignedUrl(photoUrl),
-      builder: (context, snap) {
-        final url = snap.data;
+    // If already full URL → use directly
+    if (photoUrl.startsWith("http")) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(999),
+        child: Image.network(
+          photoUrl,
+          width: 44,
+          height: 44,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) =>
+              _fallbackAvatar(letter),
+        ),
+      );
+    }
 
-        if (url != null && url.isNotEmpty) {
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: Image.network(
-              url,
-              width: 44,
-              height: 44,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
-                  _fallbackAvatar(letter),
-            ),
-          );
-        }
-
-        return _fallbackAvatar(letter);
-      },
-    );
+    // Otherwise fallback (avoid async signing inside list)
+    return _fallbackAvatar(letter);
   }
 
   Widget _fallbackAvatar(String letter) {
