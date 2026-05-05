@@ -538,34 +538,36 @@ Widget _drawerItem(
 
               ElevatedButton(
                 onPressed: () async {
-  final res = await Navigator.pushNamed(
-    context,
-    AppRoutes.createOrganization,
-  );
+                  final res = await Navigator.pushNamed(
+                    context,
+                    AppRoutes.createOrganization,
+                  );
 
-  if (res == null || res.toString().isEmpty) return;
-  if (!mounted) return;
+                  if (res == null || res.toString().isEmpty) return;
+                  if (!mounted) return;
 
-  setState(() {
-    _companyId = res.toString();
+                  setState(() {
+                    _companyId = res.toString();
 
-    _company = {};
-    _jobs = [];
-    _stats = {};
-    _recentApplicants = [];
-    _topJobs = [];
-    _todayInterviews = [];
-    _perf7d = {};
+                    _company = {};
+                    _jobs = [];
+                    _stats = {};
+                    _recentApplicants = [];
+                    _topJobs = [];
+                    _todayInterviews = [];
+                    _perf7d = {};
 
-    _loading = true;
-    _needsOrganization = false;
-  });
+                    _loading = true;
+                    _needsOrganization = false;
+                  });
 
-  await _loadDashboard();
-}
+                  await _loadDashboard();
+                },
+
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF16A34A),
                 ),
+
                 child: const Text("Create Organization"),
               ),
             ],
