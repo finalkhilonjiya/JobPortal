@@ -127,7 +127,6 @@ class _CreateOrganizationScreenState
 
     if (!mounted) return;
 
-    // 🔥 BLOCK UI (GOOD PRACTICE)
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -143,13 +142,14 @@ class _CreateOrganizationScreenState
       ),
     );
 
-    // ✅ RETURN COMPANY ID (CRITICAL)
     Navigator.pop(context, companyId);
   } catch (e) {
     _toast("Failed: $e");
   }
 
-  setState(() => _saving = false);
+  if (mounted) {
+    setState(() => _saving = false);
+  }
 }
 
   @override
