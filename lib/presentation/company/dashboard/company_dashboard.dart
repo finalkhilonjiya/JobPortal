@@ -68,6 +68,8 @@ void _openProfile() {
   Future<void> _loadDashboard() async {
   if (!mounted) return;
 
+  if (_companyId.isEmpty) return;
+
   setState(() {
     _loading = true;
     _needsOrganization = false;
@@ -76,7 +78,7 @@ void _openProfile() {
   try {
     String companyId = _companyId;
 
-    // resolve only if empty
+    // fallback resolve (only if somehow empty)
     if (companyId.isEmpty) {
       final resolved = await _service.resolveCompanyIdSafe();
 
@@ -93,7 +95,6 @@ void _openProfile() {
       companyId = resolved;
     }
 
-    // 🔥 NO RETRY — DB is already consistent (RPC fix)
     final company =
         await _service.fetchCompanyById(companyId: companyId);
 
@@ -545,25 +546,27 @@ Widget _drawerItem(
     AppRoutes.createOrganization,
   );
 
-  if (res != null && res.toString().isNotEmpty) {
-    if (!mounted) return;
+  if (res == null || res.toString().isEmpty) return;
+  if (!mounted) return;
 
-    // 🔥 HARD RESET STATE (IMPORTANT)
-    setState(() {
-      _companyId = res.toString();
-      _company = {};
-      _jobs = [];
-      _stats = {};
-      _recentApplicants = [];
-      _topJobs = [];
-      _todayInterviews = [];
-      _perf7d = {};
-      _loading = true;
-      _needsOrganization = false;
-    });
+  setState(() {
+    _companyId = res.toString();
 
-    await _loadDashboard();
-  }
+    _company = {};
+    _jobs = [];
+    _stats = {};
+    _recentApplicants = [];
+    _topJobs = [];
+    _todayInterviews = [];
+    _perf7d = {};
+
+    _loading = true;
+    _needsOrganization = false;
+  });
+
+  await Future.delayed(const Duration(milliseconds: 100));
+
+  await _loadDashboard();
 }
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF16A34A),
