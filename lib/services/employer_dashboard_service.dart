@@ -18,32 +18,35 @@ class EmployerDashboardService {
   // ORGANIZATION RESOLUTION (CRITICAL)
   // ============================================================
   Future<String?> resolveCompanyIdSafe() async {
-    final user = _requireUser();
+  final user = _requireUser();
 
-    // 1️⃣ Try company_members
+  try {
     final member = await _db
         .from('company_members')
         .select('company_id')
         .eq('user_id', user.id)
         .maybeSingle();
 
-    if (member != null) {
+    if (member != null && member['company_id'] != null) {
       return member['company_id'].toString();
     }
 
-    // 2️⃣ Fallback (first-time create case)
     final company = await _db
         .from('companies')
         .select('id')
         .eq('created_by', user.id)
         .maybeSingle();
 
-    if (company != null) {
+    if (company != null && company['id'] != null) {
       return company['id'].toString();
     }
 
     return null;
+  } catch (e) {
+    print("❌ resolveCompanyIdSafe error: $e");
+    return null;
   }
+}
 
   // ============================================================
   // COMPANY
