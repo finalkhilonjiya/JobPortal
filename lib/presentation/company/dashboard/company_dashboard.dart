@@ -74,26 +74,52 @@ void _openProfile() {
   });
 
   try {
-    String companyId = _companyId;
+    String? companyId = _companyId.isNotEmpty ? _companyId : null;
 
-    if (companyId.isEmpty) {
-      final resolved = await _service.resolveCompanyIdSafe();
+    // RETRY resolve
+    if (companyId == null) {
+      int tries = 0;
 
-      if (resolved == null || resolved.isEmpty) {
+      while (tries < 5) {
+        companyId = await _service.resolveCompanyIdSafe();
+
+        if (companyId != null && companyId.isNotEmpty) break;
+
+        await Future.delayed(const Duration(milliseconds: 300));
+        tries++;
+      }
+
+      if (companyId == null || companyId.isEmpty) {
         if (!mounted) return;
-
         setState(() {
           _loading = false;
           _needsOrganization = true;
         });
         return;
       }
-
-      companyId = resolved;
     }
 
-    final company =
-        await _service.fetchCompanyById(companyId: companyId);
+    // RETRY fetch company
+    Map<String, dynamic> company = {};
+    int tries = 0;
+
+    while (tries < 5) {
+      company = await _service.fetchCompanyById(companyId: companyId);
+
+      if (company.isNotEmpty) break;
+
+      await Future.delayed(const Duration(milliseconds: 300));
+      tries++;
+    }
+
+    if (company.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _needsOrganization = true;
+      });
+      return;
+    }
 
     final results = await Future.wait([
       _service.fetchCompanyJobs(companyId: companyId),
@@ -108,52 +134,42 @@ void _openProfile() {
     if (!mounted) return;
 
     setState(() {
-      _companyId = companyId;
+      _companyId = companyId!;
 
-      _company = (company is Map)
-          ? Map<String, dynamic>.from(company)
-          : {};
+      _company = Map<String, dynamic>.from(company);
 
-      _jobs = (results[0] is List)
-          ? (results[0] as List)
-              .map((e) => Map<String, dynamic>.from(e))
-              .toList()
-          : [];
+      _jobs = (results[0] as List? ?? [])
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
 
       _stats = (results[1] is Map)
-          ? Map<String, dynamic>.from(results[1] as Map)
+          ? Map<String, dynamic>.from(results[1])
           : {};
 
-      _recentApplicants = (results[2] is List)
-          ? (results[2] as List)
-              .map((e) => Map<String, dynamic>.from(e))
-              .toList()
-          : [];
+      _recentApplicants = (results[2] as List? ?? [])
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
 
-      _topJobs = (results[3] is List)
-          ? (results[3] as List)
-              .map((e) => Map<String, dynamic>.from(e))
-              .toList()
-          : [];
+      _topJobs = (results[3] as List? ?? [])
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
 
-      _todayInterviews = (results[4] is List)
-          ? (results[4] as List)
-              .map((e) => Map<String, dynamic>.from(e))
-              .toList()
-          : [];
+      _todayInterviews = (results[4] as List? ?? [])
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
 
       _perf7d = (results[5] is Map)
-          ? Map<String, dynamic>.from(results[5] as Map)
+          ? Map<String, dynamic>.from(results[5])
           : {};
 
-      _unreadNotifications =
-          (results[6] is int) ? results[6] as int : 0;
+      _unreadNotifications = results[6] as int? ?? 0;
 
       _loading = false;
       _needsOrganization = false;
     });
-  } catch (e) {
+  } catch (e, st) {
     print("❌ DASHBOARD ERROR: $e");
+    print(st);
 
     if (!mounted) return;
 
@@ -214,16 +230,12 @@ Widget _preparingScreen() {
 Widget build(BuildContext context) {
   return Scaffold(
     backgroundColor: const Color(0xFFF7F8FA),
-
-    // ✅ POINT 9: DRAWER ADDED
     drawer: _drawer(),
-
     body: _loading
-    ? _preparingScreen()
+        ? _preparingScreen()
         : _needsOrganization
             ? _noOrg()
             : _dashboard(),
-
     floatingActionButton: _needsOrganization
         ? null
         : FloatingActionButton(
@@ -231,11 +243,15 @@ Widget build(BuildContext context) {
             onPressed: () async {
               final res =
                   await Navigator.pushNamed(context, AppRoutes.createJob);
-              if (res == true) await _loadDashboard();
+
+              if (!mounted) return;
+
+              if (res == true) {
+                await _loadDashboard();
+              }
             },
             child: const Icon(Icons.add),
           ),
-
     bottomNavigationBar: BottomNavigationBar(
       currentIndex: 0,
       type: BottomNavigationBarType.fixed,
@@ -274,6 +290,11 @@ Widget build(BuildContext context) {
   // DASHBOARD UI
   // ============================================================
   Widget _dashboard() {
+  // 🔥 HARD GUARD
+  if (_company.isEmpty) {
+    return _preparingScreen();
+  }
+
   return SafeArea(
     child: RefreshIndicator(
       onRefresh: _loadDashboard,
@@ -286,7 +307,7 @@ Widget build(BuildContext context) {
           const HeroSlider(),
           const SizedBox(height: 16),
 
-          QuickStats(stats: _stats),
+          QuickStats(stats: _stats.isEmpty ? {} : _stats),
           const SizedBox(height: 16),
 
           PrimaryActions(companyId: _companyId),
@@ -297,7 +318,7 @@ Widget build(BuildContext context) {
           const SizedBox(height: 10),
 
           RecentApplicants(
-            data: _recentApplicants,
+            data: _recentApplicants.isEmpty ? [] : _recentApplicants,
             companyId: _companyId,
           ),
 
@@ -307,7 +328,10 @@ Widget build(BuildContext context) {
               style: TextStyle(fontWeight: FontWeight.w800)),
           const SizedBox(height: 10),
 
-          ActiveJobs(jobs: _jobs, companyId: _companyId),
+          ActiveJobs(
+            jobs: _jobs.isEmpty ? [] : _jobs,
+            companyId: _companyId,
+          ),
 
           const SizedBox(height: 20),
 
@@ -316,9 +340,9 @@ Widget build(BuildContext context) {
           const SizedBox(height: 10),
 
           TodayInterviews(
-  data: _todayInterviews,
-  companyId: _companyId,
-),
+            data: _todayInterviews.isEmpty ? [] : _todayInterviews,
+            companyId: _companyId,
+          ),
 
           const SizedBox(height: 20),
 
@@ -326,7 +350,10 @@ Widget build(BuildContext context) {
               style: TextStyle(fontWeight: FontWeight.w800)),
           const SizedBox(height: 10),
 
-          TopJobs(jobs: _topJobs, companyId: _companyId),
+          TopJobs(
+            jobs: _topJobs.isEmpty ? [] : _topJobs,
+            companyId: _companyId,
+          ),
 
           const SizedBox(height: 100),
         ],
@@ -338,14 +365,17 @@ Widget build(BuildContext context) {
 
 
 Widget _drawer() {
-  final name = (_company['name'] ?? 'Company').toString();
+  final name = (_company.isNotEmpty &&
+          _company['name'] is String &&
+          _company['name'] != null)
+      ? _company['name'] as String
+      : 'Company';
 
   return Drawer(
     backgroundColor: Colors.white,
     child: SafeArea(
       child: Column(
         children: [
-          // ================= HEADER =================
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
@@ -356,7 +386,6 @@ Widget _drawer() {
                   child: Icon(Icons.business, color: Color(0xFF16A34A)),
                 ),
                 const SizedBox(width: 12),
-
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,7 +408,6 @@ Widget _drawer() {
                     ],
                   ),
                 ),
-
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close),
@@ -387,10 +415,7 @@ Widget _drawer() {
               ],
             ),
           ),
-
           const Divider(height: 1),
-
-          // ================= MENU =================
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 6),
@@ -399,7 +424,6 @@ Widget _drawer() {
                   Navigator.pop(context);
                   Navigator.pushNamed(context, AppRoutes.employerJobs);
                 }),
-
                 _drawerItem(Icons.people_outline, "Applicants", () {
                   Navigator.pop(context);
                   Navigator.pushNamed(
@@ -411,36 +435,30 @@ Widget _drawer() {
                     },
                   );
                 }),
-
                 _drawerItem(Icons.person_outline, "Edit Profile", () {
                   Navigator.pop(context);
                   Navigator.pushNamed(context, AppRoutes.employerProfile);
                 }),
-
                 const Divider(),
-
                 _drawerItem(Icons.info_outline, "About Us", () {
                   Navigator.pop(context);
                   Navigator.pushNamed(context, AppRoutes.aboutApp);
                 }),
-
                 _drawerItem(Icons.support_agent, "Contact Us", () {
                   Navigator.pop(context);
                   Navigator.pushNamed(context, AppRoutes.contactSupport);
                 }),
-
-                _drawerItem(Icons.description_outlined, "Terms & Conditions", () {
+                _drawerItem(Icons.description_outlined, "Terms & Conditions",
+                    () {
                   Navigator.pop(context);
-                  Navigator.pushNamed(context, AppRoutes.termsAndConditions);
+                  Navigator.pushNamed(
+                      context, AppRoutes.termsAndConditions);
                 }),
-
                 _drawerItem(Icons.lock_outline, "Privacy Policy", () {
                   Navigator.pop(context);
                   Navigator.pushNamed(context, AppRoutes.privacyPolicy);
                 }),
-
                 const Divider(),
-
                 _drawerItem(
                   Icons.logout_rounded,
                   "Logout",
@@ -452,7 +470,7 @@ Widget _drawer() {
 
                     Navigator.pushNamedAndRemoveUntil(
                       context,
-                      AppRoutes.employerLogin, // ✅ FIXED (NOT role selection)
+                      AppRoutes.employerLogin,
                       (_) => false,
                     );
                   },
@@ -538,31 +556,24 @@ Widget _drawerItem(
 
               ElevatedButton(
                 onPressed: () async {
-                  final res = await Navigator.pushNamed(
-                    context,
-                    AppRoutes.createOrganization,
-                  );
+  final res = await Navigator.pushNamed(
+    context,
+    AppRoutes.createOrganization,
+  );
 
-                  if (res == null || res.toString().isEmpty) return;
-                  if (!mounted) return;
+  if (!mounted) return;
 
-                  setState(() {
-                    _companyId = res.toString();
+  if (res == null || res.toString().isEmpty) return;
 
-                    _company = {};
-                    _jobs = [];
-                    _stats = {};
-                    _recentApplicants = [];
-                    _topJobs = [];
-                    _todayInterviews = [];
-                    _perf7d = {};
+  // 🔥 DO NOT reset everything blindly
+  setState(() {
+    _companyId = res.toString();
+    _loading = true;
+    _needsOrganization = false;
+  });
 
-                    _loading = true;
-                    _needsOrganization = false;
-                  });
-
-                  await _loadDashboard();
-                },
+  await _loadDashboard();
+},
 
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF16A34A),
