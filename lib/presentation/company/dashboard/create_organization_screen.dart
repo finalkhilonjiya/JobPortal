@@ -129,21 +129,6 @@ class _CreateOrganizationScreenState
 
     if (!mounted) return;
 
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        title: const Text("Success"),
-        content: const Text("Your organization has been created."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("OK"),
-          ),
-        ],
-      ),
-    );
-
     Navigator.pop(context, companyId);
   } catch (e) {
     _toast("Failed: $e");
