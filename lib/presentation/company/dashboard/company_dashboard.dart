@@ -76,7 +76,6 @@ void _openProfile() {
   try {
     String companyId = _companyId;
 
-    // ✅ ALWAYS resolve if empty
     if (companyId.isEmpty) {
       final resolved = await _service.resolveCompanyIdSafe();
 
@@ -111,29 +110,44 @@ void _openProfile() {
     setState(() {
       _companyId = companyId;
 
-      _company = Map<String, dynamic>.from(company);
+      _company = (company is Map)
+          ? Map<String, dynamic>.from(company)
+          : {};
 
-      _jobs = (results[0] as List)
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
+      _jobs = (results[0] is List)
+          ? (results[0] as List)
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList()
+          : [];
 
-      _stats = Map<String, dynamic>.from(results[1]);
+      _stats = (results[1] is Map)
+          ? Map<String, dynamic>.from(results[1] as Map)
+          : {};
 
-      _recentApplicants = (results[2] as List)
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
+      _recentApplicants = (results[2] is List)
+          ? (results[2] as List)
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList()
+          : [];
 
-      _topJobs = (results[3] as List)
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
+      _topJobs = (results[3] is List)
+          ? (results[3] as List)
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList()
+          : [];
 
-      _todayInterviews = (results[4] as List)
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
+      _todayInterviews = (results[4] is List)
+          ? (results[4] as List)
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList()
+          : [];
 
-      _perf7d = Map<String, dynamic>.from(results[5]);
+      _perf7d = (results[5] is Map)
+          ? Map<String, dynamic>.from(results[5] as Map)
+          : {};
 
-      _unreadNotifications = results[6] as int;
+      _unreadNotifications =
+          (results[6] is int) ? results[6] as int : 0;
 
       _loading = false;
       _needsOrganization = false;
@@ -546,8 +560,6 @@ Widget _drawerItem(
     _loading = true;
     _needsOrganization = false;
   });
-
-  await Future.delayed(const Duration(milliseconds: 100));
 
   await _loadDashboard();
 }
