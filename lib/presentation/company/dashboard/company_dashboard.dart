@@ -549,25 +549,26 @@ Future<void> _waitForCompanyReady(String companyId) async {
 
   while (tries < 12) {
     try {
-      // ✅ 1. Company exists
       final company =
           await _service.fetchCompanyById(companyId: companyId);
 
-      // ✅ 2. Membership exists for THIS USER (CRITICAL FIX)
-      final memberCheck = await Supabase.instance.client
+      final memberList = await Supabase.instance.client
           .from('company_members')
           .select('company_id')
-          .eq('user_id', user.id)
-          .maybeSingle();
+          .eq('user_id', user.id);
 
-      if (company.isNotEmpty &&
-          memberCheck != null &&
-          memberCheck['company_id'] != null) {
+      final member = (memberList as List)
+          .map((e) => Map<String, dynamic>.from(e))
+          .firstWhere(
+            (e) => e['company_id'] != null,
+            orElse: () => {},
+          );
 
+      if (company.isNotEmpty && member.isNotEmpty) {
         if (!mounted) return;
 
         setState(() {
-          _companyId = memberCheck['company_id'].toString();
+          _companyId = member['company_id'].toString();
         });
 
         await _loadDashboard();
@@ -579,7 +580,6 @@ Future<void> _waitForCompanyReady(String companyId) async {
     tries++;
   }
 
-  // fallback (safe)
   if (!mounted) return;
 
   setState(() {
