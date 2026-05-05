@@ -76,7 +76,7 @@ void _openProfile() {
   try {
     String companyId = _companyId;
 
-    // ✅ Try resolve ONCE (no loop)
+    // 🔥 IMPORTANT: only resolve if NOT already set
     if (companyId.isEmpty) {
       final resolved = await _service.resolveCompanyIdSafe();
 
@@ -110,35 +110,13 @@ void _openProfile() {
 
     setState(() {
       _companyId = companyId;
-
-      _company = (company is Map)
-          ? Map<String, dynamic>.from(company)
-          : {};
-
-      _jobs = (results[0] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-
-      _stats = (results[1] is Map)
-          ? Map<String, dynamic>.from(results[1] as Map)
-          : {};
-
-      _recentApplicants = (results[2] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-
-      _topJobs = (results[3] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-
-      _todayInterviews = (results[4] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-
-      _perf7d = (results[5] is Map)
-          ? Map<String, dynamic>.from(results[5] as Map)
-          : {};
-
+      _company = Map<String, dynamic>.from(company ?? {});
+      _jobs = List<Map<String, dynamic>>.from(results[0] ?? []);
+      _stats = Map<String, dynamic>.from(results[1] ?? {});
+      _recentApplicants = List<Map<String, dynamic>>.from(results[2] ?? []);
+      _topJobs = List<Map<String, dynamic>>.from(results[3] ?? []);
+      _todayInterviews = List<Map<String, dynamic>>.from(results[4] ?? []);
+      _perf7d = Map<String, dynamic>.from(results[5] ?? {});
       _unreadNotifications = (results[6] as int?) ?? 0;
 
       _loading = false;
@@ -537,7 +515,7 @@ Widget _drawerItem(
     if (!mounted) return;
 
     setState(() {
-      _companyId = res.toString();
+      _companyId = res.toString(); // 🔥 THIS IS KEY
       _loading = true;
       _needsOrganization = false;
     });
