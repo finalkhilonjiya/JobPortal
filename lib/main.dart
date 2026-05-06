@@ -17,7 +17,8 @@ import 'routes/app_routes.dart';
 
 class AppConfig {
   static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
-  static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+  static String get supabaseAnonKey =>
+      dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
   static bool get hasSupabase =>
       supabaseUrl.trim().isNotEmpty &&
@@ -32,7 +33,9 @@ final GlobalKey<_CrashReporterState> _crashKey =
 
 class _CrashReporter extends StatefulWidget {
   final Widget child;
-  const _CrashReporter({required this.child}) : super(key: _crashKey);
+
+  // No const — _crashKey is not a compile-time constant
+  _CrashReporter({required this.child}) : super(key: _crashKey);
 
   @override
   State<_CrashReporter> createState() => _CrashReporterState();
@@ -84,8 +87,8 @@ class _CrashReporterState extends State<_CrashReporter> {
                               ),
                             ),
                             GestureDetector(
-                              onTap: () =>
-                                  setState(() => _visible = false),
+                              onTap: () => setState(
+                                  () => _visible = false),
                               child: const Icon(
                                 Icons.close,
                                 color: Colors.white,
@@ -201,17 +204,22 @@ Future<void> initPushNotifications() async {
   final user = Supabase.instance.client.auth.currentUser;
 
   if (user != null && token != null) {
-    await Supabase.instance.client.from('user_devices').upsert({
+    await Supabase.instance.client
+        .from('user_devices')
+        .upsert({
       "user_id": user.id,
       "fcm_token": token,
       "platform": "android"
     });
   }
 
-  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+  FirebaseMessaging.instance.onTokenRefresh
+      .listen((newToken) async {
     final user = Supabase.instance.client.auth.currentUser;
     if (user != null) {
-      await Supabase.instance.client.from('user_devices').upsert({
+      await Supabase.instance.client
+          .from('user_devices')
+          .upsert({
         "user_id": user.id,
         "fcm_token": newToken,
         "platform": "android"
@@ -219,8 +227,10 @@ Future<void> initPushNotifications() async {
     }
   });
 
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-    final title = message.notification?.title ?? "Notification";
+  FirebaseMessaging.onMessage
+      .listen((RemoteMessage message) async {
+    final title =
+        message.notification?.title ?? "Notification";
     final body = message.notification?.body ?? "";
 
     await localNotifications.show(
@@ -319,7 +329,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _CrashReporter(
-      // ← only change in build: wrapped MyApp body with reporter
       child: Sizer(
         builder: (_, __, ___) => MaterialApp(
           title: 'Khilonjiya.com',
@@ -348,7 +357,8 @@ class AppInitializer extends StatefulWidget {
   const AppInitializer({super.key});
 
   @override
-  State<AppInitializer> createState() => _AppInitializerState();
+  State<AppInitializer> createState() =>
+      _AppInitializerState();
 }
 
 class _AppInitializerState extends State<AppInitializer> {
