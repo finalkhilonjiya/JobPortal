@@ -21,24 +21,34 @@ class EmployerDashboardService {
   final user = _requireUser();
 
   try {
+    // Check company_members first — this is the table
+    // that may lag by a few hundred ms after RPC creation,
+    // so we do a fresh uncached query each call.
     final member = await _db
         .from('company_members')
         .select('company_id')
         .eq('user_id', user.id)
+        .order('created_at', ascending: false)
+        .limit(1)
         .maybeSingle();
 
     if (member != null && member['company_id'] != null) {
-      return member['company_id'].toString();
+      final id = member['company_id'].toString().trim();
+      if (id.isNotEmpty) return id;
     }
 
+    // Fallback: check if the user directly owns a company row
     final company = await _db
         .from('companies')
         .select('id')
         .eq('created_by', user.id)
+        .order('created_at', ascending: false)
+        .limit(1)
         .maybeSingle();
 
     if (company != null && company['id'] != null) {
-      return company['id'].toString();
+      final id = company['id'].toString().trim();
+      if (id.isNotEmpty) return id;
     }
 
     return null;
