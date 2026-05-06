@@ -27,9 +27,13 @@ class CompanyDashboard extends StatefulWidget {
 class _CompanyDashboardState extends State<CompanyDashboard> {
   final EmployerDashboardService _service = EmployerDashboardService();
 
+  // Each call to _loadDashboard increments this. Any in-flight
+  // coroutine that sees its generation is stale simply exits
+  // without touching state. This eliminates every race condition.
+  int _generation = 0;
+
   bool _loading = true;
   bool _needsOrganization = false;
-  bool _isFetching = false;
 
   String _companyId = "";
 
@@ -49,52 +53,58 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     _loadDashboard();
   }
 
-  User _requireUser() {
-    final u = Supabase.instance.client.auth.currentUser;
-    if (u == null) throw Exception("Session expired");
-    return u;
-  }
-
   void _openProfile() {
     Navigator.pushNamed(context, AppRoutes.employerProfile);
   }
 
   // ============================================================
   // LOAD DASHBOARD
+  // Generation-based: every new call cancels all previous ones.
   // ============================================================
-  Future<void> _loadDashboard() async {
+  Future<void> _loadDashboard({String? withCompanyId}) async {
     if (!mounted) return;
 
-    // Direct field assignment — NOT inside setState — so the
-    // guard check on the very next line always sees the real value.
-    if (_isFetching) return;
-    _isFetching = true;
+    // Stamp this call. Any older in-flight call will see its
+    // generation no longer matches and will silently abort.
+    _generation++;
+    final int myGeneration = _generation;
 
-    if (mounted) {
-      setState(() {
-        _loading = true;
-        _needsOrganization = false;
-      });
+    // If a specific companyId is provided (post-creation path),
+    // lock it in immediately as a direct field write.
+    if (withCompanyId != null && withCompanyId.isNotEmpty) {
+      _companyId = withCompanyId;
     }
+
+    setState(() {
+      _loading = true;
+      _needsOrganization = false;
+    });
+
+    // Helper: check if this call is still the current one.
+    bool stale() => !mounted || _generation != myGeneration;
 
     try {
       // -------------------------------------------------------
       // STEP 1: Resolve company ID
       // -------------------------------------------------------
-      String? companyId = _companyId.isNotEmpty ? _companyId : null;
+      String? companyId =
+          _companyId.isNotEmpty ? _companyId : null;
 
       if (companyId == null) {
         for (int i = 0; i < 6; i++) {
+          if (stale()) return;
           try {
             companyId = await _service.resolveCompanyIdSafe();
             if (companyId != null && companyId.isNotEmpty) break;
           } catch (_) {}
+          if (stale()) return;
           await Future.delayed(const Duration(milliseconds: 500));
         }
       }
 
+      if (stale()) return;
+
       if (companyId == null || companyId.isEmpty) {
-        if (!mounted) return;
         setState(() {
           _loading = false;
           _needsOrganization = true;
@@ -108,19 +118,22 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       Map<String, dynamic> company = {};
 
       for (int i = 0; i < 6; i++) {
+        if (stale()) return;
         try {
-          final res =
-              await _service.fetchCompanyById(companyId: companyId);
+          final res = await _service.fetchCompanyById(
+              companyId: companyId);
           if (res.isNotEmpty) {
             company = Map<String, dynamic>.from(res);
             break;
           }
         } catch (_) {}
+        if (stale()) return;
         await Future.delayed(const Duration(milliseconds: 500));
       }
 
+      if (stale()) return;
+
       if (company.isEmpty) {
-        if (!mounted) return;
         setState(() {
           _loading = false;
           _needsOrganization = true;
@@ -129,8 +142,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       }
 
       // -------------------------------------------------------
-      // STEP 3: Fetch all dashboard data — each in its own
-      // try/catch so one failure never blocks the rest.
+      // STEP 3: Fetch all dashboard data
       // -------------------------------------------------------
       List<Map<String, dynamic>> jobs = [];
       Map<String, dynamic> stats = {};
@@ -141,11 +153,12 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       int unread = 0;
 
       try {
-        jobs =
-            await _service.fetchCompanyJobs(companyId: companyId);
+        jobs = await _service.fetchCompanyJobs(
+            companyId: companyId);
       } catch (e) {
         print("❌ jobs: $e");
       }
+      if (stale()) return;
 
       try {
         stats = await _service.fetchCompanyDashboardStats(
@@ -153,6 +166,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       } catch (e) {
         print("❌ stats: $e");
       }
+      if (stale()) return;
 
       try {
         applicants = await _service.fetchRecentApplicants(
@@ -160,13 +174,15 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       } catch (e) {
         print("❌ applicants: $e");
       }
+      if (stale()) return;
 
       try {
-        topJobs =
-            await _service.fetchTopJobs(companyId: companyId);
+        topJobs = await _service.fetchTopJobs(
+            companyId: companyId);
       } catch (e) {
         print("❌ topJobs: $e");
       }
+      if (stale()) return;
 
       try {
         interviews = await _service.fetchTodayInterviews(
@@ -174,6 +190,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       } catch (e) {
         print("❌ interviews: $e");
       }
+      if (stale()) return;
 
       try {
         perf = await _service.fetchLast7DaysPerformance(
@@ -181,6 +198,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       } catch (e) {
         print("❌ perf: $e");
       }
+      if (stale()) return;
 
       try {
         unread =
@@ -188,11 +206,10 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       } catch (e) {
         print("❌ unread: $e");
       }
+      if (stale()) return;
 
-      if (!mounted) return;
-
-      // Single atomic setState — no intermediate frames where
-      // _loading is false but _company is still empty.
+      // Single atomic setState — only runs if we are still
+      // the current generation (no newer call has started).
       setState(() {
         _companyId = companyId!;
         _company = company;
@@ -208,14 +225,11 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       });
     } catch (e, st) {
       print("❌ DASHBOARD CRASH: $e\n$st");
-      if (!mounted) return;
+      if (stale()) return;
       setState(() {
         _loading = false;
         _needsOrganization = true;
       });
-    } finally {
-      // Always release the gate — every exit path reaches here.
-      _isFetching = false;
     }
   }
 
@@ -284,7 +298,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                     context, AppRoutes.createJob);
                 if (!mounted) return;
                 if (res == true) {
-                  _isFetching = false;
                   await _loadDashboard();
                 }
               },
@@ -328,8 +341,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   // DASHBOARD BODY
   // ============================================================
   Widget _dashboard() {
-    // Guard: if somehow we get here with no company data,
-    // show spinner instead of a broken empty screen.
     if (_company.isEmpty) {
       return _preparingScreen();
     }
@@ -337,14 +348,14 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     return SafeArea(
       child: RefreshIndicator(
         onRefresh: () async {
-          _isFetching = false;
           await _loadDashboard();
         },
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             HeaderWidget(
-                company: _company, unread: _unreadNotifications),
+                company: _company,
+                unread: _unreadNotifications),
             const SizedBox(height: 16),
             const HeroSlider(),
             const SizedBox(height: 16),
@@ -353,26 +364,34 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             PrimaryActions(companyId: _companyId),
             const SizedBox(height: 20),
             const Text("Recent Applicants",
-                style: TextStyle(fontWeight: FontWeight.w800)),
+                style:
+                    TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 10),
             RecentApplicants(
-                data: _recentApplicants, companyId: _companyId),
+                data: _recentApplicants,
+                companyId: _companyId),
             const SizedBox(height: 20),
             const Text("Active Jobs",
-                style: TextStyle(fontWeight: FontWeight.w800)),
+                style:
+                    TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 10),
-            ActiveJobs(jobs: _jobs, companyId: _companyId),
+            ActiveJobs(
+                jobs: _jobs, companyId: _companyId),
             const SizedBox(height: 20),
             const Text("Today's Interviews",
-                style: TextStyle(fontWeight: FontWeight.w800)),
+                style:
+                    TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 10),
             TodayInterviews(
-                data: _todayInterviews, companyId: _companyId),
+                data: _todayInterviews,
+                companyId: _companyId),
             const SizedBox(height: 20),
             const Text("Top Jobs",
-                style: TextStyle(fontWeight: FontWeight.w800)),
+                style:
+                    TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 10),
-            TopJobs(jobs: _topJobs, companyId: _companyId),
+            TopJobs(
+                jobs: _topJobs, companyId: _companyId),
             const SizedBox(height: 100),
           ],
         ),
@@ -429,7 +448,8 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                     ),
                   ),
                   IconButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () =>
+                        Navigator.pop(context),
                     icon: const Icon(Icons.close),
                   ),
                 ],
@@ -438,17 +458,17 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             const Divider(height: 1),
             Expanded(
               child: ListView(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                    vertical: 6),
                 children: [
-                  _drawerItem(Icons.work_outline, "My Jobs",
-                      () {
+                  _drawerItem(
+                      Icons.work_outline, "My Jobs", () {
                     Navigator.pop(context);
                     Navigator.pushNamed(
                         context, AppRoutes.employerJobs);
                   }),
-                  _drawerItem(
-                      Icons.people_outline, "Applicants", () {
+                  _drawerItem(Icons.people_outline,
+                      "Applicants", () {
                     Navigator.pop(context);
                     Navigator.pushNamed(
                       context,
@@ -459,16 +479,15 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                       },
                     );
                   }),
-                  _drawerItem(
-                      Icons.person_outline, "Edit Profile",
-                      () {
+                  _drawerItem(Icons.person_outline,
+                      "Edit Profile", () {
                     Navigator.pop(context);
-                    Navigator.pushNamed(
-                        context, AppRoutes.employerProfile);
+                    Navigator.pushNamed(context,
+                        AppRoutes.employerProfile);
                   }),
                   const Divider(),
-                  _drawerItem(
-                      Icons.logout_rounded, "Logout", () async {
+                  _drawerItem(Icons.logout_rounded,
+                      "Logout", () async {
                     Navigator.pop(context);
                     await _logout();
                     if (!mounted) return;
@@ -506,7 +525,8 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
               children: [
                 Icon(icon,
                     size: 20,
-                    color: color ?? const Color(0xFF334155)),
+                    color:
+                        color ?? const Color(0xFF334155)),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(
@@ -514,7 +534,8 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: color ?? const Color(0xFF111827),
+                      color: color ??
+                          const Color(0xFF111827),
                     ),
                   ),
                 ),
@@ -539,7 +560,8 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE6E8EC)),
+              border: Border.all(
+                  color: const Color(0xFFE6E8EC)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -554,52 +576,44 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                 const SizedBox(height: 8),
                 const Text(
                   "Create your organization to post jobs",
-                  style: TextStyle(color: Color(0xFF6B7280)),
+                  style:
+                      TextStyle(color: Color(0xFF6B7280)),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () async {
-                    final res = await Navigator.pushNamed(
+                    final res =
+                        await Navigator.pushNamed(
                       context,
                       AppRoutes.createOrganization,
                     );
 
                     if (!mounted) return;
 
-                    final String newCompanyId =
-                        (res != null &&
-                                res.toString().trim().isNotEmpty)
-                            ? res.toString().trim()
-                            : '';
+                    final String newCompanyId = (res !=
+                                null &&
+                            res
+                                .toString()
+                                .trim()
+                                .isNotEmpty)
+                        ? res.toString().trim()
+                        : '';
 
                     if (newCompanyId.isEmpty) return;
 
-                    // ----------------------------------------
-                    // Direct field writes BEFORE setState so
-                    // _loadDashboard's guard sees them instantly
-                    // with zero risk of setState batching delay.
-                    // ----------------------------------------
-                    _companyId = newCompanyId;
-                    _isFetching = false;
-
-                    setState(() {
-                      _loading = true;
-                      _needsOrganization = false;
-                    });
-
-                    // Give Supabase time to replicate the new
-                    // company + company_members rows.
-                    await Future.delayed(
-                        const Duration(milliseconds: 1000));
-
-                    if (!mounted) return;
-
-                    await _loadDashboard();
+                    // Pass the companyId directly into
+                    // _loadDashboard. The generation counter
+                    // automatically cancels the initState
+                    // call that is still mid-retry-loop.
+                    await _loadDashboard(
+                        withCompanyId: newCompanyId);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF16A34A),
+                    backgroundColor:
+                        const Color(0xFF16A34A),
                   ),
-                  child: const Text("Create Organization"),
+                  child: const Text(
+                      "Create Organization"),
                 ),
               ],
             ),
