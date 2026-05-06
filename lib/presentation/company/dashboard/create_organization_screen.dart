@@ -2,9 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:convert';
 import '../../../services/employer_dashboard_service.dart';
-
 
 class CreateOrganizationScreen extends StatefulWidget {
   const CreateOrganizationScreen({Key? key}) : super(key: key);
@@ -88,56 +86,76 @@ class _CreateOrganizationScreenState
   }
 
   // ============================================================
-  // CREATE ORGANIZATION (FINAL CLEAN)
+  // CREATE ORGANIZATION — fixed
   // ============================================================
   Future<void> _create() async {
-  final user = _requireUser();
+    // Validate first — no async work yet
+    final name = _name.text.trim();
 
-  final name = _name.text.trim();
+    if (name.isEmpty) {
+      _toast("Organization name required");
+      return;
+    }
+    if (_selectedBusinessTypeId == null) {
+      _toast("Select business type");
+      return;
+    }
+    if (_selectedDistrictId == null) {
+      _toast("Select district");
+      return;
+    }
 
-  if (name.isEmpty) {
-    _toast("Organization name required");
-    return;
-  }
-
-  if (_selectedBusinessTypeId == null) {
-    _toast("Select business type");
-    return;
-  }
-
-  if (_selectedDistrictId == null) {
-    _toast("Select district");
-    return;
-  }
-
-  setState(() => _saving = true);
-
-  try {
-    final service = EmployerDashboardService();
-
-    final companyId = await service.createOrganization(
-      name: name,
-      businessTypeId: _selectedBusinessTypeId!,
-      districtId: _selectedDistrictId!,
-      website: _website.text.trim(),
-      description: _desc.text.trim(),
-    );
-
-    if (companyId.isEmpty) {
-      throw Exception("Company ID not returned");
+    // Check session before going async
+    try {
+      _requireUser();
+    } catch (e) {
+      _toast("Session expired. Please login again.");
+      return;
     }
 
     if (!mounted) return;
+    setState(() => _saving = true);
 
-    Navigator.pop(context, companyId);
-  } catch (e) {
-    _toast("Failed: $e");
-  }
+    String? companyId;
 
-  if (mounted) {
-    setState(() => _saving = false);
+    try {
+      final service = EmployerDashboardService();
+
+      companyId = await service.createOrganization(
+        name: name,
+        businessTypeId: _selectedBusinessTypeId!,
+        districtId: _selectedDistrictId!,
+        website: _website.text.trim(),
+        description: _desc.text.trim(),
+      );
+    } catch (e) {
+      // Only show error and reset saving if we are still mounted.
+      // Do NOT call setState after this if we are going to pop.
+      if (mounted) {
+        setState(() => _saving = false);
+        _toast("Failed: $e");
+      }
+      return; // Stop here — do not pop
+    }
+
+    // At this point createOrganization succeeded.
+    // Check companyId is valid.
+    if (companyId == null || companyId.isEmpty) {
+      if (mounted) {
+        setState(() => _saving = false);
+        _toast("Organization ID not returned. Please try again.");
+      }
+      return;
+    }
+
+    // Pop ONLY on success, and do NOT call setState after this —
+    // the widget is being disposed by the navigator.
+    if (mounted) {
+      Navigator.pop(context, companyId);
+    }
+
+    // NO setState after Navigator.pop — widget is disposed here.
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -157,7 +175,8 @@ class _CreateOrganizationScreenState
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 24 + bottom),
+              padding:
+                  EdgeInsets.fromLTRB(16, 16, 16, 24 + bottom),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -177,26 +196,20 @@ class _CreateOrganizationScreenState
                       color: _muted,
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
                   _label("Organization name"),
                   _input(_name, "ABC Pvt Ltd"),
-
                   const SizedBox(height: 14),
-
                   _label("Business type"),
                   _dropdown(
                     value: _selectedBusinessTypeId,
                     hint: "Select type",
                     items: _businessTypes,
                     labelKey: 'type_name',
-                    onChanged: (v) =>
-                        setState(() => _selectedBusinessTypeId = v),
+                    onChanged: (v) => setState(
+                        () => _selectedBusinessTypeId = v),
                   ),
-
                   const SizedBox(height: 14),
-
                   _label("District"),
                   _dropdown(
                     value: _selectedDistrictId,
@@ -206,19 +219,13 @@ class _CreateOrganizationScreenState
                     onChanged: (v) =>
                         setState(() => _selectedDistrictId = v),
                   ),
-
                   const SizedBox(height: 14),
-
                   _label("Website"),
                   _input(_website, "https://"),
-
                   const SizedBox(height: 14),
-
                   _label("Description"),
                   _input(_desc, "About company", maxLines: 4),
-
                   const SizedBox(height: 24),
-
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -226,8 +233,8 @@ class _CreateOrganizationScreenState
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _primary,
                         elevation: 0,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius:
                               BorderRadius.circular(10),
@@ -269,8 +276,8 @@ class _CreateOrganizationScreenState
         hintText: hint,
         filled: true,
         fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
         ),
