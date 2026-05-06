@@ -77,76 +77,47 @@ void _openProfile() {
   });
 
   try {
-    String? companyId =
-        _companyId.isNotEmpty ? _companyId : null;
+    String? companyId = _companyId.isNotEmpty ? _companyId : null;
 
-    // =========================================================
-    // RESOLVE COMPANY
-    // =========================================================
     if (companyId == null) {
       for (int i = 0; i < 5; i++) {
         try {
           companyId = await _service.resolveCompanyIdSafe();
-
-          if (companyId != null &&
-              companyId.isNotEmpty) {
-            break;
-          }
+          if (companyId != null && companyId.isNotEmpty) break;
         } catch (_) {}
-
-        await Future.delayed(
-          const Duration(milliseconds: 400),
-        );
+        await Future.delayed(const Duration(milliseconds: 500));
       }
     }
 
     if (companyId == null || companyId.isEmpty) {
       if (!mounted) return;
-
       setState(() {
         _loading = false;
         _needsOrganization = true;
       });
-
       return;
     }
 
-    // =========================================================
-    // FETCH COMPANY
-    // =========================================================
     Map<String, dynamic> company = {};
-
     for (int i = 0; i < 5; i++) {
       try {
-        final res = await _service.fetchCompanyById(
-          companyId: companyId,
-        );
-
+        final res = await _service.fetchCompanyById(companyId: companyId);
         if (res.isNotEmpty) {
           company = Map<String, dynamic>.from(res);
           break;
         }
       } catch (_) {}
-
-      await Future.delayed(
-        const Duration(milliseconds: 400),
-      );
+      await Future.delayed(const Duration(milliseconds: 500));
     }
 
     if (company.isEmpty) {
       if (!mounted) return;
-
       setState(() {
         _loading = false;
         _needsOrganization = true;
       });
-
       return;
     }
-
-    // =========================================================
-    // SAFE FETCHES
-    // =========================================================
 
     List<Map<String, dynamic>> jobs = [];
     Map<String, dynamic> stats = {};
@@ -157,56 +128,43 @@ void _openProfile() {
     int unread = 0;
 
     try {
-      jobs = await _service.fetchCompanyJobs(
-        companyId: companyId,
-      );
+      jobs = await _service.fetchCompanyJobs(companyId: companyId);
     } catch (e) {
       print("❌ jobs crash: $e");
     }
 
     try {
-      stats = await _service.fetchCompanyDashboardStats(
-        companyId: companyId,
-      );
+      stats = await _service.fetchCompanyDashboardStats(companyId: companyId);
     } catch (e) {
       print("❌ stats crash: $e");
     }
 
     try {
-      applicants = await _service.fetchRecentApplicants(
-        companyId: companyId,
-      );
+      applicants = await _service.fetchRecentApplicants(companyId: companyId);
     } catch (e) {
       print("❌ applicants crash: $e");
     }
 
     try {
-      topJobs = await _service.fetchTopJobs(
-        companyId: companyId,
-      );
+      topJobs = await _service.fetchTopJobs(companyId: companyId);
     } catch (e) {
       print("❌ topJobs crash: $e");
     }
 
     try {
-      interviews = await _service.fetchTodayInterviews(
-        companyId: companyId,
-      );
+      interviews = await _service.fetchTodayInterviews(companyId: companyId);
     } catch (e) {
       print("❌ interviews crash: $e");
     }
 
     try {
-      perf = await _service.fetchLast7DaysPerformance(
-        companyId: companyId,
-      );
+      perf = await _service.fetchLast7DaysPerformance(companyId: companyId);
     } catch (e) {
       print("❌ perf crash: $e");
     }
 
     try {
-      unread =
-          await _service.fetchUnreadNotificationsCount();
+      unread = await _service.fetchUnreadNotificationsCount();
     } catch (e) {
       print("❌ unread crash: $e");
     }
@@ -215,32 +173,21 @@ void _openProfile() {
 
     setState(() {
       _companyId = companyId ?? "";
-
       _company = company;
-
       _jobs = jobs;
-
       _stats = stats;
-
       _recentApplicants = applicants;
-
       _topJobs = topJobs;
-
       _todayInterviews = interviews;
-
       _perf7d = perf;
-
       _unreadNotifications = unread;
-
       _loading = false;
       _needsOrganization = false;
     });
   } catch (e, st) {
     print("❌ DASHBOARD ERROR: $e");
     print(st);
-
     if (!mounted) return;
-
     setState(() {
       _loading = false;
       _needsOrganization = true;
@@ -569,94 +516,7 @@ Widget _drawerItem(
 }
 
 
-Future<void> _waitForCompanyReady(String companyId) async {
-  int tries = 0;
 
-  final user = Supabase.instance.client.auth.currentUser;
-
-  if (user == null) {
-    if (!mounted) return;
-
-    setState(() {
-      _loading = false;
-      _needsOrganization = true;
-    });
-
-    return;
-  }
-
-  while (tries < 15) {
-    try {
-      // =====================================================
-      // COMPANY EXISTS
-      // =====================================================
-      final company =
-          await _service.fetchCompanyById(
-        companyId: companyId,
-      );
-
-      // =====================================================
-      // MEMBERSHIP EXISTS
-      // =====================================================
-      final res = await Supabase.instance.client
-          .from('company_members')
-          .select('company_id')
-          .eq('user_id', user.id);
-
-      List<Map<String, dynamic>> memberList = [];
-
-      if (res is List) {
-        memberList = res
-            .whereType<Map>()
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
-      }
-
-      final member = memberList.firstWhere(
-        (e) => e['company_id'] != null,
-        orElse: () => {},
-      );
-
-      // =====================================================
-      // READY
-      // =====================================================
-      if (company.isNotEmpty &&
-          member.isNotEmpty &&
-          member['company_id'] != null) {
-
-        if (!mounted) return;
-
-        setState(() {
-          _companyId =
-              member['company_id'].toString();
-        });
-
-        await Future.delayed(
-          const Duration(milliseconds: 500),
-        );
-
-        await _loadDashboard();
-
-        return;
-      }
-    } catch (e) {
-      print("❌ wait crash: $e");
-    }
-
-    tries++;
-
-    await Future.delayed(
-      const Duration(milliseconds: 700),
-    );
-  }
-
-  if (!mounted) return;
-
-  setState(() {
-    _loading = false;
-    _needsOrganization = true;
-  });
-}
   // ============================================================
   // NO ORG
   // ============================================================
@@ -688,7 +548,6 @@ Future<void> _waitForCompanyReady(String companyId) async {
                 style: TextStyle(color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 16),
-
               ElevatedButton(
                 onPressed: () async {
                   final res = await Navigator.pushNamed(
@@ -697,16 +556,26 @@ Future<void> _waitForCompanyReady(String companyId) async {
                   );
 
                   if (!mounted) return;
-                  if (res == null || res.toString().isEmpty) return;
+                  if (res == null || res.toString().trim().isEmpty) return;
 
+                  final newCompanyId = res.toString().trim();
+
+                  // Reset the fetch gate BEFORE calling _loadDashboard
+                  // so the guard `if (_isFetching) return` never blocks us.
                   setState(() {
-                    _companyId = res.toString();
+                    _companyId = newCompanyId;
                     _loading = true;
                     _needsOrganization = false;
+                    _isFetching = false;
                   });
 
-                  // 🔥 FIX: wait for FULL backend readiness
-                  await _waitForCompanyReady(_companyId);
+                  // Give Supabase a moment to finish replicating the new
+                  // company + company_members rows before we read them back.
+                  await Future.delayed(const Duration(milliseconds: 900));
+
+                  if (!mounted) return;
+
+                  await _loadDashboard();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF16A34A),
