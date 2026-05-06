@@ -80,45 +80,57 @@ void _openProfile() {
     String? companyId =
         _companyId.isNotEmpty ? _companyId : null;
 
-    // =========================
-    // RESOLVE COMPANY ID
-    // =========================
+    // =========================================================
+    // RESOLVE COMPANY
+    // =========================================================
     if (companyId == null) {
       for (int i = 0; i < 5; i++) {
-        companyId = await _service.resolveCompanyIdSafe();
-        if (companyId != null && companyId.isNotEmpty) break;
-        await Future.delayed(const Duration(milliseconds: 300));
-      }
+        try {
+          companyId = await _service.resolveCompanyIdSafe();
 
-      if (companyId == null || companyId.isEmpty) {
-        if (!mounted) return;
+          if (companyId != null &&
+              companyId.isNotEmpty) {
+            break;
+          }
+        } catch (_) {}
 
-        setState(() {
-          _loading = false;
-          _needsOrganization = true;
-        });
-
-        return;
+        await Future.delayed(
+          const Duration(milliseconds: 400),
+        );
       }
     }
 
-    // =========================
+    if (companyId == null || companyId.isEmpty) {
+      if (!mounted) return;
+
+      setState(() {
+        _loading = false;
+        _needsOrganization = true;
+      });
+
+      return;
+    }
+
+    // =========================================================
     // FETCH COMPANY
-    // =========================
+    // =========================================================
     Map<String, dynamic> company = {};
 
     for (int i = 0; i < 5; i++) {
-      final res =
-          await _service.fetchCompanyById(companyId: companyId);
-
-      if (res is Map && res.isNotEmpty) {
-        company = Map<String, dynamic>.from(
-          res.map((k, v) => MapEntry(k.toString(), v)),
+      try {
+        final res = await _service.fetchCompanyById(
+          companyId: companyId,
         );
-        break;
-      }
 
-      await Future.delayed(const Duration(milliseconds: 300));
+        if (res.isNotEmpty) {
+          company = Map<String, dynamic>.from(res);
+          break;
+        }
+      } catch (_) {}
+
+      await Future.delayed(
+        const Duration(milliseconds: 400),
+      );
     }
 
     if (company.isEmpty) {
@@ -132,77 +144,93 @@ void _openProfile() {
       return;
     }
 
-    // =========================
-    // FETCH DASHBOARD DATA
-    // =========================
-    final results = await Future.wait([
-      _service.fetchCompanyJobs(companyId: companyId),
-      _service.fetchCompanyDashboardStats(companyId: companyId),
-      _service.fetchRecentApplicants(companyId: companyId),
-      _service.fetchTopJobs(companyId: companyId),
-      _service.fetchTodayInterviews(companyId: companyId),
-      _service.fetchLast7DaysPerformance(companyId: companyId),
-      _service.fetchUnreadNotificationsCount(),
-    ]).catchError((_) => List.filled(7, null));
+    // =========================================================
+    // SAFE FETCHES
+    // =========================================================
+
+    List<Map<String, dynamic>> jobs = [];
+    Map<String, dynamic> stats = {};
+    List<Map<String, dynamic>> applicants = [];
+    List<Map<String, dynamic>> topJobs = [];
+    List<Map<String, dynamic>> interviews = [];
+    Map<String, dynamic> perf = {};
+    int unread = 0;
+
+    try {
+      jobs = await _service.fetchCompanyJobs(
+        companyId: companyId,
+      );
+    } catch (e) {
+      print("❌ jobs crash: $e");
+    }
+
+    try {
+      stats = await _service.fetchCompanyDashboardStats(
+        companyId: companyId,
+      );
+    } catch (e) {
+      print("❌ stats crash: $e");
+    }
+
+    try {
+      applicants = await _service.fetchRecentApplicants(
+        companyId: companyId,
+      );
+    } catch (e) {
+      print("❌ applicants crash: $e");
+    }
+
+    try {
+      topJobs = await _service.fetchTopJobs(
+        companyId: companyId,
+      );
+    } catch (e) {
+      print("❌ topJobs crash: $e");
+    }
+
+    try {
+      interviews = await _service.fetchTodayInterviews(
+        companyId: companyId,
+      );
+    } catch (e) {
+      print("❌ interviews crash: $e");
+    }
+
+    try {
+      perf = await _service.fetchLast7DaysPerformance(
+        companyId: companyId,
+      );
+    } catch (e) {
+      print("❌ perf crash: $e");
+    }
+
+    try {
+      unread =
+          await _service.fetchUnreadNotificationsCount();
+    } catch (e) {
+      print("❌ unread crash: $e");
+    }
 
     if (!mounted) return;
-
-    // =========================
-    // SAFE PARSING
-    // =========================
-    final jobsRaw = results[0];
-    final statsRaw = results[1];
-    final applicantsRaw = results[2];
-    final topJobsRaw = results[3];
-    final interviewsRaw = results[4];
-    final perfRaw = results[5];
-    final unreadRaw = results[6];
 
     setState(() {
       _companyId = companyId ?? "";
 
       _company = company;
 
-      _jobs = (jobsRaw is List)
-          ? jobsRaw
-              .map((e) => Map<String, dynamic>.from(
-                  (e as Map).map((k, v) => MapEntry(k.toString(), v))))
-              .toList()
-          : [];
+      _jobs = jobs;
 
-      _stats = (statsRaw is Map)
-          ? Map<String, dynamic>.from(
-              statsRaw.map((k, v) => MapEntry(k.toString(), v)))
-          : {};
+      _stats = stats;
 
-      _recentApplicants = (applicantsRaw is List)
-          ? applicantsRaw
-              .map((e) => Map<String, dynamic>.from(
-                  (e as Map).map((k, v) => MapEntry(k.toString(), v))))
-              .toList()
-          : [];
+      _recentApplicants = applicants;
 
-      _topJobs = (topJobsRaw is List)
-          ? topJobsRaw
-              .map((e) => Map<String, dynamic>.from(
-                  (e as Map).map((k, v) => MapEntry(k.toString(), v))))
-              .toList()
-          : [];
+      _topJobs = topJobs;
 
-      _todayInterviews = (interviewsRaw is List)
-          ? interviewsRaw
-              .map((e) => Map<String, dynamic>.from(
-                  (e as Map).map((k, v) => MapEntry(k.toString(), v))))
-              .toList()
-          : [];
+      _todayInterviews = interviews;
 
-      _perf7d = (perfRaw is Map)
-          ? Map<String, dynamic>.from(
-              perfRaw.map((k, v) => MapEntry(k.toString(), v)))
-          : {};
+      _perf7d = perf;
 
-      _unreadNotifications =
-          (unreadRaw is int) ? unreadRaw : 0;
+      _unreadNotifications = unread;
 
       _loading = false;
       _needsOrganization = false;
@@ -545,39 +573,81 @@ Future<void> _waitForCompanyReady(String companyId) async {
   int tries = 0;
 
   final user = Supabase.instance.client.auth.currentUser;
-  if (user == null) return;
 
-  while (tries < 12) {
+  if (user == null) {
+    if (!mounted) return;
+
+    setState(() {
+      _loading = false;
+      _needsOrganization = true;
+    });
+
+    return;
+  }
+
+  while (tries < 15) {
     try {
+      // =====================================================
+      // COMPANY EXISTS
+      // =====================================================
       final company =
-          await _service.fetchCompanyById(companyId: companyId);
+          await _service.fetchCompanyById(
+        companyId: companyId,
+      );
 
-      final memberList = await Supabase.instance.client
+      // =====================================================
+      // MEMBERSHIP EXISTS
+      // =====================================================
+      final res = await Supabase.instance.client
           .from('company_members')
           .select('company_id')
           .eq('user_id', user.id);
 
-      final member = (memberList as List)
-          .map((e) => Map<String, dynamic>.from(e))
-          .firstWhere(
-            (e) => e['company_id'] != null,
-            orElse: () => {},
-          );
+      List<Map<String, dynamic>> memberList = [];
 
-      if (company.isNotEmpty && member.isNotEmpty) {
+      if (res is List) {
+        memberList = res
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+
+      final member = memberList.firstWhere(
+        (e) => e['company_id'] != null,
+        orElse: () => {},
+      );
+
+      // =====================================================
+      // READY
+      // =====================================================
+      if (company.isNotEmpty &&
+          member.isNotEmpty &&
+          member['company_id'] != null) {
+
         if (!mounted) return;
 
         setState(() {
-          _companyId = member['company_id'].toString();
+          _companyId =
+              member['company_id'].toString();
         });
 
+        await Future.delayed(
+          const Duration(milliseconds: 500),
+        );
+
         await _loadDashboard();
+
         return;
       }
-    } catch (_) {}
+    } catch (e) {
+      print("❌ wait crash: $e");
+    }
 
-    await Future.delayed(const Duration(milliseconds: 500));
     tries++;
+
+    await Future.delayed(
+      const Duration(milliseconds: 700),
+    );
   }
 
   if (!mounted) return;
