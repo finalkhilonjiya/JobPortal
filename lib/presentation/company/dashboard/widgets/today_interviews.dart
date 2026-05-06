@@ -12,47 +12,108 @@ class TodayInterviews extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    if (data.isEmpty) {
-      return _empty();
-    }
+Widget build(BuildContext context) {
+  if (data.isEmpty) {
+    return _empty();
+  }
 
-    return Container(
-      decoration: _card(),
-      child: Column(
-        children: List.generate(data.length, (i) {
-          final row = data[i];
+  final safeData = data.whereType<Map>().toList();
 
-          final duration =
-              (row['duration_minutes'] is int)
-                  ? row['duration_minutes']
-                  : 30;
+  if (safeData.isEmpty) {
+    return _empty();
+  }
 
-          final listingRaw = row['job_applications_listings'];
-          final listing = listingRaw is Map
-              ? Map<String, dynamic>.from(listingRaw)
-              : {};
+  return Container(
+    decoration: _card(),
+    child: Column(
+      children: List.generate(safeData.length, (i) {
+        final raw = safeData[i];
 
-          final jobRaw = listing['job_listings'];
-          final job = jobRaw is Map
-              ? Map<String, dynamic>.from(jobRaw)
-              : {};
+        final row = Map<String, dynamic>.from(
+          raw.map(
+            (k, v) => MapEntry(k.toString(), v),
+          ),
+        );
 
-          final appRaw = listing['job_applications'];
-          final app = appRaw is Map
-              ? Map<String, dynamic>.from(appRaw)
-              : {};
+        final durationRaw = row['duration_minutes'];
 
-          final jobId = (job['id'] ?? '').toString();
-          final name = (app['name'] ?? 'Candidate').toString();
-          final jobTitle =
-              (job['job_title'] ?? 'Job').toString();
+        int duration = 30;
 
-          final isOnline =
-              (row['interview_type'] ?? 'video') == 'video';
+        if (durationRaw is int) {
+          duration = durationRaw;
+        } else {
+          duration =
+              int.tryParse(durationRaw?.toString() ?? '') ?? 30;
+        }
 
-          return InkWell(
+        // =====================================================
+        // SAFE LISTING
+        // =====================================================
+        Map<String, dynamic> listing = {};
+
+        final listingRaw = row['job_applications_listings'];
+
+        if (listingRaw is Map) {
+          listing = Map<String, dynamic>.from(
+            listingRaw.map(
+              (k, v) => MapEntry(k.toString(), v),
+            ),
+          );
+        }
+
+        // =====================================================
+        // SAFE JOB
+        // =====================================================
+        Map<String, dynamic> job = {};
+
+        final jobRaw = listing['job_listings'];
+
+        if (jobRaw is Map) {
+          job = Map<String, dynamic>.from(
+            jobRaw.map(
+              (k, v) => MapEntry(k.toString(), v),
+            ),
+          );
+        }
+
+        // =====================================================
+        // SAFE APPLICATION
+        // =====================================================
+        Map<String, dynamic> app = {};
+
+        final appRaw = listing['job_applications'];
+
+        if (appRaw is Map) {
+          app = Map<String, dynamic>.from(
+            appRaw.map(
+              (k, v) => MapEntry(k.toString(), v),
+            ),
+          );
+        }
+
+        final jobId =
+            (job['id'] ?? '').toString();
+
+        final name =
+            (app['name'] ?? 'Candidate').toString();
+
+        final jobTitle =
+            (job['job_title'] ?? 'Job').toString();
+
+        final type =
+            (row['interview_type'] ?? 'video')
+                .toString()
+                .toLowerCase();
+
+        final isOnline = type == 'video';
+
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
             onTap: () {
+              if (jobId.isEmpty) return;
+
               Navigator.pushNamed(
                 context,
                 AppRoutes.jobApplicants,
@@ -74,6 +135,7 @@ class TodayInterviews extends StatelessWidget {
                             : Icons.location_on_outlined,
                         color: const Color(0xFF16A34A),
                       ),
+
                       const SizedBox(width: 10),
 
                       Expanded(
@@ -86,8 +148,10 @@ class TodayInterviews extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                  fontWeight: FontWeight.w700),
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
+
                             Text(
                               jobTitle,
                               maxLines: 1,
@@ -97,6 +161,7 @@ class TodayInterviews extends StatelessWidget {
                                 color: Color(0xFF6B7280),
                               ),
                             ),
+
                             Text(
                               "$duration min",
                               style: const TextStyle(
@@ -110,16 +175,20 @@ class TodayInterviews extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (i != data.length - 1)
+
+                if (i != safeData.length - 1)
                   const Divider(
-                      height: 1, color: Color(0xFFE6E8EC)),
+                    height: 1,
+                    color: Color(0xFFE6E8EC),
+                  ),
               ],
             ),
-          );
-        }),
-      ),
-    );
-  }
+          ),
+        );
+      }),
+    ),
+  );
+}
 
   Widget _empty() {
     return Container(
