@@ -5,6 +5,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:sizer/sizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'services/force_update_service.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 // Firebase
 import 'package:firebase_core/firebase_core.dart';
@@ -26,133 +28,23 @@ class AppConfig {
 }
 
 /// =============================================================
-/// CRASH REPORTER — shows errors on screen (remove after fix)
+/// CRASH LOG WRITER
 /// =============================================================
-final GlobalKey<_CrashReporterState> _crashKey =
-    GlobalKey<_CrashReporterState>();
-
-class _CrashReporter extends StatefulWidget {
-  final Widget child;
-
-  // No const — _crashKey is not a compile-time constant
-  _CrashReporter({required this.child}) : super(key: _crashKey);
-
-  @override
-  State<_CrashReporter> createState() => _CrashReporterState();
+Future<void> writeCrashLog(String error, String stack) async {
+  try {
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/crash_log.txt');
+    final content =
+        '=== CRASH ===\n$error\n\n=== STACK ===\n$stack\n';
+    await file.writeAsString(content);
+  } catch (_) {}
 }
 
-class _CrashReporterState extends State<_CrashReporter> {
-  String? _error;
-  String? _stack;
-  bool _visible = false;
-
-  void show(String error, String stack) {
-    if (!mounted) return;
-    setState(() {
-      _error = error;
-      _stack = stack;
-      _visible = true;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Stack(
-        children: [
-          widget.child,
-          if (_visible)
-            Positioned.fill(
-              child: Material(
-                color: const Color(0xEE000000),
-                child: SafeArea(
-                  child: Column(
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        color: const Color(0xFFEF4444),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        child: Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                '💥 CRASH — screenshot and send',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () => setState(
-                                  () => _visible = false),
-                              child: const Icon(
-                                Icons.close,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'ERROR:',
-                                style: TextStyle(
-                                  color: Color(0xFFFC8181),
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              SelectableText(
-                                _error ?? '',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontFamily: 'monospace',
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'STACK TRACE:',
-                                style: TextStyle(
-                                  color: Color(0xFFFC8181),
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              SelectableText(
-                                _stack ?? '',
-                                style: const TextStyle(
-                                  color: Color(0xFFD1D5DB),
-                                  fontSize: 11,
-                                  fontFamily: 'monospace',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
+/// =============================================================
+/// CRASH SCREEN — shown when crash is caught before widget tree
+/// =============================================================
+String _earlyError = '';
+String _earlyStack = '';
 
 /// =============================================================
 /// LOCAL NOTIFICATION SETUP
@@ -265,20 +157,21 @@ Future<void> initPushNotifications() async {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Wire up crash reporter BEFORE anything else
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
-    _crashKey.currentState?.show(
-      details.exceptionAsString(),
-      details.stack?.toString() ?? 'no stack',
-    );
+    final err = details.exceptionAsString();
+    final stack = details.stack?.toString() ?? 'no stack';
+    _earlyError = err;
+    _earlyStack = stack;
+    writeCrashLog(err, stack);
   };
 
   PlatformDispatcher.instance.onError = (error, stack) {
-    _crashKey.currentState?.show(
-      error.toString(),
-      stack.toString(),
-    );
+    _earlyError = error.toString();
+    _earlyStack = stack.toString();
+    writeCrashLog(_earlyError, _earlyStack);
+    // Re-run app showing crash screen
+    runApp(_CrashApp(error: _earlyError, stack: _earlyStack));
     return true;
   };
 
@@ -321,6 +214,90 @@ Future<void> main() async {
 }
 
 /// =============================================================
+/// CRASH APP — full screen crash display
+/// =============================================================
+class _CrashApp extends StatelessWidget {
+  final String error;
+  final String stack;
+  const _CrashApp({required this.error, required this.stack});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: Colors.black,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                color: const Color(0xFFEF4444),
+                padding: const EdgeInsets.all(16),
+                child: const Text(
+                  '💥 CRASH — screenshot this entire screen',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'ERROR:',
+                        style: TextStyle(
+                          color: Color(0xFFFC8181),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      SelectableText(
+                        error,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'STACK TRACE:',
+                        style: TextStyle(
+                          color: Color(0xFFFC8181),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      SelectableText(
+                        stack,
+                        style: const TextStyle(
+                          color: Color(0xFFD1D5DB),
+                          fontSize: 11,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// =============================================================
 /// APP UI
 /// =============================================================
 class MyApp extends StatelessWidget {
@@ -328,22 +305,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _CrashReporter(
-      child: Sizer(
-        builder: (_, __, ___) => MaterialApp(
-          title: 'Khilonjiya.com',
-          debugShowCheckedModeBanner: false,
-          navigatorKey: NavigationService.navigatorKey,
-          theme: KhilonjiyaUI.theme(),
-          themeMode: ThemeMode.light,
-          home: const AppInitializer(),
-          routes: AppRoutes.routes,
-          onGenerateRoute: AppRoutes.onGenerateRoute,
-          builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-                textScaler: const TextScaler.linear(1.0)),
-            child: child!,
-          ),
+    return Sizer(
+      builder: (_, __, ___) => MaterialApp(
+        title: 'Khilonjiya.com',
+        debugShowCheckedModeBanner: false,
+        navigatorKey: NavigationService.navigatorKey,
+        theme: KhilonjiyaUI.theme(),
+        themeMode: ThemeMode.light,
+        home: const AppInitializer(),
+        routes: AppRoutes.routes,
+        onGenerateRoute: AppRoutes.onGenerateRoute,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+              textScaler: const TextScaler.linear(1.0)),
+          child: child!,
         ),
       ),
     );
