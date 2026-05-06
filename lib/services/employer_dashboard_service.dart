@@ -68,6 +68,25 @@ Map<String, dynamic> _safeMap(dynamic res) {
   return {};
 }
 
+
+int _safeInt(dynamic v) {
+  if (v == null) return 0;
+
+  if (v is int) return v;
+
+  if (v is double) return v.toInt();
+
+  if (v is String) {
+    return int.tryParse(v) ?? 0;
+  }
+
+  return 0;
+}
+
+String _safeString(dynamic v) {
+  if (v == null) return '';
+  return v.toString();
+}
   // ============================================================
   // COMPANY
   // ============================================================
@@ -314,26 +333,36 @@ Map<String, dynamic> _safeMap(dynamic res) {
   Future<Map<String, dynamic>> fetchLast7DaysPerformance({
   required String companyId,
 }) async {
-  final res = await _db
-      .from('job_listings')
-      .select('views_count, applications_count')
-      .eq('company_id', companyId);
+  try {
+    final res = await _db
+        .from('job_listings')
+        .select('views_count, applications_count')
+        .eq('company_id', companyId);
 
-  final list = _safeList(res);
+    final list = _safeList(res);
 
-  int views = 0;
-  int apps = 0;
+    int views = 0;
+    int apps = 0;
 
-  for (final j in list) {
-    views += (j['views_count'] ?? 0) as int;
-    apps += (j['applications_count'] ?? 0) as int;
+    for (final j in list) {
+      views += _safeInt(j['views_count']);
+      apps += _safeInt(j['applications_count']);
+    }
+
+    return {
+      "total_views": views,
+      "total_applications": apps,
+      "days": [],
+    };
+  } catch (e) {
+    print("❌ fetchLast7DaysPerformance: $e");
+
+    return {
+      "total_views": 0,
+      "total_applications": 0,
+      "days": [],
+    };
   }
-
-  return {
-    "total_views": views,
-    "total_applications": apps,
-    "days": [],
-  };
 }
 
   // ============================================================
