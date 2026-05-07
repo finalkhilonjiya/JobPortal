@@ -9,7 +9,6 @@ import '../services/mobile_auth_service.dart';
 
 import '../presentation/home_marketplace_feed/job_seeker_main_shell.dart';
 import '../presentation/home_marketplace_feed/construction_services_home_page.dart';
-import '../presentation/company/dashboard/company_dashboard.dart';
 
 class HomeRouter extends StatefulWidget {
   const HomeRouter({Key? key}) : super(key: key);
@@ -25,8 +24,31 @@ class _HomeRouterState extends State<HomeRouter> {
   void initState() {
     super.initState();
     _auth = MobileAuthService();
-    // Navigate after first frame so context is ready
-    WidgetsBinding.instance.addPostFrameCallback((_) => _route());
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _route());
+  }
+
+  Future<bool> _hasCompany() async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+
+    final db = Supabase.instance.client;
+
+    final member = await db
+        .from('company_members')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+    if (member != null) return true;
+
+    final created = await db
+        .from('companies')
+        .select('id')
+        .eq('created_by', user.id)
+        .maybeSingle();
+
+    return created != null;
   }
 
   Future<void> _route() async {
@@ -34,7 +56,6 @@ class _HomeRouterState extends State<HomeRouter> {
 
     final user = _auth.currentUser;
 
-    // No session — go to role selection
     if (user == null) {
       Navigator.pushNamedAndRemoveUntil(
         context,
@@ -51,7 +72,6 @@ class _HomeRouterState extends State<HomeRouter> {
 
     if (!mounted) return;
 
-    // No role — go to role selection
     if (role == null) {
       Navigator.pushNamedAndRemoveUntil(
         context,
@@ -74,16 +94,43 @@ class _HomeRouterState extends State<HomeRouter> {
     }
 
     if (role == UserRole.employer) {
-      // Always go to companyDashboard.
-      // CompanyDashboard handles the "no org" state itself
-      // and pushes createOrganization as a proper route,
-      // so Navigator.pop works correctly.
+      bool hasCompany = false;
+      try {
+        hasCompany = await _hasCompany();
+      } catch (_) {}
+
+      if (!mounted) return;
+
+      if (!hasCompany) {
+        // First time employer — go directly to create org.
+        // On success, CreateOrganizationScreen will pop with
+        // companyId. We catch that and go to dashboard.
+        final companyId = await Navigator.pushNamed(
+          context,
+          AppRoutes.createOrganization,
+        );
+
+        if (!mounted) return;
+
+        // Whether they created org or pressed back,
+        // always land on companyDashboard.
+        // Dashboard handles both cases (has org / no org).
+        Navigator.pushReplacementNamed(
+          context,
+          AppRoutes.companyDashboard,
+          arguments: companyId != null
+              ? {'companyId': companyId.toString()}
+              : null,
+        );
+        return;
+      }
+
+      // Has company — go straight to dashboard
       Navigator.pushReplacementNamed(
           context, AppRoutes.companyDashboard);
       return;
     }
 
-    // Fallback
     Navigator.pushNamedAndRemoveUntil(
       context,
       AppRoutes.roleSelection,
@@ -93,7 +140,6 @@ class _HomeRouterState extends State<HomeRouter> {
 
   @override
   Widget build(BuildContext context) {
-    // Just show a spinner while routing
     return const Scaffold(
       body: Center(
         child: CircularProgressIndicator(
