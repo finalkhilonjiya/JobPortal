@@ -48,10 +48,19 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   int _unreadNotifications = 0;
 
   @override
-  void initState() {
-    super.initState();
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map && args['companyId'] != null) {
+      final id = args['companyId'].toString().trim();
+      if (id.isNotEmpty) {
+        _companyId = id;
+      }
+    }
     _loadDashboard();
-  }
+  });
+}
 
   void _openProfile() {
     Navigator.pushNamed(context, AppRoutes.employerProfile);
@@ -280,62 +289,72 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   // BUILD
   // ============================================================
   @override
-  Widget build(BuildContext context) {
+Widget build(BuildContext context) {
+  // No org — show ONLY the bare start hiring screen
+  // No bottom bar, no drawer, no FAB
+  if (_needsOrganization) {
+    return _noOrg();
+  }
+
+  // Loading — show spinner inside full scaffold
+  // so bottom bar shows during load for returning employers
+  if (_loading) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
-      drawer: _drawer(),
-      body: _loading
-          ? _preparingScreen()
-          : _needsOrganization
-              ? _noOrg()
-              : _dashboard(),
-      floatingActionButton: _needsOrganization
-          ? null
-          : FloatingActionButton(
-              backgroundColor: const Color(0xFF16A34A),
-              onPressed: () async {
-                final res = await Navigator.pushNamed(
-                    context, AppRoutes.createJob);
-                if (!mounted) return;
-                if (res == true) {
-                  await _loadDashboard();
-                }
-              },
-              child: const Icon(Icons.add),
-            ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF16A34A),
-        onTap: (i) {
-          if (i == 1) {
-            Navigator.pushNamed(context, AppRoutes.employerJobs);
-          } else if (i == 2) {
-            Navigator.pushNamed(
-              context,
-              AppRoutes.jobApplicants,
-              arguments: {
-                'jobId': 'all',
-                'companyId': _companyId,
-              },
-            );
-          } else if (i == 3) {
-            _openProfile();
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home), label: "Dashboard"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.work), label: "Jobs"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.people), label: "Applicants"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person), label: "Profile"),
-        ],
-      ),
+      body: _preparingScreen(),
     );
   }
+
+  // Has org — full dashboard with everything
+  return Scaffold(
+    backgroundColor: const Color(0xFFF7F8FA),
+    drawer: _drawer(),
+    body: _dashboard(),
+    floatingActionButton: FloatingActionButton(
+      backgroundColor: const Color(0xFF16A34A),
+      onPressed: () async {
+        final res = await Navigator.pushNamed(
+            context, AppRoutes.createJob);
+        if (!mounted) return;
+        if (res == true) {
+          await _loadDashboard();
+        }
+      },
+      child: const Icon(Icons.add),
+    ),
+    bottomNavigationBar: BottomNavigationBar(
+      currentIndex: 0,
+      type: BottomNavigationBarType.fixed,
+      selectedItemColor: const Color(0xFF16A34A),
+      onTap: (i) {
+        if (i == 1) {
+          Navigator.pushNamed(context, AppRoutes.employerJobs);
+        } else if (i == 2) {
+          Navigator.pushNamed(
+            context,
+            AppRoutes.jobApplicants,
+            arguments: {
+              'jobId': 'all',
+              'companyId': _companyId,
+            },
+          );
+        } else if (i == 3) {
+          _openProfile();
+        }
+      },
+      items: const [
+        BottomNavigationBarItem(
+            icon: Icon(Icons.home), label: "Dashboard"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.work), label: "Jobs"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.people), label: "Applicants"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.person), label: "Profile"),
+      ],
+    ),
+  );
+}
 
   // ============================================================
   // DASHBOARD BODY
@@ -551,7 +570,10 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   // NO ORG
   // ============================================================
   Widget _noOrg() {
-    return SafeArea(
+  return Scaffold(
+    backgroundColor: const Color(0xFFF7F8FA),
+    // No drawer, no FAB, no bottom bar — completely clean
+    body: SafeArea(
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -576,50 +598,40 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
                 const SizedBox(height: 8),
                 const Text(
                   "Create your organization to post jobs",
-                  style:
-                      TextStyle(color: Color(0xFF6B7280)),
+                  style: TextStyle(color: Color(0xFF6B7280)),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () async {
-                    final res =
-                        await Navigator.pushNamed(
+                    final res = await Navigator.pushNamed(
                       context,
                       AppRoutes.createOrganization,
                     );
 
                     if (!mounted) return;
 
-                    final String newCompanyId = (res !=
-                                null &&
-                            res
-                                .toString()
-                                .trim()
-                                .isNotEmpty)
-                        ? res.toString().trim()
-                        : '';
+                    final String newCompanyId =
+                        (res != null &&
+                                res.toString().trim().isNotEmpty)
+                            ? res.toString().trim()
+                            : '';
 
                     if (newCompanyId.isEmpty) return;
 
-                    // Pass the companyId directly into
-                    // _loadDashboard. The generation counter
-                    // automatically cancels the initState
-                    // call that is still mid-retry-loop.
                     await _loadDashboard(
                         withCompanyId: newCompanyId);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        const Color(0xFF16A34A),
+                    backgroundColor: const Color(0xFF16A34A),
                   ),
-                  child: const Text(
-                      "Create Organization"),
+                  child: const Text("Create Organization"),
                 ),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
