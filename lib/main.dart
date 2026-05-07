@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:sizer/sizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'services/force_update_service.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
 
 // Firebase
 import 'package:firebase_core/firebase_core.dart';
@@ -26,25 +24,6 @@ class AppConfig {
       supabaseUrl.trim().isNotEmpty &&
       supabaseAnonKey.trim().isNotEmpty;
 }
-
-/// =============================================================
-/// CRASH LOG WRITER
-/// =============================================================
-Future<void> writeCrashLog(String error, String stack) async {
-  try {
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/crash_log.txt');
-    final content =
-        '=== CRASH ===\n$error\n\n=== STACK ===\n$stack\n';
-    await file.writeAsString(content);
-  } catch (_) {}
-}
-
-/// =============================================================
-/// CRASH SCREEN — shown when crash is caught before widget tree
-/// =============================================================
-String _earlyError = '';
-String _earlyStack = '';
 
 /// =============================================================
 /// LOCAL NOTIFICATION SETUP
@@ -93,29 +72,41 @@ Future<void> initPushNotifications() async {
   final token = await messaging.getToken();
   print("FCM TOKEN: $token");
 
+  // Only save token once — check if already saved
+  final prefs = await SharedPreferences.getInstance();
+  final alreadySaved = prefs.getBool('fcm_token_saved') ?? false;
+
   final user = Supabase.instance.client.auth.currentUser;
 
-  if (user != null && token != null) {
-    await Supabase.instance.client
-        .from('user_devices')
-        .upsert({
-      "user_id": user.id,
-      "fcm_token": token,
-      "platform": "android"
-    });
-  }
-
-  FirebaseMessaging.instance.onTokenRefresh
-      .listen((newToken) async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user != null) {
+  if (!alreadySaved && user != null && token != null) {
+    try {
       await Supabase.instance.client
           .from('user_devices')
           .upsert({
         "user_id": user.id,
-        "fcm_token": newToken,
+        "fcm_token": token,
         "platform": "android"
       });
+      // Mark as saved so we never save again
+      await prefs.setBool('fcm_token_saved', true);
+    } catch (_) {}
+  }
+
+  // Token refresh — always update if token changes
+  FirebaseMessaging.instance.onTokenRefresh
+      .listen((newToken) async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      try {
+        await Supabase.instance.client
+            .from('user_devices')
+            .upsert({
+          "user_id": user.id,
+          "fcm_token": newToken,
+          "platform": "android"
+        });
+        await prefs.setBool('fcm_token_saved', true);
+      } catch (_) {}
     }
   });
 
@@ -157,24 +148,6 @@ Future<void> initPushNotifications() async {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.presentError(details);
-    final err = details.exceptionAsString();
-    final stack = details.stack?.toString() ?? 'no stack';
-    _earlyError = err;
-    _earlyStack = stack;
-    writeCrashLog(err, stack);
-  };
-
-  PlatformDispatcher.instance.onError = (error, stack) {
-    _earlyError = error.toString();
-    _earlyStack = stack.toString();
-    writeCrashLog(_earlyError, _earlyStack);
-    // Re-run app showing crash screen
-    runApp(_CrashApp(error: _earlyError, stack: _earlyStack));
-    return true;
-  };
-
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
   ]);
@@ -214,90 +187,6 @@ Future<void> main() async {
 }
 
 /// =============================================================
-/// CRASH APP — full screen crash display
-/// =============================================================
-class _CrashApp extends StatelessWidget {
-  final String error;
-  final String stack;
-  const _CrashApp({required this.error, required this.stack});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        backgroundColor: Colors.black,
-        body: SafeArea(
-          child: Column(
-            children: [
-              Container(
-                width: double.infinity,
-                color: const Color(0xFFEF4444),
-                padding: const EdgeInsets.all(16),
-                child: const Text(
-                  '💥 CRASH — screenshot this entire screen',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'ERROR:',
-                        style: TextStyle(
-                          color: Color(0xFFFC8181),
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      SelectableText(
-                        error,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        'STACK TRACE:',
-                        style: TextStyle(
-                          color: Color(0xFFFC8181),
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      SelectableText(
-                        stack,
-                        style: const TextStyle(
-                          color: Color(0xFFD1D5DB),
-                          fontSize: 11,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// =============================================================
 /// APP UI
 /// =============================================================
 class MyApp extends StatelessWidget {
@@ -326,7 +215,7 @@ class MyApp extends StatelessWidget {
 }
 
 /// =============================================================
-/// APP INITIALIZER — unchanged
+/// APP INITIALIZER
 /// =============================================================
 class AppInitializer extends StatefulWidget {
   const AppInitializer({super.key});
