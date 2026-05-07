@@ -8,9 +8,8 @@ import '../routes/app_routes.dart';
 import '../services/mobile_auth_service.dart';
 
 import '../presentation/home_marketplace_feed/job_seeker_main_shell.dart';
-import '../presentation/home_marketplace_feed/construction_services_home_page.dart'; // ✅ ADD
+import '../presentation/home_marketplace_feed/construction_services_home_page.dart';
 import '../presentation/company/dashboard/company_dashboard.dart';
-import '../presentation/company/dashboard/create_organization_screen.dart';
 
 class HomeRouter extends StatefulWidget {
   const HomeRouter({Key? key}) : super(key: key);
@@ -26,130 +25,82 @@ class _HomeRouterState extends State<HomeRouter> {
   void initState() {
     super.initState();
     _auth = MobileAuthService();
+    // Navigate after first frame so context is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) => _route());
   }
 
-  // ------------------------------------------------------------
-  // ROLE
-  // ------------------------------------------------------------
-  Future<UserRole?> _resolveRoleOrNull() async {
-  final user = _auth.currentUser;
-  if (user == null) return null;
+  Future<void> _route() async {
+    if (!mounted) return;
 
-  return await _auth.getUserRole();
-}
-
-  // ------------------------------------------------------------
-  // COMPANY CHECK
-  // ------------------------------------------------------------
-  Future<bool> _hasCompany() async {
     final user = _auth.currentUser;
-    if (user == null) return false;
 
-    final db = Supabase.instance.client;
-
-    final member = await db
-        .from('company_members')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-    if (member != null) return true;
-
-    final created = await db
-        .from('companies')
-        .select('id')
-        .eq('created_by', user.id)
-        .maybeSingle();
-
-    if (created != null) return true;
-
-    return false;
-  }
-
-  // ------------------------------------------------------------
-  // REDIRECT
-  // ------------------------------------------------------------
-  void _goToRoleSelection() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
+    // No session — go to role selection
+    if (user == null) {
       Navigator.pushNamedAndRemoveUntil(
         context,
         AppRoutes.roleSelection,
         (_) => false,
       );
-    });
+      return;
+    }
+
+    UserRole? role;
+    try {
+      role = await _auth.getUserRole();
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    // No role — go to role selection
+    if (role == null) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.roleSelection,
+        (_) => false,
+      );
+      return;
+    }
+
+    if (role == UserRole.construction) {
+      Navigator.pushReplacementNamed(
+          context, AppRoutes.constructionHome);
+      return;
+    }
+
+    if (role == UserRole.jobSeeker) {
+      Navigator.pushReplacementNamed(
+          context, AppRoutes.jobSeekerHome);
+      return;
+    }
+
+    if (role == UserRole.employer) {
+      // Always go to companyDashboard.
+      // CompanyDashboard handles the "no org" state itself
+      // and pushes createOrganization as a proper route,
+      // so Navigator.pop works correctly.
+      Navigator.pushReplacementNamed(
+          context, AppRoutes.companyDashboard);
+      return;
+    }
+
+    // Fallback
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.roleSelection,
+      (_) => false,
+    );
   }
 
-  // ------------------------------------------------------------
-  // UI
-  // ------------------------------------------------------------
   @override
-Widget build(BuildContext context) {
-  return FutureBuilder<UserRole?>(
-    future: _resolveRoleOrNull(),
-    builder: (context, roleSnap) {
-      if (roleSnap.connectionState != ConnectionState.done) {
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
-      }
-
-      final user = _auth.currentUser;
-
-      // ❌ NO SESSION → go role selection
-      if (user == null) {
-        _goToRoleSelection();
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
-      }
-
-      final role = roleSnap.data;
-
-      // ❌ SESSION EXISTS BUT NO ROLE → go role selection
-      if (role == null) {
-        _goToRoleSelection();
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
-      }
-
-      // --------------------------------------------------------
-      // CONSTRUCTION
-      // --------------------------------------------------------
-      if (role == UserRole.construction) {
-        return ConstructionServicesHomePage();
-      }
-
-      // --------------------------------------------------------
-      // EMPLOYER
-      // --------------------------------------------------------
-      if (role == UserRole.employer) {
-        return FutureBuilder<bool>(
-          future: _hasCompany(),
-          builder: (context, companySnap) {
-            if (companySnap.connectionState != ConnectionState.done) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            }
-
-            final hasCompany = companySnap.data ?? false;
-
-            if (!hasCompany) {
-              return const CreateOrganizationScreen();
-            }
-
-            return const CompanyDashboard();
-          },
-        );
-      }
-
-      // --------------------------------------------------------
-      // JOB SEEKER
-      // --------------------------------------------------------
-      return const JobSeekerMainShell();
-    },
-  );
-}
+  Widget build(BuildContext context) {
+    // Just show a spinner while routing
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(
+          strokeWidth: 3,
+          color: Color(0xFF16A34A),
+        ),
+      ),
+    );
+  }
 }
