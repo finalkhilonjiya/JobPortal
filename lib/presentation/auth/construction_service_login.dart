@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sms_autofill/sms_autofill.dart';
+import 'package:khilonjiya_com/main.dart' show saveFcmToken;
 
 import '../../routes/app_routes.dart';
 import '../../core/auth/user_role.dart';
@@ -246,12 +247,13 @@ Widget _header() {
 
       await LocationService.collectAndSaveLocation();
 
-      if (!mounted) return;
+if (!mounted) return;
 
-      Navigator.pushReplacementNamed(
-        context,
-        AppRoutes.constructionHome,
-      );
+await saveFcmToken();
+Navigator.pushReplacementNamed(
+  context,
+  AppRoutes.constructionHome,
+);
     } catch (e) {
       setState(() {
         _isLoading = false;
