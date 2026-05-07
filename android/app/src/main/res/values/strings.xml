@@ -1,20 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- App name -->
     <string name="app_name">khilonjiya.com</string>
-    
-    <!-- Google Sign-In Client ID (dummy value) -->
+
     <string name="google_sign_in_client_id">696766563336-302fko5ugv2jq60vr4dc3hf6kpmdfc6j.apps.googleusercontent.com</string>
-    
-    <!-- Facebook Configuration (dummy values) -->
-    <string name="facebook_app_id">1234567890123456</string>
-    <string name="facebook_client_token">abcdef1234567890abcdef1234567890</string>
-    <string name="fb_login_protocol_scheme">fb1234567890123456</string>
-    
-    <!-- Notification channels -->
+
     <string name="default_notification_channel_id">marketplace_notifications</string>
     <string name="default_notification_channel_name">Marketplace Notifications</string>
-    
-    <!-- File provider authority -->
+
     <string name="file_provider_authority">com.khilonjiya.marketplace.fileprovider</string>
 </resources>
