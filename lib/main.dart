@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:sizer/sizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'services/force_update_service.dart';
 
 // Firebase
@@ -23,6 +22,36 @@ class AppConfig {
   static bool get hasSupabase =>
       supabaseUrl.trim().isNotEmpty &&
       supabaseAnonKey.trim().isNotEmpty;
+}
+
+/// =============================================================
+/// SAVE FCM TOKEN — call this after every login and on startup
+/// One row per user — upsert on user_id replaces old token
+/// =============================================================
+Future<void> saveFcmToken() async {
+  try {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    final messaging = FirebaseMessaging.instance;
+    final token = await messaging.getToken();
+    if (token == null) return;
+
+    await Supabase.instance.client
+        .from('user_devices')
+        .upsert(
+          {
+            "user_id": user.id,
+            "fcm_token": token,
+            "platform": "android",
+          },
+          onConflict: 'user_id',
+        );
+
+    print("✅ FCM token saved for user ${user.id}");
+  } catch (e) {
+    print("❌ FCM save error: $e");
+  }
 }
 
 /// =============================================================
@@ -58,7 +87,7 @@ Future<void> _firebaseMessagingBackgroundHandler(
 }
 
 /// =============================================================
-/// PUSH INIT
+/// PUSH INIT — only sets up listeners, token saved via saveFcmToken
 /// =============================================================
 Future<void> initPushNotifications() async {
   final messaging = FirebaseMessaging.instance;
@@ -69,47 +98,35 @@ Future<void> initPushNotifications() async {
     sound: true,
   );
 
-  final token = await messaging.getToken();
-  print("FCM TOKEN: $token");
+  // Save token if user is already logged in (returning user)
+  await saveFcmToken();
 
-  // Only save token once — check if already saved
-  final prefs = await SharedPreferences.getInstance();
-  final alreadySaved = prefs.getBool('fcm_token_saved') ?? false;
-
-  final user = Supabase.instance.client.auth.currentUser;
-
-  if (!alreadySaved && user != null && token != null) {
-    try {
-      await Supabase.instance.client
-          .from('user_devices')
-          .upsert({
-        "user_id": user.id,
-        "fcm_token": token,
-        "platform": "android"
-      });
-      // Mark as saved so we never save again
-      await prefs.setBool('fcm_token_saved', true);
-    } catch (_) {}
-  }
-
-  // Token refresh — always update if token changes
+  // If token rotates, update it
   FirebaseMessaging.instance.onTokenRefresh
       .listen((newToken) async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user != null) {
-      try {
-        await Supabase.instance.client
-            .from('user_devices')
-            .upsert({
-          "user_id": user.id,
-          "fcm_token": newToken,
-          "platform": "android"
-        });
-        await prefs.setBool('fcm_token_saved', true);
-      } catch (_) {}
+    try {
+      final user =
+          Supabase.instance.client.auth.currentUser;
+      if (user == null) return;
+
+      await Supabase.instance.client
+          .from('user_devices')
+          .upsert(
+            {
+              "user_id": user.id,
+              "fcm_token": newToken,
+              "platform": "android",
+            },
+            onConflict: 'user_id',
+          );
+
+      print("✅ FCM token refreshed");
+    } catch (e) {
+      print("❌ FCM refresh error: $e");
     }
   });
 
+  // Foreground notifications
   FirebaseMessaging.onMessage
       .listen((RemoteMessage message) async {
     final title =
