@@ -180,7 +180,7 @@ void codeUpdated() {
 
     if (!mounted) return;
 
-await saveFcmToken();
+await saveFcmTokenWithRole('employer');
 Navigator.pushReplacementNamed(context, AppRoutes.home);
 
   } catch (e) {
