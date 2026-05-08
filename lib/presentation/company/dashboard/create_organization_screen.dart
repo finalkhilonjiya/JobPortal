@@ -227,28 +227,28 @@ class _CreateOrganizationScreenState
                   _input(_desc, "About company", maxLines: 4),
                   const SizedBox(height: 24),
                   SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _saving ? null : _create,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _primary,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Text(
-                        _saving ? "Creating..." : "Continue",
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
+  width: double.infinity,
+  child: ElevatedButton(
+    onPressed: _saving ? null : _create,
+    style: ElevatedButton.styleFrom(
+      backgroundColor: _primary,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+    ),
+    child: Text(
+      _saving ? "Creating..." : "Continue",
+      style: const TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w700,
+        color: Colors.white,
+      ),
+    ),
+  ),
+),
                 ],
               ),
             ),
