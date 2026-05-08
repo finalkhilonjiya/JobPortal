@@ -2,8 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sms_autofill/sms_autofill.dart';
-import 'package:khilonjiya_com/main.dart' show saveFcmToken;
-
+import 'package:khilonjiya_com/main.dart' show saveFcmToken, saveFcmTokenWithRole;
 import '../../routes/app_routes.dart';
 import '../../core/auth/user_role.dart';
 import '../../services/mobile_auth_service.dart';
