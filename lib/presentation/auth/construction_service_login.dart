@@ -249,7 +249,7 @@ Widget _header() {
 
 if (!mounted) return;
 
-await saveFcmToken();
+await saveFcmTokenWithRole('construction');
 Navigator.pushReplacementNamed(
   context,
   AppRoutes.constructionHome,
