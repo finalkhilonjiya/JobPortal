@@ -1738,19 +1738,19 @@ Future<List<Map<String, dynamic>>> fetchTopCompanies({
   // ============================================================
 
   Future<int> getUnreadNotificationsCount() async {
-    _ensureAuthenticatedSync();
+  _ensureAuthenticatedSync();
 
-    final userId = _userId();
+  final userId = _userId();
 
-    final res = await _db
-        .from('notifications')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('is_read', false);
+  final res = await _db
+      .from('notifications')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('user_role', 'job_seeker')
+      .eq('is_read', false);
 
-    return (res as List).length;
-  }
-
+  return (res as List).length;
+}
   // ============================================================
   // SUBSCRIPTION (PRO)
   // ============================================================
