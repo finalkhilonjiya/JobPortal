@@ -572,7 +572,6 @@ Widget build(BuildContext context) {
   Widget _noOrg() {
   return Scaffold(
     backgroundColor: const Color(0xFFF7F8FA),
-    // No drawer, no FAB, no bottom bar — completely clean
     body: SafeArea(
       child: Center(
         child: Padding(
@@ -623,8 +622,15 @@ Widget build(BuildContext context) {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF16A34A),
+                    foregroundColor: Colors.white,
                   ),
-                  child: const Text("Create Organization"),
+                  child: const Text(
+                    "Create Organization",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ],
             ),
