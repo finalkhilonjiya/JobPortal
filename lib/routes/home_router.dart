@@ -102,9 +102,7 @@ class _HomeRouterState extends State<HomeRouter> {
       if (!mounted) return;
 
       if (!hasCompany) {
-        // First time employer — go directly to create org.
-        // On success, CreateOrganizationScreen will pop with
-        // companyId. We catch that and go to dashboard.
+        // First time employer — go directly to create org
         final companyId = await Navigator.pushNamed(
           context,
           AppRoutes.createOrganization,
@@ -112,15 +110,24 @@ class _HomeRouterState extends State<HomeRouter> {
 
         if (!mounted) return;
 
-        // Whether they created org or pressed back,
-        // always land on companyDashboard.
-        // Dashboard handles both cases (has org / no org).
+        // User pressed back without creating org —
+        // go back to role selection immediately,
+        // no loading, no retries, no dashboard.
+        if (companyId == null ||
+            companyId.toString().trim().isEmpty) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.roleSelection,
+            (_) => false,
+          );
+          return;
+        }
+
+        // Org created — go to dashboard with companyId
         Navigator.pushReplacementNamed(
           context,
           AppRoutes.companyDashboard,
-          arguments: companyId != null
-              ? {'companyId': companyId.toString()}
-              : null,
+          arguments: {'companyId': companyId.toString()},
         );
         return;
       }
