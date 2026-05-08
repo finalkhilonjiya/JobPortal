@@ -5,6 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../routes/app_routes.dart';
 import '../../../services/mobile_auth_service.dart';
+import '../../services/construction_notification_service.dart';
+import 'construction_notifications_page.dart';
 
 import 'rcc_works_form.dart';
 import 'assam_type_form.dart';
@@ -33,6 +35,9 @@ class _ConstructionServicesHomePageState
   bool _loading = true;
   bool _loadingMore = false;
   bool _hasMore = true;
+  final ValueNotifier<int> _notificationCount = ValueNotifier(0);
+final ConstructionNotificationService _notifService =
+    ConstructionNotificationService();
 
   int _offset = 0;
   final int _limit = 6;
@@ -45,10 +50,11 @@ class _ConstructionServicesHomePageState
   }
 
   @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
+void dispose() {
+  _scrollController.dispose();
+  _notificationCount.dispose();
+  super.dispose();
+}
 
   void _onScroll() {
     if (_loadingMore || !_hasMore) return;
@@ -87,6 +93,8 @@ Future<void> _logout() async {
     _hasMore = res.length == _limit;
     _loading = false;
   });
+
+  await _loadNotificationCount();
 }
   Future<void> _loadMore() async {
   if (!_hasMore) return;
@@ -110,24 +118,100 @@ Future<void> _logout() async {
   });
 }
 
+Future<void> _loadNotificationCount() async {
+  final count = await _notifService.getUnreadCount();
+  if (mounted) _notificationCount.value = count;
+}
+
+Future<void> _openNotifications() async {
+  await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const ConstructionNotificationsPage(),
+    ),
+  );
+  // Refresh count after returning
+  await _loadNotificationCount();
+}
+
   @override
 Widget build(BuildContext context) {
   return Scaffold(
     backgroundColor: Colors.grey[50],
-
     drawer: _drawer(),
-
     appBar: AppBar(
-  backgroundColor: Colors.white,
-  elevation: 0,
-  leading: Builder(
-    builder: (context) => IconButton(
-      icon: const Icon(Icons.menu, color: Colors.black),
-      onPressed: () => Scaffold.of(context).openDrawer(),
+      backgroundColor: Colors.white,
+      elevation: 0,
+      leading: Builder(
+        builder: (context) => IconButton(
+          icon: const Icon(Icons.menu, color: Colors.black),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
+      ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: InkWell(
+            onTap: _openNotifications,
+            borderRadius: BorderRadius.circular(999),
+            child: Stack(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: const Color(0xFFE5E7EB),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.notifications_none_outlined,
+                    size: 22,
+                    color: Color(0xFF334155),
+                  ),
+                ),
+                ValueListenableBuilder<int>(
+                  valueListenable: _notificationCount,
+                  builder: (_, count, __) {
+                    if (count <= 0) return const SizedBox();
+                    return Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 2,
+                        ),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFEF4444),
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 18,
+                          minHeight: 18,
+                        ),
+                        child: Center(
+                          child: Text(
+                            count > 9 ? '9+' : count.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     ),
-  ),
-),
-
     body: _loading
         ? const Center(child: CircularProgressIndicator())
         : SingleChildScrollView(
@@ -135,18 +219,15 @@ Widget build(BuildContext context) {
             child: Column(
               children: [
                 _header(),
-
                 _buildWelcomeBanner(),
                 _buildServicesGrid(context),
                 _buildSliderSection(),
                 _buildFeaturesSection(),
-
                 if (_loadingMore)
                   Padding(
                     padding: EdgeInsets.symmetric(vertical: 4.h),
                     child: const CircularProgressIndicator(),
                   ),
-
                 SizedBox(height: 10.h),
               ],
             ),
