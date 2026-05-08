@@ -385,6 +385,7 @@ String _safeString(dynamic v) {
       .from('notifications')
       .select('id')
       .eq('user_id', user.id)
+      .eq('user_role', 'employer')
       .eq('is_read', false);
 
   final list = _safeList(res);
