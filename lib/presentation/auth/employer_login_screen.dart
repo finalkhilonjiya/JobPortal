@@ -6,7 +6,7 @@ import '../../routes/app_routes.dart';
 import '../../core/auth/user_role.dart';
 import '../../services/mobile_auth_service.dart';
 import 'package:sms_autofill/sms_autofill.dart';
-import 'package:khilonjiya_com/main.dart' show saveFcmToken;
+import 'package:khilonjiya_com/main.dart' show saveFcmToken, saveFcmTokenWithRole;
 
 class EmployerLoginScreen extends StatefulWidget {
   const EmployerLoginScreen({Key? key}) : super(key: key);
