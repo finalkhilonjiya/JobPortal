@@ -196,7 +196,7 @@ try {
 
 if (!mounted) return;
 
-await saveFcmToken();
+await saveFcmTokenWithRole('jobSeeker');
 Navigator.pushReplacementNamed(context, AppRoutes.home);
 } catch (e) {  
   setState(() {  
