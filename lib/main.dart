@@ -137,13 +137,23 @@ Future<void> initPushNotifications() async {
   // Save token if user is already logged in (returning user)
   await saveFcmToken();
 
-  // If token rotates, update it
+  // If token rotates, update it and preserve active_role
   FirebaseMessaging.instance.onTokenRefresh
       .listen((newToken) async {
     try {
       final user =
           Supabase.instance.client.auth.currentUser;
       if (user == null) return;
+
+      // Fetch existing active_role so we don't lose it
+      final existing = await Supabase.instance.client
+          .from('user_devices')
+          .select('active_role')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+      final activeRole =
+          existing?['active_role']?.toString();
 
       await Supabase.instance.client
           .from('user_devices')
@@ -152,6 +162,9 @@ Future<void> initPushNotifications() async {
               "user_id": user.id,
               "fcm_token": newToken,
               "platform": "android",
+              if (activeRole != null &&
+                  activeRole.isNotEmpty)
+                "active_role": activeRole,
             },
             onConflict: 'user_id',
           );
