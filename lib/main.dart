@@ -37,13 +37,6 @@ Future<void> saveFcmToken() async {
     final token = await messaging.getToken();
     if (token == null) return;
 
-    // Read the active role from secure storage
-    final prefs = await SharedPreferences.getInstance();
-    // Role is stored by MobileAuthService under 'user_role' key
-    // We read it from FlutterSecureStorage — but since saveFcmToken
-    // is called right after login, we pass the role as a parameter.
-    // See saveFcmTokenWithRole() below.
-
     await Supabase.instance.client
         .from('user_devices')
         .upsert(
@@ -51,7 +44,6 @@ Future<void> saveFcmToken() async {
             "user_id": user.id,
             "fcm_token": token,
             "platform": "android",
-            // active_role will be set by saveFcmTokenWithRole
           },
           onConflict: 'user_id',
         );
@@ -61,7 +53,6 @@ Future<void> saveFcmToken() async {
     print("❌ FCM save error: $e");
   }
 }
-
 // Call this from login screens instead of saveFcmToken()
 Future<void> saveFcmTokenWithRole(String role) async {
   try {
