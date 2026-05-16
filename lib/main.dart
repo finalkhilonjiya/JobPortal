@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:sizer/sizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'services/force_update_service.dart';
+import 'screens/force_update_screen.dart';
 
 // Firebase
 import 'package:firebase_core/firebase_core.dart';
@@ -295,6 +296,19 @@ class _AppInitializerState extends State<AppInitializer> {
   Future<void> _bootstrap() async {
     try {
       await ForceUpdateService.check();
+
+      // 🔴 Force update check — blocks everything if update is required
+      if (ForceUpdateService.updateRequired) {
+        if (!mounted) return;
+        // Remove ALL routes from stack — no back button can escape
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => const ForceUpdateScreen(),
+          ),
+          (_) => false,
+        );
+        return;
+      }
 
       if (!AppConfig.hasSupabase) {
         _go(AppRoutes.roleSelection);
