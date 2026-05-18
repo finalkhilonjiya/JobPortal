@@ -1,4 +1,5 @@
 <!-- File: android/app/src/main/AndroidManifest.xml -->
+
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.khilonjiya.marketplace">
@@ -10,7 +11,6 @@
 
     <!-- Core -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="com.android.vending.BILLING" />
 
     <!-- Network -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -36,23 +36,25 @@
         android:theme="@style/LaunchTheme"
         android:usesCleartextTraffic="true">
 
-        <!-- ✅ PUSH ICON (use white transparent icon ideally) -->
+        <!-- PUSH ICON -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@mipmap/ic_launcher" />
 
-        <!-- ✅ Notification channel -->
+        <!-- Notification channel -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="high_importance_channel"/>
 
-        <!-- ✅ Firebase Messaging Service (CRITICAL FIX) -->
+        <!-- Firebase Messaging Service -->
         <service
             android:name="com.google.firebase.messaging.FirebaseMessagingService"
             android:exported="false">
+
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT"/>
             </intent-filter>
+
         </service>
 
         <!-- Google Sign In -->
@@ -95,7 +97,9 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="com.khilonjiya.marketplace" />
+
+                <data
+                    android:scheme="com.khilonjiya.marketplace" />
             </intent-filter>
 
         </activity>
@@ -110,6 +114,7 @@
             <meta-data
                 android:name="androidx.core.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
+
         </provider>
 
     </application>
