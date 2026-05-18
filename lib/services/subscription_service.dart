@@ -9,11 +9,14 @@ class SubscriptionService {
   final SupabaseClient _db = Supabase.instance.client;
 
   /// ============================================================
-  /// GOOGLE VERIFY EDGE FUNCTION
+  /// RAZORPAY EDGE FUNCTIONS
   /// ============================================================
 
-  static const String _googleVerifyUrl =
-      "https://rsskivonmfqrzxbmxrkl.supabase.co/functions/v1/verify-google-subscription";
+  static const String _createOrderUrl =
+      "https://rsskivonmfqrzxbmxrkl.supabase.co/functions/v1/create-razorpay-order";
+
+  static const String _verifyPaymentUrl =
+      "https://rsskivonmfqrzxbmxrkl.supabase.co/functions/v1/verify-razorpay-payment";
 
   // ============================================================
   // AUTH
@@ -31,42 +34,46 @@ class SubscriptionService {
   }
 
   // ============================================================
-  // ✅ GET ACTIVE SUBSCRIPTION
+  // GET ACTIVE SUBSCRIPTION
   // ============================================================
 
   Future<Map<String, dynamic>?> getMySubscription() async {
-  final uid = _uid();
 
-  final res = await _db
-      .from('user_subscriptions')
-      .select('''
-        user_id,
-        status,
-        plan_name,
-        started_at,
-        expires_at,
-        purchase_token
-      ''')
-      .eq('user_id', uid)
-      .order('expires_at', ascending: false)
-      .limit(1)
-      .maybeSingle();
+    final uid = _uid();
 
-  if (res == null) return null;
+    final res = await _db
+        .from('user_subscriptions')
+        .select('''
+          user_id,
+          status,
+          plan_name,
+          started_at,
+          expires_at,
+          razorpay_order_id,
+          razorpay_payment_id
+        ''')
+        .eq('user_id', uid)
+        .order('expires_at', ascending: false)
+        .limit(1)
+        .maybeSingle();
 
-  return Map<String, dynamic>.from(res);
-}
+    if (res == null) return null;
+
+    return Map<String, dynamic>.from(res);
+  }
 
   // ============================================================
-  // ✅ CHECK ACTIVE ACCESS
+  // CHECK ACTIVE ACCESS
   // ============================================================
 
   Future<bool> isProActive() async {
 
     final sub = await getMySubscription();
+
     if (sub == null) return false;
 
     final expiresRaw = sub['expires_at'];
+
     if (expiresRaw == null) return false;
 
     final expires =
@@ -78,13 +85,50 @@ class SubscriptionService {
   }
 
   // ============================================================
-  // ✅ GOOGLE PLAY ONE-TIME PURCHASE VERIFY
+  // CREATE RAZORPAY ORDER
   // ============================================================
 
-  Future<void> verifyOneTimePurchase({
-    required String purchaseToken,
-    required String productId,
-    required String orderId,
+  Future<Map<String, dynamic>> createRazorpayOrder() async {
+
+    _ensureAuth();
+
+    final session = _db.auth.currentSession;
+
+    if (session == null) {
+      throw Exception("Session missing");
+    }
+
+    final response = await http.post(
+      Uri.parse(_createOrderUrl),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization":
+            "Bearer ${session.accessToken}",
+      },
+    );
+
+    final body = jsonDecode(response.body);
+
+    if (response.statusCode != 200 ||
+        body["success"] != true) {
+
+      throw Exception(
+        body["error"] ??
+            "Failed to create Razorpay order",
+      );
+    }
+
+    return Map<String, dynamic>.from(body);
+  }
+
+  // ============================================================
+  // VERIFY RAZORPAY PAYMENT
+  // ============================================================
+
+  Future<void> verifyRazorpayPayment({
+    required String razorpayOrderId,
+    required String razorpayPaymentId,
+    required String razorpaySignature,
   }) async {
 
     _ensureAuth();
@@ -96,17 +140,16 @@ class SubscriptionService {
     }
 
     final response = await http.post(
-      Uri.parse(_googleVerifyUrl),
+      Uri.parse(_verifyPaymentUrl),
       headers: {
         "Content-Type": "application/json",
         "Authorization":
             "Bearer ${session.accessToken}",
       },
       body: jsonEncode({
-        "product_id": productId,
-        "purchase_token": purchaseToken,
-        "order_id": orderId,
-        "purchase_type": "one_time"
+        "razorpay_order_id": razorpayOrderId,
+        "razorpay_payment_id": razorpayPaymentId,
+        "razorpay_signature": razorpaySignature,
       }),
     );
 
@@ -117,30 +160,13 @@ class SubscriptionService {
 
       throw Exception(
         body["error"] ??
-            "Google Play verification failed",
+            "Payment verification failed",
       );
     }
   }
 
   // ============================================================
-  // ✅ LEGACY (KEEP SAFE)
-  // ============================================================
-
-  Future<void> verifyPlayStorePurchase({
-    required String purchaseToken,
-    required String productId,
-    required String orderId,
-  }) async {
-
-    await verifyOneTimePurchase(
-      purchaseToken: purchaseToken,
-      productId: productId,
-      orderId: orderId,
-    );
-  }
-
-  // ============================================================
-  // ✅ FORCE REFRESH
+  // FORCE REFRESH
   // ============================================================
 
   Future<void> refreshSubscription() async {
