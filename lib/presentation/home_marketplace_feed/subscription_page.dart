@@ -1,15 +1,16 @@
-import 'dart:async';
+// File: lib/presentation/subscription/subscription_page.dart
+
 import 'package:flutter/material.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:in_app_purchase_android/in_app_purchase_android.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 import '../../core/ui/khilonjiya_ui.dart';
 import '../../services/subscription_service.dart';
 
 class SubscriptionPage extends StatefulWidget {
-  const SubscriptionPage({Key? key}) : super(key: key);
 
-  static const String productId = "khilonjiya_pro_subscription";
+  const SubscriptionPage({Key? key})
+      : super(key: key);
+
   @override
   State<SubscriptionPage> createState() =>
       _SubscriptionPageState();
@@ -21,14 +22,7 @@ class _SubscriptionPageState
   final SubscriptionService _service =
       SubscriptionService();
 
-  final InAppPurchase _iap =
-      InAppPurchase.instance;
- bool _processingPurchase = false;
-
-  StreamSubscription<List<PurchaseDetails>>?
-      _purchaseSub;
-
-  ProductDetails? _product;
+  late Razorpay _razorpay;
 
   bool _loading = true;
   bool _paying = false;
@@ -40,163 +34,271 @@ class _SubscriptionPageState
   DateTime? _expiry;
   int _daysLeft = 0;
 
+  String _priceText = "₹999";
+
   @override
   void initState() {
     super.initState();
+
+    _razorpay = Razorpay();
+
+    _razorpay.on(
+      Razorpay.EVENT_PAYMENT_SUCCESS,
+      _handlePaymentSuccess,
+    );
+
+    _razorpay.on(
+      Razorpay.EVENT_PAYMENT_ERROR,
+      _handlePaymentError,
+    );
+
+    _razorpay.on(
+      Razorpay.EVENT_EXTERNAL_WALLET,
+      _handleExternalWallet,
+    );
+
     _init();
   }
 
   @override
   void dispose() {
-    _purchaseSub?.cancel();
+
+    _razorpay.clear();
+
     super.dispose();
   }
 
   Future<void> _init() async {
+
     await _loadSubscription();
-    await _initBilling();
   }
 
-  Future<void> _initBilling() async {
-  if (!await _iap.isAvailable()) return;
+  // =========================================================
+  // LOAD SUBSCRIPTION
+  // =========================================================
 
-  final response =
-      await _iap.queryProductDetails({
-    SubscriptionPage.productId
-  });
+  Future<void> _loadSubscription() async {
 
-  if (response.productDetails.isNotEmpty) {
-    _product = response.productDetails.first;
+    setState(() {
+      _loading = true;
+      _isActive = false;
+    });
+
+    final sub =
+        await _service.getMySubscription();
+
+    if (sub != null) {
+
+      final exp =
+          DateTime.tryParse(
+        sub['expires_at'].toString(),
+      );
+
+      final now = DateTime.now();
+
+      if (
+          exp != null &&
+          exp.isAfter(now)
+      ) {
+
+        _expiry = exp;
+
+        _daysLeft =
+            exp.difference(now).inDays;
+
+        _isActive = true;
+      }
+    }
+
+    setState(() {
+      _loading = false;
+    });
   }
 
-  _purchaseSub =
-      _iap.purchaseStream.listen(
-    _handlePurchaseUpdates,
-  );
-
-  // ❌ DO NOT ADD restorePurchases ANYWHERE
-}
+  // =========================================================
+  // START PAYMENT
+  // =========================================================
 
   Future<void> _startPayment() async {
-  if (!_agreed) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Accept terms first")),
-    );
-    return;
-  }
 
-  if (_product == null) return;
+    if (!_agreed) {
 
-  setState(() => _paying = true);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content:
+              Text("Accept terms first"),
+        ),
+      );
 
-  await _iap.buyConsumable(
-    purchaseParam: PurchaseParam(productDetails: _product!),
-    autoConsume: false, // IMPORTANT: we will manually consume
-  );
-}
+      return;
+    }
 
-  Future<void> _handlePurchaseUpdates(
-List<PurchaseDetails> purchases,
-) async {
-for (final purchase in purchases) {
+    try {
 
-// prevent duplicate execution
-if (_processingPurchase) return;
+      setState(() {
+        _paying = true;
+      });
 
-if (purchase.status != PurchaseStatus.purchased ||
-    !purchase.pendingCompletePurchase) {
-  continue;
-}
+      final order =
+          await _service
+              .createRazorpayOrder();
 
-_processingPurchase = true;
+      final options = {
 
-try {
-  // ======================================================
-  // ✅ CORRECT GOOGLE PURCHASE TOKEN
-  // ======================================================
-  final purchaseToken =
-      (purchase as GooglePlayPurchaseDetails)
-          .billingClientPurchase
-          .purchaseToken;
+        'key': order['key_id'],
 
-  // DEBUG
-  print("🔥 PURCHASE TOKEN: $purchaseToken");
+        'amount': order['amount'],
 
-  // ======================================================
-  // VERIFY WITH BACKEND
-  // ======================================================
-  await _service.verifyPlayStorePurchase(
-    purchaseToken: purchaseToken,
-    productId: purchase.productID,
-    orderId: purchase.purchaseID ?? "",
-  );
+        'currency': order['currency'],
 
-  // ======================================================
-  // CONSUME (ANDROID ONLY)
-  // ======================================================
-  final androidAddition =
-      _iap.getPlatformAddition<
-          InAppPurchaseAndroidPlatformAddition>();
+        'name': 'Khilonjiya',
 
-  await androidAddition.consumePurchase(purchase);
+        'description':
+            'Khilonjiya Pro Subscription',
 
-  // ======================================================
-  // COMPLETE PURCHASE
-  // ======================================================
-  await _iap.completePurchase(purchase);
+        'order_id': order['order_id'],
 
-  // ======================================================
-  // RELOAD SUBSCRIPTION
-  // ======================================================
-  await _loadSubscription();
+        'prefill': {
+          'contact': '',
+          'email': '',
+        },
 
-  if (mounted) {
-    Navigator.pop(context, true);
-  }
+        'theme': {
+          'color': '#0F172A',
+        },
 
-} catch (e) {
-  print("❌ VERIFY FAILED: $e");
+        'retry': {
+          'enabled': true,
+          'max_count': 2,
+        },
 
-  if (mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Payment verification failed"),
-      ),
-    );
-  }
-} finally {
-  _processingPurchase = false;
-}
+        'send_sms_hash': true,
 
-}
+        'allow_rotation': false,
+      };
 
-if (mounted) {
-setState(() => _paying = false);
-}
-}
-  Future<void> _loadSubscription() async {
-  setState(() {
-    _loading = true;
-    _isActive = false; // ✅ add this
-  });
+      _razorpay.open(options);
 
-  final sub = await _service.getMySubscription();
+    } catch (e) {
 
-  if (sub != null) {
-    final exp =
-        DateTime.tryParse(sub['expires_at'].toString());
+      setState(() {
+        _paying = false;
+      });
 
-    final now = DateTime.now();
-
-    if (exp != null && exp.isAfter(now)) {
-      _expiry = exp;
-      _daysLeft = exp.difference(now).inDays;
-      _isActive = true;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString(),
+          ),
+        ),
+      );
     }
   }
 
-  setState(() => _loading = false);
-}
+  // =========================================================
+  // PAYMENT SUCCESS
+  // =========================================================
+
+  Future<void> _handlePaymentSuccess(
+    PaymentSuccessResponse response,
+  ) async {
+
+    try {
+
+      await _service.verifyRazorpayPayment(
+        razorpayOrderId:
+            response.orderId ?? "",
+
+        razorpayPaymentId:
+            response.paymentId ?? "",
+
+        razorpaySignature:
+            response.signature ?? "",
+      );
+
+      await _loadSubscription();
+
+      if (!mounted) return;
+
+      setState(() {
+        _paying = false;
+        _showTerms = false;
+      });
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Subscription activated successfully",
+          ),
+        ),
+      );
+
+    } catch (e) {
+
+      if (!mounted) return;
+
+      setState(() {
+        _paying = false;
+      });
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            "Verification failed: $e",
+          ),
+        ),
+      );
+    }
+  }
+
+  // =========================================================
+  // PAYMENT ERROR
+  // =========================================================
+
+  void _handlePaymentError(
+    PaymentFailureResponse response,
+  ) {
+
+    setState(() {
+      _paying = false;
+    });
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
+      SnackBar(
+        content: Text(
+          response.message ??
+              "Payment failed",
+        ),
+      ),
+    );
+  }
+
+  // =========================================================
+  // EXTERNAL WALLET
+  // =========================================================
+
+  void _handleExternalWallet(
+    ExternalWalletResponse response,
+  ) {
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
+      SnackBar(
+        content: Text(
+          "External Wallet: ${response.walletName}",
+        ),
+      ),
+    );
+  }
+
+  // =========================================================
+  // SUBSCRIBE BUTTON
+  // =========================================================
 
   void _onSubscribePressed() {
 
@@ -207,15 +309,20 @@ setState(() => _paying = false);
     });
   }
 
+  // =========================================================
+  // UI
+  // =========================================================
+
   @override
   Widget build(BuildContext context) {
 
     return Scaffold(
+
       backgroundColor:
           KhilonjiyaUI.bg,
+
       appBar: AppBar(
-        backgroundColor:
-            Colors.white,
+        backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
           "Khilonjiya Pro",
@@ -223,31 +330,45 @@ setState(() => _paying = false);
               KhilonjiyaUI.cardTitle,
         ),
       ),
+
       body: _loading
           ? const Center(
               child:
-                  CircularProgressIndicator())
+                  CircularProgressIndicator(),
+            )
           : ListView(
               padding:
                   const EdgeInsets.all(
-                      16),
+                16,
+              ),
               children: [
+
                 _heroCard(),
 
-                if (!_isActive &&
-                    _showTerms) ...[
+                if (
+                    !_isActive &&
+                    _showTerms
+                ) ...[
                   const SizedBox(
-                      height: 16),
+                    height: 16,
+                  ),
+
                   _terms(),
                 ],
 
                 const SizedBox(
-                    height: 16),
+                  height: 16,
+                ),
+
                 _features(),
               ],
             ),
     );
   }
+
+  // =========================================================
+  // HERO CARD
+  // =========================================================
 
   Widget _heroCard() {
 
@@ -256,28 +377,33 @@ setState(() => _paying = false);
         : "30 Days Pro Access";
 
     return Container(
+
       padding:
-          const EdgeInsets.all(
-              16),
+          const EdgeInsets.all(16),
+
       decoration:
           KhilonjiyaUI
               .cardDecoration(),
+
       child: Column(
         crossAxisAlignment:
-            CrossAxisAlignment
-                .start,
+            CrossAxisAlignment.start,
         children: [
 
-          Text("Khilonjiya Pro",
-              style:
-                  KhilonjiyaUI
-                      .cardTitle),
+          Text(
+            "Khilonjiya Pro",
+            style:
+                KhilonjiyaUI
+                    .cardTitle,
+          ),
 
           const SizedBox(height: 6),
 
-          Text(subtitle,
-              style:
-                  KhilonjiyaUI.sub),
+          Text(
+            subtitle,
+            style:
+                KhilonjiyaUI.sub,
+          ),
 
           if (_expiry != null)
             Text(
@@ -289,34 +415,51 @@ setState(() => _paying = false);
           const SizedBox(height: 14),
 
           Text(
-  _product?.price ?? "₹9",
-  style: KhilonjiyaUI
-      .cardTitle
-      .copyWith(fontSize: 22),
-),
+            _priceText,
+            style:
+                KhilonjiyaUI
+                    .cardTitle
+                    .copyWith(
+              fontSize: 22,
+            ),
+          ),
 
           const SizedBox(height: 14),
 
           SizedBox(
-            width:
-                double.infinity,
+            width: double.infinity,
             height: 46,
-            child:
-                ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: KhilonjiyaUI.primary,
-                foregroundColor: Colors.white,
+
+            child: ElevatedButton(
+
+              style:
+                  ElevatedButton
+                      .styleFrom(
+                backgroundColor:
+                    KhilonjiyaUI
+                        .primary,
+
+                foregroundColor:
+                    Colors.white,
               ),
+
               onPressed:
                   (_paying ||
                           _isActive)
                       ? null
                       : _onSubscribePressed,
+
               child: _paying
-                  ? const CircularProgressIndicator(
-                      color:
-                          Colors
-                              .white)
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child:
+                          CircularProgressIndicator(
+                        color:
+                            Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
                   : Text(
                       _isActive
                           ? "Subscribed"
@@ -329,19 +472,25 @@ setState(() => _paying = false);
     );
   }
 
+  // =========================================================
+  // TERMS
+  // =========================================================
+
   Widget _terms() {
 
     return Container(
+
       padding:
-          const EdgeInsets.all(
-              14),
+          const EdgeInsets.all(14),
+
       decoration:
           KhilonjiyaUI
               .cardDecoration(),
+
       child: Column(
         crossAxisAlignment:
-            CrossAxisAlignment
-                .start,
+            CrossAxisAlignment.start,
+
         children: [
 
           Text(
@@ -363,22 +512,30 @@ setState(() => _paying = false);
 • Subscription validity is 30 days from purchase.
 • Payment once completed is non-refundable.
 • Misuse or fraudulent activity may terminate access.
-"""),
+""",
+          ),
 
           const SizedBox(height: 12),
 
           Row(
             children: [
+
               Checkbox(
                 value: _agreed,
-                onChanged: (v) =>
-                    setState(() =>
-                        _agreed =
-                            v ?? false),
+
+                onChanged: (v) {
+
+                  setState(() {
+                    _agreed =
+                        v ?? false;
+                  });
+                },
               ),
+
               const Expanded(
                 child: Text(
-                    "I agree to the terms and conditions"),
+                  "I agree to the terms and conditions",
+                ),
               )
             ],
           ),
@@ -386,19 +543,32 @@ setState(() => _paying = false);
           const SizedBox(height: 10),
 
           SizedBox(
+
             width: double.infinity,
             height: 44,
+
             child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: KhilonjiyaUI.primary,
-                foregroundColor: Colors.white,
+
+              style:
+                  ElevatedButton
+                      .styleFrom(
+                backgroundColor:
+                    KhilonjiyaUI
+                        .primary,
+
+                foregroundColor:
+                    Colors.white,
               ),
+
               onPressed:
-                  (_agreed && !_paying)
+                  (_agreed &&
+                          !_paying)
                       ? _startPayment
                       : null,
+
               child: const Text(
-                  "Continue to Payment"),
+                "Continue to Payment",
+              ),
             ),
           )
         ],
@@ -406,38 +576,62 @@ setState(() => _paying = false);
     );
   }
 
+  // =========================================================
+  // FEATURES
+  // =========================================================
+
   Widget _features() {
+
     Widget item(
-        IconData i,
-        String t,
-        String s) =>
-        ListTile(
-          leading: Icon(i,
-              color:
-                  KhilonjiyaUI
-                      .primary),
-          title: Text(t),
-          subtitle: Text(s),
-        );
+      IconData i,
+      String t,
+      String s,
+    ) {
+
+      return ListTile(
+        leading: Icon(
+          i,
+          color:
+              KhilonjiyaUI.primary,
+        ),
+
+        title: Text(t),
+
+        subtitle: Text(s),
+      );
+    }
 
     return Column(
+
       crossAxisAlignment:
-          CrossAxisAlignment
-              .start,
+          CrossAxisAlignment.start,
+
       children: [
-        Text("Benefits",
-            style:
-                KhilonjiyaUI
-                    .cardTitle),
-        item(Icons.bolt,
-            "Priority Applications",
-            "Higher visibility"),
-        item(Icons.lock_open,
-            "Premium Jobs",
-            "Exclusive listings"),
-        item(Icons.verified,
-            "Verified Employers",
-            "Trusted hiring"),
+
+        Text(
+          "Benefits",
+          style:
+              KhilonjiyaUI
+                  .cardTitle,
+        ),
+
+        item(
+          Icons.bolt,
+          "Priority Applications",
+          "Higher visibility",
+        ),
+
+        item(
+          Icons.lock_open,
+          "Full interview tracking from support team",
+          "Exclusive job alert",
+        ),
+
+        item(
+          Icons.verified,
+          "Verified Employers",
+          "Trusted hiring",
+        ),
       ],
     );
   }
