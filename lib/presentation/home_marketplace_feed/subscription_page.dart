@@ -510,6 +510,7 @@ class _SubscriptionPageState
 • Calls, interviews and hiring decisions are made only by employers.
 • Application status updates will be notified inside the app.
 • Subscription validity is 30 days from purchase.
+. Khilonjiya support team will be monitoring and tracking you applications and coordinate for interviews when called by the employer.
 • Payment once completed is non-refundable.
 • Misuse or fraudulent activity may terminate access.
 """,
