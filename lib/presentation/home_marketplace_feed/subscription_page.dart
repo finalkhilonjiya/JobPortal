@@ -504,17 +504,18 @@ class _SubscriptionPageState
 
           const Text(
 """
-• Khilonjiya is a job discovery platform only.
-• Subscription DOES NOT guarantee a job.
-• Employers independently shortlist candidates.
-• Calls, interviews and hiring decisions are made only by employers.
-• Application status updates will be notified inside the app.
-• Subscription validity is 30 days from purchase.
-. Khilonjiya support team will be monitoring and tracking you applications and coordinate for interviews when called by the employer.
-• Payment once completed is non-refundable.
-• Misuse or fraudulent activity may terminate access.
+• Khilonjiya is a job discovery and hiring assistance platform only.
+• Subscription does NOT guarantee job placement or employment.
+• Final hiring decisions are made solely by employers.
+• Employers independently shortlist and contact candidates.
+• Interview calls and application updates will be notified inside the app.
+• Khilonjiya support team will assist in coordinating interviews and application follow-ups.
+• Subscription validity is 30 days from the date of purchase. Users can apply all available jobs during the period as per qualification required.
+• Subscription fees are non-refundable once payment is completed.
+• Any misuse, fraudulent activity, fake applications, or policy violations may result in account suspension without refund.
+• By proceeding, you agree to the platform’s terms and conditions.
 """,
-          ),
+),
 
           const SizedBox(height: 12),
 
@@ -625,7 +626,7 @@ class _SubscriptionPageState
         item(
           Icons.lock_open,
           "Full interview tracking from support team",
-          "Exclusive job alert",
+          "Exclusive support for each application",
         ),
 
         item(
