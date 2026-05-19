@@ -158,44 +158,45 @@ class _ConstructionServiceLoginState
 Widget _header() {
   return Column(
     children: [
-      // LOGO
+      // ================= LOGO =================
       Container(
-        width: 72,
-        height: 72,
+        width: 90,
+        height: 90,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          color: Colors.white,
+          shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
-        padding: const EdgeInsets.all(10),
-        child: Image.asset(
-          'assets/icons/app_icon.png',
-          fit: BoxFit.contain,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(100),
+          child: Image.asset(
+            'assets/icons/app_icon.png',
+            fit: BoxFit.cover,
+          ),
         ),
       ),
 
-      const SizedBox(height: 16),
+      const SizedBox(height: 24),
 
-      // APP NAME
+      // ================= APP NAME =================
       const Text(
         'Khilonjiya',
         style: TextStyle(
-          fontSize: 26,
+          fontSize: 28,
           fontWeight: FontWeight.w900,
           color: _primary,
           letterSpacing: -0.4,
         ),
       ),
 
-      const SizedBox(height: 4),
+      const SizedBox(height: 6),
 
-      // SUBTITLE
+      // ================= SUBTITLE =================
       const Text(
         'Construction Service',
         style: TextStyle(
@@ -207,15 +208,15 @@ Widget _header() {
 
       const SizedBox(height: 8),
 
-      // TAGLINE
+      // ================= TAGLINE =================
       const Text(
-  'Find trusted construction services near you',
-  textAlign: TextAlign.center,
-  style: TextStyle(
-    fontSize: 14.5,
-    color: Color(0xFF64748B),
-  ),
-),
+        'Find trusted construction services near you',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 14.5,
+          color: Color(0xFF64748B),
+        ),
+      ),
     ],
   );
 }
