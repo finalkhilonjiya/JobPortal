@@ -329,40 +329,42 @@ Widget build(BuildContext context) {
 Widget _header() {
   return Column(
     children: [
+      // ================= LOGO =================
       Container(
-        width: 72,
-        height: 72,
+        width: 90,
+        height: 90,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          color: Colors.white,
+          shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
-        padding: const EdgeInsets.all(10),
-        child: Image.asset(
-          'assets/icons/app_icon.png',
-          fit: BoxFit.contain,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(100),
+          child: Image.asset(
+            'assets/icons/app_icon.png',
+            fit: BoxFit.cover,
+          ),
         ),
       ),
 
-      const SizedBox(height: 16),
+      const SizedBox(height: 24),
 
       const Text(
         'Khilonjiya',
         style: TextStyle(
-          fontSize: 26,
+          fontSize: 28,
           fontWeight: FontWeight.w900,
           color: Color(0xFF2563EB),
           letterSpacing: -0.4,
         ),
       ),
 
-      const SizedBox(height: 4),
+      const SizedBox(height: 6),
 
       const Text(
         'Job Seeker Login',
