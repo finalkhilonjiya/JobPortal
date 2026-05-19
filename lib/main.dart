@@ -294,41 +294,65 @@ class _AppInitializerState extends State<AppInitializer> {
   }
 
   Future<void> _bootstrap() async {
-    try {
-      await ForceUpdateService.check();
 
-      // 🔴 Force update check — blocks everything if update is required
-      if (ForceUpdateService.updateRequired) {
-        if (!mounted) return;
-        // Remove ALL routes from stack — no back button can escape
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (_) => const ForceUpdateScreen(),
-          ),
-          (_) => false,
-        );
-        return;
-      }
+  try {
 
-      if (!AppConfig.hasSupabase) {
-        _go(AppRoutes.roleSelection);
-        return;
-      }
+    await ForceUpdateService.check();
 
-      final client = Supabase.instance.client;
-      final session = client.auth.currentSession;
-      final user = client.auth.currentUser;
+    // =====================================================
+    // FORCE UPDATE BLOCK
+    // =====================================================
 
-      if (session != null && user != null) {
-        _go(AppRoutes.home);
-        return;
-      }
+    if (ForceUpdateService.updateRequired) {
 
-      _go(AppRoutes.roleSelection);
-    } catch (_) {
-      _go(AppRoutes.roleSelection);
+      if (!mounted) return;
+
+      await Navigator.of(context).pushAndRemoveUntil(
+
+        MaterialPageRoute(
+          builder: (_) => const ForceUpdateScreen(),
+        ),
+
+        (route) => false,
+      );
+
+      return;
     }
+
+    // =====================================================
+    // NORMAL FLOW
+    // =====================================================
+
+    if (!AppConfig.hasSupabase) {
+
+      _go(AppRoutes.roleSelection);
+
+      return;
+    }
+
+    final client =
+        Supabase.instance.client;
+
+    final session =
+        client.auth.currentSession;
+
+    final user =
+        client.auth.currentUser;
+
+    if (session != null && user != null) {
+
+      _go(AppRoutes.home);
+
+      return;
+    }
+
+    _go(AppRoutes.roleSelection);
+
+  } catch (_) {
+
+    _go(AppRoutes.roleSelection);
   }
+}
 
   void _go(String route) {
     if (!mounted || _navigated) return;
