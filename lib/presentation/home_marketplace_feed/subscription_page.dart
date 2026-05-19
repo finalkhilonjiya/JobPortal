@@ -121,81 +121,149 @@ class _SubscriptionPageState
 
   Future<void> _startPayment() async {
 
-    if (!_agreed) {
+  if (!_agreed) {
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        const SnackBar(
-          content:
-              Text("Accept terms first"),
-        ),
-      );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
+      const SnackBar(
+        content: Text("Accept terms first"),
+      ),
+    );
 
-      return;
-    }
-
-    try {
-
-      setState(() {
-        _paying = true;
-      });
-
-      final order =
-          await _service
-              .createRazorpayOrder();
-
-      final options = {
-
-        'key': order['key_id'],
-
-        'amount': order['amount'],
-
-        'currency': order['currency'],
-
-        'name': 'Khilonjiya',
-
-        'description':
-            'Khilonjiya Pro Subscription',
-
-        'order_id': order['order_id'],
-
-        'prefill': {
-          'contact': '',
-          'email': '',
-        },
-
-        'theme': {
-          'color': '#0F172A',
-        },
-
-        'retry': {
-          'enabled': true,
-          'max_count': 2,
-        },
-
-        'send_sms_hash': true,
-
-        'allow_rotation': false,
-      };
-
-      _razorpay.open(options);
-
-    } catch (e) {
-
-      setState(() {
-        _paying = false;
-      });
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        SnackBar(
-          content: Text(
-            e.toString(),
-          ),
-        ),
-      );
-    }
+    return;
   }
+
+  try {
+
+    setState(() {
+      _paying = true;
+    });
+
+    // =========================================================
+    // GET USER PROFILE
+    // =========================================================
+
+    final profile =
+        await _service.getCurrentUserProfile();
+
+    // =========================================================
+    // MOBILE FORMAT FOR RAZORPAY
+    // Razorpay expects:
+    // 9876543210
+    // NOT +91XXXXXXXXXX
+    // =========================================================
+
+    String mobile =
+        (profile?['mobile_number'] ?? "")
+            .toString()
+            .trim();
+
+    mobile = mobile
+        .replaceAll("+91", "")
+        .replaceAll(" ", "")
+        .replaceAll("-", "");
+
+    // keep only digits
+    mobile = mobile.replaceAll(
+      RegExp(r'[^0-9]'),
+      '',
+    );
+
+    // =========================================================
+    // EMAIL
+    // USE actual_email FIELD
+    // =========================================================
+
+    final email =
+        (profile?['actual_email'] ?? "")
+            .toString()
+            .trim();
+
+    // =========================================================
+    // CREATE ORDER
+    // =========================================================
+
+    final order =
+        await _service
+            .createRazorpayOrder();
+
+    // =========================================================
+    // RAZORPAY OPTIONS
+    // =========================================================
+
+    final options = {
+
+      'key': order['key_id'],
+
+      'amount': order['amount'],
+
+      'currency': order['currency'],
+
+      'name': 'Khilonjiya',
+
+      'description':
+          'Khilonjiya Pro Subscription',
+
+      'order_id': order['order_id'],
+
+      // =====================================================
+      // YOUR LOGO
+      // =====================================================
+
+      'image':
+          'https://rsskivonmfqrzxbmxrkl.supabase.co/storage/v1/object/public/logokhilonjiya/app_icon_foreground.png',
+
+      // =====================================================
+      // AUTO PREFILL
+      // =====================================================
+
+      'prefill': {
+
+        'contact': mobile,
+
+        'email': email,
+      },
+
+      // =====================================================
+      // THEME
+      // =====================================================
+
+      'theme': {
+        'color': '#0F172A',
+      },
+
+      // =====================================================
+      // RETRY
+      // =====================================================
+
+      'retry': {
+        'enabled': true,
+        'max_count': 2,
+      },
+
+      'send_sms_hash': true,
+
+      'allow_rotation': false,
+    };
+
+    _razorpay.open(options);
+
+  } catch (e) {
+
+    setState(() {
+      _paying = false;
+    });
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
+      SnackBar(
+        content: Text(
+          e.toString(),
+        ),
+      ),
+    );
+  }
+}
 
   // =========================================================
   // PAYMENT SUCCESS
