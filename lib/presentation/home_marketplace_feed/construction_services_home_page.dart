@@ -138,22 +138,45 @@ Future<void> _openNotifications() async {
 Widget build(BuildContext context) {
   return Scaffold(
     backgroundColor: Colors.grey[50],
+
     drawer: _drawer(),
+
     appBar: AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
+      centerTitle: true,
+
+      leadingWidth: 52,
+
       leading: Builder(
         builder: (context) => IconButton(
-          icon: const Icon(Icons.menu, color: Colors.black),
-          onPressed: () => Scaffold.of(context).openDrawer(),
+          icon: const Icon(
+            Icons.menu,
+            color: Colors.black,
+          ),
+          onPressed: () =>
+              Scaffold.of(context).openDrawer(),
         ),
       ),
+
+      title: Text(
+        'Khilonjiya Construction Services',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 11.5.sp,
+          fontWeight: FontWeight.w800,
+          color: const Color(0xFF2563EB),
+        ),
+      ),
+
       actions: [
         Padding(
-          padding: const EdgeInsets.only(right: 12),
+          padding: const EdgeInsets.only(right: 6),
           child: InkWell(
             onTap: _openNotifications,
-            borderRadius: BorderRadius.circular(999),
+            borderRadius:
+                BorderRadius.circular(999),
             child: Stack(
               children: [
                 Container(
@@ -161,44 +184,64 @@ Widget build(BuildContext context) {
                   height: 40,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius:
+                        BorderRadius.circular(
+                            999),
                     border: Border.all(
-                      color: const Color(0xFFE5E7EB),
+                      color: const Color(
+                          0xFFE5E7EB),
                     ),
                   ),
                   child: const Icon(
-                    Icons.notifications_none_outlined,
+                    Icons
+                        .notifications_none_outlined,
                     size: 22,
                     color: Color(0xFF334155),
                   ),
                 ),
+
                 ValueListenableBuilder<int>(
-                  valueListenable: _notificationCount,
+                  valueListenable:
+                      _notificationCount,
                   builder: (_, count, __) {
-                    if (count <= 0) return const SizedBox();
+                    if (count <= 0) {
+                      return const SizedBox();
+                    }
+
                     return Positioned(
                       right: 6,
                       top: 6,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding:
+                            const EdgeInsets.symmetric(
                           horizontal: 5,
                           vertical: 2,
                         ),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFEF4444),
+                        decoration:
+                            const BoxDecoration(
+                          color:
+                              Color(0xFFEF4444),
                           shape: BoxShape.circle,
                         ),
-                        constraints: const BoxConstraints(
+                        constraints:
+                            const BoxConstraints(
                           minWidth: 18,
                           minHeight: 18,
                         ),
                         child: Center(
                           child: Text(
-                            count > 9 ? '9+' : count.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
+                            count > 9
+                                ? '9+'
+                                : count
+                                    .toString(),
+                            style:
+                                const TextStyle(
+                              color:
+                                  Colors.white,
                               fontSize: 10,
-                              fontWeight: FontWeight.w700,
+                              fontWeight:
+                                  FontWeight
+                                      .w700,
                             ),
                           ),
                         ),
@@ -212,22 +255,37 @@ Widget build(BuildContext context) {
         ),
       ],
     ),
+
     body: _loading
-        ? const Center(child: CircularProgressIndicator())
+        ? const Center(
+            child:
+                CircularProgressIndicator(),
+          )
         : SingleChildScrollView(
             controller: _scrollController,
             child: Column(
               children: [
-                _header(),
+
+                SizedBox(height: 2.h),
+
                 _buildWelcomeBanner(),
+
                 _buildServicesGrid(context),
+
                 _buildSliderSection(),
+
                 _buildFeaturesSection(),
+
                 if (_loadingMore)
                   Padding(
-                    padding: EdgeInsets.symmetric(vertical: 4.h),
-                    child: const CircularProgressIndicator(),
+                    padding:
+                        EdgeInsets.symmetric(
+                      vertical: 4.h,
+                    ),
+                    child:
+                        const CircularProgressIndicator(),
                   ),
+
                 SizedBox(height: 10.h),
               ],
             ),
@@ -236,34 +294,6 @@ Widget build(BuildContext context) {
 }
 
 
-Widget _header() {
-  return Container(
-    width: double.infinity,
-    padding: EdgeInsets.fromLTRB(4.w, 4.h, 4.w, 2.h),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Welcome to",
-          style: TextStyle(
-            fontSize: 11.sp,
-            color: Colors.grey,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        SizedBox(height: 0.5.h),
-        Text(
-          "Khilonjiya Construction Services",
-          style: TextStyle(
-            fontSize: 15.sp,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF2563EB),
-          ),
-        ),
-      ],
-    ),
-  );
-}
 
 
 
