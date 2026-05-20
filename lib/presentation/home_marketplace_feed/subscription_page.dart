@@ -34,7 +34,7 @@ class _SubscriptionPageState
   DateTime? _expiry;
   int _daysLeft = 0;
 
-  String _priceText = "₹199";
+  String _priceText = "₹9";
 
   @override
   void initState() {
