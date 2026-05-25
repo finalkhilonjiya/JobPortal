@@ -222,49 +222,126 @@ Widget _header() {
 }
 
   Future<void> _handleVerifyOtp() async {
-    final otp = _otpControllers.map((c) => c.text).join();
 
-    if (otp.length != 6) {
-      setState(() => _error = 'Please enter the full 6-digit OTP');
-      return;
-    }
+  final otp = _otpControllers.map((c) => c.text).join();
 
-    if (_isLoading) return;
-
-    FocusScope.of(context).unfocus();
+  if (otp.length != 6) {
 
     setState(() {
-      _isLoading = true;
-      _error = null;
+      _error = 'Please enter the full 6-digit OTP';
     });
 
-    try {
-      await _auth.verifyOtp(
-        mobile: _mobileController.text.trim(),
-        otp: otp,
-        role: UserRole.construction,
-      );
-
-      await LocationService.collectAndSaveLocation();
-
-if (!mounted) return;
-
-await saveFcmTokenWithRole('construction');
-Navigator.pushReplacementNamed(
-  context,
-  AppRoutes.constructionHome,
-);
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _error =
-            e is MobileAuthException ? e.message : 'Invalid OTP';
-      });
-
-      _clearOtp();
-      _otpFocusNodes.first.requestFocus();
-    }
+    return;
   }
+
+  if (_isLoading) return;
+
+  FocusScope.of(context).unfocus();
+
+  setState(() {
+    _isLoading = true;
+    _error = null;
+  });
+
+  try {
+
+    print("📲 VERIFYING OTP");
+
+    await _auth.verifyOtp(
+      mobile: _mobileController.text.trim(),
+      otp: otp,
+      role: UserRole.construction,
+    ).timeout(
+      const Duration(seconds: 20),
+    );
+
+    print("✅ OTP VERIFIED");
+
+    if (!mounted) return;
+
+    // NAVIGATE IMMEDIATELY
+    Navigator.pushReplacementNamed(
+      context,
+      AppRoutes.constructionHome,
+    );
+
+    // =====================================================
+    // BACKGROUND TASKS — DO NOT BLOCK LOGIN
+    // =====================================================
+
+    unawaited(
+      _saveLocationSafely(),
+    );
+
+    unawaited(
+      _saveFcmSafely(),
+    );
+
+  } catch (e, s) {
+
+    print("❌ OTP VERIFY ERROR");
+    print(e);
+    print(s);
+
+    if (!mounted) return;
+
+    setState(() {
+
+      _isLoading = false;
+
+      _error =
+          e is MobileAuthException
+              ? e.message
+              : 'Invalid OTP';
+    });
+
+    _clearOtp();
+
+    _otpFocusNodes.first.requestFocus();
+  }
+}
+
+
+Future<void> _saveLocationSafely() async {
+
+  try {
+
+    print("📍 SAVING LOCATION");
+
+    await LocationService.collectAndSaveLocation()
+        .timeout(const Duration(seconds: 15));
+
+    print("✅ LOCATION SAVED");
+
+  } catch (e, s) {
+
+    print("❌ LOCATION SAVE ERROR");
+    print(e);
+    print(s);
+  }
+}
+
+
+Future<void> _saveFcmSafely() async {
+
+  try {
+
+    print("📲 SAVING FCM TOKEN");
+
+    await saveFcmTokenWithRole('construction')
+        .timeout(const Duration(seconds: 15));
+
+    print("✅ FCM SAVE COMPLETE");
+
+  } catch (e, s) {
+
+    print("❌ FCM SAVE FAILED");
+    print(e);
+    print(s);
+  }
+}
+
+
 
   void _handleOtpChange(int index, String value) {
     if (value.length > 1) {
