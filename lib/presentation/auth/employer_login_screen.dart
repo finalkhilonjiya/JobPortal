@@ -155,10 +155,15 @@ void codeUpdated() {
   }
 
   Future<void> _handleVerifyOtp() async {
+
   final otp = _otpControllers.map((c) => c.text).join();
 
   if (otp.length != 6) {
-    setState(() => _error = 'Please enter the full 6-digit OTP');
+
+    setState(() {
+      _error = 'Please enter the full 6-digit OTP';
+    });
+
     return;
   }
 
@@ -172,25 +177,76 @@ void codeUpdated() {
   });
 
   try {
+
+    print("📲 VERIFYING OTP");
+
     await _auth.verifyOtp(
       mobile: _mobileController.text.trim(),
       otp: otp,
       role: UserRole.employer,
+    ).timeout(
+      const Duration(seconds: 20),
     );
+
+    print("✅ OTP VERIFIED");
 
     if (!mounted) return;
 
-await saveFcmTokenWithRole('employer');
-Navigator.pushReplacementNamed(context, AppRoutes.home);
+    // NAVIGATE IMMEDIATELY
+    Navigator.pushReplacementNamed(
+      context,
+      AppRoutes.home,
+    );
 
-  } catch (e) {
+    // =====================================================
+    // BACKGROUND TASKS — DO NOT BLOCK LOGIN
+    // =====================================================
+
+    unawaited(
+      _saveFcmSafely(),
+    );
+
+  } catch (e, s) {
+
+    print("❌ OTP VERIFY ERROR");
+    print(e);
+    print(s);
+
+    if (!mounted) return;
+
     setState(() {
+
       _isLoading = false;
-      _error = e is MobileAuthException ? e.message : 'Invalid OTP';
+
+      _error =
+          e is MobileAuthException
+              ? e.message
+              : 'Invalid OTP';
     });
 
     _clearOtp();
+
     _otpFocusNodes.first.requestFocus();
+  }
+}
+
+
+Future<void> _saveFcmSafely() async {
+
+  try {
+
+    print("📲 SAVING FCM TOKEN");
+
+    await saveFcmTokenWithRole('employer')
+        .timeout(const Duration(seconds: 15));
+
+    print("✅ FCM SAVE COMPLETE");
+
+  } catch (e, s) {
+
+    print("❌ FCM SAVE FAILED");
+    print(e);
+    print(s);
   }
 }
 
