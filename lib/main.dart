@@ -32,11 +32,26 @@ class AppConfig {
 Future<void> saveFcmToken() async {
   try {
     final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return;
+
+    if (user == null) {
+      print("⚠️ No logged in user for FCM save");
+      return;
+    }
 
     final messaging = FirebaseMessaging.instance;
-    final token = await messaging.getToken();
-    if (token == null) return;
+
+    print("📲 Getting FCM token...");
+
+    final token = await messaging
+        .getToken()
+        .timeout(const Duration(seconds: 15));
+
+    if (token == null || token.trim().isEmpty) {
+      print("⚠️ FCM token is null");
+      return;
+    }
+
+    print("✅ FCM TOKEN RECEIVED");
 
     await Supabase.instance.client
         .from('user_devices')
@@ -47,22 +62,41 @@ Future<void> saveFcmToken() async {
             "platform": "android",
           },
           onConflict: 'user_id',
-        );
+        )
+        .timeout(const Duration(seconds: 15));
 
     print("✅ FCM token saved for user ${user.id}");
-  } catch (e) {
-    print("❌ FCM save error: $e");
+
+  } catch (e, s) {
+    print("❌ FCM SAVE ERROR");
+    print(e);
+    print(s);
   }
 }
 // Call this from login screens instead of saveFcmToken()
 Future<void> saveFcmTokenWithRole(String role) async {
   try {
     final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return;
+
+    if (user == null) {
+      print("⚠️ No logged in user");
+      return;
+    }
 
     final messaging = FirebaseMessaging.instance;
-    final token = await messaging.getToken();
-    if (token == null) return;
+
+    print("📲 Getting FCM token with role...");
+
+    final token = await messaging
+        .getToken()
+        .timeout(const Duration(seconds: 15));
+
+    if (token == null || token.trim().isEmpty) {
+      print("⚠️ FCM token null");
+      return;
+    }
+
+    print("✅ FCM TOKEN RECEIVED");
 
     await Supabase.instance.client
         .from('user_devices')
@@ -74,11 +108,15 @@ Future<void> saveFcmTokenWithRole(String role) async {
             "active_role": role,
           },
           onConflict: 'user_id',
-        );
+        )
+        .timeout(const Duration(seconds: 15));
 
     print("✅ FCM token saved with role: $role");
-  } catch (e) {
-    print("❌ FCM save error: $e");
+
+  } catch (e, s) {
+    print("❌ FCM SAVE ERROR");
+    print(e);
+    print(s);
   }
 }
 
@@ -118,92 +156,182 @@ Future<void> _firebaseMessagingBackgroundHandler(
 /// PUSH INIT — only sets up listeners, token saved via saveFcmToken
 /// =============================================================
 Future<void> initPushNotifications() async {
-  final messaging = FirebaseMessaging.instance;
 
-  await messaging.requestPermission(
-    alert: true,
-    badge: true,
-    sound: true,
-  );
+  try {
 
-  // Save token if user is already logged in (returning user)
-  await saveFcmToken();
+    final messaging = FirebaseMessaging.instance;
 
-  // If token rotates, update it and preserve active_role
-  FirebaseMessaging.instance.onTokenRefresh
-      .listen((newToken) async {
-    try {
-      final user =
-          Supabase.instance.client.auth.currentUser;
-      if (user == null) return;
+    print("🔔 Requesting notification permission");
 
-      // Fetch existing active_role so we don't lose it
-      final existing = await Supabase.instance.client
-          .from('user_devices')
-          .select('active_role')
-          .eq('user_id', user.id)
-          .maybeSingle();
+    await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    ).timeout(const Duration(seconds: 10));
 
-      final activeRole =
-          existing?['active_role']?.toString();
+    print("✅ Notification permission completed");
 
-      await Supabase.instance.client
-          .from('user_devices')
-          .upsert(
-            {
-              "user_id": user.id,
-              "fcm_token": newToken,
-              "platform": "android",
-              if (activeRole != null &&
-                  activeRole.isNotEmpty)
-                "active_role": activeRole,
-            },
-            onConflict: 'user_id',
+    // DO NOT BLOCK APP IF THIS FAILS
+    unawaited(saveFcmToken());
+
+    FirebaseMessaging.instance.onTokenRefresh
+        .listen((newToken) async {
+
+      try {
+
+        print("🔄 FCM token refreshed");
+
+        final user =
+            Supabase.instance.client.auth.currentUser;
+
+        if (user == null) return;
+
+        final existing = await Supabase.instance.client
+            .from('user_devices')
+            .select('active_role')
+            .eq('user_id', user.id)
+            .maybeSingle()
+            .timeout(const Duration(seconds: 10));
+
+        final activeRole =
+            existing?['active_role']?.toString();
+
+        await Supabase.instance.client
+            .from('user_devices')
+            .upsert(
+              {
+                "user_id": user.id,
+                "fcm_token": newToken,
+                "platform": "android",
+                if (activeRole != null &&
+                    activeRole.isNotEmpty)
+                  "active_role": activeRole,
+              },
+              onConflict: 'user_id',
+            )
+            .timeout(const Duration(seconds: 10));
+
+        print("✅ FCM token refreshed & saved");
+
+      } catch (e, s) {
+
+        print("❌ TOKEN REFRESH ERROR");
+        print(e);
+        print(s);
+      }
+    });
+
+    FirebaseMessaging.onMessage.listen(
+      (RemoteMessage message) async {
+
+        try {
+
+          final title =
+              message.notification?.title ?? "Notification";
+
+          final body =
+              message.notification?.body ?? "";
+
+          await localNotifications.show(
+            DateTime.now().millisecondsSinceEpoch ~/ 1000,
+            title,
+            body,
+            const NotificationDetails(
+              android: AndroidNotificationDetails(
+                'high_importance_channel',
+                'High Importance Notifications',
+                importance: Importance.max,
+                priority: Priority.high,
+                icon: '@mipmap/ic_launcher',
+              ),
+            ),
           );
 
-      print("✅ FCM token refreshed");
-    } catch (e) {
-      print("❌ FCM refresh error: $e");
-    }
-  });
+        } catch (e) {
 
-  // Foreground notifications
-  FirebaseMessaging.onMessage
-      .listen((RemoteMessage message) async {
-    final title =
-        message.notification?.title ?? "Notification";
-    final body = message.notification?.body ?? "";
-
-    await localNotifications.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000,
-      title,
-      body,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'high_importance_channel',
-          'High Importance Notifications',
-          importance: Importance.max,
-          priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
-        ),
-      ),
+          print("❌ LOCAL NOTIFICATION ERROR");
+          print(e);
+        }
+      },
     );
-  });
 
-  FirebaseMessaging.onMessageOpenedApp.listen((message) {
-    NavigationService.pushReplacementNamed(AppRoutes.home);
-  });
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
 
-  final initialMessage = await messaging.getInitialMessage();
-  if (initialMessage != null) {
-    NavigationService.pushReplacementNamed(AppRoutes.home);
+      print("📩 Notification opened app");
+
+      NavigationService.pushReplacementNamed(
+        AppRoutes.home,
+      );
+    });
+
+    try {
+
+      final initialMessage = await messaging
+          .getInitialMessage()
+          .timeout(const Duration(seconds: 5));
+
+      if (initialMessage != null) {
+
+        print("📩 App opened from terminated notification");
+
+        NavigationService.pushReplacementNamed(
+          AppRoutes.home,
+        );
+      }
+
+    } catch (e) {
+
+      print("❌ INITIAL MESSAGE ERROR");
+      print(e);
+    }
+
+  } catch (e, s) {
+
+    print("❌ PUSH INIT ERROR");
+    print(e);
+    print(s);
   }
 }
 
 /// =============================================================
 /// MAIN
 /// =============================================================
+
+
+Future<void> _initializeBackgroundServices() async {
+
+  try {
+
+    print("🔥 INITIALIZING FIREBASE");
+
+    await Firebase.initializeApp()
+        .timeout(const Duration(seconds: 15));
+
+    FirebaseMessaging.onBackgroundMessage(
+      _firebaseMessagingBackgroundHandler,
+    );
+
+    print("✅ FIREBASE INITIALIZED");
+
+    await initLocalNotifications()
+        .timeout(const Duration(seconds: 10));
+
+    print("✅ LOCAL NOTIFICATIONS READY");
+
+    await initPushNotifications()
+        .timeout(const Duration(seconds: 15));
+
+    print("✅ PUSH NOTIFICATIONS READY");
+
+  } catch (e, s) {
+
+    print("❌ BACKGROUND INIT ERROR");
+    print(e);
+    print(s);
+  }
+}
 Future<void> main() async {
+
   WidgetsFlutterBinding.ensureInitialized();
 
   await SystemChrome.setPreferredOrientations([
@@ -211,26 +339,43 @@ Future<void> main() async {
   ]);
 
   try {
+
     await dotenv.load(fileName: '.env');
-  } catch (_) {}
+
+    print("✅ DOTENV LOADED");
+
+  } catch (e) {
+
+    print("❌ DOTENV ERROR");
+    print(e);
+  }
 
   if (AppConfig.hasSupabase) {
+
     try {
+
+      print("🚀 INITIALIZING SUPABASE");
+
       await Supabase.initialize(
         url: AppConfig.supabaseUrl,
         anonKey: AppConfig.supabaseAnonKey,
-      );
-    } catch (_) {}
+      ).timeout(const Duration(seconds: 15));
+
+      print("✅ SUPABASE INITIALIZED");
+
+    } catch (e, s) {
+
+      print("❌ SUPABASE INIT ERROR");
+      print(e);
+      print(s);
+    }
   }
 
-  try {
-    await Firebase.initializeApp();
-    FirebaseMessaging.onBackgroundMessage(
-      _firebaseMessagingBackgroundHandler,
-    );
-    await initLocalNotifications();
-    await initPushNotifications();
-  } catch (_) {}
+  // RUN UI IMMEDIATELY
+  runApp(const MyApp());
+
+  // BACKGROUND INITIALIZATION
+  unawaited(_initializeBackgroundServices());
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -240,8 +385,6 @@ Future<void> main() async {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
-
-  runApp(const MyApp());
 }
 
 /// =============================================================
@@ -295,15 +438,22 @@ class _AppInitializerState extends State<AppInitializer> {
 
   Future<void> _bootstrap() async {
 
+  print("🚀 BOOTSTRAP START");
+
   try {
 
-    await ForceUpdateService.check();
+    await ForceUpdateService.check()
+        .timeout(const Duration(seconds: 10));
+
+    print("✅ FORCE UPDATE CHECK DONE");
 
     // =====================================================
     // FORCE UPDATE BLOCK
     // =====================================================
 
     if (ForceUpdateService.updateRequired) {
+
+      print("⚠️ FORCE UPDATE REQUIRED");
 
       if (!mounted) return;
 
@@ -325,40 +475,98 @@ class _AppInitializerState extends State<AppInitializer> {
 
     if (!AppConfig.hasSupabase) {
 
+      print("⚠️ NO SUPABASE CONFIG");
+
       _go(AppRoutes.roleSelection);
 
       return;
     }
 
-    final client =
-        Supabase.instance.client;
+    final client = Supabase.instance.client;
 
-    final session =
-        client.auth.currentSession;
+    print("📦 GETTING SESSION");
 
-    final user =
-        client.auth.currentUser;
+    final session = client.auth.currentSession;
 
+    print("✅ SESSION:");
+    print(session);
+
+    final user = client.auth.currentUser;
+
+    print("✅ USER:");
+    print(user);
+
+    // OPTIONAL SESSION VALIDATION
     if (session != null && user != null) {
+
+      try {
+
+        print("🔎 VALIDATING SESSION");
+
+        await client
+            .from('user_profiles')
+            .select('id')
+            .limit(1)
+            .timeout(const Duration(seconds: 10));
+
+        print("✅ SESSION VALID");
+
+      } catch (e, s) {
+
+        print("❌ SESSION VALIDATION FAILED");
+        print(e);
+        print(s);
+
+        try {
+
+          await client.auth.signOut();
+
+          print("✅ BAD SESSION CLEARED");
+
+        } catch (e) {
+
+          print("❌ SIGNOUT ERROR");
+          print(e);
+        }
+
+        _go(AppRoutes.roleSelection);
+
+        return;
+      }
+
+      print("🏠 GOING HOME");
 
       _go(AppRoutes.home);
 
       return;
     }
 
+    print("➡️ GOING ROLE SELECTION");
+
     _go(AppRoutes.roleSelection);
 
-  } catch (_) {
+  } catch (e, s) {
+
+    print("❌ BOOTSTRAP ERROR");
+    print(e);
+    print(s);
 
     _go(AppRoutes.roleSelection);
   }
 }
 
   void _go(String route) {
-    if (!mounted || _navigated) return;
-    _navigated = true;
+
+  if (!mounted || _navigated) return;
+
+  _navigated = true;
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+
     NavigationService.pushReplacementNamed(route);
-  }
+
+  });
+}
 
   @override
   Widget build(BuildContext context) {
