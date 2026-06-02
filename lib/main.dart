@@ -443,37 +443,6 @@ class _AppInitializerState extends State<AppInitializer> {
 
   try {
 
-    await ForceUpdateService.check()
-        .timeout(const Duration(seconds: 10));
-
-    print("✅ FORCE UPDATE CHECK DONE");
-
-    // =====================================================
-    // FORCE UPDATE BLOCK
-    // =====================================================
-
-    if (ForceUpdateService.updateRequired) {
-
-      print("⚠️ FORCE UPDATE REQUIRED");
-
-      if (!mounted) return;
-
-      await Navigator.of(context).pushAndRemoveUntil(
-
-        MaterialPageRoute(
-          builder: (_) => const ForceUpdateScreen(),
-        ),
-
-        (route) => false,
-      );
-
-      return;
-    }
-
-    // =====================================================
-    // NORMAL FLOW
-    // =====================================================
-
     if (!AppConfig.hasSupabase) {
 
       print("⚠️ NO SUPABASE CONFIG");
@@ -485,66 +454,138 @@ class _AppInitializerState extends State<AppInitializer> {
 
     final client = Supabase.instance.client;
 
-    print("📦 GETTING SESSION");
-
     final session = client.auth.currentSession;
-
-    print("✅ SESSION:");
-    print(session);
-
     final user = client.auth.currentUser;
 
-    print("✅ USER:");
-    print(user);
+    print("✅ SESSION: $session");
+    print("✅ USER: $user");
 
-    // OPTIONAL SESSION VALIDATION
+    // =====================================================
+    // USER ALREADY LOGGED IN
+    // GO HOME IMMEDIATELY
+    // =====================================================
+
     if (session != null && user != null) {
 
-      try {
+      print("🏠 GOING HOME IMMEDIATELY");
 
-        print("🔎 VALIDATING SESSION");
+      _go(AppRoutes.home);
 
-        await client
-            .from('user_profiles')
-            .select('id')
-            .limit(1)
-            .timeout(const Duration(seconds: 10));
-
-        print("✅ SESSION VALID");
-
-      } catch (e, s) {
-
-        print("❌ SESSION VALIDATION FAILED");
-        print(e);
-        print(s);
+      // -----------------------------------------
+      // FORCE UPDATE CHECK IN BACKGROUND
+      // -----------------------------------------
+      unawaited(() async {
 
         try {
 
-          await client.auth.signOut();
+          await ForceUpdateService.check()
+              .timeout(const Duration(seconds: 10));
 
-          print("✅ BAD SESSION CLEARED");
+          print("✅ FORCE UPDATE CHECK DONE");
 
-        } catch (e) {
+          if (ForceUpdateService.updateRequired) {
 
-          print("❌ SIGNOUT ERROR");
+            print("⚠️ FORCE UPDATE REQUIRED");
+
+            NavigationService.navigatorKey.currentState
+                ?.pushAndRemoveUntil(
+
+              MaterialPageRoute(
+                builder: (_) => const ForceUpdateScreen(),
+              ),
+
+              (route) => false,
+            );
+          }
+
+        } catch (e, s) {
+
+          print("❌ FORCE UPDATE CHECK ERROR");
           print(e);
+          print(s);
         }
 
-        _go(AppRoutes.roleSelection);
+      }());
 
-        return;
-      }
+      // -----------------------------------------
+      // SESSION VALIDATION IN BACKGROUND
+      // -----------------------------------------
+      unawaited(() async {
 
-      print("🏠 GOING HOME");
+        try {
 
-      _go(AppRoutes.home);
+          await client
+              .from('user_profiles')
+              .select('id')
+              .limit(1)
+              .timeout(const Duration(seconds: 10));
+
+          print("✅ SESSION VALID");
+
+        } catch (e, s) {
+
+          print("❌ SESSION VALIDATION FAILED");
+          print(e);
+          print(s);
+
+          try {
+
+            await client.auth.signOut();
+
+            print("✅ BAD SESSION CLEARED");
+
+            NavigationService.pushReplacementNamed(
+              AppRoutes.roleSelection,
+            );
+
+          } catch (e) {
+
+            print("❌ SIGNOUT ERROR");
+            print(e);
+          }
+        }
+
+      }());
 
       return;
     }
 
+    // =====================================================
+    // NOT LOGGED IN
+    // =====================================================
+
     print("➡️ GOING ROLE SELECTION");
 
     _go(AppRoutes.roleSelection);
+
+    // Run force update check in background
+    unawaited(() async {
+
+      try {
+
+        await ForceUpdateService.check()
+            .timeout(const Duration(seconds: 10));
+
+        if (ForceUpdateService.updateRequired) {
+
+          NavigationService.navigatorKey.currentState
+              ?.pushAndRemoveUntil(
+
+            MaterialPageRoute(
+              builder: (_) => const ForceUpdateScreen(),
+            ),
+
+            (route) => false,
+          );
+        }
+
+      } catch (e) {
+
+        print("❌ FORCE UPDATE CHECK ERROR");
+        print(e);
+      }
+
+    }());
 
   } catch (e, s) {
 
