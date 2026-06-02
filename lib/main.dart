@@ -223,38 +223,40 @@ Future<void> initPushNotifications() async {
     });
 
     FirebaseMessaging.onMessage.listen(
-      (RemoteMessage message) async {
+  (RemoteMessage message) async {
 
-        try {
+    try {
 
-          final title =
-              message.notification?.title ?? "Notification";
+      final title =
+          message.data['title'] ?? "Notification";
 
-          final body =
-              message.notification?.body ?? "";
+      final body =
+          message.data['body'] ?? "";
 
-          await localNotifications.show(
-            DateTime.now().millisecondsSinceEpoch ~/ 1000,
-            title,
-            body,
-            const NotificationDetails(
-              android: AndroidNotificationDetails(
-                'high_importance_channel',
-                'High Importance Notifications',
-                importance: Importance.max,
-                priority: Priority.high,
-                icon: '@mipmap/ic_launcher',
-              ),
-            ),
-          );
+      await localNotifications.show(
+        DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        title,
+        body,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'high_importance_channel',
+            'High Importance Notifications',
+            importance: Importance.max,
+            priority: Priority.high,
 
-        } catch (e) {
+            // USE YOUR CUSTOM ICON
+            icon: '@drawable/ic_notification',
+          ),
+        ),
+      );
 
-          print("❌ LOCAL NOTIFICATION ERROR");
-          print(e);
-        }
-      },
-    );
+    } catch (e) {
+
+      print("❌ LOCAL NOTIFICATION ERROR");
+      print(e);
+    }
+  },
+);
 
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
 
