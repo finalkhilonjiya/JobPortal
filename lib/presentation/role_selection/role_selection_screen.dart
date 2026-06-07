@@ -62,7 +62,7 @@ class RoleSelectionScreen extends StatelessWidget {
 
                 // ================= ROLE CARDS =================
                 _RoleCard(
-                  title: 'Job Seeker',
+                  title: 'Job Seeker (Apply for Jobs)',
                   description:
                       'Find nearby jobs, apply instantly and track applications',
                   accent: const Color(0xFF2563EB),
