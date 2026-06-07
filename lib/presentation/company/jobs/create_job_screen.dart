@@ -62,6 +62,7 @@ String _selectedExperience = "0-1 years";
 
 final List<String> _educationList = [
   "Any",
+  "Any Graduate",
 
   // School
   "Below 10th",
