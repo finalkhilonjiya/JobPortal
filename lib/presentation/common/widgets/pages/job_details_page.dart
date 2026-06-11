@@ -1032,9 +1032,9 @@ Widget _requirementsBlock(Map<String, dynamic> job) {
           height: 1.55,
         ),
       ),
-
+const SizedBox(height: 16),
       if (verified) ...[
-        const SizedBox(height: 16),
+        
 
 
 
