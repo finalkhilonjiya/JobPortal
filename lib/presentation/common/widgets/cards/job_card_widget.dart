@@ -21,12 +21,13 @@ const JobCardWidget({
 
   static const double _companyLogoSize = 46;
 
-  @override
+@override
 Widget build(BuildContext context) {
   final title =
       (job['job_title'] ?? job['title'] ?? 'Job').toString().trim();
 
   final companyMap = job['companies'];
+
   final companyName = (companyMap is Map<String, dynamic>)
       ? (companyMap['name'] ?? '').toString().trim()
       : '';
@@ -36,6 +37,10 @@ Widget build(BuildContext context) {
       : (job['company_name'] ?? job['company'] ?? 'Company')
           .toString()
           .trim();
+
+  final isVerified = companyMap is Map<String, dynamic>
+      ? companyMap['is_verified'] == true
+      : false;
 
   final district = (job['district'] ?? '').toString().trim();
   final locality = (job['locality'] ?? '').toString().trim();
@@ -59,8 +64,9 @@ Widget build(BuildContext context) {
 
   final postedAt = job['created_at']?.toString();
 
-  final rawLogo =
-      (job['companies']?['logo_url'] ?? '').toString().trim();
+  final rawLogo = companyMap is Map<String, dynamic>
+      ? (companyMap['logo_url'] ?? '').toString().trim()
+      : '';
 
   final companyLogoUrl = rawLogo.isEmpty
       ? ''
@@ -100,11 +106,25 @@ Widget build(BuildContext context) {
                       style: KhilonjiyaUI.cardTitle,
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      company,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: KhilonjiyaUI.company,
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            company,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: KhilonjiyaUI.company,
+                          ),
+                        ),
+                        if (isVerified) ...[
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.verified_rounded,
+                            size: 16,
+                            color: KhilonjiyaUI.primary,
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
@@ -127,14 +147,23 @@ Widget build(BuildContext context) {
             ],
           ),
           const SizedBox(height: 10),
-          _infoRow(Icons.location_on_outlined,
-              const Color(0xFF2563EB), location),
+          _infoRow(
+            Icons.location_on_outlined,
+            const Color(0xFF2563EB),
+            location,
+          ),
           const SizedBox(height: 6),
-          _infoRow(Icons.work_outline_rounded,
-              const Color(0xFF475569), exp),
+          _infoRow(
+            Icons.work_outline_rounded,
+            const Color(0xFF475569),
+            exp,
+          ),
           const SizedBox(height: 6),
-          _infoRow(Icons.currency_rupee_rounded,
-              const Color(0xFF16A34A), salary),
+          _infoRow(
+            Icons.currency_rupee_rounded,
+            const Color(0xFF16A34A),
+            salary,
+          ),
           if (skills.isNotEmpty) ...[
             const SizedBox(height: 10),
             isHorizontal
