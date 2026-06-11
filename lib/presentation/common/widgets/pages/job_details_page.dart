@@ -1,6 +1,7 @@
 // File: lib/presentation/common/widgets/pages/job_details_page.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'dart:math';
 
@@ -1027,8 +1028,7 @@ Widget _requirementsBlock(Map<String, dynamic> job) {
       if (verified) ...[
         const SizedBox(height: 16),
 
-        if (verified) ...[
-  const SizedBox(height: 16),
+
 
   if (_loadingContact)
     const Center(
