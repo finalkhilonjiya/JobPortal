@@ -93,71 +93,8 @@ bool _canViewContact = false;
   // ------------------------------------------------------------
   // LOAD REAL COMPANY + REVIEWS + SIMILAR JOBS + SAVED IDS
   // ------------------------------------------------------------
-  Future<void> _loadExtras() async {
-  if (!mounted) return;
 
-  setState(() => _loadingExtras = true);
-
-  final jobId = widget.job['id']?.toString() ?? '';
-  final companyObj = widget.job['companies'];
-
-  String companyId = '';
-
-  if (companyObj is Map && companyObj['id'] != null) {
-    companyId = companyObj['id'].toString();
-  } else if (widget.job['company_id'] != null) {
-    companyId = widget.job['company_id'].toString();
-  }
-
-  // reset
-  _employerPhone = null;
-  _canViewContact = false;
-  _loadingContact = false;
-
-  // --------------------------------------------------
-  // SAVED JOB IDS
-  // --------------------------------------------------
-  try {
-    _savedJobIds = await _homeService.getUserSavedJobs();
-  } catch (_) {
-    _savedJobIds = {};
-  }
-
-  // --------------------------------------------------
-  // SIMILAR JOBS
-  // --------------------------------------------------
-  if (jobId.trim().isNotEmpty) {
-    try {
-      _similarJobs = await _homeService.fetchSimilarJobs(
-        jobId: jobId,
-        limit: 12,
-      );
-    } catch (_) {
-      _similarJobs = [];
-    }
-  }
-
-  // --------------------------------------------------
-  // COMPANY DETAILS
-  // --------------------------------------------------
-  if (companyId.trim().isNotEmpty) {
-    if (mounted) {
-      setState(() => _loadingCompany = true);
-    }
-
-    try {
-      _company = await _homeService.fetchCompanyDetails(
-        companyId,
-      );
-    } catch (_) {
-      _company = null;
-    }
-
-    try {
-      _isCompanyFollowed =
-          await _homeService.isCompanyFollowed(
-        companyId,
-      );
+  
 Future<void> _loadExtras() async {
   if (!mounted) return;
 
