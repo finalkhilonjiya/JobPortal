@@ -1027,89 +1027,141 @@ Widget _requirementsBlock(Map<String, dynamic> job) {
       if (verified) ...[
         const SizedBox(height: 16),
 
-        if (_loadingContact)
-          const Center(
-            child:
-                CircularProgressIndicator(),
-          )
-        else if (_canViewContact &&
-            _employerPhone != null)
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                await Clipboard.setData(
-                  ClipboardData(
-                    text: _employerPhone!,
+        if (verified) ...[
+  const SizedBox(height: 16),
+
+  if (_loadingContact)
+    const Center(
+      child: CircularProgressIndicator(),
+    )
+  else if (_canViewContact &&
+      _employerPhone != null) ...[
+    Text(
+      "Contact Details",
+      style: KhilonjiyaUI.body.copyWith(
+        fontWeight: FontWeight.w900,
+        fontSize: 15,
+        color: const Color(0xFF0F172A),
+      ),
+    ),
+
+    const SizedBox(height: 12),
+
+    Row(
+      children: [
+        Expanded(
+          child: InkWell(
+            onTap: () async {
+              final uri = Uri(
+                scheme: 'tel',
+                path: _employerPhone!,
+              );
+
+              await launchUrl(uri);
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              height: 52,
+              decoration: BoxDecoration(
+                color: KhilonjiyaUI.primary,
+                borderRadius:
+                    BorderRadius.circular(16),
+              ),
+              child: const Row(
+                mainAxisAlignment:
+                    MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.call_rounded,
+                    color: Colors.white,
                   ),
-                );
-
-                if (!mounted) return;
-
-                ScaffoldMessenger.of(
-                        context)
-                    .showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      "Contact number copied",
+                  SizedBox(width: 8),
+                  Text(
+                    "Call",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight:
+                          FontWeight.w800,
                     ),
                   ),
-                );
-              },
-              icon: const Icon(
-                Icons.phone_rounded,
+                ],
               ),
-              label: Text(
-                _employerPhone!,
-                style: const TextStyle(
-                  fontWeight:
-                      FontWeight.w800,
-                ),
-              ),
-              style:
-                  ElevatedButton.styleFrom(
-                backgroundColor:
-                    KhilonjiyaUI.primary,
-                foregroundColor:
-                    Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(
-                  vertical: 14,
-                ),
-                shape:
-                    RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(
-                    16,
-                  ),
-                ),
-              ),
-            ),
-          )
-        else
-          Container(
-            width: double.infinity,
-            padding:
-                const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color:
-                  const Color(0xFFF8FAFC),
-              borderRadius:
-                  BorderRadius.circular(
-                14,
-              ),
-              border: Border.all(
-                color:
-                    KhilonjiyaUI.border,
-              ),
-            ),
-            child: Text(
-              "Contact details are available only for Pro members on verified companies.",
-              style:
-                  KhilonjiyaUI.body,
             ),
           ),
+        ),
+
+        const SizedBox(width: 12),
+
+        Expanded(
+          child: InkWell(
+            onTap: () async {
+              final phone =
+                  _employerPhone!
+                      .replaceAll('+', '')
+                      .replaceAll(' ', '');
+
+              final uri = Uri.parse(
+                'https://wa.me/$phone',
+              );
+
+              await launchUrl(
+                uri,
+                mode: LaunchMode
+                    .externalApplication,
+              );
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              height: 52,
+              decoration: BoxDecoration(
+                color:
+                    const Color(0xFF25D366),
+                borderRadius:
+                    BorderRadius.circular(16),
+              ),
+              child: const Row(
+                mainAxisAlignment:
+                    MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.chat_rounded,
+                    color: Colors.white,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    "WhatsApp",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight:
+                          FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ],
+    ),
+  ]
+  else
+    Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius:
+            BorderRadius.circular(14),
+        border: Border.all(
+          color: KhilonjiyaUI.border,
+        ),
+      ),
+      child: Text(
+        "Contact details are available only for Pro members on verified companies.",
+        style: KhilonjiyaUI.body,
+      ),
+    ),
+],
 
       const SizedBox(height: 14),
 
