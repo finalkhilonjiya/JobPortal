@@ -248,6 +248,59 @@ Future<SharedPreferences> _getPrefs() async {
   return _prefs!;
 }
 
+
+  Future<String?> getEmployerContactForJob(
+  String jobId,
+) async {
+  _ensureAuthenticatedSync();
+
+  final job = await _db
+      .from('job_listings')
+      .select('employer_id, companies(is_verified)')
+      .eq('id', jobId)
+      .maybeSingle();
+
+  if (job == null) return null;
+
+  final company =
+      job['companies'] as Map<String, dynamic>?;
+
+  final isVerified =
+      company?['is_verified'] == true;
+
+  if (!isVerified) {
+    return null;
+  }
+
+  final employerId =
+      (job['employer_id'] ?? '').toString();
+
+  if (employerId.isEmpty) {
+    return null;
+  }
+
+  final profile = await _db
+      .from('user_profiles')
+      .select('mobile_number')
+      .eq('id', employerId)
+      .maybeSingle();
+
+  if (profile == null) {
+    return null;
+  }
+
+  final phone =
+      (profile['mobile_number'] ?? '')
+          .toString()
+          .trim();
+
+  if (phone.isEmpty) {
+    return null;
+  }
+
+  return phone;
+  }
+
 Future<bool> isUserProSubscribed() async {
   _ensureAuthenticatedSync();
   final userId = _userId();
