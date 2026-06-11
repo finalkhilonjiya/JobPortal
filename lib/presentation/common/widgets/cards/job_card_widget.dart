@@ -38,10 +38,6 @@ Widget build(BuildContext context) {
           .toString()
           .trim();
 
-  final isVerified = companyMap is Map<String, dynamic>
-      ? companyMap['is_verified'] == true
-      : false;
-
   final district = (job['district'] ?? '').toString().trim();
   final locality = (job['locality'] ?? '').toString().trim();
 
@@ -64,9 +60,8 @@ Widget build(BuildContext context) {
 
   final postedAt = job['created_at']?.toString();
 
-  final rawLogo = companyMap is Map<String, dynamic>
-      ? (companyMap['logo_url'] ?? '').toString().trim()
-      : '';
+  final rawLogo =
+      (job['companies']?['logo_url'] ?? '').toString().trim();
 
   final companyLogoUrl = rawLogo.isEmpty
       ? ''
@@ -75,6 +70,10 @@ Widget build(BuildContext context) {
           .getPublicUrl(rawLogo);
 
   final skills = _extractSkills(job);
+
+  final isVerified =
+      (companyMap is Map<String, dynamic>) &&
+      companyMap['is_verified'] == true;
 
   return InkWell(
     onTap: onTap,
@@ -94,7 +93,9 @@ Widget build(BuildContext context) {
                 logoUrl: companyLogoUrl,
                 size: _companyLogoSize,
               ),
+
               const SizedBox(width: 10),
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,7 +106,9 @@ Widget build(BuildContext context) {
                       overflow: TextOverflow.ellipsis,
                       style: KhilonjiyaUI.cardTitle,
                     ),
+
                     const SizedBox(height: 4),
+
                     Row(
                       children: [
                         Flexible(
@@ -116,6 +119,7 @@ Widget build(BuildContext context) {
                             style: KhilonjiyaUI.company,
                           ),
                         ),
+
                         if (isVerified) ...[
                           const SizedBox(width: 4),
                           Icon(
@@ -129,6 +133,7 @@ Widget build(BuildContext context) {
                   ],
                 ),
               ),
+
               InkWell(
                 onTap: onSaveToggle,
                 child: Padding(
@@ -146,31 +151,40 @@ Widget build(BuildContext context) {
               ),
             ],
           ),
+
           const SizedBox(height: 10),
+
           _infoRow(
             Icons.location_on_outlined,
             const Color(0xFF2563EB),
             location,
           ),
+
           const SizedBox(height: 6),
+
           _infoRow(
             Icons.work_outline_rounded,
             const Color(0xFF475569),
             exp,
           ),
+
           const SizedBox(height: 6),
+
           _infoRow(
             Icons.currency_rupee_rounded,
             const Color(0xFF16A34A),
             salary,
           ),
+
           if (skills.isNotEmpty) ...[
             const SizedBox(height: 10),
             isHorizontal
                 ? _buildSingleLineSkillChips(skills)
                 : _buildWrapSkillChips(skills),
           ],
+
           const SizedBox(height: 10),
+
           Text(
             _postedAgo(postedAt),
             style: KhilonjiyaUI.sub,
