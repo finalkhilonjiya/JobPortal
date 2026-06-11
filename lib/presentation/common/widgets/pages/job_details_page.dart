@@ -177,13 +177,17 @@ Future<void> _loadExtras() async {
     }
 
     try {
+  if (mounted) {
+    setState(() {
       _loadingContact = true;
+    });
+  }
 
-      final isPro =
-          await _homeService.isUserProSubscribed();
+  final isPro =
+      await _homeService.isUserProSubscribed();
 
-      final isVerified =
-          _company?['is_verified'] == true;
+  final isVerified =
+      _company?['is_verified'] == true;
 
       if (isPro &&
           isVerified &&
@@ -206,8 +210,12 @@ Future<void> _loadExtras() async {
       _employerPhone = null;
       _canViewContact = false;
     } finally {
+  if (mounted) {
+    setState(() {
       _loadingContact = false;
-    }
+    });
+  }
+}
   } else {
     _company = null;
     _reviews = [];
