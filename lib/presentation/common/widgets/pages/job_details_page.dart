@@ -472,14 +472,28 @@ Widget build(BuildContext context) {
   required String salary,
   required String postedText,
 }) {
-  final rawLogo =
-      (widget.job['companies']?['logo_url'] ?? '').toString().trim();
+  final companyMap =
+      widget.job['companies'] as Map<String, dynamic>?;
 
-  final companyLogoUrl = rawLogo.isEmpty
-      ? ''
-      : Supabase.instance.client.storage
-          .from('company-assets')
-          .getPublicUrl(rawLogo);
+  final isVerified =
+      companyMap?['is_verified'] == true;
+
+  String companyLogoUrl = '';
+
+  final rawLogo = (
+    companyMap?['logo_url'] ??
+    _company?['logo_url'] ??
+    ''
+  ).toString().trim();
+
+  if (rawLogo.isNotEmpty) {
+    companyLogoUrl = Supabase
+        .instance
+        .client
+        .storage
+        .from('company-assets')
+        .getPublicUrl(rawLogo);
+  }
 
   return Container(
     decoration: KhilonjiyaUI.cardDecoration(radius: 20),
@@ -496,51 +510,105 @@ Widget build(BuildContext context) {
             const SizedBox(width: 12),
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title.isEmpty ? "Job Title" : title,
+                    title.isEmpty
+                        ? "Job Title"
+                        : title,
                     style: KhilonjiyaUI.h1,
                   ),
+
                   const SizedBox(height: 4),
-                  Text(
-                    company.isEmpty ? "Company" : company,
-                    style: KhilonjiyaUI.sub.copyWith(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
+
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          company.isEmpty
+                              ? "Company"
+                              : company,
+                          maxLines: 1,
+                          overflow:
+                              TextOverflow.ellipsis,
+                          style:
+                              KhilonjiyaUI.sub.copyWith(
+                            fontSize: 13,
+                            fontWeight:
+                                FontWeight.w700,
+                          ),
+                        ),
+                      ),
+
+                      if (isVerified) ...[
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.verified_rounded,
+                          size: 16,
+                          color:
+                              KhilonjiyaUI.primary,
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),
             ),
           ],
         ),
+
         const SizedBox(height: 12),
+
         _metaRow(
           Icons.location_on_outlined,
-          location.isEmpty ? "Location not set" : location,
+          location.isEmpty
+              ? "Location not set"
+              : location,
         ),
+
         const SizedBox(height: 8),
-        _metaRow(Icons.currency_rupee_rounded, salary),
+
+        _metaRow(
+          Icons.currency_rupee_rounded,
+          salary,
+        ),
+
         const SizedBox(height: 8),
-        _metaRow(Icons.access_time_rounded, postedText),
+
+        _metaRow(
+          Icons.access_time_rounded,
+          postedText,
+        ),
+
         const SizedBox(height: 12),
+
         Align(
           alignment: Alignment.centerLeft,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            padding:
+                const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 7,
+            ),
             decoration: BoxDecoration(
-              color: KhilonjiyaUI.primary.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(999),
+              color: KhilonjiyaUI.primary
+                  .withOpacity(0.10),
+              borderRadius:
+                  BorderRadius.circular(999),
               border: Border.all(
-                color: KhilonjiyaUI.primary.withOpacity(0.18),
+                color: KhilonjiyaUI.primary
+                    .withOpacity(0.18),
               ),
             ),
             child: Text(
               "Actively hiring",
-              style: KhilonjiyaUI.caption.copyWith(
-                color: KhilonjiyaUI.primary,
-                fontWeight: FontWeight.w800,
+              style:
+                  KhilonjiyaUI.caption.copyWith(
+                color:
+                    KhilonjiyaUI.primary,
+                fontWeight:
+                    FontWeight.w800,
               ),
             ),
           ),
@@ -875,11 +943,13 @@ Widget _requirementsBlock(Map<String, dynamic> job) {
     children: [
       Row(
         children: [
-          Expanded(
+          Flexible(
             child: Text(
               name.isEmpty
                   ? "Company"
                   : name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style:
                   KhilonjiyaUI.body.copyWith(
                 fontWeight:
@@ -888,13 +958,16 @@ Widget _requirementsBlock(Map<String, dynamic> job) {
               ),
             ),
           ),
-          if (verified)
+
+          if (verified) ...[
+            const SizedBox(width: 4),
             Icon(
               Icons.verified_rounded,
               size: 18,
               color:
                   KhilonjiyaUI.primary,
             ),
+          ],
         ],
       ),
 
@@ -951,9 +1024,6 @@ Widget _requirementsBlock(Map<String, dynamic> job) {
         ),
       ),
 
-      // ==================================================
-      // CONTACT SECTION
-      // ==================================================
       if (verified) ...[
         const SizedBox(height: 16),
 
@@ -1043,54 +1113,48 @@ Widget _requirementsBlock(Map<String, dynamic> job) {
 
       const SizedBox(height: 14),
 
-      Row(
-        children: [
-          if (website.isNotEmpty) ...[
-            OutlinedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(
-                        context)
-                    .showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      "Website open coming next",
-                    ),
-                  ),
-                );
-              },
-              style:
-                  OutlinedButton.styleFrom(
-                foregroundColor:
-                    const Color(
-                        0xFF0F172A),
-                side: BorderSide(
-                  color:
-                      KhilonjiyaUI.border,
-                ),
-                padding:
-                    const EdgeInsets.symmetric(
-                  vertical: 14,
-                  horizontal: 14,
-                ),
-                shape:
-                    RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(
-                    16,
-                  ),
+      if (website.isNotEmpty)
+        OutlinedButton(
+          onPressed: () {
+            ScaffoldMessenger.of(
+                    context)
+                .showSnackBar(
+              const SnackBar(
+                content: Text(
+                  "Website open coming next",
                 ),
               ),
-              child: const Icon(
-                Icons.language_rounded,
-                size: 18,
+            );
+          },
+          style:
+              OutlinedButton.styleFrom(
+            foregroundColor:
+                const Color(0xFF0F172A),
+            side: BorderSide(
+              color:
+                  KhilonjiyaUI.border,
+            ),
+            padding:
+                const EdgeInsets.symmetric(
+              vertical: 14,
+              horizontal: 14,
+            ),
+            shape:
+                RoundedRectangleBorder(
+              borderRadius:
+                  BorderRadius.circular(
+                16,
               ),
             ),
-          ],
-        ],
-      ),
+          ),
+          child: const Icon(
+            Icons.language_rounded,
+            size: 18,
+          ),
+        ),
     ],
   );
-}                  
+}
 
   Widget _miniChip(String text) {
     return Container(
