@@ -1,5 +1,6 @@
 // File: lib/presentation/common/widgets/pages/job_details_page.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/services.dart';
 
 import 'dart:math';
 
@@ -39,6 +40,9 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   bool _loadingExtras = true;
   bool _loadingCompany = true;
   bool _loadingReviews = true;
+  String? _employerPhone;
+bool _loadingContact = false;
+bool _canViewContact = false;
 
   // Company
   Map<String, dynamic>? _company;
@@ -90,86 +94,151 @@ class _JobDetailsPageState extends State<JobDetailsPage> {
   // LOAD REAL COMPANY + REVIEWS + SIMILAR JOBS + SAVED IDS
   // ------------------------------------------------------------
   Future<void> _loadExtras() async {
-    if (!mounted) return;
-    setState(() => _loadingExtras = true);
+  if (!mounted) return;
 
-    final jobId = widget.job['id']?.toString() ?? '';
-    final companyObj = widget.job['companies'];
+  setState(() => _loadingExtras = true);
 
-    String companyId = '';
-    if (companyObj is Map && companyObj['id'] != null) {
-      companyId = companyObj['id'].toString();
-    } else if (widget.job['company_id'] != null) {
-      companyId = widget.job['company_id'].toString();
-    }
+  final jobId = widget.job['id']?.toString() ?? '';
+  final companyObj = widget.job['companies'];
 
-    // 1) Saved job ids (for similar jobs cards)
-    try {
-      _savedJobIds = await _homeService.getUserSavedJobs();
-    } catch (_) {
-      _savedJobIds = {};
-    }
+  String companyId = '';
 
-    // 2) Similar jobs
-    if (jobId.trim().isNotEmpty) {
-      try {
-        _similarJobs = await _homeService.fetchSimilarJobs(
-          jobId: jobId,
-          limit: 12,
-        );
-      } catch (_) {
-        _similarJobs = [];
-      }
-    }
-
-    // 3) Company details + follow state
-    if (companyId.trim().isNotEmpty) {
-      setState(() => _loadingCompany = true);
-
-      try {
-        _company = await _homeService.fetchCompanyDetails(companyId);
-      } catch (_) {
-        _company = null;
-      }
-
-      try {
-        _isCompanyFollowed = await _homeService.isCompanyFollowed(companyId);
-      } catch (_) {
-        _isCompanyFollowed = false;
-      }
-
-      if (mounted) setState(() => _loadingCompany = false);
-
-      // 4) Company reviews
-      setState(() => _loadingReviews = true);
-
-      try {
-        _reviews = await _homeService.fetchCompanyReviews(
-          companyId: companyId,
-          limit: 10,
-        );
-      } catch (_) {
-        _reviews = [];
-      }
-
-      if (mounted) setState(() => _loadingReviews = false);
-    } else {
-      _company = null;
-      _reviews = [];
-      _isCompanyFollowed = false;
-
-      if (mounted) {
-        setState(() {
-          _loadingCompany = false;
-          _loadingReviews = false;
-        });
-      }
-    }
-
-    if (!mounted) return;
-    setState(() => _loadingExtras = false);
+  if (companyObj is Map && companyObj['id'] != null) {
+    companyId = companyObj['id'].toString();
+  } else if (widget.job['company_id'] != null) {
+    companyId = widget.job['company_id'].toString();
   }
 
+  // reset
+  _employerPhone = null;
+  _canViewContact = false;
+  _loadingContact = false;
+
+  // --------------------------------------------------
+  // SAVED JOB IDS
+  // --------------------------------------------------
+  try {
+    _savedJobIds = await _homeService.getUserSavedJobs();
+  } catch (_) {
+    _savedJobIds = {};
+  }
+
+  // --------------------------------------------------
+  // SIMILAR JOBS
+  // --------------------------------------------------
+  if (jobId.trim().isNotEmpty) {
+    try {
+      _similarJobs = await _homeService.fetchSimilarJobs(
+        jobId: jobId,
+        limit: 12,
+      );
+    } catch (_) {
+      _similarJobs = [];
+    }
+  }
+
+  // --------------------------------------------------
+  // COMPANY DETAILS
+  // --------------------------------------------------
+  if (companyId.trim().isNotEmpty) {
+    if (mounted) {
+      setState(() => _loadingCompany = true);
+    }
+
+    try {
+      _company = await _homeService.fetchCompanyDetails(
+        companyId,
+      );
+    } catch (_) {
+      _company = null;
+    }
+
+    try {
+      _isCompanyFollowed =
+          await _homeService.isCompanyFollowed(
+        companyId,
+      );
+    } catch (_) {
+      _isCompanyFollowed = false;
+    }
+
+    if (mounted) {
+      setState(() => _loadingCompany = false);
+    }
+
+    // --------------------------------------------------
+    // COMPANY REVIEWS
+    // --------------------------------------------------
+    if (mounted) {
+      setState(() => _loadingReviews = true);
+    }
+
+    try {
+      _reviews = await _homeService.fetchCompanyReviews(
+        companyId: companyId,
+        limit: 10,
+      );
+    } catch (_) {
+      _reviews = [];
+    }
+
+    if (mounted) {
+      setState(() => _loadingReviews = false);
+    }
+
+    // --------------------------------------------------
+    // CONTACT VISIBILITY
+    // VERIFIED COMPANY + PRO USER
+    // --------------------------------------------------
+    try {
+      _loadingContact = true;
+
+      final isPro =
+          await _homeService.isUserProSubscribed();
+
+      final isVerified =
+          _company?['is_verified'] == true;
+
+      if (isPro && isVerified) {
+        final phone =
+            await _homeService.getEmployerContactForJob(
+          jobId,
+        );
+
+        _employerPhone = phone;
+        _canViewContact =
+            phone != null && phone.trim().isNotEmpty;
+      } else {
+        _employerPhone = null;
+        _canViewContact = false;
+      }
+    } catch (_) {
+      _employerPhone = null;
+      _canViewContact = false;
+    } finally {
+      _loadingContact = false;
+    }
+  } else {
+    _company = null;
+    _reviews = [];
+    _isCompanyFollowed = false;
+
+    _employerPhone = null;
+    _canViewContact = false;
+    _loadingContact = false;
+
+    if (mounted) {
+      setState(() {
+        _loadingCompany = false;
+        _loadingReviews = false;
+      });
+    }
+  }
+
+  if (!mounted) return;
+
+  setState(() => _loadingExtras = false);
+}
   // ------------------------------------------------------------
   // APPLY
   // ------------------------------------------------------------
@@ -762,130 +831,278 @@ Widget _requirementsBlock(Map<String, dynamic> job) {
   // COMPANY OVERVIEW (REAL)
   // ------------------------------------------------------------
   Widget _buildCompanyOverview() {
-    if (_loadingCompany) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 10),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
+  if (_loadingCompany) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 10),
+      child: Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
 
-    final company = _company;
+  final company = _company;
 
-    final name = (company?['name'] ?? '').toString().trim();
-    final desc = (company?['description'] ?? '').toString().trim();
-    final industry = (company?['industry'] ?? '').toString().trim();
-    final size = (company?['company_size'] ?? '').toString().trim();
-    final website = (company?['website'] ?? '').toString().trim();
-    final verified = company?['is_verified'] == true;
+  final name =
+      (company?['name'] ?? '').toString().trim();
 
-    final ratingRaw = company?['rating'];
-    final rating = ratingRaw == null
-        ? null
-        : double.tryParse(ratingRaw.toString());
+  final desc =
+      (company?['description'] ?? '').toString().trim();
 
-    final totalReviews = _toInt(company?['total_reviews']);
+  final industry =
+      (company?['industry'] ?? '').toString().trim();
 
-    if (company == null) {
-      return Text(
-        "Company information not available.",
-        style: KhilonjiyaUI.body.copyWith(
-          color: const Color(0xFF475569),
-          height: 1.55,
-        ),
-      );
-    }
+  final size =
+      (company?['company_size'] ?? '').toString().trim();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                name.isEmpty ? "Company" : name,
-                style: KhilonjiyaUI.body.copyWith(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 14.5,
-                ),
+  final website =
+      (company?['website'] ?? '').toString().trim();
+
+  final verified =
+      company?['is_verified'] == true;
+
+  final ratingRaw = company?['rating'];
+
+  final rating = ratingRaw == null
+      ? null
+      : double.tryParse(
+          ratingRaw.toString(),
+        );
+
+  final totalReviews =
+      _toInt(company?['total_reviews']);
+
+  if (company == null) {
+    return Text(
+      "Company information not available.",
+      style: KhilonjiyaUI.body.copyWith(
+        color: const Color(0xFF475569),
+        height: 1.55,
+      ),
+    );
+  }
+
+  return Column(
+    crossAxisAlignment:
+        CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          Expanded(
+            child: Text(
+              name.isEmpty
+                  ? "Company"
+                  : name,
+              style:
+                  KhilonjiyaUI.body.copyWith(
+                fontWeight:
+                    FontWeight.w900,
+                fontSize: 14.5,
               ),
             ),
-            if (verified)
-              Icon(
-                Icons.verified_rounded,
-                size: 18,
-                color: KhilonjiyaUI.primary,
+          ),
+          if (verified)
+            Icon(
+              Icons.verified_rounded,
+              size: 18,
+              color:
+                  KhilonjiyaUI.primary,
+            ),
+        ],
+      ),
+
+      const SizedBox(height: 10),
+
+      if (rating != null &&
+          rating > 0) ...[
+        Row(
+          children: [
+            const Icon(
+              Icons.star_rounded,
+              size: 18,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              "${rating.toStringAsFixed(1)} ($totalReviews reviews)",
+              style:
+                  KhilonjiyaUI.body.copyWith(
+                fontWeight:
+                    FontWeight.w800,
+                color:
+                    const Color(0xFF0F172A),
               ),
+            ),
           ],
         ),
         const SizedBox(height: 10),
+      ],
 
-        if (rating != null && rating > 0) ...[
-          Row(
-            children: [
-              const Icon(Icons.star_rounded, size: 18),
-              const SizedBox(width: 6),
-              Text(
-                "${rating.toStringAsFixed(1)} ($totalReviews reviews)",
-                style: KhilonjiyaUI.body.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF0F172A),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-        ],
-
-        if (industry.isNotEmpty || size.isNotEmpty) ...[
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              if (industry.isNotEmpty) _miniChip(industry),
-              if (size.isNotEmpty) _miniChip("Size: $size"),
-            ],
-          ),
-          const SizedBox(height: 12),
-        ],
-
-        Text(
-          desc.isEmpty ? "No company description available." : desc,
-          style: KhilonjiyaUI.body.copyWith(
-            color: const Color(0xFF475569),
-            height: 1.55,
-          ),
-        ),
-
-        const SizedBox(height: 14),
-
-        Row(
+      if (industry.isNotEmpty ||
+          size.isNotEmpty) ...[
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
           children: [
-            
-            if (website.isNotEmpty) ...[
-              const SizedBox(width: 10),
-              OutlinedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Website open coming next")),
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF0F172A),
-                  side: BorderSide(color: KhilonjiyaUI.border),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: const Icon(Icons.language_rounded, size: 18),
-              ),
-            ],
+            if (industry.isNotEmpty)
+              _miniChip(industry),
+
+            if (size.isNotEmpty)
+              _miniChip("Size: $size"),
           ],
         ),
+        const SizedBox(height: 12),
       ],
-    );
-  }
+
+      Text(
+        desc.isEmpty
+            ? "No company description available."
+            : desc,
+        style:
+            KhilonjiyaUI.body.copyWith(
+          color: const Color(0xFF475569),
+          height: 1.55,
+        ),
+      ),
+
+      // ==================================================
+      // CONTACT SECTION
+      // ==================================================
+      if (verified) ...[
+        const SizedBox(height: 16),
+
+        if (_loadingContact)
+          const Center(
+            child:
+                CircularProgressIndicator(),
+          )
+        else if (_canViewContact &&
+            _employerPhone != null)
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                await Clipboard.setData(
+                  ClipboardData(
+                    text: _employerPhone!,
+                  ),
+                );
+
+                if (!mounted) return;
+
+                ScaffoldMessenger.of(
+                        context)
+                    .showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      "Contact number copied",
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(
+                Icons.phone_rounded,
+              ),
+              label: Text(
+                _employerPhone!,
+                style: const TextStyle(
+                  fontWeight:
+                      FontWeight.w800,
+                ),
+              ),
+              style:
+                  ElevatedButton.styleFrom(
+                backgroundColor:
+                    KhilonjiyaUI.primary,
+                foregroundColor:
+                    Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(
+                  vertical: 14,
+                ),
+                shape:
+                    RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(
+                    16,
+                  ),
+                ),
+              ),
+            ),
+          )
+        else
+          Container(
+            width: double.infinity,
+            padding:
+                const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color:
+                  const Color(0xFFF8FAFC),
+              borderRadius:
+                  BorderRadius.circular(
+                14,
+              ),
+              border: Border.all(
+                color:
+                    KhilonjiyaUI.border,
+              ),
+            ),
+            child: Text(
+              "Contact details are available only for Pro members on verified companies.",
+              style:
+                  KhilonjiyaUI.body,
+            ),
+          ),
+      ],
+
+      const SizedBox(height: 14),
+
+      Row(
+        children: [
+          if (website.isNotEmpty) ...[
+            OutlinedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(
+                        context)
+                    .showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      "Website open coming next",
+                    ),
+                  ),
+                );
+              },
+              style:
+                  OutlinedButton.styleFrom(
+                foregroundColor:
+                    const Color(
+                        0xFF0F172A),
+                side: BorderSide(
+                  color:
+                      KhilonjiyaUI.border,
+                ),
+                padding:
+                    const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 14,
+                ),
+                shape:
+                    RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(
+                    16,
+                  ),
+                ),
+              ),
+              child: const Icon(
+                Icons.language_rounded,
+                size: 18,
+              ),
+            ),
+          ],
+        ],
+      ),
+    ],
+  );
+}                  
 
   Widget _miniChip(String text) {
     return Container(
