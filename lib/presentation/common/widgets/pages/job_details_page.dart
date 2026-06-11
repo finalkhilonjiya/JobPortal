@@ -158,6 +158,61 @@ bool _canViewContact = false;
           await _homeService.isCompanyFollowed(
         companyId,
       );
+Future<void> _loadExtras() async {
+  if (!mounted) return;
+
+  setState(() => _loadingExtras = true);
+
+  final jobId = widget.job['id']?.toString() ?? '';
+  final companyObj = widget.job['companies'];
+
+  String companyId = '';
+
+  if (companyObj is Map && companyObj['id'] != null) {
+    companyId = companyObj['id'].toString();
+  } else if (widget.job['company_id'] != null) {
+    companyId = widget.job['company_id'].toString();
+  }
+
+  _employerPhone = null;
+  _canViewContact = false;
+  _loadingContact = false;
+
+  try {
+    _savedJobIds = await _homeService.getUserSavedJobs();
+  } catch (_) {
+    _savedJobIds = {};
+  }
+
+  if (jobId.trim().isNotEmpty) {
+    try {
+      _similarJobs = await _homeService.fetchSimilarJobs(
+        jobId: jobId,
+        limit: 12,
+      );
+    } catch (_) {
+      _similarJobs = [];
+    }
+  }
+
+  if (companyId.trim().isNotEmpty) {
+    if (mounted) {
+      setState(() => _loadingCompany = true);
+    }
+
+    try {
+      _company = await _homeService.fetchCompanyDetails(
+        companyId,
+      );
+    } catch (_) {
+      _company = null;
+    }
+
+    try {
+      _isCompanyFollowed =
+          await _homeService.isCompanyFollowed(
+        companyId,
+      );
     } catch (_) {
       _isCompanyFollowed = false;
     }
@@ -166,9 +221,6 @@ bool _canViewContact = false;
       setState(() => _loadingCompany = false);
     }
 
-    // --------------------------------------------------
-    // COMPANY REVIEWS
-    // --------------------------------------------------
     if (mounted) {
       setState(() => _loadingReviews = true);
     }
@@ -186,10 +238,6 @@ bool _canViewContact = false;
       setState(() => _loadingReviews = false);
     }
 
-    // --------------------------------------------------
-    // CONTACT VISIBILITY
-    // VERIFIED COMPANY + PRO USER
-    // --------------------------------------------------
     try {
       _loadingContact = true;
 
@@ -199,15 +247,19 @@ bool _canViewContact = false;
       final isVerified =
           _company?['is_verified'] == true;
 
-      if (isPro && isVerified) {
+      if (isPro &&
+          isVerified &&
+          jobId.trim().isNotEmpty) {
         final phone =
             await _homeService.getEmployerContactForJob(
           jobId,
         );
 
         _employerPhone = phone;
+
         _canViewContact =
-            phone != null && phone.trim().isNotEmpty;
+            phone != null &&
+            phone.trim().isNotEmpty;
       } else {
         _employerPhone = null;
         _canViewContact = false;
@@ -238,10 +290,9 @@ bool _canViewContact = false;
   if (!mounted) return;
 
   setState(() => _loadingExtras = false);
-}
-  // ------------------------------------------------------------
-  // APPLY
-  // ------------------------------------------------------------
+}  
+      
+      // ------------------------------------------------------------
   Future<void> _applyNow() async {
   if (_checkingApplied || _isApplied) return;
 
