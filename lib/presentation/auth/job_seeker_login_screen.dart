@@ -366,35 +366,29 @@ Widget build(BuildContext context) {
           ),
 
           // FIXED FOOTER
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              color: const Color(0xFFF8FAFC),
-              padding: const EdgeInsets.only(bottom: 18, top: 10),
-              child: Column(
-                children: const [
-                  Text(
-                    'Made in Assam',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF475569),
-                    ),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    '© Khilonjiya India Pvt. Ltd.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF94A3B8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          // FIXED FOOTER
+Positioned(
+  left: 0,
+  right: 0,
+  bottom: 0,
+  child: Container(
+    color: const Color(0xFFF8FAFC),
+    padding: const EdgeInsets.only(
+      top: 10,
+      bottom: 18,
+    ),
+    child: const Center(
+      child: Text(
+        '© Khilonjiya India Pvt. Ltd.',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF94A3B8),
+        ),
+      ),
+    ),
+  ),
+),
         ],
       ),
     ),
