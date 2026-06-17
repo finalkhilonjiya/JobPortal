@@ -9,111 +9,107 @@ class RoleSelectionScreen extends StatelessWidget {
   static const _textMid = Color(0xFF334155);
   static const _textLight = Color(0xFF64748B);
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _bg,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 22),
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                const SizedBox(height: 64),
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: _bg,
+    body: SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 22),
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 64),
 
-                // ================= LOGO =================
-                Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
+                    // LOGO
+                    Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(100),
-                    child: Image.asset(
-                      'assets/icons/app_icon.png',
-                      fit: BoxFit.cover,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(100),
+                        child: Image.asset(
+                          'assets/icons/app_icon.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
-                  ),
+
+                    const SizedBox(height: 32),
+
+                    const Text(
+                      'Khilonjiya',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    _RoleCard(
+                      title: 'Job Seeker (Apply for Jobs)',
+                      description:
+                          'Find nearby jobs, apply instantly and track applications',
+                      accent: const Color(0xFF2563EB),
+                      onTap: () {
+                        Navigator.pushReplacementNamed(
+                          context,
+                          AppRoutes.jobSeekerLogin,
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    _RoleCard(
+                      title: 'Employer',
+                      description:
+                          'Post jobs, manage applicants and hire faster',
+                      accent: const Color(0xFF16A34A),
+                      onTap: () {
+                        Navigator.pushReplacementNamed(
+                          context,
+                          AppRoutes.employerLogin,
+                        );
+                      },
+                    ),
+                  ],
                 ),
-
-                const SizedBox(height: 32),
-
-                // ================= TITLE =================
-                const Text(
-                  'Khilonjiya',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF2563EB), // Job Seeker Blue
-                  ),
-                ),
-
-                
-
-                const SizedBox(height: 40),
-
-                // ================= ROLE CARDS =================
-                _RoleCard(
-                  title: 'Job Seeker (Apply for Jobs)',
-                  description:
-                      'Find nearby jobs, apply instantly and track applications',
-                  accent: const Color(0xFF2563EB),
-                  onTap: () {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      AppRoutes.jobSeekerLogin,
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 18),
-
-                _RoleCard(
-                  title: 'Employer',
-                  description:
-                      'Post jobs, manage applicants and hire faster',
-                  accent: const Color(0xFF16A34A), // Employer color
-                  onTap: () {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      AppRoutes.employerLogin,
-                    );
-                  },
-                ),
-
-
-                const SizedBox(height: 50),
-
-                // ================= FOOTER =================
-               
-
-                const Text(
-                  '© Khilonjiya India Pvt. Ltd.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: _textLight,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-              ],
+              ),
             ),
-          ),
+
+            // FOOTER FIXED AT BOTTOM
+            const Padding(
+              padding: EdgeInsets.only(bottom: 20),
+              child: Text(
+                '© Khilonjiya India Pvt. Ltd.',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
 }
-
 // ============================================================
 // ROLE CARD (UPDATED CLEAN UI)
 // ============================================================
