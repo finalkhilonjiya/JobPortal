@@ -93,16 +93,7 @@ class RoleSelectionScreen extends StatelessWidget {
                 const SizedBox(height: 50),
 
                 // ================= FOOTER =================
-                const Text(
-                  'Made in Assam',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF475569),
-                  ),
-                ),
-
-                const SizedBox(height: 6),
+               
 
                 const Text(
                   '© Khilonjiya India Pvt. Ltd.',
