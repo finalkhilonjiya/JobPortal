@@ -89,19 +89,6 @@ class RoleSelectionScreen extends StatelessWidget {
                   },
                 ),
 
-                const SizedBox(height: 18),
-
-                _RoleCard(
-  title: 'Khilonjiya Construction',
-  description: 'Find trusted construction services near you',
-  accent: const Color(0xFFF59E0B),
-  onTap: () {
-    Navigator.pushReplacementNamed(
-      context,
-      AppRoutes.constructionServiceLogin,
-    );
-  },
-),
 
                 const SizedBox(height: 50),
 
