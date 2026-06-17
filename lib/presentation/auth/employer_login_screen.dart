@@ -337,7 +337,7 @@ Widget build(BuildContext context) {
           ),
 
           // FIXED FOOTER (never moves)
-          Positioned(
+         Positioned(
             left: 0,
             right: 0,
             bottom: 0,
