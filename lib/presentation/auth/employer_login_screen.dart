@@ -440,7 +440,7 @@ Widget build(BuildContext context) {
       const SizedBox(height: 4),
 
       const Text(
-        '2.1L+ Qualified Candidates',
+        '2 Lakh+ Qualified Candidates',
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w700,
