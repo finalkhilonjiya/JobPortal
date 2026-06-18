@@ -338,44 +338,34 @@ Widget build(BuildContext context) {
 
           // FIXED FOOTER (never moves)
          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              color: const Color(0xFFF8FAFC),
-              padding: const EdgeInsets.only(bottom: 18, top: 10),
-              child: Column(
-                children: const [
-                  Text(
-                    'Made in Assam',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF475569),
-                    ),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    '© Khilonjiya India Pvt. Ltd.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF94A3B8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+  left: 0,
+  right: 0,
+  bottom: 0,
+  child: Container(
+    color: const Color(0xFFF8FAFC),
+    padding: const EdgeInsets.only(bottom: 18, top: 10),
+    child: const Column(
+      children: [
+        Text(
+          '© Khilonjiya India Pvt. Ltd.',
+          style: TextStyle(
+            fontSize: 12,
+            color: Color(0xFF94A3B8),
           ),
+        ),
+      ],
+    ),
+  ),
+),
         ],
       ),
     ),
   );
 }
 
-  Widget _header() {
+ Widget _header() {
   return Column(
     children: [
-      // ================= LOGO =================
       Container(
         width: 90,
         height: 90,
@@ -400,7 +390,6 @@ Widget build(BuildContext context) {
 
       const SizedBox(height: 24),
 
-      // ================= APP NAME =================
       const Text(
         'Khilonjiya',
         style: TextStyle(
@@ -413,7 +402,6 @@ Widget build(BuildContext context) {
 
       const SizedBox(height: 6),
 
-      // ================= SUB TITLE =================
       const Text(
         'Employer Login',
         style: TextStyle(
@@ -423,20 +411,45 @@ Widget build(BuildContext context) {
         ),
       ),
 
-      const SizedBox(height: 8),
+      const SizedBox(height: 12),
 
-      // ================= TAGLINE =================
+      const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 30),
+        child: Text(
+          'Khilonjiya helps hire Staff in 3 days.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF64748B),
+          ),
+        ),
+      ),
+
+      const SizedBox(height: 12),
+
       const Text(
-        'Post jobs, manage applicants and hire faster',
+        '60+ Job Categories',
         style: TextStyle(
-          fontSize: 14.5,
-          color: Color(0xFF64748B),
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF16A34A),
+        ),
+      ),
+
+      const SizedBox(height: 4),
+
+      const Text(
+        '2.1L+ Qualified Candidates',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF16A34A),
         ),
       ),
     ],
   );
 }
-
   Widget _mobileStep() {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
