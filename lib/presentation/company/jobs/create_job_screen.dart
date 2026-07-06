@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../services/employer_subscription_service.dart';
+import '../subscription/employer_subscription_page.dart';
+
 class CreateJobScreen extends StatefulWidget {
   const CreateJobScreen({Key? key}) : super(key: key);
 
@@ -185,6 +188,8 @@ static const _line = Color(0xFFE6E8EC);
 static const _primary = Color(0xFF16A34A);
 
 
+  final EmployerSubscriptionService _subService = EmployerSubscriptionService();
+
   @override
 void initState() {
   super.initState();
@@ -200,6 +205,29 @@ void initState() {
       await _loadEverything();
       await _loadJobForEdit(); // 🔥 IMPORTANT
     } else {
+      // Posting a NEW job requires an active Khilonjiya Premium plan.
+      // (Editing an existing job does not require this check.)
+      final active = await _subService.isPremiumActive();
+
+      if (!mounted) return;
+
+      if (!active) {
+        final companyId = (args?['companyId'] ?? '').toString();
+
+        final purchased = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                EmployerSubscriptionPage(companyId: companyId),
+          ),
+        );
+
+        if (purchased != true) {
+          if (mounted) Navigator.pop(context);
+          return;
+        }
+      }
+
       await _loadEverything();
     }
   });
