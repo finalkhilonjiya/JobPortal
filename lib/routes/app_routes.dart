@@ -33,6 +33,8 @@ import '../presentation/company/jobs/employer_job_list_screen.dart';
 import '../presentation/company/jobs/job_applicants_screen.dart';
 import '../presentation/company/jobs/job_applicants_pipeline_page.dart';
 import '../presentation/company/notifications/employer_notifications_page.dart';
+import '../presentation/company/subscription/employer_subscription_page.dart';
+import '../presentation/company/candidates/candidate_database_page.dart';
 
 class AppRoutes {
   // ❌ REMOVED '/'
@@ -70,6 +72,8 @@ static const String constructionHome = '/construction-services-home';
   static const String jobApplicantsPipeline = '/job-applicants-pipeline';
   static const String employerNotifications = '/employer-notifications';
   static const String subscribe = '/subscribe';
+  static const String employerSubscribe = '/employer-subscribe';
+  static const String candidateDatabase = '/candidate-database';
 
   static final Map<String, WidgetBuilder> routes = {
     roleSelection: (_) => const RoleSelectionScreen(),
@@ -119,6 +123,24 @@ constructionHome: (_) => const ConstructionServicesHomePage(),
           jobId: jobId,
           companyId: companyId,
         ),
+      );
+    }
+
+    if (settings.name == employerSubscribe) {
+      final args = settings.arguments as Map?;
+      final companyId = args?['companyId']?.toString() ?? '';
+
+      return MaterialPageRoute(
+        builder: (_) => EmployerSubscriptionPage(companyId: companyId),
+      );
+    }
+
+    if (settings.name == candidateDatabase) {
+      final args = settings.arguments as Map?;
+      final companyId = args?['companyId']?.toString() ?? '';
+
+      return MaterialPageRoute(
+        builder: (_) => CandidateDatabasePage(companyId: companyId),
       );
     }
 
