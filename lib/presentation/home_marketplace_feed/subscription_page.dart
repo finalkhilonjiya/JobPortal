@@ -31,8 +31,8 @@ class _SubscriptionPageState
   bool _agreed = false;
   bool _showTerms = false;
 
-  DateTime? _expiry;
-  int _daysLeft = 0;
+  bool _boostEnabled = false;
+  bool _boostSaving = false;
 
   String _priceText = "₹99";
 
@@ -84,33 +84,18 @@ class _SubscriptionPageState
       _isActive = false;
     });
 
-    final sub =
-        await _service.getMySubscription();
+    final active = await _service.isProActive();
 
-    if (sub != null) {
-
-      final exp =
-          DateTime.tryParse(
-        sub['expires_at'].toString(),
-      );
-
-      final now = DateTime.now();
-
-      if (
-          exp != null &&
-          exp.isAfter(now)
-      ) {
-
-        _expiry = exp;
-
-        _daysLeft =
-            exp.difference(now).inDays;
-
-        _isActive = true;
-      }
+    bool boost = false;
+    if (active) {
+      boost = await _service.getBoostStatus();
     }
 
+    if (!mounted) return;
+
     setState(() {
+      _isActive = active;
+      _boostEnabled = boost;
       _loading = false;
     });
   }
@@ -202,7 +187,7 @@ class _SubscriptionPageState
       'name': 'Khilonjiya',
 
       'description':
-          'Khilonjiya Pro Subscription',
+          'Khilonjiya Premium (Lifetime)',
 
       'order_id': order['order_id'],
 
@@ -299,7 +284,7 @@ class _SubscriptionPageState
           .showSnackBar(
         const SnackBar(
           content: Text(
-            "Subscription activated successfully",
+            "Khilonjiya Premium activated — it's yours for life!",
           ),
         ),
       );
@@ -378,6 +363,52 @@ class _SubscriptionPageState
   }
 
   // =========================================================
+  // BOOST TOGGLE
+  // =========================================================
+
+  Future<void> _onBoostChanged(bool value) async {
+
+    setState(() {
+      _boostSaving = true;
+    });
+
+    try {
+
+      await _service.setBoostEnabled(value);
+
+      if (!mounted) return;
+
+      setState(() {
+        _boostEnabled = value;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            value
+                ? "Boost enabled — your resume is now visible to employers"
+                : "Boost turned off",
+          ),
+        ),
+      );
+
+    } catch (e) {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+
+    } finally {
+
+      if (mounted) {
+        setState(() {
+          _boostSaving = false;
+        });
+      }
+    }
+  }
+
+  // =========================================================
   // UI
   // =========================================================
 
@@ -393,7 +424,7 @@ class _SubscriptionPageState
         backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          "Khilonjiya Pro",
+          "Khilonjiya Premium",
           style:
               KhilonjiyaUI.cardTitle,
         ),
@@ -424,6 +455,11 @@ class _SubscriptionPageState
                   _terms(),
                 ],
 
+                if (_isActive) ...[
+                  const SizedBox(height: 16),
+                  _boostCard(),
+                ],
+
                 const SizedBox(
                   height: 16,
                 ),
@@ -441,8 +477,8 @@ class _SubscriptionPageState
   Widget _heroCard() {
 
     final subtitle = _isActive
-        ? "Activated • $_daysLeft days remaining"
-        : "30 Days Pro Access";
+        ? "Activated • Lifetime access, no expiry"
+        : "One-time payment • Lifetime access";
 
     return Container(
 
@@ -459,7 +495,7 @@ class _SubscriptionPageState
         children: [
 
           Text(
-            "Khilonjiya Pro",
+            "Khilonjiya Premium",
             style:
                 KhilonjiyaUI
                     .cardTitle,
@@ -473,24 +509,27 @@ class _SubscriptionPageState
                 KhilonjiyaUI.sub,
           ),
 
-          if (_expiry != null)
-            Text(
-              "Valid till: ${_expiry!.toLocal().toString().split(' ')[0]}",
-              style:
-                  KhilonjiyaUI.sub,
-            ),
-
           const SizedBox(height: 14),
 
-          Text(
-            _priceText,
-            style:
-                KhilonjiyaUI
-                    .cardTitle
-                    .copyWith(
-              fontSize: 22,
+          if (!_isActive)
+            Text(
+              _priceText,
+              style:
+                  KhilonjiyaUI
+                      .cardTitle
+                      .copyWith(
+                fontSize: 22,
+              ),
             ),
-          ),
+
+          if (!_isActive)
+            const Text(
+              "One-time — pay once, use forever",
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
+              ),
+            ),
 
           const SizedBox(height: 14),
 
@@ -530,10 +569,81 @@ class _SubscriptionPageState
                     )
                   : Text(
                       _isActive
-                          ? "Subscribed"
-                          : "Activate Pro",
+                          ? "Premium Member for Life"
+                          : "Get Khilonjiya Premium",
                     ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =========================================================
+  // BOOST CARD (Premium members only)
+  // =========================================================
+
+  Widget _boostCard() {
+
+    return Container(
+
+      padding: const EdgeInsets.all(16),
+
+      decoration: KhilonjiyaUI.cardDecoration(),
+
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          Row(
+            children: [
+              Icon(Icons.rocket_launch,
+                  color: KhilonjiyaUI.primary),
+              const SizedBox(width: 8),
+              Text(
+                "Boost your Resume",
+                style: KhilonjiyaUI.cardTitle,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          const Text(
+            "Turn on Boost to make your resume visible to every employer "
+            "searching Khilonjiya's candidate database — not just the "
+            "jobs you've applied to.",
+            style: TextStyle(fontSize: 13, color: Colors.grey),
+          ),
+
+          const SizedBox(height: 8),
+
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _boostEnabled
+                      ? "Boost is ON"
+                      : "Boost is OFF",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              _boostSaving
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Switch(
+                      value: _boostEnabled,
+                      activeColor: KhilonjiyaUI.primary,
+                      onChanged: _onBoostChanged,
+                    ),
+            ],
           ),
         ],
       ),
@@ -578,10 +688,11 @@ class _SubscriptionPageState
 • Employers independently shortlist and contact candidates.
 • Interview calls and application updates will be notified inside the app.
 • Khilonjiya support team will assist in coordinating interviews and application follow-ups.
-• Subscription validity is 30 days from the date of purchase. Users can apply all available jobs during the period as per qualification required.
+• Khilonjiya Premium is a one-time payment that gives you lifetime access — there is no expiry and no recurring charge. You can apply to unlimited jobs on the platform forever.
+• Premium members can turn on Boost at any time to make their resume visible to employers searching Khilonjiya's candidate database.
 • Subscription fees are non-refundable once payment is completed.
 • Any misuse, fraudulent activity, fake applications, or policy violations may result in account suspension without refund.
-• By proceeding, you agree to the platform’s terms and conditions.
+• By proceeding, you agree to the platform's terms and conditions.
 """,
 ),
 
@@ -683,6 +794,18 @@ class _SubscriptionPageState
           style:
               KhilonjiyaUI
                   .cardTitle,
+        ),
+
+        item(
+          Icons.all_inclusive,
+          "Unlimited Applications, Forever",
+          "Pay once — apply to every job on Khilonjiya for life",
+        ),
+
+        item(
+          Icons.rocket_launch,
+          "Boost",
+          "Make your resume visible to employers searching for candidates",
         ),
 
         item(
