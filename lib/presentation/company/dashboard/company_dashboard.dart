@@ -6,6 +6,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../routes/app_routes.dart';
 import '../../../services/mobile_auth_service.dart';
 import '../../../services/employer_dashboard_service.dart';
+import '../../../services/employer_subscription_service.dart';
+import '../subscription/employer_subscription_page.dart';
+import '../candidates/candidate_database_page.dart';
 
 import 'widgets/header_widget.dart';
 import 'widgets/hero_slider.dart';
@@ -26,6 +29,38 @@ class CompanyDashboard extends StatefulWidget {
 
 class _CompanyDashboardState extends State<CompanyDashboard> {
   final EmployerDashboardService _service = EmployerDashboardService();
+  final EmployerSubscriptionService _subService = EmployerSubscriptionService();
+
+  // ============================================================
+  // Gate: employer must have an active Khilonjiya Premium plan
+  // before they can post a job. If not, send them to the
+  // subscription page instead of the create-job form.
+  // ============================================================
+  Future<void> _onPostJobTapped() async {
+    final active = await _subService.isPremiumActive();
+
+    if (!mounted) return;
+
+    if (!active) {
+      final purchased = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              EmployerSubscriptionPage(companyId: _companyId),
+        ),
+      );
+
+      if (purchased != true) return;
+    }
+
+    if (!mounted) return;
+
+    final res = await Navigator.pushNamed(context, AppRoutes.createJob);
+    if (!mounted) return;
+    if (res == true) {
+      await _loadDashboard();
+    }
+  }
 
   // Each call to _loadDashboard increments this. Any in-flight
   // coroutine that sees its generation is stale simply exits
@@ -312,14 +347,7 @@ Widget build(BuildContext context) {
     body: _dashboard(),
     floatingActionButton: FloatingActionButton(
       backgroundColor: const Color(0xFF16A34A),
-      onPressed: () async {
-        final res = await Navigator.pushNamed(
-            context, AppRoutes.createJob);
-        if (!mounted) return;
-        if (res == true) {
-          await _loadDashboard();
-        }
-      },
+      onPressed: _onPostJobTapped,
       child: const Icon(Icons.add),
     ),
     bottomNavigationBar: BottomNavigationBar(
@@ -339,6 +367,14 @@ Widget build(BuildContext context) {
             },
           );
         } else if (i == 3) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  CandidateDatabasePage(companyId: _companyId),
+            ),
+          );
+        } else if (i == 4) {
           _openProfile();
         }
       },
@@ -349,6 +385,8 @@ Widget build(BuildContext context) {
             icon: Icon(Icons.work), label: "Jobs"),
         BottomNavigationBarItem(
             icon: Icon(Icons.people), label: "Applicants"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.storage), label: "Database"),
         BottomNavigationBarItem(
             icon: Icon(Icons.person), label: "Profile"),
       ],
