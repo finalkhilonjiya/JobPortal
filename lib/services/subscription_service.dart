@@ -53,7 +53,8 @@ class SubscriptionService {
           id,
           full_name,
           mobile_number,
-          actual_email
+          actual_email,
+          is_boost_enabled
         ''')
         .eq('id', uid)
         .maybeSingle();
@@ -66,7 +67,7 @@ class SubscriptionService {
   }
 
   // ============================================================
-  // GET ACTIVE SUBSCRIPTION
+  // GET ACTIVE SUBSCRIPTION (Khilonjiya Premium — lifetime)
   // ============================================================
 
   Future<Map<String, dynamic>?>
@@ -80,7 +81,9 @@ class SubscriptionService {
           user_id,
           status,
           plan_name,
+          plan_key,
           amount_rupees,
+          is_lifetime,
           started_at,
           expires_at,
           razorpay_order_id,
@@ -89,7 +92,7 @@ class SubscriptionService {
         ''')
         .eq('user_id', uid)
         .order(
-          'expires_at',
+          'created_at',
           ascending: false,
         )
         .limit(1)
@@ -104,6 +107,9 @@ class SubscriptionService {
 
   // ============================================================
   // CHECK ACTIVE ACCESS
+  // Khilonjiya Premium is a one-time, lifetime purchase, so a
+  // subscription is active whenever status == 'active' AND either
+  // is_lifetime == true OR (legacy rows) expires_at is in the future.
   // ============================================================
 
   Future<bool> isProActive() async {
@@ -113,6 +119,20 @@ class SubscriptionService {
 
     if (sub == null) {
       return false;
+    }
+
+    final status =
+        (sub['status'] ?? '').toString();
+
+    if (status != 'active') {
+      return false;
+    }
+
+    final isLifetime =
+        sub['is_lifetime'] == true;
+
+    if (isLifetime) {
+      return true;
     }
 
     final expiresRaw =
@@ -134,6 +154,38 @@ class SubscriptionService {
     return expires.isAfter(
       DateTime.now(),
     );
+  }
+
+  // ============================================================
+  // BOOST — only usable once the user has Khilonjiya Premium.
+  // When enabled, the job seeker's profile becomes visible in the
+  // employer candidate database search.
+  // ============================================================
+
+  Future<bool> getBoostStatus() async {
+
+    final profile = await getCurrentUserProfile();
+
+    return profile?['is_boost_enabled'] == true;
+  }
+
+  Future<void> setBoostEnabled(bool enabled) async {
+
+    final uid = _uid();
+
+    final isActive = await isProActive();
+
+    if (enabled && !isActive) {
+      throw Exception(
+        "Boost is a Khilonjiya Premium feature. Activate Premium first.",
+      );
+    }
+
+    await _db.from('user_profiles').update({
+      'is_boost_enabled': enabled,
+      'boost_enabled_at':
+          enabled ? DateTime.now().toIso8601String() : null,
+    }).eq('id', uid);
   }
 
   // ============================================================
