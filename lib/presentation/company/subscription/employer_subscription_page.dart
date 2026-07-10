@@ -445,7 +445,7 @@ class _EmployerSubscriptionPageState
           "Download resumes",
           "Download candidate resumes directly",
         ),
-        if (!_isActive)
+        if (!_isActive && !_showTerms)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: SizedBox(
