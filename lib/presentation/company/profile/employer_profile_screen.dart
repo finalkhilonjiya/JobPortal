@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../subscription/employer_subscription_page.dart';
+
 class EmployerProfileScreen extends StatefulWidget {
   const EmployerProfileScreen({super.key});
 
@@ -209,6 +211,67 @@ if (_hasNumber(name)) {
                     const SizedBox(height: 6),
                     const Text("Upload Logo"),
                   ],
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              // ============================================================
+              // KHILONJIYA PREMIUM — subscription details entry point
+              // ============================================================
+              Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EmployerSubscriptionPage(
+                          companyId: _companyId ?? '',
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDCFCE7),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.workspace_premium,
+                              color: Color(0xFF16A34A)),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Khilonjiya Premium",
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                              Text(
+                                "View plan, validity & candidate database access",
+                                style:
+                                    TextStyle(fontSize: 12.5, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right, color: Colors.grey),
+                      ],
+                    ),
+                  ),
                 ),
               ),
 
