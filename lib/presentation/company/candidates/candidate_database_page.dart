@@ -1,8 +1,11 @@
 // File: lib/presentation/company/candidates/candidate_database_page.dart
 
 import 'package:flutter/material.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../services/candidate_database_service.dart';
+import '../../../services/employer_applicants_service.dart';
 import '../../../services/employer_subscription_service.dart';
 import '../subscription/employer_subscription_page.dart';
 
@@ -22,6 +25,8 @@ class CandidateDatabasePage extends StatefulWidget {
 class _CandidateDatabasePageState extends State<CandidateDatabasePage> {
 
   final CandidateDatabaseService _service = CandidateDatabaseService();
+  final EmployerApplicantsService _applicantsService = EmployerApplicantsService();
+  final EmployerSubscriptionService _subService = EmployerSubscriptionService();
   final TextEditingController _searchCtrl = TextEditingController();
 
   bool _loading = true;
@@ -39,14 +44,17 @@ class _CandidateDatabasePageState extends State<CandidateDatabasePage> {
     setState(() => _loading = true);
 
     try {
+      // Checked independently of the candidate list so the banner is
+      // correct even when there are zero results for a search.
+      final active = await _subService.isPremiumActive();
+
       final rows = await _service.getCandidates(search: search);
 
       if (!mounted) return;
 
       setState(() {
         _candidates = rows;
-        _hasFullAccess =
-            rows.isNotEmpty ? (rows.first['has_full_access'] == true) : _hasFullAccess;
+        _hasFullAccess = active;
         _loading = false;
       });
     } catch (e) {
@@ -68,6 +76,157 @@ class _CandidateDatabasePageState extends State<CandidateDatabasePage> {
         builder: (_) => EmployerSubscriptionPage(companyId: widget.companyId),
       ),
     ).then((_) => _load(search: _searchCtrl.text));
+  }
+
+  // ------------------------------------------------------------
+  // OPEN RESUME — same viewer employers already use for applicants
+  // ------------------------------------------------------------
+  Future<void> _openResume(Map<String, dynamic> c) async {
+
+    final rawPath = (c['resume_url'] ?? '').toString().trim();
+
+    if (rawPath.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("This candidate hasn't uploaded a resume")),
+      );
+      return;
+    }
+
+    try {
+      final url = await _applicantsService.getPublicOrSignedUrl(rawPath);
+
+      if (url == null || url.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Invalid resume")),
+        );
+        return;
+      }
+
+      final isPdf = Uri.parse(url).path.toLowerCase().endsWith('.pdf');
+
+      if (!mounted) return;
+
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        builder: (_) {
+          return SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      const Text("Resume",
+                          style: TextStyle(fontWeight: FontWeight.w900)),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.download),
+                        onPressed: () async {
+                          await launchUrl(
+                            Uri.parse(url),
+                            mode: LaunchMode.externalApplication,
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: isPdf
+                      ? SfPdfViewer.network(url)
+                      : InteractiveViewer(
+                          minScale: 1,
+                          maxScale: 5,
+                          child: Image.network(url),
+                        ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Resume failed to load")),
+      );
+    }
+  }
+
+  // ------------------------------------------------------------
+  // CONTACT SHEET — call / email the candidate directly
+  // ------------------------------------------------------------
+  void _contactCandidate(Map<String, dynamic> c) {
+
+    final phone = (c['mobile_number'] ?? '').toString().trim();
+    final email = (c['actual_email'] ?? '').toString().trim();
+
+    if (phone.isEmpty && email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No contact details on file for this candidate")),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (phone.isNotEmpty)
+                ListTile(
+                  leading: const Icon(Icons.call, color: Color(0xFF16A34A)),
+                  title: Text(phone),
+                  subtitle: const Text("Call candidate"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await launchUrl(Uri.parse("tel:$phone"));
+                  },
+                ),
+              if (phone.isNotEmpty)
+                ListTile(
+                  leading: const Icon(Icons.message, color: Color(0xFF16A34A)),
+                  title: Text(phone),
+                  subtitle: const Text("Message on WhatsApp"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final digits = phone.replaceAll(RegExp(r'[^0-9]'), '');
+                    await launchUrl(
+                      Uri.parse("https://wa.me/$digits"),
+                      mode: LaunchMode.externalApplication,
+                    );
+                  },
+                ),
+              if (email.isNotEmpty)
+                ListTile(
+                  leading: const Icon(Icons.email, color: Color(0xFF16A34A)),
+                  title: Text(email),
+                  subtitle: const Text("Send email"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await launchUrl(Uri.parse("mailto:$email"));
+                  },
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -147,6 +306,64 @@ class _CandidateDatabasePageState extends State<CandidateDatabasePage> {
           ),
         ],
       ),
+    );
+  }
+
+  // ------------------------------------------------------------
+  // Small pill button used for View Resume / Contact — sized to
+  // always fit on one line regardless of locked/unlocked label.
+  // ------------------------------------------------------------
+  Widget _actionButton({
+    required IconData icon,
+    required String label,
+    required bool locked,
+    required VoidCallback onTap,
+    required bool filled,
+  }) {
+
+    final child = Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: 16),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+          ),
+        ),
+        if (locked) ...[
+          const SizedBox(width: 3),
+          const Icon(Icons.lock, size: 12),
+        ],
+      ],
+    );
+
+    if (filled) {
+      return ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF16A34A),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        onPressed: onTap,
+        child: child,
+      );
+    }
+
+    return OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      onPressed: onTap,
+      child: child,
     );
   }
 
@@ -267,43 +484,33 @@ class _CandidateDatabasePageState extends State<CandidateDatabasePage> {
           Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.description_outlined, size: 18),
-                  label: Text(hasAccess ? "View Resume" : "View Resume 🔒"),
-                  onPressed: () {
+                child: _actionButton(
+                  icon: Icons.description_outlined,
+                  label: "View Resume",
+                  locked: !hasAccess,
+                  filled: false,
+                  onTap: () {
                     if (!hasAccess) {
                       _goToSubscription();
                       return;
                     }
-                    final url = (c['resume_url'] ?? '').toString();
-                    if (url.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("This candidate hasn't uploaded a resume"),
-                        ),
-                      );
-                      return;
-                    }
-                    // TODO: open `url` with your existing PDF/webview viewer
+                    _openResume(c);
                   },
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.call, size: 18),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF16A34A),
-                    foregroundColor: Colors.white,
-                  ),
-                  label: Text(hasAccess ? "Contact" : "Contact 🔒"),
-                  onPressed: () {
+                child: _actionButton(
+                  icon: Icons.call,
+                  label: "Contact",
+                  locked: !hasAccess,
+                  filled: true,
+                  onTap: () {
                     if (!hasAccess) {
                       _goToSubscription();
                       return;
                     }
-                    // hasAccess == true means mobile_number / actual_email
-                    // are populated on `c` — wire up your call/email sheet here.
+                    _contactCandidate(c);
                   },
                 ),
               ),
