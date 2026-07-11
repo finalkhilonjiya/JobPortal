@@ -105,6 +105,26 @@ class EmployerSubscriptionService {
   }
 
   // ============================================================
+  // GET CURRENT USER PROFILE (for auto-filling Razorpay checkout —
+  // employer should never have to type contact/email manually)
+  // ============================================================
+
+  Future<Map<String, dynamic>?> getCurrentUserProfile() async {
+
+    final uid = _uid();
+
+    final res = await _db
+        .from('user_profiles')
+        .select('mobile_number, actual_email')
+        .eq('id', uid)
+        .maybeSingle();
+
+    if (res == null) return null;
+
+    return Map<String, dynamic>.from(res);
+  }
+
+  // ============================================================
   // CREATE RAZORPAY ORDER
   // ============================================================
 
@@ -135,8 +155,10 @@ class EmployerSubscriptionService {
     final body = jsonDecode(response.body);
 
     if (response.statusCode != 200) {
+      final err = body["error"] ?? "Failed to create Razorpay order";
+      final details = body["details"];
       throw Exception(
-        body["error"] ?? "Failed to create Razorpay order",
+        details != null ? "$err: $details" : err,
       );
     }
 
@@ -176,8 +198,10 @@ class EmployerSubscriptionService {
     final body = jsonDecode(response.body);
 
     if (response.statusCode != 200 || body["success"] != true) {
+      final err = body["error"] ?? "Payment verification failed";
+      final details = body["details"];
       throw Exception(
-        body["error"] ?? "Payment verification failed",
+        details != null ? "$err: $details" : err,
       );
     }
   }
