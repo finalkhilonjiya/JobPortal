@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../services/employer_subscription_service.dart';
 
@@ -101,7 +100,16 @@ class _EmployerSubscriptionPageState
 
       setState(() => _paying = true);
 
-      final user = Supabase.instance.client.auth.currentUser;
+      final profile = await _service.getCurrentUserProfile();
+
+      String mobile = (profile?['mobile_number'] ?? "").toString().trim();
+      mobile = mobile
+          .replaceAll("+91", "")
+          .replaceAll(" ", "")
+          .replaceAll("-", "");
+      mobile = mobile.replaceAll(RegExp(r'[^0-9]'), '');
+
+      final email = (profile?['actual_email'] ?? "").toString().trim();
 
       final order = await _service.createRazorpayOrder(
         planKey: _selectedPlan!['plan_key'],
@@ -118,7 +126,8 @@ class _EmployerSubscriptionPageState
         'image':
             'https://rsskivonmfqrzxbmxrkl.supabase.co/storage/v1/object/public/logokhilonjiya/app_icon_foreground.png',
         'prefill': {
-          'email': user?.email ?? '',
+          'contact': mobile,
+          'email': email,
         },
         'theme': {'color': '#0F172A'},
         'retry': {'enabled': true, 'max_count': 2},
