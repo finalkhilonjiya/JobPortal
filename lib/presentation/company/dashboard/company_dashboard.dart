@@ -356,8 +356,6 @@ Widget build(BuildContext context) {
       selectedItemColor: const Color(0xFF16A34A),
       onTap: (i) {
         if (i == 1) {
-          Navigator.pushNamed(context, AppRoutes.employerJobs);
-        } else if (i == 2) {
           Navigator.pushNamed(
             context,
             AppRoutes.jobApplicants,
@@ -366,7 +364,7 @@ Widget build(BuildContext context) {
               'companyId': _companyId,
             },
           );
-        } else if (i == 3) {
+        } else if (i == 2) {
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -374,15 +372,13 @@ Widget build(BuildContext context) {
                   CandidateDatabasePage(companyId: _companyId),
             ),
           );
-        } else if (i == 4) {
+        } else if (i == 3) {
           _openProfile();
         }
       },
       items: const [
         BottomNavigationBarItem(
             icon: Icon(Icons.home), label: "Dashboard"),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.work), label: "Jobs"),
         BottomNavigationBarItem(
             icon: Icon(Icons.people), label: "Applicants"),
         BottomNavigationBarItem(
@@ -541,6 +537,18 @@ Widget build(BuildContext context) {
                     Navigator.pop(context);
                     Navigator.pushNamed(context,
                         AppRoutes.employerProfile);
+                  }),
+                  _drawerItem(Icons.workspace_premium_outlined,
+                      "Subscription", () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EmployerSubscriptionPage(
+                          companyId: _companyId,
+                        ),
+                      ),
+                    );
                   }),
                   const Divider(),
                   _drawerItem(Icons.logout_rounded,
