@@ -416,6 +416,7 @@ class SubscriptionService {
 
   Future<Map<String, dynamic>> createBoostRazorpayOrder({
     required int months,
+    bool test = false,
   }) async {
 
     _ensureAuth();
@@ -433,6 +434,7 @@ class SubscriptionService {
       },
       body: jsonEncode({
         "months": months,
+        "test": test,
       }),
     );
 
