@@ -382,7 +382,13 @@ class _CandidateDatabasePageState extends State<CandidateDatabasePage> {
     final boosted = c['is_boost_enabled'] == true;
     final avatar = (c['avatar_url'] ?? '').toString();
 
-    return Container(
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openCandidateDetail(c),
+        child: Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -516,6 +522,229 @@ class _CandidateDatabasePageState extends State<CandidateDatabasePage> {
               ),
             ],
           ),
+        ],
+      ),
+        ),
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------
+  // CANDIDATE DETAIL — full profile, photo, resume, contact.
+  // Opened when a card in the database is tapped.
+  // ------------------------------------------------------------
+  void _openCandidateDetail(Map<String, dynamic> c) {
+
+    final name = (c['full_name'] ?? 'Candidate').toString();
+    final title = (c['current_job_title'] ?? '').toString();
+    final company = (c['current_company'] ?? '').toString();
+    final city = (c['current_city'] ?? '').toString();
+    final state = (c['current_state'] ?? '').toString();
+    final exp = c['total_experience_years'];
+    final bio = (c['bio'] ?? '').toString();
+    final resumeHeadline = (c['resume_headline'] ?? '').toString();
+    final education = (c['highest_education'] ?? '').toString();
+    final notice = c['notice_period_days'];
+    final salaryMin = c['expected_salary_min'];
+    final salaryMax = c['expected_salary_max'];
+    final skills = (c['skills'] is List)
+        ? List<String>.from(c['skills'])
+        : <String>[];
+    final hasAccess = c['has_full_access'] == true;
+    final avatar = (c['avatar_url'] ?? '').toString();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) {
+            return SafeArea(
+              child: ListView(
+                controller: scrollController,
+                padding: const EdgeInsets.all(20),
+                children: [
+
+                  Center(
+                    child: CircleAvatar(
+                      radius: 44,
+                      backgroundColor: const Color(0xFFE2E8F0),
+                      backgroundImage:
+                          avatar.isNotEmpty ? NetworkImage(avatar) : null,
+                      child: avatar.isEmpty
+                          ? Text(
+                              name.isNotEmpty ? name[0].toUpperCase() : "?",
+                              style: const TextStyle(fontSize: 28),
+                            )
+                          : null,
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Center(
+                    child: Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+
+                  if (title.isNotEmpty || company.isNotEmpty)
+                    Center(
+                      child: Text(
+                        [title, company].where((e) => e.isNotEmpty).join(" at "),
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                    ),
+
+                  if (city.isNotEmpty || state.isNotEmpty)
+                    Center(
+                      child: Text(
+                        [city, state].where((e) => e.isNotEmpty).join(", "),
+                        style: const TextStyle(color: Colors.grey, fontSize: 13),
+                      ),
+                    ),
+
+                  const SizedBox(height: 20),
+
+                  if (resumeHeadline.isNotEmpty) ...[
+                    _detailSection("Headline", resumeHeadline),
+                  ],
+
+                  if (bio.isNotEmpty) ...[
+                    _detailSection("About", bio),
+                  ],
+
+                  Row(
+                    children: [
+                      if (exp != null)
+                        Expanded(
+                          child: _statTile("Experience", "$exp yrs"),
+                        ),
+                      if (salaryMin != null && salaryMax != null)
+                        Expanded(
+                          child: _statTile(
+                            "Expected Salary",
+                            "₹$salaryMin - ₹$salaryMax",
+                          ),
+                        ),
+                    ],
+                  ),
+
+                  Row(
+                    children: [
+                      if (education.isNotEmpty)
+                        Expanded(
+                          child: _statTile("Education", education),
+                        ),
+                      if (notice != null)
+                        Expanded(
+                          child: _statTile("Notice Period", "$notice days"),
+                        ),
+                    ],
+                  ),
+
+                  if (skills.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Skills",
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: skills
+                          .map((s) => Chip(label: Text(s)))
+                          .toList(),
+                    ),
+                  ],
+
+                  const SizedBox(height: 24),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _actionButton(
+                          icon: Icons.description_outlined,
+                          label: "View Resume",
+                          locked: !hasAccess,
+                          filled: false,
+                          onTap: () {
+                            if (!hasAccess) {
+                              Navigator.pop(context);
+                              _goToSubscription();
+                              return;
+                            }
+                            _openResume(c);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _actionButton(
+                          icon: Icons.call,
+                          label: "Contact",
+                          locked: !hasAccess,
+                          filled: true,
+                          onTap: () {
+                            if (!hasAccess) {
+                              Navigator.pop(context);
+                              _goToSubscription();
+                              return;
+                            }
+                            _contactCandidate(c);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _detailSection(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          Text(value, style: const TextStyle(color: Colors.black87)),
+        ],
+      ),
+    );
+  }
+
+  Widget _statTile(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, right: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              style: const TextStyle(fontSize: 11.5, color: Colors.grey)),
+          const SizedBox(height: 2),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
       ),
     );
