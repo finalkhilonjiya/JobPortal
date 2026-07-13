@@ -43,6 +43,7 @@ class _SubscriptionPageState
   DateTime? _boostExpiry;
   List<String> _boostMissingItems = [];
   int _boostMonths = 1;
+  bool _boostTestMode = false;
   bool _agreedBoost = false;
   bool _showBoostTerms = false;
 
@@ -224,6 +225,7 @@ class _SubscriptionPageState
 
       final order = await _service.createBoostRazorpayOrder(
         months: _boostMonths,
+        test: _boostTestMode,
       );
 
       final options = {
@@ -231,8 +233,9 @@ class _SubscriptionPageState
         'amount': order['amount'],
         'currency': order['currency'],
         'name': 'Khilonjiya',
-        'description':
-            'Khilonjiya Boost — $_boostMonths month${_boostMonths > 1 ? 's' : ''}',
+        'description': _boostTestMode
+            ? 'Khilonjiya Boost — TEST (₹1)'
+            : 'Khilonjiya Boost — $_boostMonths month${_boostMonths > 1 ? 's' : ''}',
         'order_id': order['order_id'],
         'image':
             'https://rsskivonmfqrzxbmxrkl.supabase.co/storage/v1/object/public/logokhilonjiya/app_icon_foreground.png',
@@ -303,6 +306,7 @@ class _SubscriptionPageState
         _payingFor = _PayingFor.none;
         _showPremiumTerms = false;
         _showBoostTerms = false;
+        _boostTestMode = false;
       });
 
       String message;
@@ -398,7 +402,7 @@ class _SubscriptionPageState
                 _boostCard(paying),
 
                 if (!_isBoostActive &&
-                    _boostMissingItems.isEmpty &&
+                    !_boostPendingProfile &&
                     _showBoostTerms) ...[
                   const SizedBox(height: 16),
                   _boostTerms(paying),
@@ -743,7 +747,10 @@ class _SubscriptionPageState
                     if (_showBoostTerms) {
                       _startBoostPayment();
                     } else {
-                      setState(() => _showBoostTerms = true);
+                      setState(() {
+                        _boostTestMode = false;
+                        _showBoostTerms = true;
+                      });
                     }
                   },
             child: (paying && _payingFor == _PayingFor.boost)
@@ -758,13 +765,38 @@ class _SubscriptionPageState
                 : Text(_showBoostTerms ? "Continue" : "Enable Boost"),
           ),
         ),
+
+        // ---------------------------------------------------------
+        // TEMPORARY TEST PLAN — ₹1, remove once testing is done.
+        // ---------------------------------------------------------
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              onPressed: paying
+                  ? null
+                  : () {
+                      setState(() {
+                        _boostTestMode = true;
+                        _boostMonths = 1;
+                        _showBoostTerms = true;
+                      });
+                    },
+              child: const Text(
+                "TEST — Pay ₹1 instead (temporary)",
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
 
   Widget _boostTerms(bool paying) {
 
-    final total = _boostPricePerMonth * _boostMonths;
+    final total = _boostTestMode ? 1 : _boostPricePerMonth * _boostMonths;
 
     return Container(
       padding: const EdgeInsets.all(14),
