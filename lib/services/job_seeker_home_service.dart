@@ -305,16 +305,31 @@ Future<bool> isUserProSubscribed() async {
   _ensureAuthenticatedSync();
   final userId = _userId();
 
+  // NOTE: previously this used .gte('expires_at', now) directly in the
+  // query, which excludes rows where expires_at is NULL — but lifetime
+  // Khilonjiya Premium rows always have expires_at = NULL. That silently
+  // blocked every lifetime member from applying. Fetch the row and check
+  // is_lifetime in Dart instead, same as SubscriptionService.isProActive().
   final res = await _db
       .from('user_subscriptions')
-      .select('id')
+      .select('id, is_lifetime, expires_at')
       .eq('user_id', userId)
       .eq('status', 'active')
-      .gte('expires_at', DateTime.now().toIso8601String())
+      .order('created_at', ascending: false)
       .limit(1)
       .maybeSingle();
 
-  return res != null;
+  if (res == null) return false;
+
+  if (res['is_lifetime'] == true) return true;
+
+  final expiresRaw = res['expires_at'];
+  if (expiresRaw == null) return false;
+
+  final expires = DateTime.tryParse(expiresRaw.toString());
+  if (expires == null) return false;
+
+  return expires.isAfter(DateTime.now());
 }
 
 Future<void> updateMyCurrentLocationFromDevice() async {
