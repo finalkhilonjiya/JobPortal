@@ -381,9 +381,6 @@ class SubscriptionService {
     if ((profile['full_name'] ?? '').toString().trim().isEmpty) {
       missing.add("Full name");
     }
-    if ((profile['current_job_title'] ?? '').toString().trim().isEmpty) {
-      missing.add("Current / desired job title");
-    }
     if ((profile['current_city'] ?? '').toString().trim().isEmpty) {
       missing.add("City");
     }
@@ -393,9 +390,8 @@ class SubscriptionService {
     if (profile['total_experience_years'] == null) {
       missing.add("Years of experience");
     }
-    if (profile['expected_salary_min'] == null ||
-        profile['expected_salary_max'] == null) {
-      missing.add("Expected salary range");
+    if (profile['expected_salary_min'] == null) {
+      missing.add("Expected salary");
     }
     final skills = profile['skills'];
     if (skills == null || (skills is List && skills.isEmpty)) {

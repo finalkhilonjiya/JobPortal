@@ -2,6 +2,8 @@
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'employer_applicants_service.dart';
+
 /// Reads the employer-facing candidate database via the
 /// `get_candidate_database` Postgres RPC. Every employer can browse the
 /// list; resume_url / mobile_number / actual_email come back NULL (and
@@ -12,6 +14,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class CandidateDatabaseService {
 
   final SupabaseClient _db = Supabase.instance.client;
+  final EmployerApplicantsService _applicantsService = EmployerApplicantsService();
 
   Future<List<Map<String, dynamic>>> getCandidates({
     String? search,
@@ -31,8 +34,25 @@ class CandidateDatabaseService {
 
     if (res == null) return [];
 
-    return List<Map<String, dynamic>>.from(
+    final rows = List<Map<String, dynamic>>.from(
       (res as List).map((e) => Map<String, dynamic>.from(e)),
     );
+
+    // avatar_url comes back as a raw storage path (e.g. "photos/<uid>/xxx.jpg"),
+    // same as resume_url — it needs to be resolved to an actual loadable URL
+    // before it can be used in an Image/NetworkImage widget.
+    for (final row in rows) {
+      final rawAvatar = (row['avatar_url'] ?? '').toString().trim();
+      if (rawAvatar.isEmpty) continue;
+
+      try {
+        final resolved = await _applicantsService.getPublicOrSignedUrl(rawAvatar);
+        row['avatar_url'] = resolved ?? '';
+      } catch (_) {
+        row['avatar_url'] = '';
+      }
+    }
+
+    return rows;
   }
 }
