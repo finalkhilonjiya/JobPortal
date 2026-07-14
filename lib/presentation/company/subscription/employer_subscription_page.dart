@@ -35,10 +35,17 @@ class _EmployerSubscriptionPageState
   bool _isActive = false;
   DateTime? _expiry;
 
-  bool _agreed = false;
-  bool _showTerms = false;
-
   Map<String, dynamic>? _selectedPlan;
+
+  static const String _termsText =
+"""
+• Khilonjiya Premium gives your employer account full access to the candidate database — view candidate resumes, phone numbers, and email addresses.
+• Khilonjiya Premium is required to post job listings. Without an active plan, job posting is disabled.
+• Access applies to the employer account that purchased the plan, for the plan duration selected.
+• Subscription fees are non-refundable once payment is completed.
+• Candidate information may only be used for genuine hiring purposes. Misuse, scraping, spam, or unsolicited contact may result in account suspension without refund.
+• By proceeding, you agree to the platform's terms and conditions.
+""";
 
   @override
   void initState() {
@@ -82,17 +89,104 @@ class _EmployerSubscriptionPageState
   }
 
   // =========================================================
+  // TERMS POPUP — one tap opens this, agree, and it goes straight
+  // to Razorpay. No second "Continue" button anywhere.
+  // =========================================================
+
+  Future<void> _showTermsSheet() async {
+
+    if (_selectedPlan == null) return;
+
+    bool agreed = false;
+    final plan = _selectedPlan!;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    const Text(
+                      "Terms & Conditions",
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    const Text(_termsText),
+
+                    const SizedBox(height: 12),
+
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: agreed,
+                          onChanged: (v) {
+                            setSheetState(() => agreed = v ?? false);
+                          },
+                        ),
+                        const Expanded(
+                          child: Text("I agree to the terms and conditions"),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF16A34A),
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: agreed
+                            ? () {
+                                Navigator.pop(sheetContext);
+                                _startPayment();
+                              }
+                            : null,
+                        child: Text(
+                          "Pay ₹${plan['amount_rupees']} & Activate",
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // =========================================================
   // START PAYMENT
   // =========================================================
 
   Future<void> _startPayment() async {
-
-    if (!_agreed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Accept terms first")),
-      );
-      return;
-    }
 
     if (_selectedPlan == null) return;
 
@@ -161,10 +255,7 @@ class _EmployerSubscriptionPageState
 
       if (!mounted) return;
 
-      setState(() {
-        _paying = false;
-        _showTerms = false;
-      });
+      setState(() => _paying = false);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -241,10 +332,30 @@ class _EmployerSubscriptionPageState
                   ...EmployerSubscriptionService.plans
                       .map((p) => _planCard(p)),
 
-                  const SizedBox(height: 16),
-                ],
+                  const SizedBox(height: 10),
 
-                if (!_isActive && _showTerms) _terms(),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF16A34A),
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: _paying ? null : _showTermsSheet,
+                      child: _paying
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text("Continue"),
+                    ),
+                  ),
+                ],
 
                 const SizedBox(height: 16),
 
@@ -354,74 +465,6 @@ class _EmployerSubscriptionPageState
     );
   }
 
-  Widget _terms() {
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Terms & Conditions",
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-"""
-• Khilonjiya Premium gives your employer account full access to the candidate database — view candidate resumes, phone numbers, and email addresses.
-• Khilonjiya Premium is required to post job listings. Without an active plan, job posting is disabled.
-• Access applies to the employer account that purchased the plan, for the plan duration selected.
-• Subscription fees are non-refundable once payment is completed.
-• Candidate information may only be used for genuine hiring purposes. Misuse, scraping, spam, or unsolicited contact may result in account suspension without refund.
-• By proceeding, you agree to the platform's terms and conditions.
-""",
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Checkbox(
-                value: _agreed,
-                onChanged: (v) => setState(() => _agreed = v ?? false),
-              ),
-              const Expanded(
-                child: Text("I agree to the terms and conditions"),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            height: 46,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF16A34A),
-                foregroundColor: Colors.white,
-              ),
-              onPressed: (_agreed && !_paying) ? _startPayment : null,
-              child: _paying
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : Text(
-                      "Pay ₹${_selectedPlan?['amount_rupees'] ?? ''} & Activate",
-                    ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _benefits() {
 
     Widget item(IconData i, String t, String s) {
@@ -454,17 +497,6 @@ class _EmployerSubscriptionPageState
           "Download resumes",
           "Download candidate resumes directly",
         ),
-        if (!_isActive && !_showTerms)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => setState(() => _showTerms = true),
-                child: const Text("Continue"),
-              ),
-            ),
-          ),
       ],
     );
   }
