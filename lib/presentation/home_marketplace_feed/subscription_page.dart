@@ -34,8 +34,6 @@ class _SubscriptionPageState
 
   // Premium
   bool _isPremiumActive = false;
-  bool _agreedPremium = false;
-  bool _showPremiumTerms = false;
 
   // Boost
   bool _isBoostActive = false;
@@ -44,11 +42,29 @@ class _SubscriptionPageState
   List<String> _boostMissingItems = [];
   int _boostMonths = 1;
   bool _boostTestMode = false;
-  bool _agreedBoost = false;
-  bool _showBoostTerms = false;
 
   static const int _boostPricePerMonth =
       SubscriptionService.boostPricePerMonthRupees;
+
+  static const String _premiumTermsText =
+"""
+• Khilonjiya is a job discovery and hiring assistance platform only.
+• Final hiring decisions are made solely by employers.
+• Khilonjiya Premium is a one-time payment that gives you lifetime access — there is no expiry and no recurring charge. You can apply to unlimited jobs on the platform forever.
+• Once you have Khilonjiya Premium, you can separately subscribe to Boost to make your resume visible to employers searching the candidate database.
+• Subscription fees are non-refundable once payment is completed.
+• By proceeding, you agree to the platform's terms and conditions.
+""";
+
+  static const String _boostTermsText =
+"""
+• Boost makes your name, photo, resume, and contact details visible to employers browsing Khilonjiya's candidate database.
+• Boost is a paid subscription billed for the number of months you select up front — it is not a one-time or lifetime purchase, and does not auto-renew.
+• Your Boost period only starts counting once your profile is fully complete (photo, resume, and core details). If anything is missing when you pay, your plan will show as "activation pending" until you complete it — no time is lost while it's pending.
+• Your profile stops appearing in the candidate database once your Boost period ends, unless you renew.
+• Subscription fees are non-refundable once payment is completed.
+• By proceeding, you agree to the platform's terms and conditions.
+""";
 
   @override
   void initState() {
@@ -129,17 +145,98 @@ class _SubscriptionPageState
   }
 
   // =========================================================
+  // SHARED TERMS POPUP — one tap opens this, agree, and it goes
+  // straight to Razorpay. No second "Continue" button anywhere.
+  // =========================================================
+
+  Future<void> _showTermsSheet({
+    required String title,
+    required String termsText,
+    required String ctaLabel,
+    required VoidCallback onAccept,
+  }) async {
+
+    bool agreed = false;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    Text(title, style: KhilonjiyaUI.cardTitle),
+
+                    const SizedBox(height: 12),
+
+                    Text(termsText),
+
+                    const SizedBox(height: 12),
+
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: agreed,
+                          onChanged: (v) {
+                            setSheetState(() => agreed = v ?? false);
+                          },
+                        ),
+                        const Expanded(
+                          child: Text("I agree to the terms and conditions"),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: KhilonjiyaUI.primary,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: agreed
+                            ? () {
+                                Navigator.pop(sheetContext);
+                                onAccept();
+                              }
+                            : null,
+                        child: Text(ctaLabel),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // =========================================================
   // START PREMIUM PAYMENT
   // =========================================================
 
   Future<void> _startPremiumPayment() async {
-
-    if (!_agreedPremium) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Accept terms first")),
-      );
-      return;
-    }
 
     try {
 
@@ -198,13 +295,6 @@ class _SubscriptionPageState
   // =========================================================
 
   Future<void> _startBoostPayment() async {
-
-    if (!_agreedBoost) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Accept terms first")),
-      );
-      return;
-    }
 
     try {
 
@@ -304,8 +394,6 @@ class _SubscriptionPageState
 
       setState(() {
         _payingFor = _PayingFor.none;
-        _showPremiumTerms = false;
-        _showBoostTerms = false;
         _boostTestMode = false;
       });
 
@@ -392,21 +480,9 @@ class _SubscriptionPageState
 
                 _premiumCard(paying),
 
-                if (!_isPremiumActive && _showPremiumTerms) ...[
-                  const SizedBox(height: 16),
-                  _premiumTerms(paying),
-                ],
-
                 const SizedBox(height: 20),
 
                 _boostCard(paying),
-
-                if (!_isBoostActive &&
-                    !_boostPendingProfile &&
-                    _showBoostTerms) ...[
-                  const SizedBox(height: 16),
-                  _boostTerms(paying),
-                ],
 
                 const SizedBox(height: 20),
 
@@ -466,11 +542,12 @@ class _SubscriptionPageState
               onPressed: (paying || _isPremiumActive)
                   ? null
                   : () {
-                      if (_showPremiumTerms) {
-                        _startPremiumPayment();
-                      } else {
-                        setState(() => _showPremiumTerms = true);
-                      }
+                      _showTermsSheet(
+                        title: "Khilonjiya Premium — Terms & Conditions",
+                        termsText: _premiumTermsText,
+                        ctaLabel: "Pay ₹99 & Activate",
+                        onAccept: _startPremiumPayment,
+                      );
                     },
               child: (paying && _payingFor == _PayingFor.premium)
                   ? const SizedBox(
@@ -484,73 +561,8 @@ class _SubscriptionPageState
                   : Text(
                       _isPremiumActive
                           ? "Premium Member for Life"
-                          : (_showPremiumTerms
-                              ? "Continue"
-                              : "Get Khilonjiya Premium"),
+                          : "Get Khilonjiya Premium",
                     ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _premiumTerms(bool paying) {
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: KhilonjiyaUI.cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-
-          Text("Terms & Conditions", style: KhilonjiyaUI.cardTitle),
-
-          const SizedBox(height: 10),
-
-          const Text(
-"""
-• Khilonjiya is a job discovery and hiring assistance platform only.
-• Subscription does NOT guarantee job placement or employment.
-• Final hiring decisions are made solely by employers.
-• Khilonjiya Premium is a one-time payment that gives you lifetime access — there is no expiry and no recurring charge. You can apply to unlimited jobs on the platform forever.
-• Once you have Khilonjiya Premium, you can separately subscribe to Boost to make your resume visible to employers searching the candidate database.
-• Subscription fees are non-refundable once payment is completed.
-• Any misuse, fraudulent activity, fake applications, or policy violations may result in account suspension without refund.
-• By proceeding, you agree to the platform's terms and conditions.
-""",
-          ),
-
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Checkbox(
-                value: _agreedPremium,
-                onChanged: (v) {
-                  setState(() => _agreedPremium = v ?? false);
-                },
-              ),
-              const Expanded(
-                child: Text("I agree to the terms and conditions"),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: KhilonjiyaUI.primary,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: (_agreedPremium && !paying)
-                  ? _startPremiumPayment
-                  : null,
-              child: const Text("Pay ₹99 & Activate"),
             ),
           ),
         ],
@@ -744,14 +756,13 @@ class _SubscriptionPageState
             onPressed: paying
                 ? null
                 : () {
-                    if (_showBoostTerms) {
-                      _startBoostPayment();
-                    } else {
-                      setState(() {
-                        _boostTestMode = false;
-                        _showBoostTerms = true;
-                      });
-                    }
+                    setState(() => _boostTestMode = false);
+                    _showTermsSheet(
+                      title: "Khilonjiya Boost — Terms & Conditions",
+                      termsText: _boostTermsText,
+                      ctaLabel: "Pay ₹$total & Activate",
+                      onAccept: _startBoostPayment,
+                    );
                   },
             child: (paying && _payingFor == _PayingFor.boost)
                 ? const SizedBox(
@@ -762,7 +773,7 @@ class _SubscriptionPageState
                       strokeWidth: 2,
                     ),
                   )
-                : Text(_showBoostTerms ? "Continue" : "Enable Boost"),
+                : const Text("Enable Boost"),
           ),
         ),
 
@@ -780,8 +791,13 @@ class _SubscriptionPageState
                       setState(() {
                         _boostTestMode = true;
                         _boostMonths = 1;
-                        _showBoostTerms = true;
                       });
+                      _showTermsSheet(
+                        title: "Khilonjiya Boost — Terms & Conditions",
+                        termsText: _boostTermsText,
+                        ctaLabel: "Pay ₹1 & Activate",
+                        onAccept: _startBoostPayment,
+                      );
                     },
               child: const Text(
                 "TEST — Pay ₹1 instead (temporary)",
@@ -791,67 +807,6 @@ class _SubscriptionPageState
           ),
         ),
       ],
-    );
-  }
-
-  Widget _boostTerms(bool paying) {
-
-    final total = _boostTestMode ? 1 : _boostPricePerMonth * _boostMonths;
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: KhilonjiyaUI.cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-
-          Text("Boost Terms & Conditions", style: KhilonjiyaUI.cardTitle),
-
-          const SizedBox(height: 10),
-
-          const Text(
-"""
-• Boost makes your name, photo, resume, and contact details visible to employers browsing Khilonjiya's candidate database.
-• Boost is a paid subscription billed for the number of months you select up front — it is not a one-time or lifetime purchase, and does not auto-renew.
-• Your Boost period only starts counting once your profile is fully complete (photo, resume, and core details). If anything is missing when you pay, your plan will show as "activation pending" until you complete it — no time is lost while it's pending.
-• Your profile stops appearing in the candidate database once your Boost period ends, unless you renew.
-• Subscription fees are non-refundable once payment is completed.
-• By proceeding, you agree to the platform's terms and conditions.
-""",
-          ),
-
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Checkbox(
-                value: _agreedBoost,
-                onChanged: (v) {
-                  setState(() => _agreedBoost = v ?? false);
-                },
-              ),
-              const Expanded(
-                child: Text("I agree to the Boost terms and conditions"),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: KhilonjiyaUI.primary,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: (_agreedBoost && !paying) ? _startBoostPayment : null,
-              child: Text("Pay ₹$total & Activate"),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
