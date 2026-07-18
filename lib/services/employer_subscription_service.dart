@@ -26,22 +26,14 @@ class EmployerSubscriptionService {
     {
       'plan_key': 'employer_premium_1m',
       'label': 'Khilonjiya Premium — 1 Month',
-      'amount_rupees': 999,
+      'amount_rupees': 499,
       'duration_days': 30,
     },
     {
       'plan_key': 'employer_premium_3m',
       'label': 'Khilonjiya Premium — 3 Months',
-      'amount_rupees': 1999,
+      'amount_rupees': 899,
       'duration_days': 90,
-    },
-    // TEST PLAN — ₹1 / 10 days. Remove this entry (and the matching
-    // SQL row + edge function entries) once testing is done.
-    {
-      'plan_key': 'employer_premium_test_10d',
-      'label': 'TEST — 10 Days (₹1)',
-      'amount_rupees': 1,
-      'duration_days': 10,
     },
   ];
 
