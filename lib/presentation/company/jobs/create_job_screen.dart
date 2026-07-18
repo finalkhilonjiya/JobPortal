@@ -122,6 +122,22 @@ final List<String> _experienceList = [
   List<String> _districts = [];
   String? _selectedDistrict;
 
+  // North East state + district (cascading). District list reloads
+  // whenever the selected state changes.
+  static const List<String> _neStates = [
+    'Assam',
+    'Arunachal Pradesh',
+    'Manipur',
+    'Meghalaya',
+    'Mizoram',
+    'Nagaland',
+    'Tripura',
+    'Sikkim',
+  ];
+  String _selectedState = 'Assam';
+  double? _selectedDistrictLat;
+  double? _selectedDistrictLng;
+
   // ------------------------------------------------------------
   // COMPANY (ORGANIZATION)
   // ------------------------------------------------------------
@@ -266,7 +282,9 @@ Future<void> _loadJobForEdit() async {
       _salaryMaxCtrl.text = (j['salary_max'] ?? '').toString();
       _salaryPeriod = j['salary_period'] ?? _salaryPeriod;
 
-      _selectedDistrict = j['district'];
+      // District is set below, after the correct state's district list
+      // has been loaded — setting it here would leave it unmatched
+      // against _districts if this job belongs to a non-Assam state.
       _addressCtrl.text = j['job_address'] ?? '';
 
       _hiringUrgency = j['hiring_urgency'] ?? _hiringUrgency;
@@ -286,8 +304,31 @@ Future<void> _loadJobForEdit() async {
       }
     });
 
+    // ✅ LOAD THE CORRECT STATE'S DISTRICTS, THEN SELECT THE JOB'S DISTRICT
+    // (older jobs created before this feature won't have location_state
+    // set — default to Assam, same as before this change).
+    final jobState = (j['location_state'] ?? '').toString().trim();
+
+    if (_neStates.contains(jobState)) {
+      _selectedState = jobState;
+    } else {
+      _selectedState = 'Assam';
+    }
+
+    await _loadDistricts();
+
+    if (mounted) {
+      setState(() {
+        final jobDistrict = (j['district'] ?? '').toString();
+        _selectedDistrict =
+            _districts.contains(jobDistrict) ? jobDistrict : _selectedDistrict;
+        _updateSelectedDistrictCoords();
+      });
+    }
+
     // ✅ LOAD LOCALITY IF GUWAHATI
-    if ((j['district'] ?? "").toString().toLowerCase() == "guwahati") {
+    if (_selectedState == "Assam" &&
+        (j['district'] ?? "").toString().toLowerCase() == "guwahati") {
       await _loadLocalities();
 
       if (mounted) {
@@ -512,35 +553,77 @@ ButtonStyle _primaryButtonStyle() {
   }
 
   // ------------------------------------------------------------
-  // LOAD: DISTRICTS
+  // LOAD: DISTRICTS (for the currently selected North East state)
   // ------------------------------------------------------------
+  // District rows keyed by name, for this fetch — used to pull the
+  // lat/long of whichever district ends up selected.
+  Map<String, Map<String, dynamic>> _districtRows = {};
+
   Future<void> _loadDistricts() async {
+
+    setState(() => _loadingDistricts = true);
+
     try {
       final res = await _client
-          .from("assam_districts_master")
-          .select("district_name")
+          .from("ne_states_districts_master")
+          .select("district_name, latitude, longitude")
+          .eq("state_name", _selectedState)
           .order("district_name", ascending: true);
 
-      final items = List<Map<String, dynamic>>.from(res)
+      final rows = List<Map<String, dynamic>>.from(res);
+
+      final items = rows
           .map((e) => (e["district_name"] ?? "").toString())
           .where((e) => e.trim().isNotEmpty)
           .toList();
+
+      final rowsByName = <String, Map<String, dynamic>>{
+        for (final r in rows) (r["district_name"] ?? "").toString(): r,
+      };
 
       if (!mounted) return;
 
       setState(() {
         _districts = items;
+        _districtRows = rowsByName;
         _selectedDistrict = items.isNotEmpty ? items.first : null;
+        _updateSelectedDistrictCoords();
         _loadingDistricts = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _districts = [];
+        _districtRows = {};
         _selectedDistrict = null;
+        _selectedDistrictLat = null;
+        _selectedDistrictLng = null;
         _loadingDistricts = false;
       });
     }
+  }
+
+  void _updateSelectedDistrictCoords() {
+    final row = _districtRows[_selectedDistrict ?? ''];
+    _selectedDistrictLat = row == null
+        ? null
+        : double.tryParse(row['latitude'].toString());
+    _selectedDistrictLng = row == null
+        ? null
+        : double.tryParse(row['longitude'].toString());
+  }
+
+  Future<void> _onStateChanged(String? newState) async {
+    if (newState == null || newState == _selectedState) return;
+
+    setState(() {
+      _selectedState = newState;
+      _selectedDistrict = null;
+      _selectedDistrictLat = null;
+      _selectedDistrictLng = null;
+    });
+
+    await _loadDistricts();
   }
 
   // ------------------------------------------------------------
@@ -856,8 +939,12 @@ ButtonStyle _primaryButtonStyle() {
       "salary_period": _salaryPeriod,
 
       "district": _selectedDistrict,
+      "location_state": _selectedState,
+      "latitude": _selectedDistrictLat,
+      "longitude": _selectedDistrictLng,
 
-      "locality": (_selectedDistrict ?? "").toLowerCase() == "guwahati"
+      "locality": (_selectedState == "Assam" &&
+              (_selectedDistrict ?? "").toLowerCase() == "guwahati")
           ? _selectedLocality
           : null,
 
@@ -1393,9 +1480,13 @@ Widget build(BuildContext context) {
         subtitle: "Where the candidate will work",
         child: Column(
           children: [
+            _stateDropdown(),
+
+            SizedBox(height: 1.5.h),
+
             _districtDropdown(),
 
-            if (_selectedDistrict == "Guwahati")
+            if (_selectedState == "Assam" && _selectedDistrict == "Guwahati")
               _localityDropdown(),
 
             _multilineField("Full Job Address", _addressCtrl),
@@ -1532,6 +1623,15 @@ Widget build(BuildContext context) {
     );
   }
 
+  Widget _stateDropdown() {
+    return _dropdown(
+      "State",
+      _selectedState,
+      _neStates,
+      (v) => _onStateChanged(v),
+    );
+  }
+
   Widget _districtDropdown() {
   if (_loadingDistricts) {
     return Padding(
@@ -1547,7 +1647,7 @@ Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(bottom: 1.5.h),
       child: _errorBox(
-        text: "No districts found in database",
+        text: "No districts found for $_selectedState",
         actionText: "Retry",
         onAction: _loadDistricts,
       ),
@@ -1563,9 +1663,10 @@ Widget build(BuildContext context) {
         _selectedDistrict = v;
         _selectedLocality = null;
         _localities = [];
+        _updateSelectedDistrictCoords();
       });
 
-      if (v == "Guwahati") {
+      if (_selectedState == "Assam" && v == "Guwahati") {
         await _loadLocalities();
       }
     },
