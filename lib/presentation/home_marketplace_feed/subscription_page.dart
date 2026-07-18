@@ -41,7 +41,6 @@ class _SubscriptionPageState
   DateTime? _boostExpiry;
   List<String> _boostMissingItems = [];
   int _boostMonths = 1;
-  bool _boostTestMode = false;
 
   static const int _boostPricePerMonth =
       SubscriptionService.boostPricePerMonthRupees;
@@ -315,7 +314,6 @@ class _SubscriptionPageState
 
       final order = await _service.createBoostRazorpayOrder(
         months: _boostMonths,
-        test: _boostTestMode,
       );
 
       final options = {
@@ -323,9 +321,8 @@ class _SubscriptionPageState
         'amount': order['amount'],
         'currency': order['currency'],
         'name': 'Khilonjiya',
-        'description': _boostTestMode
-            ? 'Khilonjiya Boost — TEST (₹1)'
-            : 'Khilonjiya Boost — $_boostMonths month${_boostMonths > 1 ? 's' : ''}',
+        'description':
+            'Khilonjiya Boost — $_boostMonths month${_boostMonths > 1 ? 's' : ''}',
         'order_id': order['order_id'],
         'image':
             'https://rsskivonmfqrzxbmxrkl.supabase.co/storage/v1/object/public/logokhilonjiya/app_icon_foreground.png',
@@ -394,7 +391,6 @@ class _SubscriptionPageState
 
       setState(() {
         _payingFor = _PayingFor.none;
-        _boostTestMode = false;
       });
 
       String message;
@@ -756,7 +752,6 @@ class _SubscriptionPageState
             onPressed: paying
                 ? null
                 : () {
-                    setState(() => _boostTestMode = false);
                     _showTermsSheet(
                       title: "Khilonjiya Boost — Terms & Conditions",
                       termsText: _boostTermsText,
@@ -774,36 +769,6 @@ class _SubscriptionPageState
                     ),
                   )
                 : const Text("Enable Boost"),
-          ),
-        ),
-
-        // ---------------------------------------------------------
-        // TEMPORARY TEST PLAN — ₹1, remove once testing is done.
-        // ---------------------------------------------------------
-        Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: SizedBox(
-            width: double.infinity,
-            child: TextButton(
-              onPressed: paying
-                  ? null
-                  : () {
-                      setState(() {
-                        _boostTestMode = true;
-                        _boostMonths = 1;
-                      });
-                      _showTermsSheet(
-                        title: "Khilonjiya Boost — Terms & Conditions",
-                        termsText: _boostTermsText,
-                        ctaLabel: "Pay ₹1 & Activate",
-                        onAccept: _startBoostPayment,
-                      );
-                    },
-              child: const Text(
-                "TEST — Pay ₹1 instead (temporary)",
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ),
           ),
         ),
       ],
