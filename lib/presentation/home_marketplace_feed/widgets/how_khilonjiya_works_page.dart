@@ -45,7 +45,7 @@ class HowKhilonjiyaWorksPage extends StatelessWidget {
           _section(
             title: "5. Upgrade to Pro",
             content:
-                "Unlock premium visibility, better job recommendations, and priority features with Khilonjiya Pro.",
+                "Unlock premium visibility, better job recommendations, and priority features with Khilonjiya Premium.",
           ),
         ],
       ),
