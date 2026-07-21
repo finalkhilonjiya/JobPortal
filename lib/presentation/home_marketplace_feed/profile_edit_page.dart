@@ -10,7 +10,15 @@ import '../../core/ui/khilonjiya_ui.dart';
 import '../../services/job_seeker_home_service.dart';
 
 class ProfileEditPage extends StatefulWidget {
-  const ProfileEditPage({Key? key}) : super(key: key);
+
+  /// When true, the page is being opened from the "Complete Profile to
+  /// activate Khilonjiya Premium" flow. In this mode, Save enforces
+  /// all fields required for profile completeness before it will
+  /// submit, and a secondary "Complete Later" action is shown that
+  /// saves whatever's filled in without that enforcement.
+  final bool forActivation;
+
+  const ProfileEditPage({Key? key, this.forActivation = false}) : super(key: key);
 
   @override
   State<ProfileEditPage> createState() => _ProfileEditPageState();
@@ -429,8 +437,57 @@ bool _isLocked(String field) {
 
   int _toInt(String s) => int.tryParse(s.trim()) ?? 0;
 
-  Future _save() async {
+  // Mirrors JobSeekerHomeService._calculateProfileCompletion() and
+  // is_profile_premium_ready() in the DB — same 12 fields, same rules,
+  // checked against current FORM state (not yet-saved profile).
+  List<String> _missingForActivation() {
+
+    final missing = <String>[];
+
+    int expYears = 0;
+    if (_selectedExperience == 'Fresher') {
+      expYears = 0;
+    } else if (_selectedExperience == '10+ years') {
+      expYears = 10;
+    } else {
+      expYears = int.tryParse(_selectedExperience.split(' ').first) ?? 0;
+    }
+
+    if (_fullNameCtrl.text.trim().isEmpty) missing.add("Full name");
+    if (_phoneCtrl.text.trim().isEmpty) missing.add("Mobile number");
+    if (_selectedDistrict.trim().isEmpty) missing.add("City / district");
+    if (_selectedState.trim().isEmpty) missing.add("State");
+    if (_selectedEducation.trim().isEmpty) missing.add("Highest education");
+    if (expYears <= 0) missing.add("Years of experience (select something other than Fresher)");
+    if (_toInt(_expectedSalaryMinCtrl.text) <= 0) missing.add("Expected salary");
+    if (_skills.isEmpty) missing.add("At least one skill");
+    if (_bioCtrl.text.trim().isEmpty) missing.add("About you (bio)");
+    if (_jobType.trim().isEmpty || _jobType.trim().toLowerCase() == 'any') {
+      missing.add("Preferred job type (select something other than Any)");
+    }
+    if (_resumeStoragePath.trim().isEmpty) missing.add("Resume");
+    if (_photoStoragePath.trim().isEmpty) missing.add("Profile photo");
+
+    return missing;
+  }
+
+  Future _save({bool skipValidation = false}) async {
   if (_saving) return;
+
+  if (widget.forActivation && !skipValidation) {
+    final missing = _missingForActivation();
+    if (missing.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Please complete: ${missing.join(', ')}",
+          ),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
+  }
 
   setState(() => _saving = true);
 
@@ -925,6 +982,71 @@ bool _isLocked(String field) {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+
+        if (widget.forActivation) ...[
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF7ED),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFFDE0C0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.workspace_premium_outlined,
+                        color: Color(0xFFEA580C), size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "Complete your profile to activate Khilonjiya Premium",
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  "Every field below is required — employers will only be able to see your profile and contact you once Premium is active.",
+                  style: TextStyle(fontSize: 12.5, color: Colors.grey),
+                ),
+                const SizedBox(height: 10),
+                Builder(builder: (context) {
+                  final missing = _missingForActivation();
+                  final pct = (((12 - missing.length) / 12) * 100).round();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Profile $pct% complete",
+                        style: const TextStyle(
+                            fontSize: 12.5, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 4),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: pct / 100,
+                          minHeight: 8,
+                          backgroundColor: const Color(0xFFE5E7EB),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            pct >= 100
+                                ? const Color(0xFF16A34A)
+                                : KhilonjiyaUI.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
         // HEADER
         Container(
           decoration: KhilonjiyaUI.cardDecoration(radius: 22),
@@ -957,6 +1079,23 @@ bool _isLocked(String field) {
                   ],
                 ),
               ),
+              if (!widget.forActivation)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: KhilonjiyaUI.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "${(_profile['profile_completion_percentage'] ?? 0)}%",
+                    style: TextStyle(
+                      color: KhilonjiyaUI.primary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -1232,35 +1371,92 @@ TextField(
         ),
         child: SafeArea(
           top: false,
-          child: SizedBox(
-            width: double.infinity,
-            height: 40,
-            child: ElevatedButton(
-              onPressed:
-                  (_saving || _uploadingPhoto || _uploadingResume) ? null : _save,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: KhilonjiyaUI.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                ),
-              ),
-              child: _saving
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.6,
-                        color: Colors.white,
+          child: widget.forActivation
+              ? Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 40,
+                        child: OutlinedButton(
+                          onPressed: (_saving || _uploadingPhoto || _uploadingResume)
+                              ? null
+                              : () => _save(skipValidation: true),
+                          style: OutlinedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                          child: const Text(
+                            "Complete Later",
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
                       ),
-                    )
-                  : const Text(
-                      "Save changes",
-                      style: TextStyle(fontWeight: FontWeight.w900),
                     ),
-            ),
-          ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 2,
+                      child: SizedBox(
+                        height: 40,
+                        child: ElevatedButton(
+                          onPressed: (_saving || _uploadingPhoto || _uploadingResume)
+                              ? null
+                              : () => _save(),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: KhilonjiyaUI.primary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                          child: _saving
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.6,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text(
+                                  "Save & Activate Premium",
+                                  style: TextStyle(fontWeight: FontWeight.w900),
+                                ),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : SizedBox(
+                  width: double.infinity,
+                  height: 40,
+                  child: ElevatedButton(
+                    onPressed:
+                        (_saving || _uploadingPhoto || _uploadingResume) ? null : () => _save(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: KhilonjiyaUI.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                    child: _saving
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.6,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            "Save changes",
+                            style: TextStyle(fontWeight: FontWeight.w900),
+                          ),
+                  ),
+                ),
         ),
       ),
     );
