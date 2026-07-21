@@ -20,13 +20,40 @@ class SubscriptionService {
   static const String _verifyPaymentUrl =
       "https://rsskivonmfqrzxbmxrkl.supabase.co/functions/v1/verify-razorpay-payment";
 
-  static const String _createBoostOrderUrl =
-      "https://rsskivonmfqrzxbmxrkl.supabase.co/functions/v1/create-boost-razorpay-order";
+  /// The exact same 12 fields (and truthiness rules) that
+  /// JobSeekerHomeService._calculateProfileCompletion() uses to compute
+  /// profile_completion_percentage. Kept in sync deliberately — Premium
+  /// activation readiness == 100% profile completion, same definition
+  /// everywhere in the app.
+  static const List<String> _requiredFieldKeys = [
+    'full_name',
+    'mobile_number',
+    'current_city',
+    'current_state',
+    'highest_education',
+    'total_experience_years',
+    'expected_salary_min',
+    'skills',
+    'bio',
+    'preferred_job_types',
+    'resume_url',
+    'avatar_url',
+  ];
 
-  static const String _verifyBoostPaymentUrl =
-      "https://rsskivonmfqrzxbmxrkl.supabase.co/functions/v1/verify-boost-razorpay-payment";
-
-  static const int boostPricePerMonthRupees = 49;
+  static const Map<String, String> _requiredFieldLabels = {
+    'full_name': 'Full name',
+    'mobile_number': 'Mobile number',
+    'current_city': 'City / district',
+    'current_state': 'State',
+    'highest_education': 'Highest education',
+    'total_experience_years': 'Years of experience',
+    'expected_salary_min': 'Expected salary',
+    'skills': 'At least one skill',
+    'bio': 'About you (bio)',
+    'preferred_job_types': 'Preferred job type',
+    'resume_url': 'Resume',
+    'avatar_url': 'Profile photo',
+  };
 
   // ============================================================
   // AUTH
@@ -62,16 +89,17 @@ class SubscriptionService {
           full_name,
           mobile_number,
           actual_email,
-          avatar_url,
-          resume_url,
-          current_job_title,
           current_city,
           current_state,
+          highest_education,
           total_experience_years,
           expected_salary_min,
-          expected_salary_max,
           skills,
-          is_boost_enabled
+          bio,
+          preferred_job_types,
+          resume_url,
+          avatar_url,
+          profile_completion_percentage
         ''')
         .eq('id', uid)
         .maybeSingle();
@@ -124,9 +152,6 @@ class SubscriptionService {
 
   // ============================================================
   // CHECK ACTIVE ACCESS
-  // Khilonjiya Premium is a one-time, lifetime purchase, so a
-  // subscription is active whenever status == 'active' AND either
-  // is_lifetime == true OR (legacy rows) expires_at is in the future.
   // ============================================================
 
   Future<bool> isProActive() async {
@@ -173,8 +198,106 @@ class SubscriptionService {
     );
   }
 
+  /// True only for the "paid, waiting on profile completion" state.
+  Future<bool> isPendingProfileActivation() async {
+
+    final sub = await getMySubscription();
+
+    if (sub == null) return false;
+
+    return (sub['status'] ?? '') == 'paid_pending_profile';
+  }
+
   // ============================================================
-  // CREATE RAZORPAY ORDER (Khilonjiya Premium)
+  // PROFILE READINESS — same 12-field definition used by the
+  // profile completion % calculator server-side.
+  // ============================================================
+
+  /// Returns the list of missing item labels (empty = ready to activate).
+  Future<List<String>> getMissingProfileItems() async {
+
+    final profile = await getCurrentUserProfile();
+
+    if (profile == null) {
+      return _requiredFieldKeys
+          .map((k) => _requiredFieldLabels[k] ?? k)
+          .toList();
+    }
+
+    final missing = <String>[];
+
+    for (final key in _requiredFieldKeys) {
+      final v = profile[key];
+
+      bool ok;
+      if (v == null) {
+        ok = false;
+      } else if (v is String) {
+        ok = v.trim().isNotEmpty;
+      } else if (v is num) {
+        ok = v > 0;
+      } else if (v is List) {
+        ok = v.isNotEmpty;
+      } else {
+        ok = v.toString().trim().isNotEmpty;
+      }
+
+      if (!ok) {
+        missing.add(_requiredFieldLabels[key] ?? key);
+      }
+    }
+
+    return missing;
+  }
+
+  Future<bool> isProfileReadyForPremium() async {
+    final missing = await getMissingProfileItems();
+    return missing.isEmpty;
+  }
+
+  /// Reads the persisted profile_completion_percentage (already
+  /// computed and saved by JobSeekerHomeService.updateMyProfile on
+  /// every save) — use this for display, it's the single source of
+  /// truth already used elsewhere in the app.
+  Future<int> getProfileCompletionPercent() async {
+
+    final profile = await getCurrentUserProfile();
+
+    final raw = profile?['profile_completion_percentage'];
+
+    final pct = raw is int ? raw : int.tryParse('$raw') ?? 0;
+
+    return pct.clamp(0, 100);
+  }
+
+  // ============================================================
+  // SELF-SERVICE ACTIVATION
+  // Call whenever the subscription page loads. No-op if there's
+  // nothing pending. Flips a paid-but-incomplete Premium to active
+  // the instant the profile becomes complete.
+  // ============================================================
+
+  Future<bool> activatePendingPremium() async {
+
+    _ensureAuth();
+
+    try {
+      final res = await _db.rpc('activate_pending_premium');
+
+      if (res == null) return false;
+
+      final row = (res is List && res.isNotEmpty)
+          ? Map<String, dynamic>.from(res.first)
+          : null;
+
+      return row?['activated'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // ============================================================
+  // CREATE RAZORPAY ORDER
   // ============================================================
 
   Future<Map<String, dynamic>>
@@ -222,10 +345,13 @@ class SubscriptionService {
   }
 
   // ============================================================
-  // VERIFY RAZORPAY PAYMENT (Khilonjiya Premium)
+  // VERIFY RAZORPAY PAYMENT
+  // Returns the parsed response — includes `activated` (true if
+  // Premium is live now) and `pending_profile` (true if payment
+  // succeeded but the profile still needs completing).
   // ============================================================
 
-  Future<void> verifyRazorpayPayment({
+  Future<Map<String, dynamic>> verifyRazorpayPayment({
 
     required String razorpayOrderId,
 
@@ -310,210 +436,8 @@ class SubscriptionService {
         details != null ? "$err: $details" : err,
       );
     }
-  }
-
-  // ============================================================
-  // BOOST — paid, monthly, requires Premium + a complete profile.
-  // Only boosted (and not expired) profiles show up in the
-  // employer candidate database.
-  // ============================================================
-
-  Future<Map<String, dynamic>?> getBoostSubscription() async {
-
-    final uid = _uid();
-
-    final res = await _db
-        .from('boost_subscriptions')
-        .select('''
-          id,
-          user_id,
-          months,
-          amount_rupees,
-          status,
-          started_at,
-          expires_at
-        ''')
-        .eq('user_id', uid)
-        .order('created_at', ascending: false)
-        .limit(1)
-        .maybeSingle();
-
-    if (res == null) return null;
-
-    return Map<String, dynamic>.from(res);
-  }
-
-  Future<bool> isBoostActive() async {
-
-    final sub = await getBoostSubscription();
-
-    if (sub == null) return false;
-    if ((sub['status'] ?? '') != 'active') return false;
-
-    final expiresRaw = sub['expires_at'];
-    if (expiresRaw == null) return false;
-
-    final expires = DateTime.tryParse(expiresRaw.toString());
-    if (expires == null) return false;
-
-    return expires.isAfter(DateTime.now());
-  }
-
-  /// Returns the list of missing items (empty list = profile is ready).
-  /// Mirrors public.is_profile_boost_ready() — the edge function
-  /// re-checks this server-side too, this is just for fast UI feedback.
-  Future<List<String>> getBoostProfileMissingItems() async {
-
-    final profile = await getCurrentUserProfile();
-
-    final missing = <String>[];
-
-    if (profile == null) {
-      return ["Profile not found"];
-    }
-
-    if ((profile['avatar_url'] ?? '').toString().trim().isEmpty) {
-      missing.add("Profile photo");
-    }
-    if ((profile['resume_url'] ?? '').toString().trim().isEmpty) {
-      missing.add("Resume");
-    }
-    if ((profile['full_name'] ?? '').toString().trim().isEmpty) {
-      missing.add("Full name");
-    }
-    if ((profile['current_city'] ?? '').toString().trim().isEmpty) {
-      missing.add("City");
-    }
-    if ((profile['current_state'] ?? '').toString().trim().isEmpty) {
-      missing.add("State");
-    }
-    if (profile['total_experience_years'] == null) {
-      missing.add("Years of experience");
-    }
-    if (profile['expected_salary_min'] == null) {
-      missing.add("Expected salary");
-    }
-    final skills = profile['skills'];
-    if (skills == null || (skills is List && skills.isEmpty)) {
-      missing.add("At least one skill");
-    }
-
-    return missing;
-  }
-
-  Future<bool> isProfileBoostReady() async {
-    final missing = await getBoostProfileMissingItems();
-    return missing.isEmpty;
-  }
-
-  // ============================================================
-  // CREATE RAZORPAY ORDER (Boost)
-  // ============================================================
-
-  Future<Map<String, dynamic>> createBoostRazorpayOrder({
-    required int months,
-  }) async {
-
-    _ensureAuth();
-
-    final session = _db.auth.currentSession;
-    if (session == null) {
-      throw Exception("Session missing");
-    }
-
-    final response = await http.post(
-      Uri.parse(_createBoostOrderUrl),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer ${session.accessToken}",
-      },
-      body: jsonEncode({
-        "months": months,
-      }),
-    );
-
-    final body = jsonDecode(response.body);
-
-    if (response.statusCode != 200) {
-      final err = body["error"] ?? "Failed to create Boost order";
-      final details = body["details"];
-      throw Exception(
-        details != null ? "$err: $details" : err,
-      );
-    }
 
     return Map<String, dynamic>.from(body);
-  }
-
-  // ============================================================
-  // VERIFY RAZORPAY PAYMENT (Boost)
-  // ============================================================
-
-  /// Returns the parsed response, which includes:
-  /// - activated: true if Boost is live now (profile was already complete)
-  /// - pending_profile: true if payment succeeded but the profile still
-  ///   needs to be completed before Boost actually turns on
-  Future<Map<String, dynamic>> verifyBoostRazorpayPayment({
-    required String razorpayOrderId,
-    required String razorpayPaymentId,
-    required String razorpaySignature,
-  }) async {
-
-    _ensureAuth();
-
-    final session = _db.auth.currentSession;
-    if (session == null) {
-      throw Exception("Session missing");
-    }
-
-    final response = await http.post(
-      Uri.parse(_verifyBoostPaymentUrl),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer ${session.accessToken}",
-      },
-      body: jsonEncode({
-        "razorpay_order_id": razorpayOrderId,
-        "razorpay_payment_id": razorpayPaymentId,
-        "razorpay_signature": razorpaySignature,
-      }),
-    );
-
-    final body = jsonDecode(response.body);
-
-    if (response.statusCode != 200 || body["success"] != true) {
-      final err = body["error"] ?? "Boost verification failed";
-      final details = body["details"];
-      throw Exception(
-        details != null ? "$err: $details" : err,
-      );
-    }
-
-    return Map<String, dynamic>.from(body);
-  }
-
-  /// Call this whenever the subscription page loads. It's a harmless
-  /// no-op if there's nothing to activate. The moment a paid-but-pending
-  /// Boost's profile becomes complete, this flips it to active and
-  /// starts the expiry clock (the actual "activation" moment).
-  Future<bool> activatePendingBoost() async {
-
-    _ensureAuth();
-
-    try {
-      final res = await _db.rpc('activate_pending_boost');
-
-      if (res == null) return false;
-
-      final row = (res is List && res.isNotEmpty)
-          ? Map<String, dynamic>.from(res.first)
-          : null;
-
-      return row?['activated'] == true;
-    } catch (_) {
-      // Non-fatal — just means nothing was pending, or a transient error.
-      return false;
-    }
   }
 
   // ============================================================
@@ -523,7 +447,5 @@ class SubscriptionService {
   Future<void> refreshSubscription() async {
 
     await getMySubscription();
-
-    await getBoostSubscription();
   }
 }
