@@ -379,7 +379,6 @@ class _CandidateDatabasePageState extends State<CandidateDatabasePage> {
         ? List<String>.from(c['skills'])
         : <String>[];
     final hasAccess = c['has_full_access'] == true;
-    final boosted = c['is_boost_enabled'] == true;
     final avatar = (c['avatar_url'] ?? '').toString();
 
     return Material(
@@ -393,9 +392,6 @@ class _CandidateDatabasePageState extends State<CandidateDatabasePage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: boosted
-            ? Border.all(color: const Color(0xFF16A34A), width: 1.2)
-            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -427,25 +423,6 @@ class _CandidateDatabasePageState extends State<CandidateDatabasePage> {
                             ),
                           ),
                         ),
-                        if (boosted) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFDCFCE7),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              "Boosted",
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Color(0xFF16A34A),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                     if (title.isNotEmpty || company.isNotEmpty)
