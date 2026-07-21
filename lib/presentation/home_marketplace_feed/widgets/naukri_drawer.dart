@@ -222,8 +222,8 @@ void _closeDrawer() {
                           Expanded(
                             child: Text(
                               _isProActive
-                                  ? "Khilonjiya Pro Active"
-                                  : "Upgrade to Khilonjiya Pro",
+                                  ? "Khilonjiya Premium Active"
+                                  : "Upgrade to Khilonjiya Premium",
                               style: KhilonjiyaUI.body.copyWith(
                                 fontWeight: FontWeight.w600,
                               ),
