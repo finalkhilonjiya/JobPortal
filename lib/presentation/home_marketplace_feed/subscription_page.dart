@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 import '../../core/ui/khilonjiya_ui.dart';
-import '../../routes/app_routes.dart';
 import '../../services/subscription_service.dart';
+import 'profile_edit_page.dart';
 
 class SubscriptionPage extends StatefulWidget {
 
@@ -17,10 +17,6 @@ class SubscriptionPage extends StatefulWidget {
       _SubscriptionPageState();
 }
 
-// Which purchase flow is currently in-flight — Razorpay callbacks are
-// shared across both Premium and Boost, so we branch on this.
-enum _PayingFor { none, premium, boost }
-
 class _SubscriptionPageState
     extends State<SubscriptionPage> {
 
@@ -30,37 +26,19 @@ class _SubscriptionPageState
   late Razorpay _razorpay;
 
   bool _loading = true;
-  _PayingFor _payingFor = _PayingFor.none;
+  bool _paying = false;
 
-  // Premium
   bool _isPremiumActive = false;
-
-  // Boost
-  bool _isBoostActive = false;
-  bool _boostPendingProfile = false;
-  DateTime? _boostExpiry;
-  List<String> _boostMissingItems = [];
-  int _boostMonths = 1;
-
-  static const int _boostPricePerMonth =
-      SubscriptionService.boostPricePerMonthRupees;
+  bool _pendingProfile = false;
+  List<String> _missingItems = [];
+  int _completionPercent = 0;
 
   static const String _premiumTermsText =
 """
 • Khilonjiya is a job discovery and hiring assistance platform only.
 • Final hiring decisions are made solely by employers.
 • Khilonjiya Premium is a one-time payment that gives you lifetime access — there is no expiry and no recurring charge. You can apply to unlimited jobs on the platform forever.
-• Once you have Khilonjiya Premium, you can separately subscribe to Boost to make your resume visible to employers searching the candidate database.
-• Subscription fees are non-refundable once payment is completed.
-• By proceeding, you agree to the platform's terms and conditions.
-""";
-
-  static const String _boostTermsText =
-"""
-• Boost makes your name, photo, resume, and contact details visible to employers browsing Khilonjiya's candidate database.
-• Boost is a paid subscription billed for the number of months you select up front — it is not a one-time or lifetime purchase, and does not auto-renew.
-• Your Boost period only starts counting once your profile is fully complete (photo, resume, and core details). If anything is missing when you pay, your plan will show as "activation pending" until you complete it — no time is lost while it's pending.
-• Your profile stops appearing in the candidate database once your Boost period ends, unless you renew.
+• Every active Khilonjiya Premium member automatically appears in the employer candidate database — no separate purchase needed.
 • Subscription fees are non-refundable once payment is completed.
 • By proceeding, you agree to the platform's terms and conditions.
 """;
@@ -107,53 +85,38 @@ class _SubscriptionPageState
       _loading = true;
     });
 
-    final premiumActive = await _service.isProActive();
+    // Self-activates a paid-but-incomplete Premium the moment the
+    // profile is found to be complete. Harmless no-op otherwise.
+    await _service.activatePendingPremium();
 
-    // Boost is independent of Premium — always evaluated on its own.
-    // If a paid-but-incomplete Boost is now ready (profile completed
-    // since last visit), this flips it to active right here.
-    await _service.activatePendingBoost();
-
-    final boostSub = await _service.getBoostSubscription();
-
-    final boostActive = await _service.isBoostActive();
-
-    final boostStatus = (boostSub?['status'] ?? '').toString();
-    final pendingProfile = boostStatus == 'paid_pending_profile';
-
-    DateTime? boostExpiry;
-    if (boostSub != null && boostSub['expires_at'] != null) {
-      boostExpiry = DateTime.tryParse(boostSub['expires_at'].toString());
-    }
+    final active = await _service.isProActive();
+    final pending = await _service.isPendingProfileActivation();
 
     List<String> missing = [];
-    if (!boostActive) {
-      missing = await _service.getBoostProfileMissingItems();
+    int percent = 100;
+
+    if (!active) {
+      missing = await _service.getMissingProfileItems();
+      percent = await _service.getProfileCompletionPercent();
     }
 
     if (!mounted) return;
 
     setState(() {
-      _isPremiumActive = premiumActive;
-      _isBoostActive = boostActive;
-      _boostPendingProfile = pendingProfile && !boostActive;
-      _boostExpiry = boostExpiry;
-      _boostMissingItems = missing;
+      _isPremiumActive = active;
+      _pendingProfile = pending && !active;
+      _missingItems = missing;
+      _completionPercent = percent;
       _loading = false;
     });
   }
 
   // =========================================================
   // SHARED TERMS POPUP — one tap opens this, agree, and it goes
-  // straight to Razorpay. No second "Continue" button anywhere.
+  // straight to Razorpay.
   // =========================================================
 
-  Future<void> _showTermsSheet({
-    required String title,
-    required String termsText,
-    required String ctaLabel,
-    required VoidCallback onAccept,
-  }) async {
+  Future<void> _showTermsSheet() async {
 
     bool agreed = false;
 
@@ -180,11 +143,14 @@ class _SubscriptionPageState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
 
-                    Text(title, style: KhilonjiyaUI.cardTitle),
+                    Text(
+                      "Khilonjiya Premium — Terms & Conditions",
+                      style: KhilonjiyaUI.cardTitle,
+                    ),
 
                     const SizedBox(height: 12),
 
-                    Text(termsText),
+                    const Text(_premiumTermsText),
 
                     const SizedBox(height: 12),
 
@@ -215,10 +181,10 @@ class _SubscriptionPageState
                         onPressed: agreed
                             ? () {
                                 Navigator.pop(sheetContext);
-                                onAccept();
+                                _startPayment();
                               }
                             : null,
-                        child: Text(ctaLabel),
+                        child: const Text("Pay ₹99 & Activate"),
                       ),
                     ),
                   ],
@@ -232,15 +198,15 @@ class _SubscriptionPageState
   }
 
   // =========================================================
-  // START PREMIUM PAYMENT
+  // START PAYMENT
   // =========================================================
 
-  Future<void> _startPremiumPayment() async {
+  Future<void> _startPayment() async {
 
     try {
 
       setState(() {
-        _payingFor = _PayingFor.premium;
+        _paying = true;
       });
 
       final profile = await _service.getCurrentUserProfile();
@@ -280,7 +246,7 @@ class _SubscriptionPageState
     } catch (e) {
 
       setState(() {
-        _payingFor = _PayingFor.none;
+        _paying = false;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -290,120 +256,41 @@ class _SubscriptionPageState
   }
 
   // =========================================================
-  // START BOOST PAYMENT
-  // =========================================================
-
-  Future<void> _startBoostPayment() async {
-
-    try {
-
-      setState(() {
-        _payingFor = _PayingFor.boost;
-      });
-
-      final profile = await _service.getCurrentUserProfile();
-
-      String mobile = (profile?['mobile_number'] ?? "").toString().trim();
-      mobile = mobile
-          .replaceAll("+91", "")
-          .replaceAll(" ", "")
-          .replaceAll("-", "");
-      mobile = mobile.replaceAll(RegExp(r'[^0-9]'), '');
-
-      final email = (profile?['actual_email'] ?? "").toString().trim();
-
-      final order = await _service.createBoostRazorpayOrder(
-        months: _boostMonths,
-      );
-
-      final options = {
-        'key': order['key_id'],
-        'amount': order['amount'],
-        'currency': order['currency'],
-        'name': 'Khilonjiya',
-        'description':
-            'Khilonjiya Boost — $_boostMonths month${_boostMonths > 1 ? 's' : ''}',
-        'order_id': order['order_id'],
-        'image':
-            'https://rsskivonmfqrzxbmxrkl.supabase.co/storage/v1/object/public/logokhilonjiya/app_icon_foreground.png',
-        'prefill': {
-          'contact': mobile,
-          'email': email,
-        },
-        'theme': {'color': '#0F172A'},
-        'retry': {'enabled': true, 'max_count': 2},
-        'send_sms_hash': true,
-        'allow_rotation': false,
-      };
-
-      _razorpay.open(options);
-
-    } catch (e) {
-
-      setState(() {
-        _payingFor = _PayingFor.none;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
-  }
-
-  // =========================================================
-  // PAYMENT SUCCESS (shared — branches on _payingFor)
+  // PAYMENT SUCCESS
   // =========================================================
 
   Future<void> _handlePaymentSuccess(
     PaymentSuccessResponse response,
   ) async {
 
-    final wasPayingFor = _payingFor;
-    bool boostPendingProfile = false;
-
     try {
 
-      if (wasPayingFor == _PayingFor.boost) {
+      final result = await _service.verifyRazorpayPayment(
+        razorpayOrderId: response.orderId ?? "",
+        razorpayPaymentId: response.paymentId ?? "",
+        razorpaySignature: response.signature ?? "",
+      );
 
-        final result = await _service.verifyBoostRazorpayPayment(
-          razorpayOrderId: response.orderId ?? "",
-          razorpayPaymentId: response.paymentId ?? "",
-          razorpaySignature: response.signature ?? "",
-        );
+      final activatedNow = result['activated'] == true;
 
-        boostPendingProfile = result['activated'] != true;
-
-      } else {
-
-        await _service.verifyRazorpayPayment(
-          razorpayOrderId: response.orderId ?? "",
-          razorpayPaymentId: response.paymentId ?? "",
-          razorpaySignature: response.signature ?? "",
-        );
-      }
-
-      // Refresh EVERYTHING — Premium status, Boost status, profile
-      // readiness — so the screen reflects the true state the moment
-      // the user comes back from Razorpay.
+      // Refresh everything so the screen reflects the true state
+      // the moment the user comes back from Razorpay.
       await _load();
 
       if (!mounted) return;
 
       setState(() {
-        _payingFor = _PayingFor.none;
+        _paying = false;
       });
 
-      String message;
-      if (wasPayingFor == _PayingFor.boost) {
-        message = boostPendingProfile
-            ? "Payment successful! Complete your profile to activate Boost."
-            : "Boost activated — your profile is now visible to employers";
-      } else {
-        message = "Khilonjiya Premium activated — it's yours for life!";
-      }
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
+        SnackBar(
+          content: Text(
+            activatedNow
+                ? "Khilonjiya Premium activated — it's yours for life!"
+                : "Payment successful! Complete your profile below to activate Khilonjiya Premium.",
+          ),
+        ),
       );
 
     } catch (e) {
@@ -411,7 +298,7 @@ class _SubscriptionPageState
       if (!mounted) return;
 
       setState(() {
-        _payingFor = _PayingFor.none;
+        _paying = false;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -425,7 +312,7 @@ class _SubscriptionPageState
   ) {
 
     setState(() {
-      _payingFor = _PayingFor.none;
+      _paying = false;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -447,13 +334,27 @@ class _SubscriptionPageState
   }
 
   // =========================================================
+  // GO COMPLETE PROFILE (mandatory-field mode)
+  // =========================================================
+
+  Future<void> _goCompleteProfile() async {
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ProfileEditPage(forActivation: true),
+      ),
+    );
+
+    await _load();
+  }
+
+  // =========================================================
   // UI
   // =========================================================
 
   @override
   Widget build(BuildContext context) {
-
-    final paying = _payingFor != _PayingFor.none;
 
     return Scaffold(
 
@@ -474,11 +375,7 @@ class _SubscriptionPageState
               padding: const EdgeInsets.all(16),
               children: [
 
-                _premiumCard(paying),
-
-                const SizedBox(height: 20),
-
-                _boostCard(paying),
+                _premiumCard(),
 
                 const SizedBox(height: 20),
 
@@ -492,11 +389,16 @@ class _SubscriptionPageState
   // PREMIUM CARD
   // =========================================================
 
-  Widget _premiumCard(bool paying) {
+  Widget _premiumCard() {
 
-    final subtitle = _isPremiumActive
-        ? "Activated • Lifetime access, no expiry"
-        : "One-time payment • Lifetime access";
+    String subtitle;
+    if (_isPremiumActive) {
+      subtitle = "Activated • Lifetime access, no expiry";
+    } else if (_pendingProfile) {
+      subtitle = "Payment received • Activation pending";
+    } else {
+      subtitle = "One-time payment • Lifetime access";
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -511,136 +413,63 @@ class _SubscriptionPageState
 
           Text(subtitle, style: KhilonjiyaUI.sub),
 
-          const SizedBox(height: 14),
-
-          if (!_isPremiumActive)
+          if (!_isPremiumActive && !_pendingProfile) ...[
+            const SizedBox(height: 14),
             Text(
               "₹99",
               style: KhilonjiyaUI.cardTitle.copyWith(fontSize: 22),
             ),
-
-          if (!_isPremiumActive)
             const Text(
               "One-time — pay once, use forever",
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
+          ],
 
           const SizedBox(height: 14),
 
-          SizedBox(
-            width: double.infinity,
-            height: 46,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: KhilonjiyaUI.primary,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: (paying || _isPremiumActive)
-                  ? null
-                  : () {
-                      _showTermsSheet(
-                        title: "Khilonjiya Premium — Terms & Conditions",
-                        termsText: _premiumTermsText,
-                        ctaLabel: "Pay ₹99 & Activate",
-                        onAccept: _startPremiumPayment,
-                      );
-                    },
-              child: (paying && _payingFor == _PayingFor.premium)
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : Text(
-                      _isPremiumActive
-                          ? "Premium Member for Life"
-                          : "Get Khilonjiya Premium",
-                    ),
+          if (_isPremiumActive) ...[
+            const Row(
+              children: [
+                Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 18),
+                SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    "You're visible to employers searching the candidate database.",
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // =========================================================
-  // BOOST CARD
-  // =========================================================
-
-  Widget _boostCard(bool paying) {
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: KhilonjiyaUI.cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-
-          Row(
-            children: [
-              Icon(Icons.rocket_launch, color: KhilonjiyaUI.primary),
-              const SizedBox(width: 8),
-              Text("Boost Plan", style: KhilonjiyaUI.cardTitle),
-            ],
-          ),
-
-          const SizedBox(height: 8),
-
-          const Text(
-            "Make your resume visible to every employer searching "
-            "Khilonjiya's candidate database — not just the jobs you've "
-            "applied to.",
-            style: TextStyle(fontSize: 13, color: Colors.grey),
-          ),
-
-          const SizedBox(height: 14),
-
-          if (_isBoostActive) _boostActiveStatus(),
-
-          if (!_isBoostActive && _boostPendingProfile)
-            _boostPendingActivation(),
-
-          if (!_isBoostActive && !_boostPendingProfile)
-            _boostMonthSelector(paying),
-        ],
-      ),
-    );
-  }
-
-  Widget _boostActiveStatus() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 18),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                _boostExpiry != null
-                    ? "Boost is active — valid till ${_boostExpiry!.toLocal().toString().split(' ')[0]}"
-                    : "Boost is active",
-                style: const TextStyle(fontWeight: FontWeight.w600),
+          ] else if (_pendingProfile) ...[
+            _pendingActivationBlock(),
+          ] else ...[
+            SizedBox(
+              width: double.infinity,
+              height: 46,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: KhilonjiyaUI.primary,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: _paying ? null : _showTermsSheet,
+                child: _paying
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text("Get Khilonjiya Premium"),
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: () => setState(() => _isBoostActive = false),
-            child: const Text("Extend Boost"),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _boostPendingActivation() {
+  Widget _pendingActivationBlock() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -658,16 +487,18 @@ class _SubscriptionPageState
         ),
         const SizedBox(height: 6),
         const Text(
-          "Payment received! Complete your profile below to activate Boost — your plan starts counting only once activation is complete.",
+          "Payment received! Complete your profile to activate Khilonjiya Premium — employers will only be able to see your profile and contact you once it's activated.",
           style: TextStyle(fontSize: 12.5, color: Colors.grey),
         ),
+        const SizedBox(height: 10),
+        _completionBar(),
         const SizedBox(height: 10),
         const Text(
           "Still needed:",
           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
         ),
         const SizedBox(height: 6),
-        ..._boostMissingItems.map(
+        ..._missingItems.map(
           (m) => Padding(
             padding: const EdgeInsets.only(bottom: 3),
             child: Row(
@@ -687,10 +518,7 @@ class _SubscriptionPageState
               backgroundColor: KhilonjiyaUI.primary,
               foregroundColor: Colors.white,
             ),
-            onPressed: () async {
-              await Navigator.pushNamed(context, AppRoutes.profileEdit);
-              await _load();
-            },
+            onPressed: _goCompleteProfile,
             child: const Text("Complete Profile & Activate"),
           ),
         ),
@@ -698,77 +526,30 @@ class _SubscriptionPageState
     );
   }
 
-  Widget _boostMonthSelector(bool paying) {
-
-    final total = _boostPricePerMonth * _boostMonths;
-
+  Widget _completionBar() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
-        const Text(
-          "₹49 per month — choose 1 to 3 months",
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-        ),
-
-        const SizedBox(height: 10),
-
         Row(
           children: [
-            IconButton(
-              icon: const Icon(Icons.remove_circle_outline),
-              onPressed: _boostMonths > 1
-                  ? () => setState(() => _boostMonths--)
-                  : null,
-            ),
             Text(
-              "$_boostMonths month${_boostMonths > 1 ? 's' : ''}",
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-            ),
-            IconButton(
-              icon: const Icon(Icons.add_circle_outline),
-              onPressed: _boostMonths < 3
-                  ? () => setState(() => _boostMonths++)
-                  : null,
-            ),
-            const Spacer(),
-            Text(
-              "₹$total",
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+              "Profile $_completionPercent% complete",
+              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
             ),
           ],
         ),
-
-        const SizedBox(height: 10),
-
-        SizedBox(
-          width: double.infinity,
-          height: 44,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: KhilonjiyaUI.primary,
-              foregroundColor: Colors.white,
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: LinearProgressIndicator(
+            value: _completionPercent / 100,
+            minHeight: 8,
+            backgroundColor: const Color(0xFFE5E7EB),
+            valueColor: AlwaysStoppedAnimation<Color>(
+              _completionPercent >= 100
+                  ? const Color(0xFF16A34A)
+                  : KhilonjiyaUI.primary,
             ),
-            onPressed: paying
-                ? null
-                : () {
-                    _showTermsSheet(
-                      title: "Khilonjiya Boost — Terms & Conditions",
-                      termsText: _boostTermsText,
-                      ctaLabel: "Pay ₹$total & Activate",
-                      onAccept: _startBoostPayment,
-                    );
-                  },
-            child: (paying && _payingFor == _PayingFor.boost)
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Text("Enable Boost"),
           ),
         ),
       ],
@@ -803,8 +584,8 @@ class _SubscriptionPageState
 
         item(
           Icons.rocket_launch,
-          "Boost",
-          "Get discovered — appear in the employer candidate database",
+          "Visible to Employers",
+          "Comes with Khilonjiya Premium — no separate purchase needed",
         ),
 
         item(
