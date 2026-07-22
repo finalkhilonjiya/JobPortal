@@ -24,44 +24,103 @@ class CandidateDatabasePage extends StatefulWidget {
 
 class _CandidateDatabasePageState extends State<CandidateDatabasePage> {
 
+  static const int _pageSize = 20;
+
   final CandidateDatabaseService _service = CandidateDatabaseService();
   final EmployerApplicantsService _applicantsService = EmployerApplicantsService();
   final EmployerSubscriptionService _subService = EmployerSubscriptionService();
   final TextEditingController _searchCtrl = TextEditingController();
 
   bool _loading = true;
+  bool _loadingMore = false;
   bool _hasFullAccess = false;
   List<Map<String, dynamic>> _candidates = [];
+  int _totalCount = 0;
+
+  // Filters
+  String? _state;
+  String? _district;
+  String? _qualification;
+
+  List<String> _stateOptions = [];
+  List<String> _districtOptions = [];
+  List<String> _qualificationOptions = [];
+
+  bool get _hasActiveFilters =>
+      (_state ?? '').isNotEmpty ||
+      (_district ?? '').isNotEmpty ||
+      (_qualification ?? '').isNotEmpty;
+
+  bool get _hasMore => _candidates.length < _totalCount;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _loadFilterOptions();
+    _load(reset: true);
   }
 
-  Future<void> _load({String? search}) async {
+  Future<void> _loadFilterOptions() async {
+    try {
+      final opts = await _service.getFilterOptions();
+      if (!mounted) return;
+      setState(() {
+        _stateOptions = opts.states;
+        _districtOptions = opts.districts;
+        _qualificationOptions = opts.qualifications;
+      });
+    } catch (_) {
+      // Non-fatal — filter chips just won't have options if this fails.
+    }
+  }
 
-    setState(() => _loading = true);
+  Future<void> _load({bool reset = false}) async {
+
+    if (reset) {
+      setState(() {
+        _loading = true;
+        _candidates = [];
+        _totalCount = 0;
+      });
+    } else {
+      setState(() => _loadingMore = true);
+    }
 
     try {
       // Checked independently of the candidate list so the banner is
-      // correct even when there are zero results for a search.
+      // correct even when there are zero results for a search/filter.
       final active = await _subService.isPremiumActive();
 
-      final rows = await _service.getCandidates(search: search);
+      final result = await _service.getCandidates(
+        search: _searchCtrl.text,
+        state: _state,
+        district: _district,
+        qualification: _qualification,
+        limit: _pageSize,
+        offset: reset ? 0 : _candidates.length,
+      );
 
       if (!mounted) return;
 
       setState(() {
-        _candidates = rows;
+        if (reset) {
+          _candidates = result.candidates;
+        } else {
+          _candidates = [..._candidates, ...result.candidates];
+        }
+        _totalCount = result.totalCount;
         _hasFullAccess = active;
         _loading = false;
+        _loadingMore = false;
       });
     } catch (e) {
 
       if (!mounted) return;
 
-      setState(() => _loading = false);
+      setState(() {
+        _loading = false;
+        _loadingMore = false;
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to load candidates: $e")),
@@ -75,7 +134,152 @@ class _CandidateDatabasePageState extends State<CandidateDatabasePage> {
       MaterialPageRoute(
         builder: (_) => EmployerSubscriptionPage(companyId: widget.companyId),
       ),
-    ).then((_) => _load(search: _searchCtrl.text));
+    ).then((_) => _load(reset: true));
+  }
+
+  // ------------------------------------------------------------
+  // FILTER SHEET — State / District / Qualification
+  // ------------------------------------------------------------
+  Future<void> _openFilterSheet() async {
+
+    String? state = _state;
+    String? district = _district;
+    String? qualification = _qualification;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    Row(
+                      children: [
+                        const Text(
+                          "Filter Candidates",
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                        ),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () {
+                            setSheetState(() {
+                              state = null;
+                              district = null;
+                              qualification = null;
+                            });
+                          },
+                          child: const Text("Clear"),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    _filterDropdown(
+                      label: "State",
+                      value: state,
+                      options: _stateOptions,
+                      onChanged: (v) => setSheetState(() => state = v),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    _filterDropdown(
+                      label: "District",
+                      value: district,
+                      options: _districtOptions,
+                      onChanged: (v) => setSheetState(() => district = v),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    _filterDropdown(
+                      label: "Qualification",
+                      value: qualification,
+                      options: _qualificationOptions,
+                      onChanged: (v) => setSheetState(() => qualification = v),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF16A34A),
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          setState(() {
+                            _state = state;
+                            _district = district;
+                            _qualification = qualification;
+                          });
+                          _load(reset: true);
+                        },
+                        child: const Text("Apply Filters"),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _filterDropdown({
+    required String label,
+    required String? value,
+    required List<String> options,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          isExpanded: true,
+          value: (value != null && options.contains(value)) ? value : null,
+          hint: Text("Any $label"),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: const Color(0xFFF7F8FA),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
+            ),
+          ),
+          items: [
+            DropdownMenuItem<String>(value: null, child: Text("Any $label")),
+            ...options.map((o) => DropdownMenuItem<String>(value: o, child: Text(o))),
+          ],
+          onChanged: onChanged,
+        ),
+      ],
+    );
   }
 
   // ------------------------------------------------------------
@@ -242,6 +446,30 @@ class _CandidateDatabasePageState extends State<CandidateDatabasePage> {
           "Candidate Database",
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
+        actions: [
+          IconButton(
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(Icons.filter_list),
+                if (_hasActiveFilters)
+                  Positioned(
+                    right: -1,
+                    top: -1,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF16A34A),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            onPressed: _openFilterSheet,
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -249,7 +477,7 @@ class _CandidateDatabasePageState extends State<CandidateDatabasePage> {
           if (!_hasFullAccess) _lockedBanner(),
 
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
             child: TextField(
               controller: _searchCtrl,
               decoration: InputDecoration(
@@ -262,9 +490,23 @@ class _CandidateDatabasePageState extends State<CandidateDatabasePage> {
                   borderSide: BorderSide.none,
                 ),
               ),
-              onSubmitted: (v) => _load(search: v),
+              onSubmitted: (_) => _load(reset: true),
             ),
           ),
+
+          if (_hasActiveFilters) _activeFiltersRow(),
+
+          if (!_loading)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Showing ${_candidates.length} of $_totalCount",
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ),
+            ),
 
           Expanded(
             child: _loading
@@ -272,15 +514,66 @@ class _CandidateDatabasePageState extends State<CandidateDatabasePage> {
                 : _candidates.isEmpty
                     ? const Center(child: Text("No candidates found"))
                     : ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        itemCount: _candidates.length,
+                        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                        itemCount: _candidates.length + (_hasMore ? 1 : 0),
                         separatorBuilder: (_, __) => const SizedBox(height: 10),
-                        itemBuilder: (context, i) =>
-                            _candidateCard(_candidates[i]),
+                        itemBuilder: (context, i) {
+                          if (i >= _candidates.length) {
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                child: _loadingMore
+                                    ? const CircularProgressIndicator()
+                                    : OutlinedButton(
+                                        onPressed: () => _load(),
+                                        child: const Text("Load More"),
+                                      ),
+                              ),
+                            );
+                          }
+                          return _candidateCard(_candidates[i]);
+                        },
                       ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _activeFiltersRow() {
+    final chips = <Widget>[];
+
+    if ((_state ?? '').isNotEmpty) {
+      chips.add(_filterChip("State: $_state", () {
+        setState(() => _state = null);
+        _load(reset: true);
+      }));
+    }
+    if ((_district ?? '').isNotEmpty) {
+      chips.add(_filterChip("District: $_district", () {
+        setState(() => _district = null);
+        _load(reset: true);
+      }));
+    }
+    if ((_qualification ?? '').isNotEmpty) {
+      chips.add(_filterChip("Qualification: $_qualification", () {
+        setState(() => _qualification = null);
+        _load(reset: true);
+      }));
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+      child: Wrap(spacing: 8, runSpacing: 8, children: chips),
+    );
+  }
+
+  Widget _filterChip(String label, VoidCallback onRemove) {
+    return Chip(
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      deleteIcon: const Icon(Icons.close, size: 16),
+      onDeleted: onRemove,
+      backgroundColor: const Color(0xFFDCFCE7),
     );
   }
 
