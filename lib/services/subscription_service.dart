@@ -230,7 +230,12 @@ class SubscriptionService {
       final v = profile[key];
 
       bool ok;
-      if (v == null) {
+
+      // "Fresher" (0 years) and "Any" (maps to an empty array) are
+      // legitimate, deliberate answers — not missing data.
+      if (key == 'total_experience_years' || key == 'preferred_job_types') {
+        ok = true;
+      } else if (v == null) {
         ok = false;
       } else if (v is String) {
         ok = v.trim().isNotEmpty;
