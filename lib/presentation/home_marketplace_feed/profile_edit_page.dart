@@ -259,6 +259,16 @@ void dispose() {
 
     if (!_jobTypeOptions.contains(_jobType)) _jobType = 'Any';
 
+    // PREFERRED LOCATIONS (was never being restored on load — fixed)
+    _preferredDistricts.clear();
+    final rawPreferredLocations = _profile['preferred_locations'];
+    if (rawPreferredLocations is List) {
+      for (final d in rawPreferredLocations) {
+        final v = d.toString().trim();
+        if (v.isNotEmpty) _preferredDistricts.add(v);
+      }
+    }
+
     // SKILLS
     _skills.clear();
     final rawSkills = _profile['skills'];
@@ -444,27 +454,18 @@ bool _isLocked(String field) {
 
     final missing = <String>[];
 
-    int expYears = 0;
-    if (_selectedExperience == 'Fresher') {
-      expYears = 0;
-    } else if (_selectedExperience == '10+ years') {
-      expYears = 10;
-    } else {
-      expYears = int.tryParse(_selectedExperience.split(' ').first) ?? 0;
-    }
+    // "Fresher" and "Any" are legitimate, deliberate answers — not
+    // missing data. Experience and preferred job type are never
+    // counted as missing.
 
     if (_fullNameCtrl.text.trim().isEmpty) missing.add("Full name");
     if (_phoneCtrl.text.trim().isEmpty) missing.add("Mobile number");
     if (_selectedDistrict.trim().isEmpty) missing.add("City / district");
     if (_selectedState.trim().isEmpty) missing.add("State");
     if (_selectedEducation.trim().isEmpty) missing.add("Highest education");
-    if (expYears <= 0) missing.add("Years of experience (select something other than Fresher)");
     if (_toInt(_expectedSalaryMinCtrl.text) <= 0) missing.add("Expected salary");
     if (_skills.isEmpty) missing.add("At least one skill");
     if (_bioCtrl.text.trim().isEmpty) missing.add("About you (bio)");
-    if (_jobType.trim().isEmpty || _jobType.trim().toLowerCase() == 'any') {
-      missing.add("Preferred job type (select something other than Any)");
-    }
     if (_resumeStoragePath.trim().isEmpty) missing.add("Resume");
     if (_photoStoragePath.trim().isEmpty) missing.add("Profile photo");
 
@@ -1080,25 +1081,74 @@ bool _isLocked(String field) {
                 ),
               ),
               if (!widget.forActivation)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: KhilonjiyaUI.primary.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    "${(_profile['profile_completion_percentage'] ?? 0)}%",
-                    style: TextStyle(
-                      color: KhilonjiyaUI.primary,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12.5,
+                Builder(builder: (context) {
+                  final missing = _missingForActivation();
+                  final pct = (((12 - missing.length) / 12) * 100).round();
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: KhilonjiyaUI.primary.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                  ),
-                ),
+                    child: Text(
+                      "$pct%",
+                      style: TextStyle(
+                        color: KhilonjiyaUI.primary,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  );
+                }),
             ],
           ),
         ),
+
+        if (!widget.forActivation)
+          Builder(builder: (context) {
+            final missing = _missingForActivation();
+            if (missing.isEmpty) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "To reach 100%, still needed:",
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 6),
+                    ...missing.map(
+                      (m) => Padding(
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(top: 5),
+                              child: Icon(Icons.circle, size: 5, color: Colors.grey),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(m, style: const TextStyle(fontSize: 12.5)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
 
         // -------------------------------
         // MOBILE (LOCK AFTER SET)
