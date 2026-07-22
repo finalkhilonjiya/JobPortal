@@ -336,6 +336,14 @@ Future<void> _openResumeViewer(String url) async {
             icon: Icons.badge_outlined,
           ),
           _infoTile(
+            title: "Preferred Locations",
+            value: (_profile['preferred_locations'] is List &&
+                    (_profile['preferred_locations'] as List).isNotEmpty)
+                ? (_profile['preferred_locations'] as List).join(", ")
+                : "",
+            icon: Icons.map_outlined,
+          ),
+          _infoTile(
             title: "Notice Period (days)",
             value: _i(_profile['notice_period_days']) > 0
                 ? "${_profile['notice_period_days']} days"
