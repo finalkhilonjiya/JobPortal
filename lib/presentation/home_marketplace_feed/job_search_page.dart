@@ -30,6 +30,62 @@ class _JobSearchPageState extends State<JobSearchPage> {
   Set<String> _savedJobIds = {};
   List<Map<String, dynamic>> _results = [];
 
+  // ------------------------------------------------------------
+  // FILTERS — State / District / Qualification
+  // ------------------------------------------------------------
+  static const List<String> _neStates = [
+    'Assam',
+    'Arunachal Pradesh',
+    'Manipur',
+    'Meghalaya',
+    'Mizoram',
+    'Nagaland',
+    'Tripura',
+    'Sikkim',
+  ];
+
+  static const List<String> _qualificationOptions = [
+    "Any",
+    "Any Graduate",
+    "Below 10th",
+    "10th Pass",
+    "12th Pass",
+    "ITI",
+    "Diploma",
+    "Polytechnic",
+    "BA",
+    "BSc",
+    "BCom",
+    "BBA",
+    "BCA",
+    "B.Tech / BE",
+    "MA",
+    "MSc",
+    "MCom",
+    "MBA",
+    "MCA",
+    "M.Tech / ME",
+    "CA",
+    "CS",
+    "ICWA",
+    "PhD",
+    "Other",
+  ];
+
+  String? _filterState;
+  String? _filterDistrict;
+  String? _filterQualification;
+
+  List<String> _districtOptions = [];
+
+  bool get _hasActiveFilters =>
+      (_filterState ?? '').isNotEmpty ||
+      (_filterDistrict ?? '').isNotEmpty ||
+      (_filterQualification ?? '').isNotEmpty;
+
+  bool get _hasAnyCriteria =>
+      _searchCtrl.text.trim().isNotEmpty || _hasActiveFilters;
+
   @override
   void initState() {
     super.initState();
@@ -67,9 +123,7 @@ class _JobSearchPageState extends State<JobSearchPage> {
     _debounce = Timer(const Duration(milliseconds: 350), () async {
       if (_disposed) return;
 
-      final query = q.trim();
-
-      if (query.isEmpty) {
+      if (!_hasAnyCriteria) {
         setState(() {
           _results = [];
           _loading = false;
@@ -77,19 +131,20 @@ class _JobSearchPageState extends State<JobSearchPage> {
         return;
       }
 
-      await _search(query);
+      await _search();
     });
   }
 
-  Future<void> _search(String query) async {
+  Future<void> _search() async {
     if (_disposed) return;
 
     setState(() => _loading = true);
 
     try {
       final nowIso = DateTime.now().toIso8601String();
+      final query = _searchCtrl.text.trim();
 
-      final res = await _db
+      var builder = _db
           .from('job_listings')
           .select('''
             *,
@@ -104,14 +159,35 @@ class _JobSearchPageState extends State<JobSearchPage> {
             )
           ''')
           .eq('status', 'active')
-          .gte('expires_at', nowIso)
-          .or(
-            'job_title.ilike.%$query%,'
-            'district.ilike.%$query%,'
-            'companies.name.ilike.%$query%',
-          )
-          .order('created_at', ascending: false)
-          .limit(50);
+          .gte('expires_at', nowIso);
+
+      if (query.isNotEmpty) {
+        builder = builder.or(
+          'job_title.ilike.%$query%,'
+          'district.ilike.%$query%,'
+          'companies.name.ilike.%$query%',
+        );
+      }
+
+      if ((_filterState ?? '').isNotEmpty) {
+        builder = builder.eq('location_state', _filterState!);
+      }
+
+      if ((_filterDistrict ?? '').isNotEmpty) {
+        builder = builder.eq('district', _filterDistrict!);
+      }
+
+      if ((_filterQualification ?? '').isNotEmpty &&
+          _filterQualification != 'Any') {
+        // Jobs that specifically require this qualification, plus jobs
+        // open to "Any" qualification (those are a match for everyone).
+        builder = builder.or(
+          'education_required.eq.$_filterQualification,'
+          'education_required.eq.Any',
+        );
+      }
+
+      final res = await builder.order('created_at', ascending: false).limit(50);
 
       final list = List<Map<String, dynamic>>.from(res);
 
@@ -125,6 +201,208 @@ class _JobSearchPageState extends State<JobSearchPage> {
     } finally {
       if (!_disposed) setState(() => _loading = false);
     }
+  }
+
+  // ------------------------------------------------------------
+  // FILTER SHEET
+  // ------------------------------------------------------------
+  Future<void> _openFilterSheet() async {
+
+    String? state = _filterState;
+    String? district = _filterDistrict;
+    String? qualification = _filterQualification;
+
+    List<String> districtOptions = List.of(_districtOptions);
+    bool loadingDistricts = false;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+
+            Future<void> loadDistricts(String s) async {
+              setSheetState(() => loadingDistricts = true);
+              try {
+                final res = await _db
+                    .from('ne_states_districts_master')
+                    .select('district_name')
+                    .eq('state_name', s)
+                    .order('district_name', ascending: true);
+                final items = List<Map<String, dynamic>>.from(res)
+                    .map((e) => (e['district_name'] ?? '').toString())
+                    .where((e) => e.isNotEmpty)
+                    .toList();
+                setSheetState(() {
+                  districtOptions = items;
+                  loadingDistricts = false;
+                });
+              } catch (_) {
+                setSheetState(() {
+                  districtOptions = [];
+                  loadingDistricts = false;
+                });
+              }
+            }
+
+            // Load districts for a pre-selected state the first time the
+            // sheet opens (e.g. reopening filters after applying earlier).
+            if ((state ?? '').isNotEmpty &&
+                districtOptions.isEmpty &&
+                !loadingDistricts) {
+              loadingDistricts = true;
+              loadDistricts(state!);
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    Row(
+                      children: [
+                        const Text(
+                          "Filter Jobs",
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                        ),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () {
+                            setSheetState(() {
+                              state = null;
+                              district = null;
+                              qualification = null;
+                              districtOptions = [];
+                            });
+                          },
+                          child: const Text("Clear"),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    const Text("State",
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      value: state,
+                      hint: const Text("Any state"),
+                      decoration: _filterInputDecoration(),
+                      items: [
+                        const DropdownMenuItem<String>(value: null, child: Text("Any state")),
+                        ..._neStates.map((s) => DropdownMenuItem<String>(value: s, child: Text(s))),
+                      ],
+                      onChanged: (v) {
+                        setSheetState(() {
+                          state = v;
+                          district = null;
+                          districtOptions = [];
+                        });
+                        if (v != null) loadDistricts(v);
+                      },
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    const Text("District",
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      value: districtOptions.contains(district) ? district : null,
+                      hint: Text(state == null
+                          ? "Select a state first"
+                          : (loadingDistricts ? "Loading..." : "Any district")),
+                      decoration: _filterInputDecoration(),
+                      items: [
+                        const DropdownMenuItem<String>(value: null, child: Text("Any district")),
+                        ...districtOptions.map((d) => DropdownMenuItem<String>(value: d, child: Text(d))),
+                      ],
+                      onChanged: (state == null || loadingDistricts)
+                          ? null
+                          : (v) => setSheetState(() => district = v),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    const Text("Qualification",
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      value: qualification,
+                      hint: const Text("Any qualification"),
+                      decoration: _filterInputDecoration(),
+                      items: [
+                        const DropdownMenuItem<String>(value: null, child: Text("Any qualification")),
+                        ..._qualificationOptions
+                            .map((q) => DropdownMenuItem<String>(value: q, child: Text(q))),
+                      ],
+                      onChanged: (v) => setSheetState(() => qualification = v),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: KhilonjiyaUI.primary,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          setState(() {
+                            _filterState = state;
+                            _filterDistrict = district;
+                            _filterQualification = qualification;
+                            _districtOptions = districtOptions;
+                          });
+                          if (_hasAnyCriteria) {
+                            _search();
+                          } else {
+                            setState(() => _results = []);
+                          }
+                        },
+                        child: const Text("Apply Filters"),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  InputDecoration _filterInputDecoration() {
+    return InputDecoration(
+      filled: true,
+      fillColor: const Color(0xFFF7F8FA),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide.none,
+      ),
+    );
   }
 
   // ------------------------------------------------------------
@@ -176,7 +454,7 @@ class _JobSearchPageState extends State<JobSearchPage> {
                 child: Icon(Icons.arrow_back, size: 22),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 6),
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -206,10 +484,7 @@ class _JobSearchPageState extends State<JobSearchPage> {
                             icon: const Icon(Icons.close, size: 18),
                             onPressed: () {
                               _searchCtrl.clear();
-                              setState(() {
-                                _results = [];
-                                _loading = false;
-                              });
+                              _onQueryChanged('');
                             },
                           ),
                     border: InputBorder.none,
@@ -221,9 +496,75 @@ class _JobSearchPageState extends State<JobSearchPage> {
                 ),
               ),
             ),
+            const SizedBox(width: 4),
+            IconButton(
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(Icons.filter_list),
+                  if (_hasActiveFilters)
+                    Positioned(
+                      right: -1,
+                      top: -1,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: KhilonjiyaUI.primary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              onPressed: _openFilterSheet,
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _activeFiltersRow() {
+    final chips = <Widget>[];
+
+    if ((_filterState ?? '').isNotEmpty) {
+      chips.add(_filterChip("State: $_filterState", () {
+        setState(() {
+          _filterState = null;
+          _filterDistrict = null;
+          _districtOptions = [];
+        });
+        _hasAnyCriteria ? _search() : setState(() => _results = []);
+      }));
+    }
+    if ((_filterDistrict ?? '').isNotEmpty) {
+      chips.add(_filterChip("District: $_filterDistrict", () {
+        setState(() => _filterDistrict = null);
+        _hasAnyCriteria ? _search() : setState(() => _results = []);
+      }));
+    }
+    if ((_filterQualification ?? '').isNotEmpty) {
+      chips.add(_filterChip("Qualification: $_filterQualification", () {
+        setState(() => _filterQualification = null);
+        _hasAnyCriteria ? _search() : setState(() => _results = []);
+      }));
+    }
+
+    if (chips.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      child: Wrap(spacing: 8, runSpacing: 8, children: chips),
+    );
+  }
+
+  Widget _filterChip(String label, VoidCallback onRemove) {
+    return Chip(
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      deleteIcon: const Icon(Icons.close, size: 16),
+      onDeleted: onRemove,
+      backgroundColor: KhilonjiyaUI.primary.withOpacity(0.10),
     );
   }
 
@@ -232,12 +573,12 @@ class _JobSearchPageState extends State<JobSearchPage> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_searchCtrl.text.trim().isEmpty) {
+    if (!_hasAnyCriteria) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: Text(
-            "Type something to search jobs",
+            "Type something or use filters to search jobs",
             style: KhilonjiyaUI.sub,
             textAlign: TextAlign.center,
           ),
@@ -285,6 +626,7 @@ class _JobSearchPageState extends State<JobSearchPage> {
       body: Column(
         children: [
           _buildSearchBox(),
+          _activeFiltersRow(),
           Expanded(child: _buildBody()),
         ],
       ),
