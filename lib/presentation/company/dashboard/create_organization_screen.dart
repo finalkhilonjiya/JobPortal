@@ -1,0 +1,307 @@
+// lib/presentation/company/create_organization_screen.dart
+
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../services/employer_dashboard_service.dart';
+
+class CreateOrganizationScreen extends StatefulWidget {
+  const CreateOrganizationScreen({Key? key}) : super(key: key);
+
+  @override
+  State<CreateOrganizationScreen> createState() =>
+      _CreateOrganizationScreenState();
+}
+
+class _CreateOrganizationScreenState
+    extends State<CreateOrganizationScreen> {
+  final SupabaseClient _db = Supabase.instance.client;
+
+  bool _loading = true;
+  bool _saving = false;
+
+  List<Map<String, dynamic>> _districts = [];
+  List<Map<String, dynamic>> _businessTypes = [];
+
+  final TextEditingController _name = TextEditingController();
+  final TextEditingController _website = TextEditingController();
+  final TextEditingController _desc = TextEditingController();
+
+  String? _selectedDistrictId;
+  String? _selectedBusinessTypeId;
+
+  static const Color _bg = Color(0xFFF8FAFC);
+  static const Color _border = Color(0xFFE5E7EB);
+  static const Color _text = Color(0xFF0F172A);
+  static const Color _muted = Color(0xFF64748B);
+  static const Color _primary = Color(0xFF16A34A);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMasters();
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _website.dispose();
+    _desc.dispose();
+    super.dispose();
+  }
+
+  User _requireUser() {
+    final u = _db.auth.currentUser;
+    if (u == null) throw Exception("Session expired");
+    return u;
+  }
+
+  void _toast(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  Future<void> _loadMasters() async {
+    setState(() => _loading = true);
+
+    try {
+      final dRes = await _db
+          .from('assam_districts_master')
+          .select('id, district_name')
+          .order('district_name');
+
+      final bRes = await _db
+          .from('business_types_master')
+          .select('id, type_name')
+          .eq('is_active', true)
+          .order('type_name');
+
+      _districts = List<Map<String, dynamic>>.from(dRes);
+      _businessTypes = List<Map<String, dynamic>>.from(bRes);
+    } catch (_) {
+      _toast("Failed to load data");
+    }
+
+    setState(() => _loading = false);
+  }
+
+  // ============================================================
+  // CREATE ORGANIZATION — fixed
+  // ============================================================
+  Future<void> _create() async {
+    // Validate first — no async work yet
+    final name = _name.text.trim();
+
+    if (name.isEmpty) {
+      _toast("Organization name required");
+      return;
+    }
+    if (_selectedBusinessTypeId == null) {
+      _toast("Select business type");
+      return;
+    }
+    if (_selectedDistrictId == null) {
+      _toast("Select district");
+      return;
+    }
+
+    // Check session before going async
+    try {
+      _requireUser();
+    } catch (e) {
+      _toast("Session expired. Please login again.");
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _saving = true);
+
+    String? companyId;
+
+    try {
+      final service = EmployerDashboardService();
+
+      companyId = await service.createOrganization(
+        name: name,
+        businessTypeId: _selectedBusinessTypeId!,
+        districtId: _selectedDistrictId!,
+        website: _website.text.trim(),
+        description: _desc.text.trim(),
+      );
+    } catch (e) {
+      // Only show error and reset saving if we are still mounted.
+      // Do NOT call setState after this if we are going to pop.
+      if (mounted) {
+        setState(() => _saving = false);
+        _toast("Failed: $e");
+      }
+      return; // Stop here — do not pop
+    }
+
+    // At this point createOrganization succeeded.
+    // Check companyId is valid.
+    if (companyId == null || companyId.isEmpty) {
+      if (mounted) {
+        setState(() => _saving = false);
+        _toast("Organization ID not returned. Please try again.");
+      }
+      return;
+    }
+
+    // Pop ONLY on success, and do NOT call setState after this —
+    // the widget is being disposed by the navigator.
+    if (mounted) {
+      Navigator.pop(context, companyId);
+    }
+
+    // NO setState after Navigator.pop — widget is disposed here.
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.of(context).viewInsets.bottom;
+
+    return Scaffold(
+      backgroundColor: _bg,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        title: const Text(
+          "Create Organization",
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        foregroundColor: _text,
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding:
+                  EdgeInsets.fromLTRB(16, 16, 16, 24 + bottom),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Get started",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: _text,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    "Create your organization to start hiring",
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      color: _muted,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _label("Organization name"),
+                  _input(_name, "ABC Pvt Ltd"),
+                  const SizedBox(height: 14),
+                  _label("Business type"),
+                  _dropdown(
+                    value: _selectedBusinessTypeId,
+                    hint: "Select type",
+                    items: _businessTypes,
+                    labelKey: 'type_name',
+                    onChanged: (v) => setState(
+                        () => _selectedBusinessTypeId = v),
+                  ),
+                  const SizedBox(height: 14),
+                  _label("District"),
+                  _dropdown(
+                    value: _selectedDistrictId,
+                    hint: "Select district",
+                    items: _districts,
+                    labelKey: 'district_name',
+                    onChanged: (v) =>
+                        setState(() => _selectedDistrictId = v),
+                  ),
+                  const SizedBox(height: 14),
+                  _label("Website"),
+                  _input(_website, "https://"),
+                  const SizedBox(height: 14),
+                  _label("Description"),
+                  _input(_desc, "About company", maxLines: 4),
+                  const SizedBox(height: 24),
+                  SizedBox(
+  width: double.infinity,
+  child: ElevatedButton(
+    onPressed: _saving ? null : _create,
+    style: ElevatedButton.styleFrom(
+      backgroundColor: _primary,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+    ),
+    child: Text(
+      _saving ? "Creating..." : "Continue",
+      style: const TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w700,
+        color: Colors.white,
+      ),
+    ),
+  ),
+),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _label(String t) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text(
+          t,
+          style: const TextStyle(
+            fontSize: 13,
+            color: _muted,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+
+  Widget _input(TextEditingController c, String hint,
+      {int maxLines = 1}) {
+    return TextField(
+      controller: c,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        hintText: hint,
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
+  }
+
+  Widget _dropdown({
+    required String? value,
+    required String hint,
+    required List<Map<String, dynamic>> items,
+    required String labelKey,
+    required Function(String?) onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      hint: Text(hint),
+      items: items
+          .map((e) => DropdownMenuItem<String>(
+                value: e['id'].toString(),
+                child: Text(e[labelKey].toString()),
+              ))
+          .toList(),
+      onChanged: onChanged,
+    );
+  }
+}

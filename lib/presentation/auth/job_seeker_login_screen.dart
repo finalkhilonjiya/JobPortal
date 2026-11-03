@@ -1,0 +1,722 @@
+// File: lib/presentation/auth/job_seeker_login_screen.dart
+
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:sms_autofill/sms_autofill.dart';
+import 'package:khilonjiya_com/main.dart' show saveFcmToken, saveFcmTokenWithRole;
+import '../../routes/app_routes.dart';
+import '../../core/auth/user_role.dart';
+import '../../services/mobile_auth_service.dart';
+import '../../services/location_service.dart';
+
+class JobSeekerLoginScreen extends StatefulWidget {
+const JobSeekerLoginScreen({Key? key}) : super(key: key);
+
+@override
+State<JobSeekerLoginScreen> createState() =>
+_JobSeekerLoginScreenState();
+}
+
+class _JobSeekerLoginScreenState extends State<JobSeekerLoginScreen>
+with SingleTickerProviderStateMixin, CodeAutoFill {
+
+final _mobileController = TextEditingController();
+
+final List<TextEditingController> _otpControllers =
+List.generate(6, (_) => TextEditingController());
+final List<FocusNode> _otpFocusNodes =
+List.generate(6, (_) => FocusNode());
+
+final _auth = MobileAuthService();
+
+bool _isMobileValid = false;
+bool _showOtpStep = false;
+bool _isLoading = false;
+String _appHash = '';
+int _resendSeconds = 0;
+Timer? _timer;
+
+String? _error;
+
+late final AnimationController _animController;
+
+@override
+void initState() {
+  super.initState();
+
+  _animController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 450),
+  )..forward();
+
+  _mobileController.addListener(_validateMobile);
+
+  listenForCode();
+
+  // ❌ REMOVE app hash completely
+}
+
+@override
+void dispose() {
+SmsAutoFill().unregisterListener();
+_animController.dispose();
+_timer?.cancel();
+_mobileController.dispose();
+
+for (final c in _otpControllers) {  
+  c.dispose();  
+}  
+for (final f in _otpFocusNodes) {  
+  f.dispose();  
+}  
+super.dispose();
+
+}
+
+@override
+void codeUpdated() {
+  if (code == null) return;
+
+  final otp = code!.replaceAll(RegExp(r'[^0-9]'), '');
+
+  if (otp.length == 6) {
+    for (int i = 0; i < 6; i++) {
+      _otpControllers[i].text = otp[i];
+    }
+
+    Future.delayed(const Duration(milliseconds: 200), () {
+      _handleVerifyOtp();
+    });
+  }
+}
+
+void _goBack() {
+  Navigator.pushNamedAndRemoveUntil(
+    context,
+    AppRoutes.roleSelection,
+    (_) => false,
+  );
+}
+
+void _validateMobile() {
+final value = _mobileController.text.trim();
+final valid = MobileAuthService.isValidMobileNumber(value);
+if (valid == _isMobileValid && _error == null) return;
+
+setState(() {  
+  _isMobileValid = valid;  
+  _error = null;  
+});
+
+}
+
+Future<void> _handleSendOtp() async {
+if (!_isMobileValid || _isLoading) return;
+
+FocusScope.of(context).unfocus();
+
+setState(() {
+_isLoading = true;
+_error = null;
+});
+
+try {
+await _auth.sendOtp(
+mobile: _mobileController.text.trim(),
+role: UserRole.jobSeeker,
+);
+
+setState(() {  
+  _showOtpStep = true;  
+  _isLoading = false;  
+});  
+
+_startResendTimer();  
+_clearOtp();  
+_otpFocusNodes.first.requestFocus();  
+
+HapticFeedback.lightImpact();
+
+} catch (e) {
+setState(() {
+_isLoading = false;
+_error =
+e is MobileAuthException ? e.message : 'Failed to send OTP';
+});
+}
+}
+void _startResendTimer() {
+_timer?.cancel();
+setState(() => _resendSeconds = 30);
+
+_timer = Timer.periodic(const Duration(seconds: 1), (t) {  
+  if (!mounted) return;  
+  if (_resendSeconds <= 0) {  
+    t.cancel();  
+    return;  
+  }  
+  setState(() => _resendSeconds--);  
+});
+
+}
+
+void _clearOtp() {
+for (final c in _otpControllers) {
+c.clear();
+}
+}
+
+Future<void> _handleVerifyOtp() async {
+
+  final otp = _otpControllers.map((c) => c.text).join();
+
+  if (otp.length != 6) {
+
+    setState(() {
+      _error = 'Please enter the full 6-digit OTP';
+    });
+
+    return;
+  }
+
+  if (_isLoading) return;
+
+  FocusScope.of(context).unfocus();
+
+  setState(() {
+    _isLoading = true;
+    _error = null;
+  });
+
+  try {
+
+    print("📲 VERIFYING OTP");
+
+    await _auth.verifyOtp(
+      mobile: _mobileController.text.trim(),
+      otp: otp,
+      role: UserRole.jobSeeker,
+    ).timeout(
+      const Duration(seconds: 20),
+    );
+
+    print("✅ OTP VERIFIED");
+
+    if (!mounted) return;
+
+    // NAVIGATE IMMEDIATELY
+    Navigator.pushReplacementNamed(
+      context,
+      AppRoutes.home,
+    );
+
+    // =====================================================
+    // BACKGROUND TASKS — DO NOT BLOCK LOGIN
+    // =====================================================
+
+    unawaited(
+      _saveLocationSafely(),
+    );
+
+    unawaited(
+      _saveFcmSafely(),
+    );
+
+  } catch (e, s) {
+
+    print("❌ OTP VERIFY ERROR");
+    print(e);
+    print(s);
+
+    if (!mounted) return;
+
+    setState(() {
+
+      _isLoading = false;
+
+      _error =
+          e is MobileAuthException
+              ? e.message
+              : 'Invalid OTP';
+    });
+
+    _clearOtp();
+
+    _otpFocusNodes.first.requestFocus();
+  }
+}
+
+Future<void> _saveLocationSafely() async {
+
+  try {
+
+    print("📍 SAVING LOCATION");
+
+    await LocationService.collectAndSaveLocation()
+        .timeout(const Duration(seconds: 15));
+
+    print("✅ LOCATION SAVED");
+
+  } catch (e, s) {
+
+    print("❌ LOCATION SAVE ERROR");
+    print(e);
+    print(s);
+  }
+}
+
+Future<void> _saveFcmSafely() async {
+
+  try {
+
+    print("📲 SAVING FCM TOKEN");
+
+    await saveFcmTokenWithRole('jobSeeker')
+        .timeout(const Duration(seconds: 15));
+
+    print("✅ FCM SAVE COMPLETE");
+
+  } catch (e, s) {
+
+    print("❌ FCM SAVE FAILED");
+    print(e);
+    print(s);
+  }
+}
+
+void _handleOtpChange(int index, String value) {
+if (value.length > 1) {
+final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
+if (digits.length == 6) {
+for (int i = 0; i < 6; i++) {
+_otpControllers[i].text = digits[i];
+}
+_otpFocusNodes.last.requestFocus();
+Future.delayed(const Duration(milliseconds: 250), _handleVerifyOtp);
+} else {
+_otpControllers[index].text =
+digits.isNotEmpty ? digits[0] : '';
+}
+return;
+}
+
+if (value.isNotEmpty && index < 5) {  
+  _otpFocusNodes[index + 1].requestFocus();  
+}  
+
+final fullOtp = _otpControllers.map((c) => c.text).join();  
+if (fullOtp.length == 6) {  
+  Future.delayed(const Duration(milliseconds: 250), _handleVerifyOtp);  
+}
+
+}
+
+void _handleOtpBackspace(int index, RawKeyEvent event) {
+if (event is RawKeyDownEvent &&
+event.logicalKey == LogicalKeyboardKey.backspace) {
+if (_otpControllers[index].text.isEmpty && index > 0) {
+_otpControllers[index - 1].clear();
+_otpFocusNodes[index - 1].requestFocus();
+}
+}
+}
+
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: const Color(0xFFF8FAFC),
+    resizeToAvoidBottomInset: false, // ✅ CRITICAL FIX
+    body: SafeArea(
+      child: Stack(
+        children: [
+          // MAIN CONTENT
+          Column(
+            children: [
+              const SizedBox(height: 12),
+
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  onPressed: _goBack,
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                ),
+              ),
+
+              const SizedBox(height: 26),
+
+              _header(),
+
+              const SizedBox(height: 20),
+
+              // ONLY FORM SCROLLS
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 20), // ✅ FIXED
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: Column(
+                    children: [
+                      _showOtpStep ? _otpStep() : _mobileStep(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // FIXED FOOTER
+          // FIXED FOOTER
+Positioned(
+  left: 0,
+  right: 0,
+  bottom: 0,
+  child: Container(
+    color: const Color(0xFFF8FAFC),
+    padding: const EdgeInsets.only(
+      top: 10,
+      bottom: 18,
+    ),
+    child: const Center(
+      child: Text(
+        '© Khilonjiya India Pvt. Ltd.',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF94A3B8),
+        ),
+      ),
+    ),
+  ),
+),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _header() {
+  return Column(
+    children: [
+      // ================= LOGO =================
+      Container(
+        width: 90,
+        height: 90,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(100),
+          child: Image.asset(
+            'assets/icons/app_icon.png',
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
+
+      const SizedBox(height: 24),
+
+      const Text(
+        'Khilonjiya',
+        style: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.w900,
+          color: Color(0xFF2563EB),
+          letterSpacing: -0.4,
+        ),
+      ),
+
+      const SizedBox(height: 6),
+
+      const Text(
+        'Job Seeker Login',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF0F172A),
+        ),
+      ),
+
+      const SizedBox(height: 8),
+
+      const Text(
+        'Find nearby jobs and apply instantly',
+        style: TextStyle(
+          fontSize: 14.5,
+          color: Color(0xFF64748B),
+        ),
+      ),
+    ],
+  );
+}
+
+
+Widget _mobileStep() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'Mobile number',
+        style: TextStyle(
+          fontSize: 14.5,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF0F172A),
+        ),
+      ),
+      const SizedBox(height: 10),
+
+      TextField(
+        controller: _mobileController,
+        keyboardType: TextInputType.phone,
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(10),
+        ],
+        decoration: InputDecoration(
+          prefixText: '+91 ',
+          hintText: 'Enter mobile number',
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide:
+                const BorderSide(color: Color(0xFF2563EB), width: 1.4),
+          ),
+        ),
+      ),
+
+      if (_error != null) ...[
+        const SizedBox(height: 14),
+        Text(
+          _error!,
+          style: const TextStyle(
+            color: Color(0xFFEF4444),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+
+      const SizedBox(height: 26),
+
+      SizedBox(
+        width: double.infinity,
+        height: 52, // ✅ MATCHED SIZE
+        child: ElevatedButton(
+          onPressed: _isMobileValid && !_isLoading
+              ? _handleSendOtp
+              : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF2563EB),
+            disabledBackgroundColor: const Color(0xFFE2E8F0),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          child: _isLoading
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.6,
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : const Text(
+                  'Send OTP',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _otpStep() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'Enter OTP',
+        style: TextStyle(
+          fontSize: 14.5,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF0F172A),
+        ),
+      ),
+      const SizedBox(height: 8),
+
+      Text(
+        '+91 ${_mobileController.text.trim()}',
+        style: const TextStyle(
+          fontSize: 13.5,
+          color: Color(0xFF64748B),
+        ),
+      ),
+
+      const SizedBox(height: 22),
+
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: List.generate(6, (i) {
+          return SizedBox(
+            width: 46,
+            height: 56,
+            child: RawKeyboardListener(
+              focusNode: FocusNode(),
+              onKey: (event) => _handleOtpBackspace(i, event),
+              child: TextField(
+                controller: _otpControllers[i],
+                focusNode: _otpFocusNodes[i],
+                maxLength: 1,
+                keyboardType: TextInputType.number,
+                autofillHints: const [AutofillHints.oneTimeCode],
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+                decoration: InputDecoration(
+                  counterText: '',
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2563EB),
+                      width: 1.4,
+                    ),
+                  ),
+                ),
+                onChanged: (v) => _handleOtpChange(i, v),
+              ),
+            ),
+          );
+        }),
+      ),
+
+      if (_error != null) ...[
+        const SizedBox(height: 14),
+        Text(
+          _error!,
+          style: const TextStyle(
+            color: Color(0xFFEF4444),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+
+      const SizedBox(height: 22),
+
+      SizedBox(
+        width: double.infinity,
+        height: 52, // ✅ MATCHED SIZE
+        child: ElevatedButton(
+          onPressed: _isLoading ? null : _handleVerifyOtp,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF2563EB),
+            disabledBackgroundColor: const Color(0xFFE2E8F0),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          child: _isLoading
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.6,
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : const Text(
+                  'Verify & Continue',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+        ),
+      ),
+
+      const SizedBox(height: 12),
+
+      TextButton(
+        onPressed:
+            (_resendSeconds == 0 && !_isLoading) ? _handleSendOtp : null,
+        child: Text(
+          _resendSeconds == 0
+              ? 'Resend OTP'
+              : 'Resend in $_resendSeconds s',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: _resendSeconds == 0
+                ? const Color(0xFF2563EB)
+                : const Color(0xFF94A3B8),
+          ),
+        ),
+      ),
+
+      const SizedBox(height: 6),
+
+      TextButton(
+        onPressed: _isLoading
+            ? null
+            : () {
+                setState(() {
+                  _showOtpStep = false;
+                  _error = null;
+                });
+              },
+        child: const Text(
+          'Change mobile number',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF64748B),
+          ),
+        ),
+      ),
+    ],
+  );
+}
+}
