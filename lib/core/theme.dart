@@ -1,89 +1,54 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primary = Color(0xFF0E7C66);
-  static const Color primaryDark = Color(0xFF0A5C4C);
-  static const Color primarySoft = Color(0xFFE6F4F0);
-  static const Color accent = Color(0xFFFF7A59);
-  static const Color accentSoft = Color(0xFFFFEFEA);
-
-  static const Color ink = Color(0xFF101828);
-  static const Color text2 = Color(0xFF475467);
-  static const Color muted = Color(0xFF98A2B3);
-  static const Color border = Color(0xFFE4E7EC);
-  static const Color bg = Color(0xFFF7F8FA);
+  static const Color primary = Color(0xFFF26B0F);
+  static const Color primaryLight = Color(0xFFFF9A3D);
+  static const Color primaryDark = Color(0xFFD9540A);
+  static const Color soft = Color(0xFFFFF0E5);
+  static const Color softer = Color(0xFFFFF7F0);
+  static const Color bg = Color(0xFFFFFAF6);
   static const Color surface = Color(0xFFFFFFFF);
+  static const Color ink = Color(0xFF1F1A17);
+  static const Color text2 = Color(0xFF5E564F);
+  static const Color text3 = Color(0xFF9A918A);
+  static const Color line = Color(0xFFEFE6DF);
+  static const Color success = Color(0xFF1FA463);
+  static const Color successSoft = Color(0xFFE5F6EC);
+  static const Color danger = Color(0xFFE5484D);
+  static const Color dangerSoft = Color(0xFFFDEBEC);
+  static const Color info = Color(0xFF2F7DE1);
+  static const Color infoSoft = Color(0xFFE8F1FD);
+  static const Color gold = Color(0xFFF5A623);
+  static const Color shadow = Color(0x14291404);
+  static const Color scrim = Color(0x99000000);
 
-  static const Color danger = Color(0xFFD92D20);
-  static const Color success = Color(0xFF12B76A);
-
-  // Pre-computed translucent colours (avoid deprecated withOpacity calls).
-  static const Color shadow = Color(0x14101828); // ink @ 8%
-  static const Color scrim = Color(0x66000000); // black @ 40%
-  static const Color glass = Color(0xCCFFFFFF); // white @ 80%
+  static const LinearGradient brand = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [primaryLight, primary],
+  );
 }
 
 class AppText {
-  static const TextStyle display = TextStyle(
-    fontFamily: 'Poppins',
-    fontSize: 28,
-    height: 1.2,
-    fontWeight: FontWeight.w700,
-    color: AppColors.ink,
-  );
+  static const String heading = 'Poppins';
+  static const String body = 'Inter';
+
   static const TextStyle h1 = TextStyle(
-    fontFamily: 'Poppins',
-    fontSize: 22,
-    height: 1.25,
-    fontWeight: FontWeight.w700,
-    color: AppColors.ink,
-  );
+      fontFamily: heading, fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.ink, height: 1.2);
   static const TextStyle h2 = TextStyle(
-    fontFamily: 'Poppins',
-    fontSize: 18,
-    height: 1.3,
-    fontWeight: FontWeight.w600,
-    color: AppColors.ink,
-  );
+      fontFamily: heading, fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.ink, height: 1.25);
   static const TextStyle h3 = TextStyle(
-    fontFamily: 'Poppins',
-    fontSize: 16,
-    height: 1.3,
-    fontWeight: FontWeight.w600,
-    color: AppColors.ink,
-  );
-  static const TextStyle price = TextStyle(
-    fontFamily: 'Poppins',
-    fontSize: 18,
-    height: 1.2,
-    fontWeight: FontWeight.w700,
-    color: AppColors.ink,
-  );
-  static const TextStyle body = TextStyle(
-    fontFamily: 'Inter',
-    fontSize: 14,
-    height: 1.45,
-    color: AppColors.text2,
-  );
-  static const TextStyle bodyStrong = TextStyle(
-    fontFamily: 'Inter',
-    fontSize: 14,
-    height: 1.45,
-    fontWeight: FontWeight.w600,
-    color: AppColors.ink,
-  );
-  static const TextStyle small = TextStyle(
-    fontFamily: 'Inter',
-    fontSize: 12,
-    height: 1.4,
-    color: AppColors.muted,
-  );
+      fontFamily: heading, fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.ink, height: 1.3);
+  static const TextStyle title = TextStyle(
+      fontFamily: body, fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.ink, height: 1.35);
+  static const TextStyle bodyM = TextStyle(
+      fontFamily: body, fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.text2, height: 1.5);
+  static const TextStyle bodyS = TextStyle(
+      fontFamily: body, fontSize: 12.5, fontWeight: FontWeight.w400, color: AppColors.text3, height: 1.4);
   static const TextStyle label = TextStyle(
-    fontFamily: 'Inter',
-    fontSize: 13,
-    fontWeight: FontWeight.w600,
-    color: AppColors.ink,
-  );
+      fontFamily: body, fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink);
+  static const TextStyle price = TextStyle(
+      fontFamily: heading, fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.primary);
 }
 
 class AppTheme {
@@ -93,40 +58,83 @@ class AppTheme {
       brightness: Brightness.light,
     ).copyWith(
       primary: AppColors.primary,
-      onPrimary: Colors.white,
+      secondary: AppColors.primaryLight,
       surface: AppColors.surface,
       error: AppColors.danger,
     );
-
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
+      fontFamily: AppText.body,
       scaffoldBackgroundColor: AppColors.bg,
-      fontFamily: 'Inter',
       splashFactory: InkRipple.splashFactory,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AppColors.bg,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        foregroundColor: AppColors.ink,
+        titleTextStyle: AppText.h3,
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(52),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          textStyle: const TextStyle(fontFamily: AppText.body, fontSize: 15, fontWeight: FontWeight.w600),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          minimumSize: const Size.fromHeight(52),
+          side: const BorderSide(color: AppColors.primary, width: 1.2),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          textStyle: const TextStyle(fontFamily: AppText.body, fontSize: 15, fontWeight: FontWeight.w600),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          textStyle: const TextStyle(fontFamily: AppText.body, fontWeight: FontWeight.w600),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.ink,
+        contentTextStyle: const TextStyle(fontFamily: AppText.body, color: Colors.white, fontSize: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      dividerColor: AppColors.line,
     );
   }
 }
 
-/// Shared input decoration (kept out of ThemeData so it never breaks when
-/// Flutter renames component-theme classes).
-InputDecoration inputDeco(String label, {String? hint, String? prefixText}) {
-  OutlineInputBorder border(Color c, [double w = 1]) => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+/// Reusable text-field decoration (avoids ThemeData.inputDecorationTheme API churn).
+InputDecoration inputDeco(String hint, {IconData? icon, Widget? suffix, String? label, String? prefixText}) {
+  OutlineInputBorder b(Color c, [double w = 1]) => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(color: c, width: w),
       );
   return InputDecoration(
-    labelText: label,
     hintText: hint,
+    labelText: label,
     prefixText: prefixText,
+    hintStyle: const TextStyle(color: AppColors.text3, fontSize: 14),
+    prefixIcon: icon == null ? null : Icon(icon, size: 20, color: AppColors.text3),
+    suffixIcon: suffix,
     filled: true,
     fillColor: AppColors.surface,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-    labelStyle: AppText.body,
-    hintStyle: AppText.small.copyWith(fontSize: 14),
-    enabledBorder: border(AppColors.border),
-    focusedBorder: border(AppColors.primary, 1.6),
-    errorBorder: border(AppColors.danger),
-    focusedErrorBorder: border(AppColors.danger, 1.6),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+    border: b(AppColors.line),
+    enabledBorder: b(AppColors.line),
+    focusedBorder: b(AppColors.primary, 1.6),
+    errorBorder: b(AppColors.danger),
+    focusedErrorBorder: b(AppColors.danger, 1.6),
   );
 }
+
+List<BoxShadow> softShadow([double blur = 22]) => [
+      BoxShadow(color: AppColors.shadow, blurRadius: blur, offset: const Offset(0, 8)),
+    ];

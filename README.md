@@ -1,38 +1,34 @@
 # Housing
 
-Rent, buy, sell rooms, PGs, homestays, flats, houses, plots and commercial spaces.
-Flutter app + Supabase (new, empty project).
-
-Package id stays `com.khilonjiya.marketplace` so this replaces the existing Play Store app.
+Rent, buy and sell flats, houses, villas, PGs, homestays, plots, shops and offices.
+Flutter app + Supabase. Package id stays `com.khilonjiya.marketplace` so it replaces the existing Play Store app.
 
 ## One-time setup
 
 ### 1. Supabase (new empty project)
-1. supabase.com -> New project.
-2. SQL Editor -> paste all of `supabase/schema.sql` -> Run.
-3. Authentication -> Providers -> **Phone** -> enable.
-   - Add **Test phone numbers and OTPs** (e.g. `918486000001=123456`). No SMS is sent for these.
-   - Before public launch, connect a real SMS provider (Twilio / MessageBird / Vonage) in the same screen.
-4. Project Settings -> API -> copy the **Project URL** and the **anon public key**.
+SQL Editor -> run these files **in this order** (paste, Run):
+1. `supabase/schema.sql` (already done if you ran it before)
+2. `supabase/migrations/002_full_platform.sql`
+3. `supabase/seed_demo.sql` (optional demo listings, 4 fake users, guides - so the app is not empty)
 
-### 2. GitHub secrets (repo -> Settings -> Secrets and variables -> Actions -> Secrets)
-| Secret | Value |
-|---|---|
-| `SUPABASE_URL` | Project URL |
-| `SUPABASE_ANON_KEY` | anon public key |
-| `KEYSTORE_BASE64` | your existing `.jks` converted to base64 (see below) |
-| `KEYSTORE_PASSWORD` | keystore password |
-| `KEY_ALIAS` | key alias |
-| `KEY_PASSWORD` | key password |
+Authentication -> Providers -> **Phone** -> enable, add **Test phone numbers and OTPs**
+(for example `918822989693=123456`). No SMS is sent for these.
+Before public launch connect a real SMS provider (Twilio / MessageBird / Vonage) and complete DLT registration.
 
-Windows PowerShell, to make the base64 text (copies it to the clipboard):
+### 2. Make yourself admin
+Log in once in the app with your number, then in the SQL editor:
 ```
-[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\path\to\your.jks")) | Set-Clipboard
+update public.profiles set role='admin' where phone='+918822989693';
 ```
+Profile tab -> **Admin panel** appears (listings, reports, users, promotions, settings).
 
-### 3. Build
-GitHub -> Actions -> **Build Android (AAB + APK)** -> Run workflow.
-When it finishes, download `housing-aab` (upload to Play) or `housing-apk` (install on a phone).
+New listings go live immediately. To require approval, open Admin panel -> Settings and switch off *Auto-approve*.
+
+### 3. GitHub secrets (repo -> Settings -> Secrets and variables -> Actions)
+`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`
+
+### 4. Build
+GitHub -> Actions -> **Build Android (AAB + APK)** -> Run workflow. Download `housing-apk` (phone) or `housing-aab` (Play Store).
 
 ## Run locally
 ```
@@ -40,17 +36,24 @@ flutter pub get
 flutter run --dart-define=SUPABASE_URL=https://xxxx.supabase.co --dart-define=SUPABASE_ANON_KEY=eyJ...
 ```
 
-## Version codes
-Each workflow run uses `1000 + run number` as the Play version code. If Play ever says
-the version code is already used, set a repository variable `BUILD_NUMBER_OFFSET` to a higher number.
+## Removing demo data
+```
+delete from auth.users where email like '%@housing.local';
+delete from public.articles where slug like 'demo-%';
+```
+Demo photos live in `assets/demo/` and are referenced as `asset:demo_*` in the database. Real listings upload their own photos.
 
-## Roadmap
-- [x] Auth (phone OTP), browse, search + filters, detail, shortlist, post property, my listings, report, delete account
-- [ ] Map view and "near me"
-- [ ] In-app chat
-- [ ] Push notifications
-- [ ] Paid boosts / featured listings (Razorpay)
-- [ ] Saved searches and alerts
-- [ ] Agent / broker profiles
-- [ ] EMI calculator, rent agreement helper, locality insights
-- [ ] Admin panel for verification and reports
+## Features in this version
+Search with full filters, saved searches with alerts, near me (device location), listing-ID search, compare, recently viewed,
+property page (gallery, floor plans, video, 360 link, reviews, similar, locality insights, open in Google Maps),
+6-step post/edit wizard, owner dashboard (stats, lead pipeline, visits), real-time chat with images, block/report,
+in-app notifications, agent/builder profiles, admin panel, promotion requests, calculators (EMI, price check,
+land converter, yield, stamp duty, total cost, appreciation), guides.
+
+## Not built yet
+Razorpay payments, push notifications (Firebase), real SMS/email provider, document/KYC verification, bulk upload,
+duplicate detection, in-app 360 viewer, watermark/CDN, coupons, SEO website, iOS, Hindi/Assamese.
+
+## Version codes
+Each workflow run uses `1000 + run number` as the Play version code. If Play says the version code is already used,
+set a repository variable `BUILD_NUMBER_OFFSET` to a higher number.

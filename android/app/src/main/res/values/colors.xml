@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="background_color">#F7F8FA</color>
-    <color name="status_bar_color">#FFFFFF</color>
+    <color name="ic_launcher_background">#F57A1F</color>
+    <color name="splash_bg">#F26B0F</color>
+    <color name="background_color">#FFFAF6</color>
+    <color name="status_bar_color">#FFFAF6</color>
     <color name="navigation_bar_color">#FFFFFF</color>
-    <color name="background_color_dark">#0B1220</color>
-    <color name="status_bar_color_dark">#0B1220</color>
-    <color name="navigation_bar_color_dark">#0B1220</color>
-    <color name="primary_color">#0E7C66</color>
+    <color name="background_color_dark">#FFFAF6</color>
+    <color name="status_bar_color_dark">#FFFAF6</color>
+    <color name="navigation_bar_color_dark">#FFFFFF</color>
 </resources>

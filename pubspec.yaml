@@ -17,6 +17,9 @@ dependencies:
   url_launcher: ^6.3.0
   image_picker: ^1.1.1
   share_plus: ^10.0.2
+  shared_preferences: ^2.3.2
+  geolocator: ^13.0.2
+  geocoding: ^3.0.0
 
 dev_dependencies:
   flutter_test:
@@ -27,7 +30,8 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/
+    - assets/demo/
+    - assets/icons/
 
   fonts:
     - family: Inter
