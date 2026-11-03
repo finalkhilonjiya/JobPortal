@@ -1,64 +1,22 @@
-# ========================================
-# 💾 General OS/Editor Generated Files
-# ========================================
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.history
-.svn/
-.idea/
-*.iml
-*.ipr
-*.iws
-
-# ========================================
-# 🛠️ Build/System Directories
-# ========================================
-.build/
-.buildlog/
-.swiftpm/
-migrate_working_dir/
-
-# ========================================
-# 🐦 Dart & Flutter
-# ========================================
+# Flutter / Dart
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
 pubspec.lock
-
-**/doc/api/
-**/ios/Flutter/.last_build_id
-
-# Flutter build outputs
 /build/
-/web/
-/android/app/debug
-/android/app/profile
-/android/app/release
+*.iml
+.idea/
+.DS_Store
 
-# ========================================
-# 🔐 Sensitive Files (MANUAL CONTROL)
-# NOTE: Temporarily allowing .env for CodeMagic
-# REMOVE from Git later after CI/CD setup
-# ========================================
+# Secrets - NEVER commit these
 .env
-.env.local
-.env.production
-.env.staging
-
-# ========================================
-# 🧩 Symbolication / Obfuscation
-# ========================================
-app.*.symbols
-app.*.map.json
-
-# ========================================
-# 🧪 VS Code (optional, enable if needed)
-# ========================================
-#.vscode/
+.env.*
+dart_defines.json
+*.jks
+*.keystore
+key.properties
+android/key.properties
+android/app/upload-keystore.jks

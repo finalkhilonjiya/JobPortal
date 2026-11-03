@@ -1,11 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">khilonjiya.com</string>
-
-    <string name="google_sign_in_client_id">696766563336-302fko5ugv2jq60vr4dc3hf6kpmdfc6j.apps.googleusercontent.com</string>
-
-    <string name="default_notification_channel_id">marketplace_notifications</string>
-    <string name="default_notification_channel_name">Marketplace Notifications</string>
-
-    <string name="file_provider_authority">com.khilonjiya.marketplace.fileprovider</string>
+    <string name="app_name">Housing</string>
 </resources>

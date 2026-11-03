@@ -1,25 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- ✅ FIXED: Launch background for khilonjiya.com - EXTRA LARGE LOGO -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Background color -->
     <item android:drawable="@android:color/white" />
-
-    <!-- Optional: You can uncomment the following to add a logo image -->
-    <!--
     <item>
         <bitmap
             android:gravity="center"
-            android:src="@mipmap/launch_image" />
-    </item>
-    -->
-
-    <!-- EXTRA LARGE centered circle logo - Changed from 120dp to 300dp -->
-    <item>
-        <shape android:shape="oval">
-            <solid android:color="@color/primary_color" />
-            <size 
-                android:width="300dp" 
-                android:height="300dp" />
-        </shape>
+            android:src="@mipmap/ic_launcher" />
     </item>
 </layer-list>

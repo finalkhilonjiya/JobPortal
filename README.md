@@ -1,204 +1,56 @@
-# khilonjiya.com
+# Housing
 
-A comprehensive Flutter marketplace application with Supabase backend integration.
+Rent, buy, sell rooms, PGs, homestays, flats, houses, plots and commercial spaces.
+Flutter app + Supabase (new, empty project).
 
-## 🚀 Features
+Package id stays `com.khilonjiya.marketplace` so this replaces the existing Play Store app.
 
-- **Authentication**: Sign up, sign in, and user management
-- **Marketplace**: Browse, search, and filter listings
-- **Categories**: Organized product categorization
-- **Messaging**: Real-time chat between buyers and sellers
-- **Favorites**: Save and manage favorite listings
-- **User Profiles**: Comprehensive user management
-- **Real-time**: Live updates for messages and listings
+## One-time setup
 
-## 🛠 Tech Stack
+### 1. Supabase (new empty project)
+1. supabase.com -> New project.
+2. SQL Editor -> paste all of `supabase/schema.sql` -> Run.
+3. Authentication -> Providers -> **Phone** -> enable.
+   - Add **Test phone numbers and OTPs** (e.g. `918486000001=123456`). No SMS is sent for these.
+   - Before public launch, connect a real SMS provider (Twilio / MessageBird / Vonage) in the same screen.
+4. Project Settings -> API -> copy the **Project URL** and the **anon public key**.
 
-- **Frontend**: Flutter 3.16.0+, Dart 3.2.0+
-- **Backend**: Supabase (PostgreSQL, Auth, Real-time, Storage)
-- **State Management**: Built-in Flutter state management
-- **UI**: Material Design with custom theming
+### 2. GitHub secrets (repo -> Settings -> Secrets and variables -> Actions -> Secrets)
+| Secret | Value |
+|---|---|
+| `SUPABASE_URL` | Project URL |
+| `SUPABASE_ANON_KEY` | anon public key |
+| `KEYSTORE_BASE64` | your existing `.jks` converted to base64 (see below) |
+| `KEYSTORE_PASSWORD` | keystore password |
+| `KEY_ALIAS` | key alias |
+| `KEY_PASSWORD` | key password |
 
-## 📋 Prerequisites
-
-Before running this application, make sure you have:
-
-- Flutter SDK (3.16.0 or higher)
-- Dart SDK (3.2.0 or higher)
-- Supabase account and project
-
-## 🔧 Setup
-
-### 1. Supabase Configuration
-
-1. Create a new project on [Supabase](https://supabase.com)
-2. Go to Settings > API to find your project URL and anon key
-3. Run the migration file located at `supabase/migrations/20241216120000_marketplace_complete_schema.sql` in your Supabase SQL editor
-
-### 2. Environment Variables
-
-The app requires the following environment variables to be passed during build/run:
-
-```bash
---dart-define=SUPABASE_URL=your_supabase_project_url
---dart-define=SUPABASE_ANON_KEY=your_supabase_anon_key
+Windows PowerShell, to make the base64 text (copies it to the clipboard):
+```
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\path\to\your.jks")) | Set-Clipboard
 ```
 
-### 3. Installation
+### 3. Build
+GitHub -> Actions -> **Build Android (AAB + APK)** -> Run workflow.
+When it finishes, download `housing-aab` (upload to Play) or `housing-apk` (install on a phone).
 
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   flutter pub get
-   ```
-
-3. Run the app with environment variables:
-   ```bash
-   flutter run --dart-define=SUPABASE_URL=your_supabase_url --dart-define=SUPABASE_ANON_KEY=your_anon_key
-   ```
-
-## 📱 App Structure
-
+## Run locally
 ```
-lib/
-├── main.dart                    # App entry point
-├── core/
-│   └── app_export.dart         # Global exports
-├── presentation/               # UI screens and widgets
-├── routes/
-│   └── app_routes.dart        # Navigation routes
-├── theme/
-│   └── app_theme.dart         # App theming
-├── utils/                     # Supabase services
-│   ├── supabase_service.dart  # Core Supabase client
-│   ├── auth_service.dart      # Authentication service
-│   ├── listing_service.dart   # Listing management
-│   ├── category_service.dart  # Category management
-│   ├── favorite_service.dart  # Favorites management
-│   └── message_service.dart   # Messaging service
-└── widgets/                   # Reusable widgets
+flutter pub get
+flutter run --dart-define=SUPABASE_URL=https://xxxx.supabase.co --dart-define=SUPABASE_ANON_KEY=eyJ...
 ```
 
-## 🔐 Authentication
+## Version codes
+Each workflow run uses `1000 + run number` as the Play version code. If Play ever says
+the version code is already used, set a repository variable `BUILD_NUMBER_OFFSET` to a higher number.
 
-The app includes a complete authentication system:
-
-- Email/password registration and login
-- User profile management
-- Role-based access (admin, seller, buyer)
-- Password reset functionality
-
-## 📊 Database Schema
-
-The app uses a comprehensive PostgreSQL schema with:
-
-- **User Profiles**: Extended user information
-- **Categories**: Hierarchical product categories
-- **Listings**: Marketplace items with images and details
-- **Messages & Conversations**: Real-time messaging
-- **Favorites**: User saved items
-- **Search History**: User search tracking
-- **Price Alerts**: Price monitoring
-
-## 🔒 Security
-
-- Row Level Security (RLS) enabled on all tables
-- Proper authentication checks
-- Secure API access patterns
-- Data validation and sanitization
-
-## 🚀 Deployment
-
-### Development
-```bash
-flutter run --dart-define=SUPABASE_URL=your_url --dart-define=SUPABASE_ANON_KEY=your_key
-```
-
-### Production Build
-```bash
-flutter build apk --dart-define=SUPABASE_URL=your_url --dart-define=SUPABASE_ANON_KEY=your_key
-```
-
-## 📝 Available Test Data
-
-The migration includes sample data for testing:
-
-- **Users**: Admin, sellers, and buyers with different roles
-- **Categories**: Electronics, Furniture, Vehicles, Clothing
-- **Listings**: Sample marketplace items with images
-- **Messages**: Example conversations
-- **Favorites**: Sample user preferences
-
-### Test Credentials
-- Admin: `admin@marketplace.com` / `password123`
-- Seller: `john.seller@example.com` / `password123`
-- Buyer: `mike.buyer@example.com` / `password123`
-
-## 🛡️ Error Handling
-
-The app includes comprehensive error handling:
-
-- Network connectivity checks
-- Supabase operation error handling
-- User-friendly error messages
-- Graceful fallbacks for failed operations
-
-## 📱 Key Features Implementation
-
-### Real-time Messaging
-- WebSocket connections via Supabase Realtime
-- Instant message delivery
-- Read status tracking
-- Typing indicators support
-
-### Search & Filtering
-- Full-text search across listings
-- Category-based filtering
-- Price range filtering
-- Location-based search
-- Search history tracking
-
-### Image Handling
-- Supabase Storage integration ready
-- Multiple image upload support
-- Image optimization and caching
-- Fallback image handling
-
-## 🔄 State Management
-
-The app uses Flutter's built-in state management with:
-- StatefulWidget for local state
-- FutureBuilder for async operations
-- StreamBuilder for real-time updates
-- Service layer for data management
-
-## 📈 Performance Optimizations
-
-- Efficient database queries with proper indexing
-- Image caching with `cached_network_image`
-- Pagination for large data sets
-- Lazy loading of content
-- Optimized Supabase client configuration
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 🆘 Support
-
-For support and questions:
-1. Check the existing issues
-2. Create a new issue with detailed description
-3. Include error logs and reproduction steps
-
----
-
-**Note**: Remember to keep your Supabase credentials secure and never commit them to version control.
+## Roadmap
+- [x] Auth (phone OTP), browse, search + filters, detail, shortlist, post property, my listings, report, delete account
+- [ ] Map view and "near me"
+- [ ] In-app chat
+- [ ] Push notifications
+- [ ] Paid boosts / featured listings (Razorpay)
+- [ ] Saved searches and alerts
+- [ ] Agent / broker profiles
+- [ ] EMI calculator, rent agreement helper, locality insights
+- [ ] Admin panel for verification and reports
