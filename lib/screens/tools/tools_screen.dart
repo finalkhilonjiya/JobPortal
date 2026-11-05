@@ -7,6 +7,7 @@ import '../../core/anim.dart';
 import '../../core/format.dart';
 import '../../core/theme.dart';
 import '../../services/api.dart';
+import '../../widgets/app_images.dart';
 import '../../widgets/common.dart';
 import '../../widgets/ui.dart';
 
@@ -32,6 +33,28 @@ class _ToolsScreenState extends State<ToolsScreen> {
     ('Appreciation', Icons.show_chart_rounded),
     ('Price / sq ft', Icons.square_foot_rounded),
   ];
+
+  static const _toolImages = [
+    'tool_emi', 'tool_price', 'tool_land', 'purpose_rent',
+    'purpose_lease', 'purpose_buy', 'tool_locality', 'tool_land',
+  ];
+
+  Widget _header() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Row(children: [
+        Container(
+          width: 64,
+          height: 64,
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: AppColors.soft, borderRadius: BorderRadius.circular(20)),
+          child: ToolIcon(_toolImages[_i], size: 48, fallback: _names[_i].$2),
+        ),
+        const SizedBox(width: 14),
+        Expanded(child: Text(_names[_i].$1, style: AppText.h2)),
+      ]),
+    );
+  }
 
   Widget _tool() {
     switch (_i) {
@@ -76,7 +99,7 @@ class _ToolsScreenState extends State<ToolsScreen> {
             child: SingleChildScrollView(
               key: ValueKey<int>(_i),
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
-              child: _tool(),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_header(), _tool()]),
             ),
           ),
         ),

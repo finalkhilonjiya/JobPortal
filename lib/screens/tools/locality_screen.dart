@@ -7,6 +7,7 @@ import '../../models/models.dart';
 import '../../models/property.dart';
 import '../../services/api.dart';
 import '../../widgets/common.dart';
+import '../../widgets/app_images.dart';
 import '../../widgets/property_card.dart';
 import '../../widgets/ui.dart';
 import '../main_shell.dart';
@@ -58,7 +59,7 @@ class _LocalityScreenState extends State<LocalityScreen> {
             title: Text(_name, style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, color: Colors.white, fontSize: 19)),
             background: Container(
               decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFFFF9A3D), Color(0xFFE85A00)])),
-              child: const Align(alignment: Alignment.topRight, child: Padding(padding: EdgeInsets.only(top: 60, right: 20), child: Icon(Icons.location_city_rounded, size: 90, color: Color(0x33FFFFFF)))),
+              child: const Align(alignment: Alignment.topRight, child: Padding(padding: EdgeInsets.only(top: 60, right: 20), child: ToolIcon('tool_locality', size: 84, fallback: Icons.location_city_rounded))),
             ),
           ),
         ),

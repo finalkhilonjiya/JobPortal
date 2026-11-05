@@ -10,6 +10,7 @@ import '../../core/location.dart';
 import '../../core/theme.dart';
 import '../../models/property.dart';
 import '../../services/api.dart';
+import '../../widgets/app_images.dart';
 import '../../widgets/common.dart';
 import '../../widgets/ui.dart';
 
@@ -644,7 +645,7 @@ class _PostPropertyScreenState extends State<PostPropertyScreen> {
                   border: Border.all(color: category == c.key ? AppColors.primary : AppColors.line, width: category == c.key ? 1.6 : 1),
                 ),
                 child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Icon(c.icon, color: category == c.key ? AppColors.primary : AppColors.text2, size: 26),
+                  CatIcon(c.key, size: 38),
                   const SizedBox(height: 5),
                   Text(c.label, textAlign: TextAlign.center, maxLines: 2, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: category == c.key ? AppColors.primaryDark : AppColors.text2)),
                 ]),

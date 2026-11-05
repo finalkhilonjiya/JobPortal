@@ -32,6 +32,10 @@ flutter:
   assets:
     - assets/demo/
     - assets/icons/
+    - assets/icons/cat/
+    - assets/icons/tool/
+    - assets/banners/
+    - assets/onboarding/
 
   fonts:
     - family: Inter

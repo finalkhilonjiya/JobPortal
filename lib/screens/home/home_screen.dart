@@ -9,6 +9,7 @@ import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../models/property.dart';
 import '../../services/api.dart';
+import '../../widgets/app_images.dart';
 import '../../widgets/common.dart';
 import '../../widgets/property_card.dart';
 import '../../widgets/ui.dart';
@@ -363,10 +364,9 @@ class _BannerData {
   final String title;
   final String subtitle;
   final String cta;
-  final IconData icon;
-  final List<Color> colors;
+  final String image;
   final VoidCallback onTap;
-  _BannerData(this.title, this.subtitle, this.cta, this.icon, this.colors, this.onTap);
+  _BannerData(this.title, this.subtitle, this.cta, this.image, this.onTap);
 }
 
 class _Banners extends StatefulWidget {
@@ -405,20 +405,18 @@ class _BannersState extends State<_Banners> {
   @override
   Widget build(BuildContext context) {
     final items = [
-      _BannerData('Zero brokerage homes', 'Talk directly to owners and save lakhs.', 'Explore', Icons.savings_rounded,
-          const [Color(0xFF1F1A17), Color(0xFF4A3426)], widget.onNoBroker),
-      _BannerData('Post your property free', 'Reach thousands of buyers and tenants today.', 'Post now', Icons.add_home_work_rounded,
-          const [Color(0xFFFF9A3D), Color(0xFFF26B0F)], widget.onPost),
-      _BannerData('Verified listings', 'Look for the green tick for extra trust.', 'See verified', Icons.verified_rounded,
-          const [Color(0xFF1FA463), Color(0xFF0E7B47)], widget.onVerified),
-      _BannerData('Calculators and tools', 'EMI, price check, land converter and more.', 'Open tools', Icons.calculate_rounded,
-          const [Color(0xFF2F7DE1), Color(0xFF1A56B0)], widget.onTools),
+      _BannerData('Zero brokerage homes', 'Talk directly to owners and save lakhs.', 'Explore', 'assets/banners/slider_zero_brokerage.jpg', widget.onNoBroker),
+      _BannerData('Post your property free', 'Reach thousands of buyers and tenants today.', 'Post now', 'assets/banners/slider_post_free.jpg', widget.onPost),
+      _BannerData('Verified listings', 'Look for the green tick for extra trust.', 'See verified', 'assets/banners/slider_verified.jpg', widget.onVerified),
+      _BannerData('Calculators and tools', 'EMI, price check, land converter and more.', 'Open tools', 'assets/banners/slider_tools.jpg', widget.onTools),
     ];
+    // images are 1.95:1; page width is 90% of the screen minus 12px of padding
+    final bannerH = ((MediaQuery.of(context).size.width * 0.9 - 12) / 1.95).roundToDouble();
     return Column(
       children: [
         const SizedBox(height: 22),
         SizedBox(
-          height: 150,
+          height: bannerH,
           child: PageView.builder(
             controller: _c,
             itemCount: items.length,
@@ -431,35 +429,47 @@ class _BannersState extends State<_Banners> {
                 child: Pressable(
                   onTap: b.onTap,
                   scale: 0.98,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: b.colors),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
                     child: Stack(
+                      fit: StackFit.expand,
                       children: [
-                        Positioned(
-                          right: -18,
-                          bottom: -22,
-                          child: Icon(b.icon, size: 130, color: const Color(0x26FFFFFF)),
+                        Image.asset(
+                          b.image,
+                          fit: BoxFit.cover,
+                          filterQuality: FilterQuality.medium,
+                          errorBuilder: (_, __, ___) => Container(decoration: const BoxDecoration(gradient: AppColors.brand)),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
+                        const DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              stops: [0.45, 1.0],
+                              colors: [Color(0x00000000), Color(0xC8000000)],
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          left: 16,
+                          right: 16,
+                          bottom: 14,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text(b.title, style: const TextStyle(fontFamily: 'Poppins', color: Colors.white, fontSize: 19, fontWeight: FontWeight.w600)),
-                              const SizedBox(height: 4),
-                              SizedBox(
-                                width: 210,
-                                child: Text(b.subtitle, style: const TextStyle(color: Color(0xE6FFFFFF), fontSize: 12.5, height: 1.4)),
+                              Expanded(
+                                child: Text(
+                                  b.subtitle,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: Colors.white, fontSize: 12.5, height: 1.35, fontWeight: FontWeight.w500),
+                                ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(width: 10),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-                                child: Text(b.cta, style: TextStyle(color: b.colors.last, fontWeight: FontWeight.w700, fontSize: 12.5)),
+                                decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(20)),
+                                child: Text(b.cta, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
                               ),
                             ],
                           ),
@@ -531,7 +541,8 @@ class _QuickGrid extends StatelessWidget {
                     width: 58,
                     height: 58,
                     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), boxShadow: softShadow(12)),
-                    child: Icon(q.icon, color: AppColors.primary, size: 28),
+                    padding: const EdgeInsets.all(7),
+                    child: CatIcon(q.cats.first, size: 44),
                   ),
                   const SizedBox(height: 7),
                   Text(q.label, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppColors.text2), maxLines: 1),
@@ -635,13 +646,13 @@ class _ToolStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      ('EMI calculator', Icons.calculate_rounded, 0),
-      ('Price check', Icons.price_check_rounded, 1),
-      ('Land converter', Icons.straighten_rounded, 2),
-      ('Rental yield', Icons.trending_up_rounded, 3),
+      ('EMI calculator', 'tool_emi', 0),
+      ('Price check', 'tool_price', 1),
+      ('Land converter', 'tool_land', 2),
+      ('Rental yield', 'purpose_rent', 3),
     ];
     return SizedBox(
-      height: 94,
+      height: 108,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.only(left: 20, right: 6),
@@ -659,7 +670,7 @@ class _ToolStrip extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(it.$2, color: AppColors.primary, size: 26),
+                  ToolIcon(it.$2, size: 38),
                   Text(it.$1, style: AppText.label),
                 ],
               ),
@@ -700,7 +711,11 @@ class _GuideRow extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Badge2(a.category.toUpperCase()),
+                      Row(children: [
+                        Badge2(a.category.toUpperCase()),
+                        const Spacer(),
+                        const ToolIcon('tool_guides', size: 34, fallback: Icons.menu_book_rounded),
+                      ]),
                       const SizedBox(height: 10),
                       Text(a.title, style: AppText.title, maxLines: 3, overflow: TextOverflow.ellipsis),
                     ],
